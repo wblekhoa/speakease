@@ -28,7 +28,8 @@
     "createUpdaterArtifacts": false,
     "targets": "all",
     "resources": ["resources/**/*"],
-    "license": "MIT",
+    "license": "PolyForm-Noncommercial-1.0.0 AND MIT",
+    "copyright": "© 2026 Lê Khoa. Built on Handy, © 2025 CJ Pais (MIT).",
     "icon": [
       "icons/32x32.png",
       "icons/128x128.png",
@@ -37,7 +38,11 @@
       "icons/icon.ico"
     ],
     "macOS": {
-      "files": {},
+      "files": {
+        "Resources/legal/LICENSE.txt": "../LICENSE",
+        "Resources/legal/LICENSE-MIT-HANDY.txt": "../LICENSE-MIT-HANDY",
+        "Resources/legal/NOTICE.md": "../NOTICE.md"
+      },
       "hardenedRuntime": true,
       "minimumSystemVersion": "10.15",
       "signingIdentity": "Developer ID Application: Khoa Le (5QBA98WXJL)",
@@ -70,7 +75,6 @@
       }
     },
     "windows": {
-      "signCommand": "trusted-signing-cli -e https://eus.codesigning.azure.net/ -a CJ-Signing -c cjpais-dev -d Handy %1",
       "nsis": {
         "template": "nsis/installer.nsi",
         "installerIcon": "icons/icon.ico"
