@@ -15,8 +15,11 @@ import { useModelStore } from "@/stores/modelStore";
 import {
   getLanguageLabel,
   MODEL_CAPABILITY_LANGUAGES,
+  recognitionLanguage,
   supportsLanguageCode,
 } from "@/lib/constants/languages.ts";
+import { useSettingsStore } from "@/stores/settingsStore";
+import { vietnameseResult } from "@/lib/utils/vietnameseModels";
 import type { ModelInfo } from "@/bindings";
 
 // check if model supports a language based on its supported_languages list
@@ -30,13 +33,29 @@ const modelSupportsLanguage = (model: ModelInfo, langCode: string): boolean => {
 const isLegacyModel = (model: ModelInfo): boolean =>
   typeof model.source === "object" && "Url" in model.source;
 
+/** SpeakEase: the catalog opens on the language you speak - the one the
+ * model listens for, or the interface's when that is "auto" - instead of
+ * every model for every language (Arabic, Ukrainian, ...). */
+const initialLanguageFilter = (uiLanguage: string) => {
+  const listening =
+    useSettingsStore.getState().settings?.selected_language ?? "auto";
+  const code = recognitionLanguage(
+    listening === "auto" ? uiLanguage : listening,
+  );
+  return MODEL_CAPABILITY_LANGUAGES.some((lang) => lang.value === code)
+    ? code
+    : "all";
+};
+
 export const ModelsSettings: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const [switchingModelId, setSwitchingModelId] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState("");
   const [filterStreaming, setFilterStreaming] = useState(false);
   const [filterTranslation, setFilterTranslation] = useState(false);
-  const [languageFilter, setLanguageFilter] = useState("all");
+  const [languageFilter, setLanguageFilter] = useState(() =>
+    initialLanguageFilter(i18n.language),
+  );
   const [languageDropdownOpen, setLanguageDropdownOpen] = useState(false);
   const [languageSearch, setLanguageSearch] = useState("");
   const languageDropdownRef = useRef<HTMLDivElement>(null);
@@ -221,11 +240,25 @@ export const ModelsSettings: React.FC = () => {
       return 0;
     });
 
+    // For Vietnamese, the models measured on it come first, best first
+    // (vietnameseModels.ts); the rest keep the catalog's order.
+    if (languageFilter === "vi") {
+      const rate = (model: ModelInfo) =>
+        vietnameseResult(model)?.wer ?? Number.POSITIVE_INFINITY;
+      available.sort((a, b) => rate(a) - rate(b));
+    }
+
     return {
       downloadedModels: downloaded,
       availableModels: available,
     };
-  }, [filteredModels, downloadingModels, extractingModels, currentModel]);
+  }, [
+    filteredModels,
+    downloadingModels,
+    extractingModels,
+    currentModel,
+    languageFilter,
+  ]);
 
   if (loading) {
     return (
@@ -239,13 +272,6 @@ export const ModelsSettings: React.FC = () => {
 
   return (
     <div className="max-w-3xl w-full mx-auto space-y-4">
-      {/* The page's name is in the window toolbar (App.tsx). */}
-      <div className="mb-4">
-        <p className="text-sm text-text/60">
-          {t("settings.models.description")}
-        </p>
-      </div>
-
       {/* Search bar — filter the catalog by name or description */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text/40 pointer-events-none" />

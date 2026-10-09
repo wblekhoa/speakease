@@ -52,7 +52,7 @@ export const Keycaps: React.FC<{ combination: string; osType: OSType }> = ({
   const spoken = parts.map(formatKeyPart).join(" + ");
   return (
     <span
-      className="flex items-center gap-1 whitespace-nowrap"
+      className="inline-flex items-center gap-1 whitespace-nowrap align-middle"
       title={spoken}
       aria-label={spoken}
     >

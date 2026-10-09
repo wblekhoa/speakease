@@ -1,5 +1,5 @@
 import React, { useEffect, useRef, useState } from "react";
-import { useTranslation } from "react-i18next";
+import { Trans, useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
 import {
   commands,
@@ -8,7 +8,7 @@ import {
   type ModelInfo,
 } from "@/bindings";
 import { useOsType } from "@/hooks/useOsType";
-import { formatKeyCombination } from "@/lib/utils/keyboard";
+import { Keycaps } from "../../ui/Keycaps";
 import { useSettings } from "../../../hooks/useSettings";
 import { useModelStore } from "../../../stores/modelStore";
 import { openSection } from "@/lib/navigation";
@@ -225,7 +225,6 @@ export const SpeakPage: React.FC = () => {
   const targetValue = settings?.speakease_translate_target ?? null;
   const target = TARGETS.find((item) => item.value === targetValue);
   const binding = settings?.bindings?.transcribe?.current_binding ?? "";
-  const keys = binding ? formatKeyCombination(binding, osType) : "";
 
   const languageName = (code: string) =>
     code === "auto"
@@ -244,7 +243,9 @@ export const SpeakPage: React.FC = () => {
     languageName(language),
     aiEnabled && enhance ? enhance.name : null,
     aiEnabled && target
-      ? t("speak.pipeline.translate", { language: targetName(target.value) })
+      ? t("speak.pipeline.translate", {
+          language: translateTargetName(target.value, i18n.language, true),
+        })
       : null,
   ].filter(Boolean);
 
@@ -324,7 +325,15 @@ export const SpeakPage: React.FC = () => {
               ? t("speak.orb.stop")
               : phase === "transcribing"
                 ? t("speak.orb.working")
-                : t("speak.hold", { keys })}
+                : binding && (
+                    // The shortcut drawn as keys, as on the Recording page.
+                    <Trans
+                      i18nKey="speak.hold"
+                      components={{
+                        keys: <Keycaps combination={binding} osType={osType} />,
+                      }}
+                    />
+                  )}
           </p>
           <p className="text-sm text-mid-gray">
             {phase === "idle"

@@ -501,7 +501,7 @@ const MainShortcutAi: React.FC = () => {
         }
         isUpdating={isUpdating("speakease_translate_target")}
         label={t("settings.postProcessing.main.translate.label", {
-          language: translateTargetName(language, i18n.language),
+          language: translateTargetName(language, i18n.language, true),
         })}
         description={t("settings.postProcessing.main.translate.description")}
         descriptionMode="tooltip"

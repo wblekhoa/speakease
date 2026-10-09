@@ -24,16 +24,22 @@ import Badge from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { vietnameseResult } from "@/lib/utils/vietnameseModels";
+import { languageName } from "@/lib/utils/languageName";
 
 // Get display text for model's language support
 const getLanguageDisplayText = (
   supportedLanguages: string[],
   t: (key: string, options?: Record<string, unknown>) => string,
+  uiLanguage: string,
 ): string => {
   const capabilityLanguages = getUniqueCapabilityLanguages(supportedLanguages);
   if (capabilityLanguages.length === 1) {
     const langCode = capabilityLanguages[0];
-    const langName = getLanguageLabel(langCode) || langCode;
+    // In the reader's language ("Chỉ tiếng Anh"), not the catalog's English.
+    const langName =
+      languageName(langCode, uiLanguage, true) ??
+      getLanguageLabel(langCode) ??
+      langCode;
     return t("modelSelector.capabilities.languageOnly", { language: langName });
   }
   return t("modelSelector.capabilities.languageCount", {
@@ -252,7 +258,13 @@ const ModelCard: React.FC<ModelCardProps> = ({
             }
           >
             <Globe className="w-3.5 h-3.5" />
-            <span>{getLanguageDisplayText(model.supported_languages, t)}</span>
+            <span>
+              {getLanguageDisplayText(
+                model.supported_languages,
+                t,
+                i18n.language,
+              )}
+            </span>
           </div>
         )}
         {model.supports_translation && (

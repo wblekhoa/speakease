@@ -274,7 +274,8 @@
       "volume": {
         "title": "Âm lượng",
         "description": "Độ lớn của tiếng báo"
-      }
+      },
+      "defaultOutput": "Loa mặc định của máy"
     },
     "advanced": {
       "groups": {
@@ -818,7 +819,7 @@
     "best": "Tốt nhất cho tiếng Việt"
   },
   "speak": {
-    "hold": "Giữ {{keys}} để nói",
+    "hold": "Giữ <keys/> để nói",
     "pipeline": {
       "translate": "dịch sang {{language}}"
     },
@@ -865,5 +866,12 @@
       "copy": "Sao chép",
       "copied": "Đã chép"
     }
+  },
+  "modelDescription": {
+    "transcribes": "Chép lời {{what}}",
+    "languages": "{{count}} ngôn ngữ",
+    "translation": "dịch được sang tiếng Anh",
+    "detection": "tự nhận ngôn ngữ",
+    "streaming": "hiện chữ ngay khi nói"
   }
 }

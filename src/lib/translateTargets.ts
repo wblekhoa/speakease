@@ -1,3 +1,5 @@
+import { languageName } from "./utils/languageName";
+
 /**
  * The languages SpeakEase translates into. `value` is what the prompt says
  * (and what is stored), so it stays in English; the label is the reader's.
@@ -18,19 +20,17 @@ export const TRANSLATE_TARGETS = [
   { value: "Portuguese", code: "PT", flag: "🇵🇹" },
 ] as const;
 
-/** A target's name in the interface language, e.g. "Japanese" → "tiếng Nhật". */
-export const translateTargetName = (value: string, uiLanguage: string) => {
+/** A target's name in the interface language, e.g. "Japanese" → "Tiếng
+ * Nhật" in a picker, "tiếng Nhật" inside a sentence. */
+export const translateTargetName = (
+  value: string,
+  uiLanguage: string,
+  inSentence = false,
+) => {
   const code = TRANSLATE_TARGETS.find((item) => item.value === value)?.code;
-  if (!code) return value;
-  try {
-    return (
-      new Intl.DisplayNames([uiLanguage], { type: "language" }).of(
-        code.toLowerCase(),
-      ) ?? value
-    );
-  } catch {
-    return value;
-  }
+  return (
+    (code && languageName(code.toLowerCase(), uiLanguage, inSentence)) ?? value
+  );
 };
 
 /** The prompt the translate steps own; it is not offered as a tidy-up. */

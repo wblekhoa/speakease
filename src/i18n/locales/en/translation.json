@@ -274,7 +274,8 @@
       "volume": {
         "title": "Volume",
         "description": "Adjust the volume of audio feedback sounds"
-      }
+      },
+      "defaultOutput": "System default output"
     },
     "advanced": {
       "groups": {
@@ -818,7 +819,7 @@
     "nemotron": "Fastest, shows text while you speak, but makes more mistakes."
   },
   "speak": {
-    "hold": "Hold {{keys}} to talk",
+    "hold": "Hold <keys/> to talk",
     "pipeline": {
       "translate": "translate to {{language}}"
     },
@@ -865,5 +866,12 @@
       "copy": "Copy",
       "copied": "Copied"
     }
+  },
+  "modelDescription": {
+    "transcribes": "Transcribes {{what}}",
+    "languages": "{{count}} languages",
+    "translation": "translates into English",
+    "detection": "detects the language",
+    "streaming": "shows words as you speak"
   }
 }

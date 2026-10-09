@@ -38,7 +38,8 @@ export const MicrophoneSelector: React.FC<MicrophoneSelectorProps> = React.memo(
 
     const microphoneOptions = audioDevices.map((device) => ({
       value: device.name,
-      label: device.name,
+      // The system's own choice, named in the reader's language.
+      label: device.name === "Default" ? t("speak.mic.default") : device.name,
     }));
 
     return (
