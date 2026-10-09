@@ -31,7 +31,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
       <SettingContainer
         title={t("settings.postProcessing.api.provider.title")}
         description={t("settings.postProcessing.api.provider.description")}
-        descriptionMode="tooltip"
+        descriptionMode="inline"
         layout="horizontal"
         grouped={true}
       >
@@ -432,6 +432,11 @@ export const PostProcessingSettings: React.FC = () => {
       <SettingsGroup title={t("settings.postProcessing.hotkey.title")}>
         <ShortcutInput
           shortcutId="transcribe_with_post_process"
+          descriptionMode="tooltip"
+          grouped={true}
+        />
+        <ShortcutInput
+          shortcutId="transcribe_translate"
           descriptionMode="tooltip"
           grouped={true}
         />

@@ -131,6 +131,10 @@ const settingUpdaters: {
     commands.updateRecordingRetentionPeriod(value as string),
   translate_to_english: (value) =>
     commands.changeTranslateToEnglishSetting(value as boolean),
+  speakease_enhance_prompt_id: (value) =>
+    commands.changeSpeakeaseEnhancePromptIdSetting((value as string) || null),
+  speakease_translate_target: (value) =>
+    commands.changeSpeakeaseTranslateTargetSetting((value as string) || null),
   selected_language: (value) =>
     commands.changeSelectedLanguageSetting(value as string),
   overlay_position: (value) =>

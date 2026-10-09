@@ -649,6 +649,134 @@ impl HistoryManager {
     }
 }
 
+// SpeakEase: search and totals for the history page.
+
+/// What the history page shows above the list.
+#[derive(Clone, Debug, Serialize, Deserialize, Type)]
+pub struct HistoryStats {
+    pub entries: i64,
+    pub words: i64,
+    /// Minutes of typing the dictation replaced, estimated at 40 words a
+    /// minute typed against 150 spoken.
+    pub minutes_saved: f64,
+}
+
+const SELECT_ENTRY: &str = "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested
+     FROM transcription_history ORDER BY id DESC";
+
+/// The text the user actually got: the AI version when there is one.
+fn shown_text(entry: &HistoryEntry) -> &str {
+    entry
+        .post_processed_text
+        .as_deref()
+        .filter(|text| !text.trim().is_empty())
+        .unwrap_or(&entry.transcription_text)
+}
+
+/// Entries whose text contains every word of the query, case-insensitively.
+/// Done in Rust rather than with LIKE: SQLite folds case for ASCII only, and
+/// Vietnamese needs "Đà" to match "đà". The history is capped by the
+/// history limit, so scanning it is cheap.
+fn search_in(conn: &Connection, query: &str) -> Result<Vec<HistoryEntry>> {
+    let words: Vec<String> = query.split_whitespace().map(str::to_lowercase).collect();
+    let mut stmt = conn.prepare(SELECT_ENTRY)?;
+    let entries = stmt
+        .query_map([], HistoryManager::map_history_entry)?
+        .collect::<std::result::Result<Vec<_>, _>>()?;
+    Ok(entries
+        .into_iter()
+        .filter(|entry| {
+            let haystack = format!(
+                "{} {}",
+                entry.transcription_text,
+                entry.post_processed_text.as_deref().unwrap_or("")
+            )
+            .to_lowercase();
+            words.iter().all(|word| haystack.contains(word.as_str()))
+        })
+        .collect())
+}
+
+fn stats_in(conn: &Connection) -> Result<HistoryStats> {
+    let mut stmt = conn.prepare(SELECT_ENTRY)?;
+    let entries = stmt
+        .query_map([], HistoryManager::map_history_entry)?
+        .collect::<std::result::Result<Vec<_>, _>>()?;
+    let words: i64 = entries
+        .iter()
+        .map(|entry| shown_text(entry).split_whitespace().count() as i64)
+        .sum();
+    let minutes_saved = words as f64 / 40.0 - words as f64 / 150.0;
+    Ok(HistoryStats {
+        entries: entries.len() as i64,
+        words,
+        minutes_saved: (minutes_saved * 10.0).round() / 10.0,
+    })
+}
+
+impl HistoryManager {
+    pub async fn search_history_entries(&self, query: &str) -> Result<Vec<HistoryEntry>> {
+        let conn = self.get_connection()?;
+        search_in(&conn, query)
+    }
+
+    pub async fn history_stats(&self) -> Result<HistoryStats> {
+        let conn = self.get_connection()?;
+        stats_in(&conn)
+    }
+}
+
+#[cfg(test)]
+mod speakease_tests {
+    use super::*;
+
+    fn conn_with(rows: &[(&str, Option<&str>)]) -> Connection {
+        let conn = Connection::open_in_memory().unwrap();
+        conn.execute_batch(
+            "CREATE TABLE transcription_history (
+                id INTEGER PRIMARY KEY AUTOINCREMENT, file_name TEXT NOT NULL,
+                timestamp INTEGER NOT NULL, saved BOOLEAN NOT NULL DEFAULT 0,
+                title TEXT NOT NULL, transcription_text TEXT NOT NULL,
+                post_processed_text TEXT, post_process_prompt TEXT,
+                post_process_requested BOOLEAN NOT NULL DEFAULT 0);",
+        )
+        .unwrap();
+        for (i, (text, processed)) in rows.iter().enumerate() {
+            conn.execute(
+                "INSERT INTO transcription_history (file_name, timestamp, title, transcription_text, post_processed_text)
+                 VALUES (?1, ?2, ?3, ?4, ?5)",
+                params![format!("r{i}.wav"), i as i64, "t", text, processed],
+            )
+            .unwrap();
+        }
+        conn
+    }
+
+    #[test]
+    fn search_folds_vietnamese_case_and_needs_every_word() {
+        let conn = conn_with(&[
+            ("họp ở Đà Nẵng lúc hai giờ", None),
+            ("gửi báo cáo", Some("Gửi báo cáo quý 3.")),
+            ("đi chợ", None),
+        ]);
+        let found = search_in(&conn, "đà NẴNG").unwrap();
+        assert_eq!(found.len(), 1);
+        assert_eq!(found[0].transcription_text, "họp ở Đà Nẵng lúc hai giờ");
+        // The AI version is searched too.
+        assert_eq!(search_in(&conn, "quý 3").unwrap().len(), 1);
+        assert_eq!(search_in(&conn, "báo chợ").unwrap().len(), 0);
+    }
+
+    #[test]
+    fn stats_count_the_text_the_user_got() {
+        let conn = conn_with(&[("ờ một hai ba", Some("Một, hai, ba.")), ("bốn năm", None)]);
+        let stats = stats_in(&conn).unwrap();
+        assert_eq!(stats.entries, 2);
+        assert_eq!(stats.words, 5);
+        assert_eq!(stats.minutes_saved, 0.1);
+    }
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

@@ -1,5 +1,6 @@
 import type { TFunction } from "i18next";
 import type { ModelInfo } from "@/bindings";
+import { vietnameseResult } from "./vietnameseModels";
 
 /**
  * Get the translated name for a model
@@ -26,6 +27,14 @@ export function getTranslatedModelDescription(
   // Custom models use a generic translation key
   if (model.is_custom) {
     return t("onboarding.customModelDescription");
+  }
+  // SpeakEase: Vietnamese descriptions for the models measured on Vietnamese.
+  const measured = vietnameseResult(model);
+  if (measured) {
+    const vietnamese = t(`vietnameseModels.${measured.key}`, {
+      defaultValue: "",
+    });
+    if (vietnamese !== "") return vietnamese;
   }
   const translationKey = `onboarding.models.${model.id}.description`;
   const translated = t(translationKey, { defaultValue: "" });

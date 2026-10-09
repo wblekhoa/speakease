@@ -7,6 +7,7 @@ import type { ModelCardStatus } from "./ModelCard";
 import ModelCard, { isLegacySource } from "./ModelCard";
 import HandyTextLogo from "../icons/HandyTextLogo";
 import { useModelStore } from "../../stores/modelStore";
+import { vietnameseResult } from "@/lib/utils/vietnameseModels";
 
 interface OnboardingProps {
   onModelSelected: () => void;
@@ -38,17 +39,32 @@ const Onboarding: React.FC<OnboardingProps> = ({
   // Curate the download list: legacy (.bin/ONNX) downloads are deprecated and
   // never shown here (they still appear in the compatible section if already on
   // disk). The catalog arrives rank-sorted, so the first two recommended models
-  // are the featured picks — currently Parakeet Unified (English) and Nemotron
-  // Streaming (multilingual). Everything else hides behind "Show all".
+  // are the featured picks; in SpeakEase those are the two best measured on
+  // Vietnamese (see vietnameseModels.ts). Everything else hides behind "Show all".
   const { downloadable, topPicks, otherRecommended, rest } = useMemo(() => {
     const downloadable = models.filter(
       (m: ModelInfo) => !m.is_downloaded && !isLegacySource(m),
     );
-    const recommended = downloadable.filter((m: ModelInfo) => m.is_recommended);
+    // SpeakEase: the models measured on Vietnamese lead, best first, and
+    // count as recommended whatever the catalog says.
+    const vietnamese = downloadable
+      .filter((m: ModelInfo) => vietnameseResult(m) !== null)
+      .sort(
+        (a: ModelInfo, b: ModelInfo) =>
+          (vietnameseResult(a)?.wer ?? 0) - (vietnameseResult(b)?.wer ?? 0),
+      );
+    const recommended = [
+      ...vietnamese,
+      ...downloadable.filter(
+        (m: ModelInfo) => m.is_recommended && !vietnamese.includes(m),
+      ),
+    ];
     // `models` arrives in editorial rank order (the backend sorts by rank_of,
     // then accuracy), so keep that order here: ranked-but-not-recommended models
     // surface first, then the unranked tail by accuracy.
-    const rest = downloadable.filter((m: ModelInfo) => !m.is_recommended);
+    const rest = downloadable.filter(
+      (m: ModelInfo) => !recommended.includes(m),
+    );
     return {
       downloadable,
       topPicks: recommended.slice(0, 2),

@@ -1,4 +1,5 @@
 import {
+  useCallback,
   useEffect,
   useLayoutEffect,
   useState,
@@ -49,6 +50,18 @@ const renderSettingsContent = (
   return <ActiveComponent />;
 };
 
+/** The first-run screens fill the window on their own, without the side
+ * column: they paint the window ground themselves (the Mac window is
+ * see-through, App.css) and keep a strip along the top to drag it by. */
+const FirstRunFrame = ({ children }: { children: ReactNode }) => (
+  <div className="app-ground min-h-screen">
+    <div data-tauri-drag-region className="fixed inset-x-0 top-0 h-12 z-10" />
+    {children}
+  </div>
+);
+
+const SIDEBAR_COLLAPSED_KEY = "speakease.sidebar.collapsed";
+
 function App() {
   const { t, i18n } = useTranslation();
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep | null>(
@@ -59,8 +72,26 @@ function App() {
   // Track if this is a returning user who just needs to grant permissions
   // (vs a new user who needs full onboarding including model selection)
   const [isReturningUser, setIsReturningUser] = useState(false);
-  const [currentSection, setCurrentSection] =
-    useState<SidebarSection>("general");
+  const [currentSection, setCurrentSection] = useState<SidebarSection>("speak");
+  // The side panel's folded state is a per-Mac convenience, kept in
+  // localStorage like the theme mirror; it survives relaunches.
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    try {
+      return localStorage.getItem(SIDEBAR_COLLAPSED_KEY) === "1";
+    } catch {
+      return false;
+    }
+  });
+  const toggleSidebar = useCallback(() => {
+    setSidebarCollapsed((collapsed) => {
+      try {
+        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? "0" : "1");
+      } catch {
+        // private storage: the fold just isn't remembered
+      }
+      return !collapsed;
+    });
+  }, []);
   const { settings, updateSetting } = useSettings();
   const direction = getLanguageDirection(i18n.language);
   const refreshAudioDevices = useSettingsStore(
@@ -281,11 +312,14 @@ function App() {
     }
   };
 
-  const handleAccessibilityComplete = () => {
+  // Stable across renders: AccessibilityOnboarding re-runs its permission
+  // check (and initialize_enigo/initialize_shortcuts) whenever this changes,
+  // so a fresh function per render looped those calls until the step ended.
+  const handleAccessibilityComplete = useCallback(() => {
     // Returning users already have models, skip to main app
     // New users need to select a model
     setOnboardingStep(isReturningUser ? "done" : "model");
-  };
+  }, [isReturningUser]);
 
   const handleModelSelected = () => {
     // Transition to main app - user has started a download
@@ -328,7 +362,7 @@ function App() {
     // the settings layout unmounted ensures viewport overflow behaves exactly
     // as it does during first-run onboarding.
     content = (
-      <>
+      <FirstRunFrame>
         {onboardingPreview === "accessibility" ? (
           <AccessibilityOnboarding onComplete={NOOP} preview />
         ) : (
@@ -341,42 +375,57 @@ function App() {
         >
           {t("settings.debug.onboardingPreview.exitButton")}
         </button>
-      </>
+      </FirstRunFrame>
     );
   } else if (onboardingStep === "accessibility") {
     content = (
-      <AccessibilityOnboarding onComplete={handleAccessibilityComplete} />
+      <FirstRunFrame>
+        <AccessibilityOnboarding onComplete={handleAccessibilityComplete} />
+      </FirstRunFrame>
     );
   } else if (onboardingStep === "model") {
-    content = <Onboarding onModelSelected={handleModelSelected} />;
+    content = (
+      <FirstRunFrame>
+        <Onboarding onModelSelected={handleModelSelected} />
+      </FirstRunFrame>
+    );
   } else {
     content = (
-      <div
-        dir={direction}
-        className="h-screen flex flex-col select-none cursor-default"
-      >
+      <div dir={direction} className="h-screen flex select-none cursor-default">
         <ErrorBoundary context="What's New">
           <WhatsNewGate />
         </ErrorBoundary>
-        {/* Main content area that takes remaining space */}
-        <div className="flex-1 flex overflow-hidden">
-          <Sidebar
-            activeSection={currentSection}
-            onSectionChange={setCurrentSection}
-          />
-          {/* Scrollable content area */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            <div ref={settingsScrollRef} className="flex-1 overflow-y-auto">
-              <div className="flex flex-col items-center p-4 gap-4">
-                <AccessibilityPermissions />
-                <SecureInputWarning />
-                {renderSettingsContent(currentSection, setOnboardingPreview)}
-              </div>
+        {/* The side column, flush with the window's left edge (ReadEase's
+            layout): the Mac's sidebar material shows through it. */}
+        <Sidebar
+          activeSection={currentSection}
+          onSectionChange={setCurrentSection}
+          collapsed={sidebarCollapsed}
+          onToggleCollapsed={toggleSidebar}
+        />
+        <div className="app-ground flex-1 min-w-0 flex flex-col overflow-hidden">
+          {/* The toolbar: the window's drag handle (the title bar is an
+              overlay) and the page's name, on the window buttons' line. */}
+          <header
+            data-tauri-drag-region
+            className="h-[60px] shrink-0 flex items-center px-6 border-b border-hairline"
+          >
+            <h1
+              data-tauri-drag-region
+              className="font-display text-[15px] font-semibold truncate"
+            >
+              {t(SECTIONS_CONFIG[currentSection].labelKey)}
+            </h1>
+          </header>
+          <div ref={settingsScrollRef} className="flex-1 overflow-y-auto">
+            <div className="flex flex-col items-center p-4 gap-4">
+              <AccessibilityPermissions />
+              <SecureInputWarning />
+              {renderSettingsContent(currentSection, setOnboardingPreview)}
             </div>
           </div>
+          <Footer />
         </div>
-        {/* Fixed footer at bottom */}
-        <Footer />
       </div>
     );
   }

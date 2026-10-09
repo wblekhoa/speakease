@@ -53,17 +53,15 @@ mod tests {
 
     #[test]
     fn resolves_locale_fallbacks() {
+        // SpeakEase ships vi and en only; every other locale falls to en.
         for (locale, expected) in [
-            ("zh-Hant-TW", "zh-TW"),
-            ("zh-Hant-HK", "zh-TW"),
-            ("zh-HK", "zh-TW"),
-            ("zh-MO", "zh-TW"),
-            ("ZH-TW", "zh-TW"),
-            ("zh_Hant_TW", "zh-TW"),
-            ("zh-Hans-CN", "zh"),
-            ("yue-Hant-HK", "zh-TW"),
-            ("yue-Hans-CN", "zh"),
-            ("fr-FR", "fr"),
+            ("vi", "vi"),
+            ("vi-VN", "vi"),
+            ("VI_vn", "vi"),
+            ("en", "en"),
+            ("en-VN", "en"),
+            ("zh-Hant-TW", "en"),
+            ("fr-FR", "en"),
             ("xx-YY", "en"),
         ] {
             assert_eq!(

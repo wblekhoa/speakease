@@ -239,10 +239,8 @@ export const ModelsSettings: React.FC = () => {
 
   return (
     <div className="max-w-3xl w-full mx-auto space-y-4">
+      {/* The page's name is in the window toolbar (App.tsx). */}
       <div className="mb-4">
-        <h1 className="text-xl font-semibold mb-2">
-          {t("settings.models.title")}
-        </h1>
         <p className="text-sm text-text/60">
           {t("settings.models.description")}
         </p>
@@ -335,7 +333,7 @@ export const ModelsSettings: React.FC = () => {
                 </button>
 
                 {languageDropdownOpen && (
-                  <div className="absolute top-full right-0 mt-1 w-56 bg-background border border-mid-gray/80 rounded-lg shadow-lg z-50 overflow-hidden">
+                  <div className="absolute top-full right-0 mt-1 w-56 bg-background border border-hairline rounded-lg shadow-lg z-50 overflow-hidden">
                     <div className="p-2 border-b border-mid-gray/40">
                       <input
                         ref={languageSearchInputRef}

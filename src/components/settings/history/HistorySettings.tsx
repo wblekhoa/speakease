@@ -1,17 +1,28 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { convertFileSrc } from "@tauri-apps/api/core";
 import { readFile } from "@tauri-apps/plugin-fs";
-import { Check, Copy, FolderOpen, RotateCcw, Star, Trash2 } from "lucide-react";
+import {
+  CheckIcon,
+  CopyIcon,
+  FolderOpenIcon,
+  RotateLeftIcon,
+  SearchIcon,
+  SpeakerIcon,
+  StarIcon,
+  StarOutlineIcon,
+  TrashIcon,
+} from "../../icons/bulk";
 import { useTranslation } from "react-i18next";
 import { toast } from "sonner";
 import {
   commands,
   events,
   type HistoryEntry,
+  type HistoryStats,
   type HistoryUpdatePayload,
 } from "@/bindings";
 import { useOsType } from "@/hooks/useOsType";
-import { formatDateTime } from "@/utils/dateFormat";
+import { useSettings } from "@/hooks/useSettings";
 import { AudioPlayer, AudioPlayerGroup } from "../../ui/AudioPlayer";
 import { Button } from "../../ui/Button";
 import { copyToClipboard } from "./clipboard";
@@ -39,6 +50,15 @@ const IconButton: React.FC<{
 
 const PAGE_SIZE = 30;
 
+/** Calendar day of an entry, for grouping. */
+const dayKey = (timestamp: number) => new Date(timestamp * 1000).toDateString();
+
+/** The text the user got: the AI version when there is one. */
+const shownText = (entry: HistoryEntry) =>
+  entry.post_processed_text?.trim()
+    ? entry.post_processed_text
+    : entry.transcription_text;
+
 interface OpenRecordingsButtonProps {
   onClick: () => void;
   label: string;
@@ -55,7 +75,7 @@ const OpenRecordingsButton: React.FC<OpenRecordingsButtonProps> = ({
     className="flex items-center gap-2"
     title={label}
   >
-    <FolderOpen className="w-4 h-4" />
+    <FolderOpenIcon width={16} height={16} />
     <span>{label}</span>
   </Button>
 );
@@ -69,6 +89,32 @@ export const HistorySettings: React.FC = () => {
   const sentinelRef = useRef<HTMLDivElement>(null);
   const entriesRef = useRef<HistoryEntry[]>([]);
   const loadingRef = useRef(false);
+  const [query, setQuery] = useState("");
+  const [results, setResults] = useState<HistoryEntry[] | null>(null);
+  const [stats, setStats] = useState<HistoryStats | null>(null);
+
+  const loadStats = useCallback(async () => {
+    const result = await commands.getHistoryStats();
+    if (result.status === "ok") setStats(result.data);
+  }, []);
+
+  useEffect(() => {
+    loadStats();
+  }, [loadStats]);
+
+  // Search runs on the whole history (server side), a beat after typing stops.
+  useEffect(() => {
+    const trimmed = query.trim();
+    if (!trimmed) {
+      setResults(null);
+      return;
+    }
+    const timer = setTimeout(async () => {
+      const result = await commands.searchHistoryEntries(trimmed);
+      if (result.status === "ok") setResults(result.data);
+    }, 200);
+    return () => clearTimeout(timer);
+  }, [query, entries]);
 
   // Keep ref in sync for use in IntersectionObserver callback
   useEffect(() => {
@@ -135,6 +181,7 @@ export const HistorySettings: React.FC = () => {
   useEffect(() => {
     const unlisten = events.historyUpdatePayload.listen((event) => {
       const payload: HistoryUpdatePayload = event.payload;
+      loadStats();
       if (payload.action === "added") {
         setEntries((prev) => [payload.entry, ...prev]);
       } else if (payload.action === "updated") {
@@ -149,7 +196,7 @@ export const HistorySettings: React.FC = () => {
     return () => {
       unlisten.then((fn) => fn());
     };
-  }, []);
+  }, [loadStats]);
 
   const toggleSaved = async (id: number) => {
     // Optimistic update
@@ -197,6 +244,7 @@ export const HistorySettings: React.FC = () => {
   const deleteAudioEntry = async (id: number) => {
     // Optimistically remove
     setEntries((prev) => prev.filter((e) => e.id !== id));
+    setResults((prev) => prev && prev.filter((e) => e.id !== id));
     try {
       const result = await commands.deleteHistoryEntry(id);
       if (result.status !== "ok") {
@@ -227,7 +275,26 @@ export const HistorySettings: React.FC = () => {
     }
   };
 
+  const { settings } = useSettings();
+  /** The name of the AI prompt an entry went through, if any. */
+  const promptNameFor = (entry: HistoryEntry) =>
+    entry.post_processed_text?.trim()
+      ? (settings?.post_process_prompts?.find(
+          (prompt) => prompt.prompt === entry.post_process_prompt,
+        )?.name ??
+        // The Speak page's translations through English keep their second
+        // leg's prompt, which is generated, not stored (settings.rs).
+        (entry.post_process_prompt?.startsWith(
+          "<transcript>\n${output}\n</transcript>\n\nThe text above is English. Translate",
+        )
+          ? t("settings.history.translatedBadge", {
+              defaultValue: "Translated",
+            })
+          : t("settings.history.aiBadge", { defaultValue: "AI" })))
+      : null;
+
   let content: React.ReactNode;
+  const shown = results ?? entries;
 
   if (loading) {
     content = (
@@ -235,32 +302,41 @@ export const HistorySettings: React.FC = () => {
         {t("settings.history.loading")}
       </div>
     );
-  } else if (entries.length === 0) {
+  } else if (shown.length === 0) {
     content = (
       <div className="px-4 py-3 text-center text-text/60">
-        {t("settings.history.empty")}
+        {results
+          ? t("settings.history.noResults", { defaultValue: "No matches" })
+          : t("settings.history.empty")}
       </div>
     );
   } else {
     content = (
       <>
         <AudioPlayerGroup>
-          <div className="divide-y divide-mid-gray/20">
-            {entries.map((entry) => (
-              <HistoryEntryComponent
-                key={entry.id}
-                entry={entry}
-                onToggleSaved={() => toggleSaved(entry.id)}
-                onCopyText={() => copyToClipboard(entry.transcription_text)}
-                getAudioUrl={getAudioUrl}
-                deleteAudio={deleteAudioEntry}
-                retryTranscription={retryHistoryEntry}
-              />
+          <div>
+            {shown.map((entry, index) => (
+              <React.Fragment key={entry.id}>
+                {(index === 0 ||
+                  dayKey(shown[index - 1].timestamp) !==
+                    dayKey(entry.timestamp)) && (
+                  <DayHeader timestamp={entry.timestamp} />
+                )}
+                <HistoryEntryComponent
+                  entry={entry}
+                  promptName={promptNameFor(entry)}
+                  onToggleSaved={() => toggleSaved(entry.id)}
+                  onCopyText={() => copyToClipboard(shownText(entry))}
+                  getAudioUrl={getAudioUrl}
+                  deleteAudio={deleteAudioEntry}
+                  retryTranscription={retryHistoryEntry}
+                />
+              </React.Fragment>
             ))}
           </div>
         </AudioPlayerGroup>
         {/* Sentinel for infinite scroll */}
-        <div ref={sentinelRef} className="h-1" />
+        {!results && <div ref={sentinelRef} className="h-1" />}
       </>
     );
   }
@@ -279,7 +355,30 @@ export const HistorySettings: React.FC = () => {
             label={t("settings.history.openFolder")}
           />
         </div>
-        <div className="bg-background border border-mid-gray/20 rounded-lg overflow-visible">
+        {stats && stats.entries > 0 && (
+          <p className="px-4 text-sm text-text/60 tabular-nums">
+            {t("settings.history.stats", {
+              defaultValue:
+                "{{entries}} dictations · {{words}} words · about {{minutes}} min of typing saved",
+              entries: stats.entries.toLocaleString(),
+              words: stats.words.toLocaleString(),
+              minutes: stats.minutes_saved.toLocaleString(),
+            })}
+          </p>
+        )}
+        <label className="mx-4 flex items-center gap-2 px-3 py-2 rounded-xl border border-hairline bg-surface focus-within:border-logo-primary">
+          <SearchIcon width={16} height={16} className="text-mid-gray" />
+          <input
+            type="search"
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder={t("settings.history.searchPlaceholder", {
+              defaultValue: "Search what you said",
+            })}
+            className="flex-1 bg-transparent text-sm outline-none"
+          />
+        </label>
+        <div className="bg-surface border border-hairline rounded-2xl overflow-visible">
           {content}
         </div>
       </div>
@@ -287,8 +386,32 @@ export const HistorySettings: React.FC = () => {
   );
 };
 
+const DayHeader: React.FC<{ timestamp: number }> = ({ timestamp }) => {
+  const { t, i18n } = useTranslation();
+  const day = new Date(timestamp * 1000);
+  const today = new Date();
+  const yesterday = new Date();
+  yesterday.setDate(today.getDate() - 1);
+  const label =
+    day.toDateString() === today.toDateString()
+      ? t("settings.history.today", { defaultValue: "Today" })
+      : day.toDateString() === yesterday.toDateString()
+        ? t("settings.history.yesterday", { defaultValue: "Yesterday" })
+        : day.toLocaleDateString(i18n.language, {
+            weekday: "long",
+            day: "numeric",
+            month: "long",
+          });
+  return (
+    <h3 className="px-4 pt-3 pb-1 text-xs font-medium text-mid-gray uppercase tracking-wide border-t border-hairline first:border-t-0">
+      {label}
+    </h3>
+  );
+};
+
 interface HistoryEntryProps {
   entry: HistoryEntry;
+  promptName: string | null;
   onToggleSaved: () => void;
   onCopyText: () => Promise<boolean>;
   getAudioUrl: (fileName: string) => Promise<string | null>;
@@ -298,6 +421,7 @@ interface HistoryEntryProps {
 
 const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   entry,
+  promptName,
   onToggleSaved,
   onCopyText,
   getAudioUrl,
@@ -307,8 +431,12 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   const { t, i18n } = useTranslation();
   const [showCopied, setShowCopied] = useState(false);
   const [retrying, setRetrying] = useState(false);
+  const [listening, setListening] = useState(false);
 
   const hasTranscription = entry.transcription_text.trim().length > 0;
+  const aiText = entry.post_processed_text?.trim()
+    ? entry.post_processed_text
+    : null;
 
   const handleLoadAudio = useCallback(
     () => getAudioUrl(entry.file_name),
@@ -351,22 +479,37 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
     }
   };
 
-  const formattedDate = formatDateTime(String(entry.timestamp), i18n.language);
+  const time = new Date(entry.timestamp * 1000).toLocaleTimeString(
+    i18n.language,
+    { hour: "2-digit", minute: "2-digit" },
+  );
 
   return (
-    <div className="px-4 py-2 pb-5 flex flex-col gap-3">
-      <div className="flex justify-between items-center">
-        <p className="text-sm font-medium">{formattedDate}</p>
-        <div className="flex items-center">
+    <div className="group px-4 py-2.5 flex flex-col gap-1.5">
+      <div className="flex items-center gap-2">
+        <span className="text-xs text-text/50 tabular-nums">{time}</span>
+        {promptName && (
+          <span className="text-[11px] leading-4 px-1.5 rounded bg-logo-primary/15 text-logo-primary">
+            {promptName}
+          </span>
+        )}
+        <div className="ml-auto flex items-center opacity-60 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+          <IconButton
+            onClick={() => setListening((open) => !open)}
+            active={listening}
+            title={t("settings.history.listen", { defaultValue: "Play back" })}
+          >
+            <SpeakerIcon width={18} height={18} />
+          </IconButton>
           <IconButton
             onClick={handleCopyText}
             disabled={!hasTranscription || retrying}
             title={t("settings.history.copyToClipboard")}
           >
             {showCopied ? (
-              <Check width={16} height={16} />
+              <CheckIcon width={18} height={18} />
             ) : (
-              <Copy width={16} height={16} />
+              <CopyIcon width={18} height={18} />
             )}
           </IconButton>
           <IconButton
@@ -379,39 +522,40 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
                 : t("settings.history.save")
             }
           >
-            <Star
-              width={16}
-              height={16}
-              fill={entry.saved ? "currentColor" : "none"}
-            />
+            {entry.saved ? (
+              <StarIcon width={18} height={18} />
+            ) : (
+              <StarOutlineIcon width={18} height={18} />
+            )}
           </IconButton>
           <IconButton
             onClick={handleRetranscribe}
             disabled={retrying}
             title={t("settings.history.retranscribe")}
           >
-            <RotateCcw
-              width={16}
-              height={16}
+            <span
+              className="inline-flex"
               style={
                 retrying
                   ? { animation: "spin 1s linear infinite reverse" }
                   : undefined
               }
-            />
+            >
+              <RotateLeftIcon width={18} height={18} />
+            </span>
           </IconButton>
           <IconButton
             onClick={handleDeleteEntry}
             disabled={retrying}
             title={t("settings.history.delete")}
           >
-            <Trash2 width={16} height={16} />
+            <TrashIcon width={18} height={18} />
           </IconButton>
         </div>
       </div>
 
       <p
-        className={`italic text-sm pb-2 ${
+        className={`text-sm ${
           retrying
             ? ""
             : hasTranscription
@@ -435,11 +579,21 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
         {retrying
           ? t("settings.history.transcribing")
           : hasTranscription
-            ? entry.transcription_text
+            ? (aiText ?? entry.transcription_text)
             : t("settings.history.transcriptionFailed")}
       </p>
+      {aiText && !retrying && (
+        <p className="text-xs text-text/50 select-text whitespace-pre-wrap break-words">
+          <span className="font-medium">
+            {t("settings.history.original", { defaultValue: "Original" })}:
+          </span>{" "}
+          {entry.transcription_text}
+        </p>
+      )}
 
-      <AudioPlayer onLoadRequest={handleLoadAudio} className="w-full" />
+      {listening && (
+        <AudioPlayer onLoadRequest={handleLoadAudio} className="w-full pt-1" />
+      )}
     </div>
   );
 };

@@ -305,7 +305,7 @@ pub fn resume_all_shortcuts(app: &AppHandle) {
         if id == "cancel" {
             continue;
         }
-        if id == "transcribe_with_post_process" && !settings.post_process_enabled {
+        if crate::settings::is_post_process_binding(id) && !settings.post_process_enabled {
             continue;
         }
         if let Err(e) = register_shortcut(app, binding.clone()) {
@@ -497,7 +497,7 @@ fn register_all_shortcuts_for_implementation(
         }
 
         // Skip post-processing shortcut when the feature is disabled
-        if id == "transcribe_with_post_process" && !current_settings.post_process_enabled {
+        if crate::settings::is_post_process_binding(id) && !current_settings.post_process_enabled {
             continue;
         }
 
@@ -691,6 +691,34 @@ pub fn change_translate_to_english_setting(app: AppHandle, enabled: bool) -> Res
 pub fn change_selected_language_setting(app: AppHandle, language: String) -> Result<(), String> {
     let mut settings = settings::get_settings(&app);
     settings.selected_language = language;
+    settings::write_settings(&app, settings);
+    Ok(())
+}
+
+/// SpeakEase quick setting: the AI prompt the main shortcut tidies with
+/// (None or "" = off).
+#[tauri::command]
+#[specta::specta]
+pub fn change_speakease_enhance_prompt_id_setting(
+    app: AppHandle,
+    prompt_id: Option<String>,
+) -> Result<(), String> {
+    let mut settings = settings::get_settings(&app);
+    settings.speakease_enhance_prompt_id = prompt_id.filter(|id| !id.is_empty());
+    settings::write_settings(&app, settings);
+    Ok(())
+}
+
+/// SpeakEase quick setting: the language the main shortcut translates into
+/// (None or "" = off).
+#[tauri::command]
+#[specta::specta]
+pub fn change_speakease_translate_target_setting(
+    app: AppHandle,
+    target: Option<String>,
+) -> Result<(), String> {
+    let mut settings = settings::get_settings(&app);
+    settings.speakease_translate_target = target.filter(|t| !t.is_empty());
     settings::write_settings(&app, settings);
     Ok(())
 }
@@ -1055,12 +1083,11 @@ pub fn change_post_process_enabled_setting(app: AppHandle, enabled: bool) -> Res
     settings.post_process_enabled = enabled;
     settings::write_settings(&app, settings.clone());
 
-    // Register or unregister the post-processing shortcut
-    if let Some(binding) = settings
-        .bindings
-        .get("transcribe_with_post_process")
-        .cloned()
-    {
+    // Register or unregister the post-processing shortcuts
+    for (id, binding) in settings.bindings.clone() {
+        if !settings::is_post_process_binding(&id) {
+            continue;
+        }
         if enabled {
             let _ = register_shortcut(&app, binding);
         } else {

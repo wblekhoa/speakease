@@ -1,7 +1,22 @@
-import React, { useState, useRef, useEffect, useMemo } from "react";
+import React, {
+  useCallback,
+  useState,
+  useRef,
+  useEffect,
+  useMemo,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { SettingContainer } from "../ui/SettingContainer";
 import { ResetButton } from "../ui/ResetButton";
+import {
+  selectChevron,
+  selectMenu,
+  selectOption,
+  selectOptionChosen,
+  selectTrigger,
+  selectTriggerDisabled,
+  selectTriggerEnabled,
+} from "../ui/selectStyles";
 import { useSettings } from "../../hooks/useSettings";
 import {
   getLanguageLabel,
@@ -43,7 +58,7 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
   supportedLanguages,
   supportsLanguageDetection = true,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const { getSetting, updateSetting, resetSetting, isUpdating } = useSettings();
   const [isOpen, setIsOpen] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
@@ -92,16 +107,44 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
     );
   }, [supportedLanguages, supportsLanguageDetection]);
 
+  // SpeakEase: names in the interface's own language ("Tiếng Việt", not
+  // "Vietnamese"); the catalog's English label is the fallback.
+  const displayNames = useMemo(() => {
+    try {
+      return new Intl.DisplayNames([i18n.language], { type: "language" });
+    } catch {
+      return null;
+    }
+  }, [i18n.language]);
+  const nameOf = useCallback(
+    (code: string, fallback?: string) => {
+      if (code === "auto") return t("settings.general.language.auto");
+      let name: string | undefined;
+      try {
+        name = displayNames?.of(code);
+      } catch {
+        name = undefined;
+      }
+      if (!name || name === code) return fallback ?? code;
+      return name.charAt(0).toLocaleUpperCase(i18n.language) + name.slice(1);
+    },
+    [displayNames, i18n.language, t],
+  );
+
   const filteredLanguages = useMemo(
     () =>
       availableLanguages.filter((language) =>
-        language.label.toLowerCase().includes(searchQuery.toLowerCase()),
+        `${language.label} ${nameOf(language.value, language.label)}`
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()),
       ),
-    [searchQuery, availableLanguages],
+    [searchQuery, availableLanguages, nameOf],
   );
 
-  const selectedLanguageName =
-    getLanguageLabel(selectedLanguage) || t("settings.general.language.auto");
+  const selectedLanguageName = nameOf(
+    selectedLanguage,
+    getLanguageLabel(selectedLanguage),
+  );
 
   const handleLanguageSelect = async (languageCode: string) => {
     await updateSetting("selected_language", languageCode);
@@ -143,19 +186,17 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
         <div className="relative" ref={dropdownRef}>
           <button
             type="button"
-            className={`px-2 py-1 text-sm font-semibold bg-mid-gray/10 border border-mid-gray/80 rounded min-w-[200px] text-start flex items-center justify-between transition-all duration-150 ${
+            className={`${selectTrigger} ${
               isUpdating("selected_language")
-                ? "opacity-50 cursor-not-allowed"
-                : "hover:bg-logo-primary/10 cursor-pointer hover:border-logo-primary"
+                ? selectTriggerDisabled
+                : selectTriggerEnabled
             }`}
             onClick={handleToggle}
             disabled={isUpdating("selected_language")}
           >
             <span className="truncate">{selectedLanguageName}</span>
             <svg
-              className={`w-4 h-4 ms-2 transition-transform duration-200 ${
-                isOpen ? "transform rotate-180" : ""
-              }`}
+              className={`${selectChevron} ${isOpen ? "rotate-180" : ""}`}
               fill="none"
               stroke="currentColor"
               viewBox="0 0 24 24"
@@ -170,9 +211,11 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
           </button>
 
           {isOpen && !isUpdating("selected_language") && (
-            <div className="absolute top-full left-0 right-0 mt-1 bg-background border border-mid-gray/80 rounded shadow-lg z-50 max-h-60 overflow-hidden">
+            <div
+              className={`${selectMenu} left-0 right-0 max-h-72 overflow-hidden`}
+            >
               {/* Search input */}
-              <div className="p-2 border-b border-mid-gray/80">
+              <div className="p-1 pb-1.5">
                 <input
                   ref={searchInputRef}
                   type="text"
@@ -180,11 +223,11 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
                   onChange={handleSearchChange}
                   onKeyDown={handleKeyDown}
                   placeholder={t("settings.general.language.searchPlaceholder")}
-                  className="w-full px-2 py-1 text-sm bg-mid-gray/10 border border-mid-gray/40 rounded focus:outline-none focus:ring-1 focus:ring-logo-primary focus:border-logo-primary"
+                  className="w-full h-8 px-2.5 text-sm bg-row border border-transparent rounded-lg focus:outline-none focus:border-logo-primary"
                 />
               </div>
 
-              <div className="max-h-48 overflow-y-auto">
+              <div className="max-h-56 overflow-y-auto">
                 {filteredLanguages.length === 0 ? (
                   <div className="px-2 py-2 text-sm text-mid-gray text-center">
                     {t("settings.general.language.noResults")}
@@ -194,15 +237,17 @@ export const LanguageSelector: React.FC<LanguageSelectorProps> = ({
                     <button
                       key={language.value}
                       type="button"
-                      className={`w-full px-2 py-1 text-sm text-start hover:bg-logo-primary/10 transition-colors duration-150 ${
+                      className={`${selectOption} ${
                         selectedLanguage === language.value
-                          ? "bg-logo-primary/20 text-logo-primary font-semibold"
+                          ? selectOptionChosen
                           : ""
                       }`}
                       onClick={() => handleLanguageSelect(language.value)}
                     >
                       <div className="flex items-center justify-between">
-                        <span className="truncate">{language.label}</span>
+                        <span className="truncate">
+                          {nameOf(language.value, language.label)}
+                        </span>
                       </div>
                     </button>
                   ))

@@ -144,6 +144,9 @@ fn show_main_window(app: &AppHandle) {
 #[cfg(target_os = "macos")]
 fn apply_startup_activation_policy(app: &mut tauri::App, headless_mode: bool) {
     if headless_mode {
+        // SpeakEase: a one-shot CLI run has no window, so it must not flash a
+        // Dock icon (a scripted batch of runs made the Dock bounce non-stop).
+        app.set_activation_policy(tauri::ActivationPolicy::Prohibited);
         return;
     }
 
@@ -663,6 +666,8 @@ pub fn run(cli_args: CliArgs) {
             shortcut::change_autostart_setting,
             shortcut::change_translate_to_english_setting,
             shortcut::change_selected_language_setting,
+            shortcut::change_speakease_enhance_prompt_id_setting,
+            shortcut::change_speakease_translate_target_setting,
             shortcut::change_overlay_position_setting,
             shortcut::change_overlay_style_setting,
             shortcut::change_debug_mode_setting,
@@ -761,6 +766,8 @@ pub fn run(cli_args: CliArgs) {
             commands::transcription::get_model_load_status,
             commands::transcription::unload_model_manually,
             commands::history::get_history_entries,
+            commands::history::search_history_entries,
+            commands::history::get_history_stats,
             commands::history::toggle_history_entry_saved,
             commands::history::get_audio_file_path,
             commands::history::delete_history_entry,
@@ -945,15 +952,38 @@ pub fn run(cli_args: CliArgs) {
             // for portable mode (redirects WebView2 cache to portable Data dir)
             let mut win_builder =
                 tauri::WebviewWindowBuilder::new(app, "main", tauri::WebviewUrl::App("/".into()))
-                    .title("Handy")
-                    .inner_size(680.0, 570.0)
-                    .min_inner_size(680.0, 570.0)
+                    .title("SpeakEase")
+                    .inner_size(780.0, 600.0)
+                    .min_inner_size(720.0, 560.0)
                     .resizable(true)
                     .maximizable(true)
                     .visible(false);
 
             if let Some(data_dir) = portable::data_dir() {
                 win_builder = win_builder.data_directory(data_dir.join("webview"));
+            }
+
+            // SpeakEase on macOS: ReadEase's window - the title bar is an
+            // overlay, the window is see-through with the Mac's sidebar
+            // material behind it, and the page paints everything but the
+            // side column, which is where the material shows. The lights sit
+            // in the column's top-left corner, on the 60px toolbar line
+            // (ReadEase's own position, x 20 / y 29).
+            #[cfg(target_os = "macos")]
+            {
+                use tauri::utils::config::WindowEffectsConfig;
+                use tauri::window::{Effect, EffectState};
+                win_builder = win_builder
+                    .title_bar_style(tauri::TitleBarStyle::Overlay)
+                    .hidden_title(true)
+                    .transparent(true)
+                    .traffic_light_position(tauri::LogicalPosition::new(20.0, 29.0))
+                    .effects(WindowEffectsConfig {
+                        effects: vec![Effect::Sidebar],
+                        state: Some(EffectState::FollowsWindowActiveState),
+                        radius: None,
+                        color: None,
+                    });
             }
 
             // Only used on Windows, to disable WebView2 browser accelerators.

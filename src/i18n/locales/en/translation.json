@@ -13,10 +13,14 @@
     "general": "General",
     "models": "Models",
     "advanced": "Advanced",
-    "postProcessing": "Post Process",
+    "postProcessing": "AI & Translate",
     "history": "History",
     "debug": "Debug",
-    "about": "About"
+    "about": "About",
+    "expand": "Show sidebar",
+    "collapse": "Hide sidebar",
+    "label": "Sections",
+    "speak": "Speak"
   },
   "onboarding": {
     "subtitle": "To get started, choose a transcription model",
@@ -101,7 +105,7 @@
     },
     "permissions": {
       "title": "Permissions Required",
-      "description": "Handy needs a couple of permissions to work properly.",
+      "description": "SpeakEase needs a couple of permissions to work properly.",
       "microphone": {
         "title": "Microphone Access",
         "description": "Required to hear your voice for transcription."
@@ -161,7 +165,7 @@
     "general": {
       "title": "General",
       "shortcut": {
-        "title": "Handy Shortcuts",
+        "title": "SpeakEase Shortcuts",
         "description": "Configure keyboard shortcuts to trigger speech-to-text recording",
         "loading": "Loading shortcuts...",
         "none": "No shortcuts configured",
@@ -179,6 +183,10 @@
           "transcribe_with_post_process": {
             "name": "Post-Processing Hotkey",
             "description": "Optional: A dedicated hotkey that always applies AI post-processing to your transcription."
+          },
+          "transcribe_translate": {
+            "name": "Translate Hotkey",
+            "description": "Speak in any language; the text is pasted in English (uses the \"Translate to English\" prompt)."
           }
         },
         "errors": {
@@ -225,7 +233,7 @@
       },
       "rescan": {
         "label": "Rescan",
-        "tooltip": "Rescan for models added to the models folder or Hugging Face cache outside Handy"
+        "tooltip": "Rescan for models added to the models folder or Hugging Face cache outside SpeakEase"
       },
       "noModelsMatch": "No models match this filter."
     },
@@ -293,11 +301,11 @@
       },
       "autostart": {
         "label": "Launch on Startup",
-        "description": "Automatically start Handy when you log in to your computer."
+        "description": "Automatically start SpeakEase when you log in to your computer."
       },
       "showTrayIcon": {
         "label": "Show Tray Icon",
-        "description": "Display the Handy icon in the system tray."
+        "description": "Display the SpeakEase icon in the system tray."
       },
       "overlay": {
         "style": {
@@ -414,10 +422,10 @@
         "title": "Hotkey"
       },
       "api": {
-        "title": "API (OpenAI Compatible)",
+        "title": "AI engine",
         "provider": {
           "title": "Provider",
-          "description": "Select an OpenAI-compatible provider."
+          "description": "Apple Intelligence runs on this Mac: free, and nothing you say leaves it. Other services need an API key and charge per request."
         },
         "appleIntelligence": {
           "unavailable": "Apple Intelligence is not available on this device. Requires an Apple Silicon Mac running macOS Tahoe (26.0) or later with Apple Intelligence enabled in System Settings."
@@ -445,7 +453,7 @@
         "title": "Prompt",
         "selectedPrompt": {
           "title": "Selected Prompt",
-          "description": "Select a template for refining transcriptions or create a new one. Use ${output} inside the prompt text to reference the captured transcript."
+          "description": "The prompt the \"Dictate + AI\" shortcut uses. The translate shortcut always uses \"Dịch sang tiếng Anh\"."
         },
         "noPrompts": "No prompts available",
         "selectPrompt": "Select a prompt",
@@ -477,7 +485,16 @@
       "retranscribe": "Re-transcribe",
       "retranscribeError": "Failed to re-transcribe. Please try again.",
       "transcribing": "Transcribing...",
-      "transcriptionFailed": "Transcription failed. You can re-transcribe using the retry icon."
+      "transcriptionFailed": "Transcription failed. You can re-transcribe using the retry icon.",
+      "noResults": "No matches",
+      "searchPlaceholder": "Search what you said",
+      "original": "Original",
+      "stats": "{{entries}} dictations · {{words}} words · about {{minutes}} min of typing saved",
+      "today": "Today",
+      "yesterday": "Yesterday",
+      "listen": "Play back",
+      "aiBadge": "AI",
+      "translatedBadge": "Translated"
     },
     "debug": {
       "title": "Debug",
@@ -502,7 +519,7 @@
       },
       "updateChecks": {
         "label": "Check for Updates",
-        "description": "Automatically check for new versions of Handy",
+        "description": "Automatically check for new versions of SpeakEase",
         "lockedDescription": "Disabled by system configuration (HANDY_DISABLE_UPDATER)"
       },
       "whatsNewPreview": {
@@ -551,8 +568,8 @@
         "description": "Microphone to use when laptop lid is closed"
       },
       "postProcessingToggle": {
-        "label": "Post Processing",
-        "description": "Enable AI-powered text refinement after transcription"
+        "label": "AI Cleanup",
+        "description": "Turn on the AI cleanup and translation step after transcription"
       },
       "muteWhileRecording": {
         "label": "Mute While Recording",
@@ -594,7 +611,7 @@
       },
       "keyboardDiagnostic": {
         "title": "Keyboard Diagnostic",
-        "description": "Checks whether keyboard events reach Handy. Only event counts are recorded — never which keys you press.",
+        "description": "Checks whether keyboard events reach SpeakEase. Only event counts are recorded — never which keys you press.",
         "run": "Run 10s diagnostic",
         "running": "Listening… press your shortcut a few times (e.g. Option+Space)",
         "secureInputLabel": "Secure Input",
@@ -608,7 +625,7 @@
         "mouse": "Mouse",
         "verdictBlocked": "Secure Input is blocking key events — keyed shortcuts cannot work until it is resolved.",
         "verdictSuspicious": "Modifier events arrived but no key events — something is suppressing keys even though Secure Input reports disabled. Please report this on GitHub.",
-        "verdictOk": "Key events are reaching Handy normally.",
+        "verdictOk": "Key events are reaching SpeakEase normally.",
         "verdictNoEvents": "No events captured — did you press any keys during the test?",
         "failed": "Diagnostic failed: {{error}}"
       }
@@ -617,24 +634,24 @@
       "title": "About",
       "version": {
         "title": "Version",
-        "description": "Current version of Handy"
+        "description": "Current version of SpeakEase"
       },
       "whatsNewUpdates": {
         "label": "Show What's New",
-        "description": "Show release notes after Handy updates"
+        "description": "Show release notes after SpeakEase updates"
       },
       "appDataDirectory": {
         "title": "App Data Directory",
-        "description": "Location where Handy stores its data"
+        "description": "Location where SpeakEase stores its data"
       },
       "sourceCode": {
         "title": "Source Code",
-        "description": "View source code and contribute",
-        "button": "View on GitHub"
+        "description": "SpeakEase is built on Handy, the open-source app by CJ Pais (MIT)",
+        "button": "Handy on GitHub"
       },
       "supportDevelopment": {
         "title": "Support Development",
-        "description": "Help us continue building Handy",
+        "description": "Support the Handy project SpeakEase is built on",
         "button": "Donate"
       },
       "acknowledgments": {
@@ -642,7 +659,7 @@
         "ggml": {
           "title": "ggml",
           "description": "High-performance tensor library for on-device machine learning inference",
-          "details": "Handy's local speech-to-text is built on transcribe.cpp and ggml. Thanks to the amazing work by Georgi Gerganov and contributors."
+          "details": "SpeakEase's local speech-to-text is built on transcribe.cpp and ggml. Thanks to the amazing work by Georgi Gerganov and contributors."
         }
       }
     }
@@ -663,7 +680,7 @@
     "portableUpdateBrowseButton": "Open GitHub Releases"
   },
   "whatsNew": {
-    "title": "New in Handy v{{version}}"
+    "title": "New in SpeakEase v{{version}}"
   },
   "common": {
     "loading": "Loading...",
@@ -675,7 +692,7 @@
     "noOptionsFound": "No options found"
   },
   "accessibility": {
-    "permissionsDescription": "Handy needs accessibility permissions to type transcribed text.",
+    "permissionsDescription": "SpeakEase needs accessibility permissions to type transcribed text.",
     "openSettings": "Open System Settings"
   },
   "errors": {
@@ -698,11 +715,11 @@
   },
   "appLanguage": {
     "title": "Application Language",
-    "description": "Change the language of the Handy interface"
+    "description": "Change the language of the SpeakEase interface"
   },
   "theme": {
     "title": "Application Theme",
-    "description": "Choose whether Handy follows your system theme or stays light or dark",
+    "description": "Choose whether SpeakEase follows your system theme or stays light or dark",
     "options": {
       "system": "System",
       "light": "Light",
@@ -724,5 +741,59 @@
     "learnMore": "How to fix",
     "recorderBlocked": "Can't record shortcuts right now — macOS Secure Input is blocking key events. Resolve the Secure Input warning first.",
     "dismiss": "Dismiss"
+  },
+  "quickStart": {
+    "title": "Start talking",
+    "subtitle": "Hold a shortcut, speak, let go: the text lands where your cursor is.",
+    "rows": {
+      "transcribe": "Dictate",
+      "transcribe_with_post_process": "Dictate, then let AI tidy it",
+      "transcribe_translate": "Speak, get English"
+    }
+  },
+  "vietnameseModels": {
+    "score": "Vietnamese: {{wer}}% word errors",
+    "best": "Best for Vietnamese",
+    "cohere": "Most accurate for Vietnamese, fast, 14 languages.",
+    "qwen3_17b": "Close to Cohere, a little slower, 30 languages.",
+    "funasr": "Balanced speed and accuracy, lighter than Cohere.",
+    "moonshine_vi": "Tiny (86 MB), Vietnamese only; fails on clips over 25 seconds.",
+    "whisper_turbo": "Multilingual Whisper, steady, slower than the ones above.",
+    "qwen3_06b": "The small Qwen3, 30 languages.",
+    "nemotron": "Fastest, shows text while you speak, but makes more mistakes."
+  },
+  "speak": {
+    "hold": "Hold {{keys}} to talk",
+    "pipeline": {
+      "translate": "translate to {{language}}"
+    },
+    "mic": {
+      "title": "Microphone",
+      "default": "Default microphone",
+      "defaultHint": "Follows the microphone macOS uses",
+      "chip": "Default"
+    },
+    "model": {
+      "title": "Model",
+      "none": "No model",
+      "hint": "{{count}} languages · downloaded"
+    },
+    "language": {
+      "title": "Listen for",
+      "auto": "Detect the language",
+      "autoShort": "Auto",
+      "viHint": "More accurate when you only speak Vietnamese"
+    },
+    "ai": {
+      "title": "AI cleanup",
+      "off": "No cleanup",
+      "offHint": "Paste exactly what you said"
+    },
+    "translate": {
+      "title": "Translate to",
+      "off": "No translation",
+      "offHint": "Keep the language you speak",
+      "search": "Search languages…"
+    }
   }
 }

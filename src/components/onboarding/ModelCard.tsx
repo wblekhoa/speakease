@@ -23,6 +23,7 @@ import {
 import Badge from "../ui/Badge";
 import { Button } from "../ui/Button";
 import { useSettingsStore } from "@/stores/settingsStore";
+import { vietnameseResult } from "@/lib/utils/vietnameseModels";
 
 // Get display text for model's language support
 const getLanguageDisplayText = (
@@ -91,7 +92,7 @@ const ModelCard: React.FC<ModelCardProps> = ({
   downloadSpeed,
   showRecommended = true,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const debugMode = useSettingsStore(
     (state) => state.settings?.debug_mode ?? false,
   );
@@ -103,6 +104,7 @@ const ModelCard: React.FC<ModelCardProps> = ({
   // Get translated model name and description
   const displayName = getTranslatedModelName(model, t);
   const displayDescription = getTranslatedModelDescription(model, t);
+  const vietnamese = vietnameseResult(model);
   const showModelSize =
     status === "downloadable" || status === "available" || status === "active";
   const formattedModelSize = formatModelSize(Number(model.size_mb));
@@ -112,22 +114,22 @@ const ModelCard: React.FC<ModelCardProps> = ({
   );
 
   const baseClasses =
-    "flex flex-col rounded-xl px-4 py-3 gap-2 text-left transition-all duration-200";
+    "flex flex-col rounded-2xl px-4 py-3 gap-2 text-left transition-all duration-200 bg-surface";
 
   const getVariantClasses = () => {
     if (status === "active") {
-      return "border-2 border-logo-primary/50 bg-logo-primary/10";
+      return "border-2 border-logo-primary";
     }
     if (isFeatured) {
-      return "border-2 border-logo-primary/25 bg-logo-primary/5";
+      return "border-2 border-logo-primary/40";
     }
-    return "border-2 border-mid-gray/20";
+    return "border-2 border-hairline";
   };
 
   const getInteractiveClasses = () => {
     if (!isClickable) return "";
     if (disabled) return "opacity-50 cursor-not-allowed";
-    return "cursor-pointer hover:border-logo-primary/50 hover:bg-logo-primary/5 hover:shadow-lg hover:scale-[1.01] active:scale-[0.99] group";
+    return "cursor-pointer hover:border-logo-primary/60 hover:shadow-lg active:scale-[0.99] group";
   };
 
   const handleClick = () => {
@@ -173,6 +175,9 @@ const ModelCard: React.FC<ModelCardProps> = ({
             {showRecommended && model.is_recommended && (
               <Badge variant="primary">{t("onboarding.recommended")}</Badge>
             )}
+            {vietnamese?.best && (
+              <Badge variant="primary">{t("vietnameseModels.best")}</Badge>
+            )}
             {status === "active" && (
               <Badge variant="primary">
                 <Check className="w-3 h-3 mr-1" />
@@ -195,6 +200,13 @@ const ModelCard: React.FC<ModelCardProps> = ({
           <p className="text-text/60 text-sm leading-relaxed">
             {displayDescription}
           </p>
+          {vietnamese && (
+            <p className="text-xs text-logo-primary tabular-nums">
+              {t("vietnameseModels.score", {
+                wer: vietnamese.wer.toLocaleString(i18n.language),
+              })}
+            </p>
+          )}
         </div>
         {(model.accuracy_score > 0 || model.speed_score > 0) && (
           <div className="hidden sm:flex items-center ms-4">

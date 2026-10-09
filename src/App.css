@@ -1,4 +1,10 @@
 @import "tailwindcss";
+/* The same two faces as ReadEase: Plus Jakarta Sans for titles, Be Vietnam
+   Pro (drawn for Vietnamese diacritics) for everything else. */
+@import "@fontsource-variable/plus-jakarta-sans";
+@import "@fontsource/be-vietnam-pro/400.css";
+@import "@fontsource/be-vietnam-pro/500.css";
+@import "@fontsource/be-vietnam-pro/600.css";
 @import "./styles/theme.css";
 
 /* Register the shared color tokens (src/styles/theme.css) as Tailwind
@@ -13,6 +19,14 @@
   --color-mid-gray: var(--color-mid-gray);
   --color-warning: var(--color-warning);
   --color-error: var(--color-error);
+  --color-surface: var(--color-surface);
+  --color-row: var(--color-row);
+  --color-hairline: var(--color-hairline);
+  --color-brand-deep: var(--color-brand-deep);
+  --color-glass-hover: var(--color-glass-hover);
+  --color-glass-chosen: var(--color-glass-chosen);
+  --font-display: "Plus Jakarta Sans Variable", system-ui, sans-serif;
+  --font-sans: "Be Vietnam Pro", system-ui, sans-serif;
 }
 
 :root {
@@ -39,6 +53,8 @@
      viewer reads as a distinct console. In light mode this is a faint gray code
      block (matching other surfaces); the dark theme overrides it below. */
   --color-log-surface: color-mix(in srgb, var(--color-background), black 6%);
+
+  font-family: var(--font-sans);
 
   /* Apply colors */
   color: var(--color-text);
@@ -103,8 +119,55 @@
   fill: var(--color-logo-primary);
 }
 
+.logo-text {
+  fill: var(--color-text);
+}
+
 .logo-stroke {
   fill: var(--color-logo-stroke);
   stroke: var(--color-logo-stroke);
   stroke-width: 1;
+}
+
+/* SpeakEase window (ReadEase's): in the Mac app the window is transparent
+   with the sidebar material behind it, so the page must not paint a ground
+   of its own - `.app-ground` paints it where it belongs. In a browser
+   preview there is no material and the html keeps its colour. */
+html.glass,
+html.glass body {
+  background: transparent;
+}
+.app-ground {
+  background-color: var(--color-background);
+}
+/* The first-run screens have no side column, and the gutter onboarding
+   reserves on both edges lies outside every element - so there the root
+   paints the ground itself. */
+html.glass[data-onboarding-active],
+html.glass[data-onboarding-active] body {
+  background-color: var(--color-background);
+}
+/* WebKit leaves that reserved gutter unpainted on a see-through window, as
+   two grey strips; the Mac's scrollbars overlay the page, so it has nothing
+   to reserve for anyway. */
+html.glass[data-onboarding-active] {
+  scrollbar-gutter: auto;
+}
+
+/* The side column, flush with the window's left edge. In the Mac app the
+   page paints no ground under it (`.app-ground` paints the rest), so the
+   sidebar material shows through its glass tint; a hairline separates it
+   from the content. The backdrop blur only matters in a browser preview,
+   where there is no material. */
+.side-panel {
+  background-color: var(--color-glass);
+  border-inline-end: 1px solid var(--color-glass-edge);
+  -webkit-backdrop-filter: blur(24px) saturate(1.4);
+  backdrop-filter: blur(24px) saturate(1.4);
+  transition: width 220ms cubic-bezier(0.2, 0, 0, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .side-panel {
+    transition: none;
+  }
 }

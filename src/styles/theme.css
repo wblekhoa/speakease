@@ -1,31 +1,58 @@
-/* Handy Colors */
+/* SpeakEase colors: the same DOL DS ramps ReadEase uses, so the two apps
+   read as one family (values copied from readease
+   app/src/styles/ds-tokens.css, 09/10/2026). Neutral n00 is the desk, n10
+   the raised surface, n100 the secondary ink, n180 the ink; blue b100 is
+   the brand, b80 its pressed/hover step. */
 
 :root {
   /* Palette source of truth. Each themed color is defined once as a
      light/dark pair; the active tokens below and the `data-theme` overrides
-     in App.css reference these, so a hex value lives in exactly one place. */
-  --light-color-text: #0f0f0f;
-  --light-color-background: #fbfbfb;
-  --light-color-logo-primary: #faa2ca;
-  --light-color-logo-stroke: #382731;
+     reference these, so a hex value lives in exactly one place. */
+  --light-color-text: #2b3138; /* n180 */
+  --light-color-background: #ffffff; /* n00 */
+  --light-color-logo-primary: #2b52d4; /* b100 */
+  --light-color-logo-stroke: #2b3138;
+  --light-color-mid-gray: #6c7885; /* n100 */
+  --light-color-background-ui: #2b52d4; /* b100 */
+  --light-color-brand-deep: #2446b4; /* b120 */
+  /* Surfaces ReadEase layers its panels with: a raised card, the chosen row
+     of a list, and the hairline between them. In light the card is the
+     desk's own white and the hairline does the separating; in dark the fill
+     steps do, and the hairline nearly disappears. */
+  --light-color-surface: #ffffff; /* n00 */
+  --light-color-row: #f0f2f5; /* n10 */
+  --light-color-hairline: #e1e5ea; /* n20 */
+  /* The floating side panel sits on the Mac's sidebar material, so its
+     fills are alphas of the ink (ReadEase's veil/tint, DS na05/na20), not
+     opaque greys that would hide the blur. */
+  --light-color-glass: rgba(255, 255, 255, 0.28);
+  --light-color-glass-edge: rgba(43, 49, 56, 0.1);
+  --light-color-glass-hover: rgba(139, 155, 174, 0.14);
+  --light-color-glass-chosen: rgba(139, 155, 174, 0.26); /* na20 */
 
-  --dark-color-text: #fbfbfb;
-  --dark-color-background: #2c2b29;
-  --dark-color-logo-primary: #f28cbb;
-  --dark-color-logo-stroke: #fad1ed;
+  --dark-color-text: #f8f8f8; /* n180 */
+  --dark-color-background: #1c1d1e; /* n00 */
+  --dark-color-logo-primary: #486af2; /* b100 */
+  --dark-color-logo-stroke: #f8f8f8;
+  --dark-color-mid-gray: #8d8f91; /* n100 */
+  --dark-color-background-ui: #486af2; /* b100 */
+  --dark-color-brand-deep: #4563cc; /* b80 */
+  --dark-color-surface: #262727; /* n10 */
+  --dark-color-row: #363637; /* n40 */
+  --dark-color-hairline: #2d2e2e; /* n20 */
+  --dark-color-glass: rgba(38, 39, 39, 0.38);
+  --dark-color-glass-edge: rgba(255, 255, 255, 0.08);
+  --dark-color-glass-hover: rgba(195, 196, 197, 0.1);
+  --dark-color-glass-chosen: rgba(195, 196, 197, 0.2); /* na20 */
 
-  /* Semantic status colors. First used by SecureInputWarning; intended to
-     replace the ad-hoc yellow-500/red-500 usages (e.g. ui/Alert.tsx) over
-     time so status styling is themeable from one place. */
+  /* Semantic status colors. */
   --light-color-warning: #d97706;
-  --light-color-error: #dc2626;
+  --light-color-error: #e44b18; /* r100 */
   --dark-color-warning: #fbbf24;
-  --dark-color-error: #f87171;
+  --dark-color-error: #c45330; /* r100 */
 
   /* Tokens that do not change between light and dark */
-  --color-background-ui: #da5893;
   --color-text-stroke: #f6f6f6;
-  --color-mid-gray: #808080;
 
   /* Active palette — defaults to light, follows the OS via the media query
      below, or is forced by `data-theme` (see the overrides below). */
@@ -33,6 +60,16 @@
   --color-background: var(--light-color-background);
   --color-logo-primary: var(--light-color-logo-primary);
   --color-logo-stroke: var(--light-color-logo-stroke);
+  --color-mid-gray: var(--light-color-mid-gray);
+  --color-background-ui: var(--light-color-background-ui);
+  --color-brand-deep: var(--light-color-brand-deep);
+  --color-surface: var(--light-color-surface);
+  --color-row: var(--light-color-row);
+  --color-hairline: var(--light-color-hairline);
+  --color-glass: var(--light-color-glass);
+  --color-glass-edge: var(--light-color-glass-edge);
+  --color-glass-hover: var(--light-color-glass-hover);
+  --color-glass-chosen: var(--light-color-glass-chosen);
   --color-warning: var(--light-color-warning);
   --color-error: var(--light-color-error);
 }
@@ -43,6 +80,16 @@
     --color-background: var(--dark-color-background);
     --color-logo-primary: var(--dark-color-logo-primary);
     --color-logo-stroke: var(--dark-color-logo-stroke);
+    --color-mid-gray: var(--dark-color-mid-gray);
+    --color-background-ui: var(--dark-color-background-ui);
+    --color-brand-deep: var(--dark-color-brand-deep);
+    --color-surface: var(--dark-color-surface);
+    --color-row: var(--dark-color-row);
+    --color-hairline: var(--dark-color-hairline);
+    --color-glass: var(--dark-color-glass);
+    --color-glass-edge: var(--dark-color-glass-edge);
+    --color-glass-hover: var(--dark-color-glass-hover);
+    --color-glass-chosen: var(--dark-color-glass-chosen);
     --color-warning: var(--dark-color-warning);
     --color-error: var(--dark-color-error);
   }
@@ -52,7 +99,7 @@
  * Explicit theme override, driven by the `theme` setting via
  * `document.documentElement.dataset.theme`. When set, the higher-specificity
  * attribute selectors win over the `prefers-color-scheme` media query above,
- * so a user can keep Handy light or dark regardless of the OS setting.
+ * so a user can keep SpeakEase light or dark regardless of the OS setting.
  * `system` (or no attribute) leaves the OS in charge.
  *
  * Lives here (not in App.css) so every window that imports the shared palette —
@@ -63,6 +110,16 @@
   --color-background: var(--light-color-background);
   --color-logo-primary: var(--light-color-logo-primary);
   --color-logo-stroke: var(--light-color-logo-stroke);
+  --color-mid-gray: var(--light-color-mid-gray);
+  --color-background-ui: var(--light-color-background-ui);
+  --color-brand-deep: var(--light-color-brand-deep);
+  --color-surface: var(--light-color-surface);
+  --color-row: var(--light-color-row);
+  --color-hairline: var(--light-color-hairline);
+  --color-glass: var(--light-color-glass);
+  --color-glass-edge: var(--light-color-glass-edge);
+  --color-glass-hover: var(--light-color-glass-hover);
+  --color-glass-chosen: var(--light-color-glass-chosen);
   --color-warning: var(--light-color-warning);
   --color-error: var(--light-color-error);
 }
@@ -72,6 +129,16 @@
   --color-background: var(--dark-color-background);
   --color-logo-primary: var(--dark-color-logo-primary);
   --color-logo-stroke: var(--dark-color-logo-stroke);
+  --color-mid-gray: var(--dark-color-mid-gray);
+  --color-background-ui: var(--dark-color-background-ui);
+  --color-brand-deep: var(--dark-color-brand-deep);
+  --color-surface: var(--dark-color-surface);
+  --color-row: var(--dark-color-row);
+  --color-hairline: var(--dark-color-hairline);
+  --color-glass: var(--dark-color-glass);
+  --color-glass-edge: var(--dark-color-glass-edge);
+  --color-glass-hover: var(--dark-color-glass-hover);
+  --color-glass-chosen: var(--dark-color-glass-chosen);
   --color-warning: var(--dark-color-warning);
   --color-error: var(--dark-color-error);
 }

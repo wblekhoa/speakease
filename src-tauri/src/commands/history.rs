@@ -1,6 +1,6 @@
 use crate::actions::process_transcription_output;
 use crate::managers::{
-    history::{HistoryManager, PaginatedHistory},
+    history::{HistoryEntry, HistoryManager, HistoryStats, PaginatedHistory},
     transcription::TranscriptionManager,
 };
 use std::sync::Arc;
@@ -94,7 +94,8 @@ pub async fn retry_history_entry_transcription(
     }
 
     let processed =
-        process_transcription_output(&app, &transcription, entry.post_process_requested).await;
+        process_transcription_output(&app, &transcription, entry.post_process_requested, None)
+            .await;
     history_manager
         .update_transcription(
             id,
@@ -151,4 +152,27 @@ pub async fn update_recording_retention_period(
         .map_err(|e| e.to_string())?;
 
     Ok(())
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn search_history_entries(
+    history_manager: State<'_, Arc<HistoryManager>>,
+    query: String,
+) -> Result<Vec<HistoryEntry>, String> {
+    history_manager
+        .search_history_entries(&query)
+        .await
+        .map_err(|e| e.to_string())
+}
+
+#[tauri::command]
+#[specta::specta]
+pub async fn get_history_stats(
+    history_manager: State<'_, Arc<HistoryManager>>,
+) -> Result<HistoryStats, String> {
+    history_manager
+        .history_stats()
+        .await
+        .map_err(|e| e.to_string())
 }
