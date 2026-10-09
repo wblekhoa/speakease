@@ -13,7 +13,8 @@
     "languageAuto": "Tự nhận diện",
     "aiCleanup": "AI sửa câu",
     "translateTo": "Dịch sang",
-    "off": "Tắt"
+    "off": "Tắt",
+    "openApp": "Mở SpeakEase"
   },
   "sidebar": {
     "general": "Chung",

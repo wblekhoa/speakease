@@ -13,7 +13,8 @@
     "languageAuto": "Auto-detect",
     "aiCleanup": "AI cleanup",
     "translateTo": "Translate to",
-    "off": "Off"
+    "off": "Off",
+    "openApp": "Open SpeakEase"
   },
   "sidebar": {
     "general": "General",

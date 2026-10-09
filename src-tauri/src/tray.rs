@@ -564,6 +564,8 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
         true,
         None::<&str>,
     )?;
+    // SpeakEase: the window itself, on the Speak page.
+    let open_app_i = MenuItem::with_id(app, "open_app", &strings.open_app, true, None::<&str>)?;
     let quit_i = MenuItem::with_id(app, "quit", &strings.quit, true, quit_accelerator)?;
     let separator = || PredefinedMenuItem::separator(app);
 
@@ -576,6 +578,7 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
                 &separator()?,
                 &cancel_i,
                 &separator()?,
+                &open_app_i,
                 &copy_last_transcript_i,
                 &separator()?,
                 &settings_i,
@@ -611,11 +614,18 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
 
         let (listen_submenu, enhance_submenu, translate_submenu) =
             quick_submenus(app, &strings, &inputs.quick)?;
-        let (separator_a, separator_b, separator_c, separator_d) =
-            (separator()?, separator()?, separator()?, separator()?);
+        let (separator_a, separator_b, separator_c, separator_d, separator_e) = (
+            separator()?,
+            separator()?,
+            separator()?,
+            separator()?,
+            separator()?,
+        );
         let mut items: Vec<&dyn tauri::menu::IsMenuItem<tauri::Wry>> = vec![
             &version_i,
             &separator_a,
+            &open_app_i,
+            &separator_e,
             &copy_last_transcript_i,
             &open_history_i,
             &separator_b,
