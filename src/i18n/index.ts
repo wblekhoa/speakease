@@ -85,11 +85,15 @@ export const getSupportedLanguage = (
   return supported ? supported.code : null;
 };
 
-// Initialize i18n with English as default
-// Language will be synced from settings after init
+// Start in the Mac's own language when it is one we ship (Vietnamese or
+// English), English otherwise - the same rule as the backend's default
+// (settings.rs default_app_language) - so the first frame is already in
+// the right language. The saved setting is synced in after init.
+const initialLanguage = getSupportedLanguage(navigator.language) ?? "en";
+
 i18n.use(initReactI18next).init({
   resources,
-  lng: "en",
+  lng: initialLanguage,
   fallbackLng: "en",
   interpolation: {
     escapeValue: false, // React already escapes values

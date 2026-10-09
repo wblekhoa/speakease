@@ -676,11 +676,25 @@ fn default_post_process_enabled() -> bool {
     true
 }
 
-// SpeakEase is made for Vietnamese speakers: the interface starts in
-// Vietnamese whatever the system locale says (an "en-VN" Mac would otherwise
-// fall back to English). The language picker still changes it.
+// SpeakEase ships two interface languages. The first launch follows the
+// Mac's own language: Vietnamese when macOS is set to Vietnamese, English
+// for everything else (an English Mac in Vietnam, "en-VN", gets English).
+// The language picker changes it afterwards and that choice is kept.
 fn default_app_language() -> String {
-    "vi".to_string()
+    app_language_for_locale(tauri_plugin_os::locale().as_deref())
+}
+
+pub(crate) fn app_language_for_locale(locale: Option<&str>) -> String {
+    let language = locale
+        .unwrap_or("en")
+        .trim()
+        .to_lowercase()
+        .replace('_', "-");
+    if language == "vi" || language.starts_with("vi-") {
+        "vi".to_string()
+    } else {
+        "en".to_string()
+    }
 }
 
 fn default_show_tray_icon() -> bool {
@@ -1523,6 +1537,22 @@ mod tests {
         assert!(japanese.contains("into natural, fluent Japanese."));
         assert!(japanese.ends_with("Return only the Japanese translation."));
         assert_eq!(settings.prompt_text("no_such_prompt"), None);
+    }
+
+    #[test]
+    fn the_interface_follows_the_macs_language() {
+        for (locale, expected) in [
+            (Some("vi-VN"), "vi"),
+            (Some("vi"), "vi"),
+            (Some("VI_vn"), "vi"),
+            (Some("en-VN"), "en"),
+            (Some("en-US"), "en"),
+            (Some("ja-JP"), "en"),
+            (Some("video"), "en"),
+            (None, "en"),
+        ] {
+            assert_eq!(app_language_for_locale(locale), expected, "{locale:?}");
+        }
     }
 
     #[test]
