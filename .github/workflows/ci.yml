@@ -1,0 +1,61 @@
+# The checks every commit has to pass, where no one has to remember to run
+# them: the same commands as CONTRIBUTING.md. `main` accepts a commit only
+# once `app` and `rust` have passed on it (repository ruleset "checks").
+# No secrets are used or needed; nothing is built for release here.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: ["**"]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  app:
+    name: app
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+      - name: Install
+        run: bun install --frozen-lockfile
+      - name: Lint
+        run: bun run lint
+      - name: Types
+        run: bunx tsc --noEmit
+      - name: Translations (vi, en)
+        run: bun run check:translations
+      - name: Format
+        run: bunx prettier --check src
+      - name: Build the interface
+        run: bunx vite build
+
+  rust:
+    name: rust
+    runs-on: ubuntu-24.04
+    timeout-minutes: 60
+    steps:
+      - uses: actions/checkout@v5
+      - name: Install system dependencies
+        # Handy's own CI set: WebKitGTK for Tauri, ALSA for audio, and the
+        # Vulkan toolchain transcribe-cpp-sys builds ggml's backend with.
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y libwebkit2gtk-4.1-dev libappindicator3-dev librsvg2-dev libasound2-dev libssl-dev libgtk-layer-shell-dev \
+            libvulkan-dev glslc spirv-headers
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - uses: swatinem/rust-cache@v2
+        with:
+          workspaces: "./src-tauri -> target"
+      - name: Format
+        working-directory: src-tauri
+        run: cargo fmt -- --check
+      - name: Tests
+        working-directory: src-tauri
+        run: cargo test --lib

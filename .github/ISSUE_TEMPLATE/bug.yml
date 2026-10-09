@@ -1,0 +1,45 @@
+name: Báo lỗi · Bug report
+description: Có gì không chạy đúng? Kể ngắn gọn, kèm phiên bản và vài dòng nhật ký nếu có.
+labels: [bug]
+body:
+  - type: input
+    id: version
+    attributes:
+      label: Phiên bản SpeakEase · Version
+      description: Cài đặt › Ứng dụng › Về SpeakEase (ví dụ 0.1.0)
+      placeholder: 0.1.0
+    validations:
+      required: true
+  - type: input
+    id: macos
+    attributes:
+      label: macOS và máy · macOS and Mac
+      description: Menu  › Giới thiệu máy Mac này (ví dụ macOS 26.1, MacBook Air M2)
+    validations:
+      required: true
+  - type: input
+    id: model
+    attributes:
+      label: Mô hình nhận dạng · Speech model
+      description: Ở chân cửa sổ, ví dụ Cohere Transcribe
+  - type: textarea
+    id: what
+    attributes:
+      label: Chuyện gì xảy ra · What happened
+      description: Bạn mong gì, và thấy gì.
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Các bước để lặp lại · Steps
+      placeholder: |
+        1. Giữ ⌥ Space và nói…
+        2. Thả ra…
+        3. Thấy…
+  - type: textarea
+    id: log
+    attributes:
+      label: Vài dòng cuối nhật ký (tuỳ chọn) · Log tail
+      description: Cài đặt › Ứng dụng › Thư mục nhật ký → handy.log. Chỉ dán những dòng quanh lúc lỗi; đừng dán lời bạn đã nói hay khoá API.
+      render: text
