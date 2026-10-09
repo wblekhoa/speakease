@@ -31,6 +31,8 @@ jobs:
         run: bun run check:translations
       - name: Format
         run: bunx prettier --check src
+      - name: Unit tests
+        run: bun run test:unit
       - name: Build the interface
         run: bunx vite build
 

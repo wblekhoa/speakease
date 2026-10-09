@@ -190,6 +190,35 @@
       "rescan": {
         "label": "Quét lại",
         "tooltip": "Quét lại các mô hình bạn tự thêm vào thư mục mô hình hoặc bộ nhớ đệm Hugging Face"
+      },
+      "picks": {
+        "title": "Đề xuất cho {{language}}",
+        "basisMeasured": "Theo đo trên 60 câu FLEURS",
+        "basisCatalog": "Theo điểm của danh mục",
+        "chooseLanguage": "Chọn một ngôn ngữ để xem mô hình hợp với nó:",
+        "best": {
+          "label": "Chính xác nhất",
+          "why": "Ít lỗi nhất"
+        },
+        "balanced": {
+          "label": "Cân bằng",
+          "why": "Gần bằng mà nhanh hơn"
+        },
+        "live": {
+          "label": "Hiện chữ khi nói",
+          "why": "Chữ hiện ngay lúc bạn còn đang nói"
+        },
+        "light": {
+          "label": "Nhẹ nhất",
+          "why": "Tải nhanh, chạy được trên mọi máy"
+        },
+        "shortOnly": "Rất nhẹ, nhưng chỉ hợp câu ngắn dưới ~25 giây",
+        "wer": "Sai {{rate}}% số từ",
+        "use": "Dùng",
+        "download": "Tải về",
+        "downloading": "Đang tải {{percent}}%",
+        "preparing": "Đang chuẩn bị…",
+        "active": "Đang dùng"
       }
     },
     "general": {

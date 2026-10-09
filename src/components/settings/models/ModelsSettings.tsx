@@ -20,6 +20,9 @@ import {
 } from "@/lib/constants/languages.ts";
 import { useSettingsStore } from "@/stores/settingsStore";
 import { vietnameseResult } from "@/lib/utils/vietnameseModels";
+import { pickModels } from "@/lib/utils/modelPicks";
+import { ModelPicks } from "./ModelPicks";
+import { languageName } from "@/lib/utils/languageName";
 import type { ModelInfo } from "@/bindings";
 
 // check if model supports a language based on its supported_languages list
@@ -100,19 +103,29 @@ export const ModelsSettings: React.FC = () => {
   }, [languageDropdownOpen]);
 
   // filtered languages for dropdown (exclude "auto")
+  // Named in the interface language; the search also finds the English name.
   const filteredLanguages = useMemo(() => {
-    return MODEL_CAPABILITY_LANGUAGES.filter((lang) =>
-      lang.label.toLowerCase().includes(languageSearch.toLowerCase()),
+    const query = languageSearch.toLowerCase();
+    return MODEL_CAPABILITY_LANGUAGES.map((lang) => ({
+      value: lang.value,
+      label: languageName(lang.value, i18n.language) ?? lang.label,
+      english: lang.label,
+    })).filter((lang) =>
+      `${lang.label} ${lang.english}`.toLowerCase().includes(query),
     );
-  }, [languageSearch]);
+  }, [languageSearch, i18n.language]);
 
   // Get selected language label
   const selectedLanguageLabel = useMemo(() => {
     if (languageFilter === "all") {
       return t("settings.models.filters.allLanguages");
     }
-    return getLanguageLabel(languageFilter) || "";
-  }, [languageFilter, t]);
+    return (
+      languageName(languageFilter, i18n.language) ??
+      getLanguageLabel(languageFilter) ??
+      ""
+    );
+  }, [languageFilter, t, i18n.language]);
 
   const getModelStatus = (modelId: string): ModelCardStatus => {
     if (modelId in extractingModels) {
@@ -214,6 +227,19 @@ export const ModelsSettings: React.FC = () => {
     });
   }, [models, languageFilter, filterStreaming, filterTranslation, searchQuery]);
 
+  // Suggestions look at the whole catalog for the language, not at what the
+  // search box or the streaming/translation toggles narrowed it to.
+  const picks = useMemo(
+    () =>
+      pickModels(
+        models.filter(
+          (model: ModelInfo) => !isLegacyModel(model) || model.is_downloaded,
+        ),
+        languageFilter,
+      ),
+    [models, languageFilter],
+  );
+
   // Split filtered models into downloaded (including custom) and available sections
   const { downloadedModels, availableModels } = useMemo(() => {
     const downloaded: ModelInfo[] = [];
@@ -232,21 +258,21 @@ export const ModelsSettings: React.FC = () => {
       }
     }
 
+    // For Vietnamese, the models measured on it come first, best first
+    // (vietnameseModels.ts); otherwise the catalog's order stands.
+    const rate = (model: ModelInfo) =>
+      languageFilter === "vi"
+        ? (vietnameseResult(model)?.wer ?? Number.POSITIVE_INFINITY)
+        : 0;
+
     // Sort: active model first, then non-custom, then custom at the bottom
     downloaded.sort((a, b) => {
       if (a.id === currentModel) return -1;
       if (b.id === currentModel) return 1;
       if (a.is_custom !== b.is_custom) return a.is_custom ? 1 : -1;
-      return 0;
+      return rate(a) - rate(b);
     });
-
-    // For Vietnamese, the models measured on it come first, best first
-    // (vietnameseModels.ts); the rest keep the catalog's order.
-    if (languageFilter === "vi") {
-      const rate = (model: ModelInfo) =>
-        vietnameseResult(model)?.wer ?? Number.POSITIVE_INFINITY;
-      available.sort((a, b) => rate(a) - rate(b));
-    }
+    available.sort((a, b) => rate(a) - rate(b));
 
     return {
       downloadedModels: downloaded,
@@ -272,6 +298,17 @@ export const ModelsSettings: React.FC = () => {
 
   return (
     <div className="max-w-3xl w-full mx-auto space-y-4">
+      {/* SpeakEase: what to use for the language in the filter, first. */}
+      <ModelPicks
+        language={languageFilter}
+        picks={picks}
+        statusOf={getModelStatus}
+        progressOf={getDownloadProgress}
+        onUse={handleModelSelect}
+        onDownload={handleModelDownload}
+        onChooseLanguage={setLanguageFilter}
+      />
+
       {/* Search bar — filter the catalog by name or description */}
       <div className="relative">
         <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-text/40 pointer-events-none" />

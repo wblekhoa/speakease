@@ -245,7 +245,36 @@
         "label": "Rescan",
         "tooltip": "Rescan for models added to the models folder or Hugging Face cache outside SpeakEase"
       },
-      "noModelsMatch": "No models match this filter."
+      "noModelsMatch": "No models match this filter.",
+      "picks": {
+        "title": "Suggested for {{language}}",
+        "basisMeasured": "Measured on 60 FLEURS sentences",
+        "basisCatalog": "From the catalog's scores",
+        "chooseLanguage": "Choose a language to see which models suit it:",
+        "best": {
+          "label": "Most accurate",
+          "why": "The fewest mistakes"
+        },
+        "balanced": {
+          "label": "Balanced",
+          "why": "Nearly as accurate, and faster"
+        },
+        "live": {
+          "label": "Live text",
+          "why": "Words appear while you are still speaking"
+        },
+        "light": {
+          "label": "Lightest",
+          "why": "Small download, runs on any Mac"
+        },
+        "shortOnly": "Tiny, but only for sentences under ~25 seconds",
+        "wer": "{{rate}}% word errors",
+        "use": "Use",
+        "download": "Download",
+        "downloading": "Downloading {{percent}}%",
+        "preparing": "Getting ready…",
+        "active": "In use"
+      }
     },
     "sound": {
       "title": "Sound",

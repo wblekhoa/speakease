@@ -28,6 +28,7 @@ bun run lint
 bunx tsc --noEmit
 bun run check:translations
 bunx prettier --check src
+bun run test:unit
 cd src-tauri && cargo fmt -- --check && cargo test --lib
 ```
 
