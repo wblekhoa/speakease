@@ -19,8 +19,15 @@ import { BaseUrlField } from "../PostProcessingSettingsApi/BaseUrlField";
 import { ApiKeyField } from "../PostProcessingSettingsApi/ApiKeyField";
 import { ModelSelect } from "../PostProcessingSettingsApi/ModelSelect";
 import { usePostProcessProviderState } from "../PostProcessingSettingsApi/usePostProcessProviderState";
-import { ShortcutInput } from "../ShortcutInput";
 import { useSettings } from "../../../hooks/useSettings";
+import { ToggleSwitch } from "../../ui/ToggleSwitch";
+import { PostProcessingToggle } from "../PostProcessingToggle";
+import { openSection } from "@/lib/navigation";
+import {
+  TRANSLATE_PROMPT_ID,
+  TRANSLATE_TARGETS,
+  translateTargetName,
+} from "@/lib/translateTargets";
 
 const PostProcessingSettingsApiComponent: React.FC = () => {
   const { t } = useTranslation();
@@ -424,31 +431,131 @@ export const PostProcessingSettingsPrompts = React.memo(
 );
 PostProcessingSettingsPrompts.displayName = "PostProcessingSettingsPrompts";
 
+/** The main shortcut's AI: the tidy-up prompt and whether it translates,
+ * the Speak page's two AI chips; and the translate language, shared with
+ * the translate shortcut (settings.rs set_translate_target). */
+const MainShortcutAi: React.FC = () => {
+  const { t, i18n } = useTranslation();
+  const { getSetting, updateSetting, isUpdating } = useSettings();
+  const prompts = (getSetting("post_process_prompts") || []).filter(
+    (prompt) => prompt.id !== TRANSLATE_PROMPT_ID,
+  );
+  const enhanceId = getSetting("speakease_enhance_prompt_id") ?? null;
+  const target = getSetting("speakease_translate_target") ?? null;
+  const language =
+    getSetting("speakease_translate_language") ?? target ?? "English";
+  const OFF = "off";
+
+  return (
+    <>
+      <SettingContainer
+        title={t("settings.postProcessing.main.enhance.title")}
+        description={t("settings.postProcessing.main.enhance.description")}
+        descriptionMode="tooltip"
+        layout="horizontal"
+        grouped
+      >
+        <Dropdown
+          selectedValue={
+            prompts.some((prompt) => prompt.id === enhanceId) ? enhanceId : OFF
+          }
+          options={[
+            { value: OFF, label: t("speak.ai.off") },
+            ...prompts.map((prompt) => ({
+              value: prompt.id,
+              label: prompt.name,
+            })),
+          ]}
+          onSelect={(value) =>
+            updateSetting(
+              "speakease_enhance_prompt_id",
+              value && value !== OFF ? value : null,
+            )
+          }
+          disabled={isUpdating("speakease_enhance_prompt_id")}
+        />
+      </SettingContainer>
+      <SettingContainer
+        title={t("settings.postProcessing.main.language.title")}
+        description={t("settings.postProcessing.main.language.description")}
+        descriptionMode="tooltip"
+        layout="horizontal"
+        grouped
+      >
+        <Dropdown
+          selectedValue={language}
+          options={TRANSLATE_TARGETS.map((item) => ({
+            value: item.value,
+            label: `${item.flag} ${translateTargetName(item.value, i18n.language)}`,
+          }))}
+          onSelect={(value) =>
+            value && updateSetting("speakease_translate_language", value)
+          }
+          disabled={isUpdating("speakease_translate_language")}
+        />
+      </SettingContainer>
+      <ToggleSwitch
+        checked={Boolean(target)}
+        onChange={(on) =>
+          updateSetting("speakease_translate_target", on ? language : null)
+        }
+        isUpdating={isUpdating("speakease_translate_target")}
+        label={t("settings.postProcessing.main.translate.label", {
+          language: translateTargetName(language, i18n.language),
+        })}
+        description={t("settings.postProcessing.main.translate.description")}
+        descriptionMode="tooltip"
+        grouped
+      />
+    </>
+  );
+};
+
 export const PostProcessingSettings: React.FC = () => {
   const { t } = useTranslation();
+  const { getSetting } = useSettings();
+  const enabled = getSetting("post_process_enabled") || false;
 
   return (
     <div className="max-w-3xl w-full mx-auto space-y-6">
-      <SettingsGroup title={t("settings.postProcessing.hotkey.title")}>
-        <ShortcutInput
-          shortcutId="transcribe_with_post_process"
-          descriptionMode="tooltip"
-          grouped={true}
-        />
-        <ShortcutInput
-          shortcutId="transcribe_translate"
-          descriptionMode="tooltip"
-          grouped={true}
-        />
+      {/* The switch that stops every AI step: this page, the Speak page's
+          chips and the two AI shortcuts (actions.rs quick_steps). */}
+      <SettingsGroup>
+        <PostProcessingToggle descriptionMode="inline" grouped />
       </SettingsGroup>
 
-      <SettingsGroup title={t("settings.postProcessing.api.title")}>
-        <PostProcessingSettingsApi />
-      </SettingsGroup>
+      {enabled && (
+        <>
+          <SettingsGroup
+            title={t("settings.postProcessing.main.title")}
+            description={t("settings.postProcessing.main.groupDescription")}
+          >
+            <MainShortcutAi />
+          </SettingsGroup>
 
-      <SettingsGroup title={t("settings.postProcessing.prompts.title")}>
-        <PostProcessingSettingsPrompts />
-      </SettingsGroup>
+          <SettingsGroup title={t("settings.postProcessing.api.title")}>
+            <PostProcessingSettingsApi />
+          </SettingsGroup>
+
+          <SettingsGroup
+            title={t("settings.postProcessing.prompts.title")}
+            description={t("settings.postProcessing.prompts.groupDescription")}
+          >
+            <PostProcessingSettingsPrompts />
+          </SettingsGroup>
+
+          <p className="px-4 text-xs text-mid-gray">
+            {t("settings.postProcessing.shortcutsLive")}{" "}
+            <button
+              type="button"
+              onClick={() => openSection("recording")}
+              className="text-logo-primary hover:underline cursor-pointer"
+            >
+              {t("settings.postProcessing.shortcutsLink")}
+            </button>
+          </p>
+        </>
+      )}
     </div>
   );
 };

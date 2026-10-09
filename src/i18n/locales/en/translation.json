@@ -7,7 +7,13 @@
     "model": "Model",
     "quit": "Quit",
     "cancel": "Cancel",
-    "secureInputWarning": "⚠ Shortcuts blocked by Secure Input"
+    "secureInputWarning": "⚠ Shortcuts blocked by Secure Input",
+    "openHistory": "Open History",
+    "language": "Listen for",
+    "languageAuto": "Auto-detect",
+    "aiCleanup": "AI cleanup",
+    "translateTo": "Translate to",
+    "off": "Off"
   },
   "sidebar": {
     "general": "General",
@@ -20,7 +26,11 @@
     "expand": "Show sidebar",
     "collapse": "Hide sidebar",
     "label": "Sections",
-    "speak": "Speak"
+    "speak": "Speak",
+    "recording": "Recording",
+    "recognition": "Recognition",
+    "app": "App",
+    "settingsGroup": "Settings"
   },
   "onboarding": {
     "subtitle": "To get started, choose a transcription model",
@@ -173,20 +183,20 @@
         "pressKeys": "Press keys...",
         "bindings": {
           "transcribe": {
-            "name": "Transcribe Shortcut",
-            "description": "The keyboard shortcut to record and transcribe your voice."
+            "name": "Dictate",
+            "description": "Hold or tap to talk; the text lands where your cursor is."
           },
           "cancel": {
-            "name": "Cancel Shortcut",
-            "description": "The keyboard shortcut to cancel the current recording."
+            "name": "Cancel",
+            "description": "Stops the recording without pasting anything."
           },
           "transcribe_with_post_process": {
-            "name": "Post-Processing Hotkey",
-            "description": "Optional: A dedicated hotkey that always applies AI post-processing to your transcription."
+            "name": "Dictate with AI",
+            "description": "AI rewrites what you said with the AI shortcut's prompt."
           },
           "transcribe_translate": {
-            "name": "Translate Hotkey",
-            "description": "Speak in any language; the text is pasted in English (uses the \"Translate to English\" prompt)."
+            "name": "Translate",
+            "description": "Pastes a translation, in the language set in AI & Translate."
           }
         },
         "errors": {
@@ -366,8 +376,9 @@
         }
       },
       "translateToEnglish": {
-        "label": "Translate to English",
-        "description": "Automatically translate speech from other languages to English during transcription."
+        "label": "Translate to English inside the model",
+        "description": "Automatically translate speech from other languages to English during transcription.",
+        "aiTranslates": "Off while AI translates on the Speak page; the two would translate twice."
       },
       "modelUnload": {
         "title": "Unload Model",
@@ -453,7 +464,7 @@
         "title": "Prompt",
         "selectedPrompt": {
           "title": "Selected Prompt",
-          "description": "The prompt the \"Dictate + AI\" shortcut uses. The translate shortcut always uses \"Dịch sang tiếng Anh\"."
+          "description": "The prompt the AI shortcut uses. The translate shortcut uses the language chosen above."
         },
         "noPrompts": "No prompts available",
         "selectPrompt": "Select a prompt",
@@ -468,8 +479,27 @@
         "createPrompt": "Create Prompt",
         "cancel": "Cancel",
         "selectToEdit": "Select a prompt above to view and edit its details.",
-        "createFirst": "Click 'Create New Prompt' above to create your first post-processing prompt."
-      }
+        "createFirst": "Click 'Create New Prompt' above to create your first post-processing prompt.",
+        "groupDescription": "The prompt the AI shortcut uses. Edit it or add your own; they all appear under AI cleanup too."
+      },
+      "main": {
+        "title": "Main shortcut",
+        "groupDescription": "The same choices as the AI chips on the Speak page.",
+        "enhance": {
+          "title": "AI cleanup",
+          "description": "How AI tidies everything you dictate with the main shortcut."
+        },
+        "language": {
+          "title": "Translate into",
+          "description": "The language the translate shortcut uses, and the main shortcut while it translates."
+        },
+        "translate": {
+          "label": "Translate every dictation into {{language}}",
+          "description": "The main shortcut pastes the translation instead of what you said."
+        }
+      },
+      "shortcutsLive": "The translate and AI shortcuts are set with the others, in",
+      "shortcutsLink": "Recording."
     },
     "history": {
       "title": "History",
@@ -494,7 +524,11 @@
       "yesterday": "Yesterday",
       "listen": "Play back",
       "aiBadge": "AI",
-      "translatedBadge": "Translated"
+      "translatedBadge": "Translated",
+      "keeping": "Storage",
+      "statEntries": "dictations",
+      "statWords": "words",
+      "statMinutes": "minutes of typing saved"
     },
     "debug": {
       "title": "Debug",
@@ -568,8 +602,8 @@
         "description": "Microphone to use when laptop lid is closed"
       },
       "postProcessingToggle": {
-        "label": "AI Cleanup",
-        "description": "Turn on the AI cleanup and translation step after transcription"
+        "label": "Use AI",
+        "description": "Clean up and translate what you say with AI. Off: you get exactly what you said, and the AI shortcuts stop working."
       },
       "muteWhileRecording": {
         "label": "Mute While Recording",
@@ -661,6 +695,27 @@
           "description": "High-performance tensor library for on-device machine learning inference",
           "details": "SpeakEase's local speech-to-text is built on transcribe.cpp and ggml. Thanks to the amazing work by Georgi Gerganov and contributors."
         }
+      }
+    },
+    "recording": {
+      "shortcuts": "Shortcuts",
+      "microphone": "Microphone",
+      "feedback": "Overlay & sounds"
+    },
+    "recognition": {
+      "listening": "Listening",
+      "listeningWith": "Listening with {{model}}",
+      "models": "Models"
+    },
+    "app": {
+      "appearance": "Appearance",
+      "startup": "Startup",
+      "output": "Putting text in place",
+      "about": "About SpeakEase",
+      "credits": {
+        "title": "Built on Handy",
+        "description": "SpeakEase is built on Handy by CJ Pais (MIT licence) and runs speech models through ggml.",
+        "button": "Handy on GitHub"
       }
     }
   },
@@ -787,13 +842,28 @@
     "ai": {
       "title": "AI cleanup",
       "off": "No cleanup",
-      "offHint": "Paste exactly what you said"
+      "offHint": "Paste exactly what you said",
+      "disabled": "AI off",
+      "disabledHint": "AI is switched off, so nothing is cleaned up or translated. You get exactly what you said.",
+      "enable": "Turn on AI"
     },
     "translate": {
       "title": "Translate to",
       "off": "No translation",
       "offHint": "Keep the language you speak",
       "search": "Search languages…"
+    },
+    "moreSettings": "More settings…",
+    "orb": {
+      "start": "Click to start talking",
+      "stop": "Listening… click to stop",
+      "working": "Transcribing…",
+      "orClick": "or click the microphone"
+    },
+    "result": {
+      "title": "You just said",
+      "copy": "Copy",
+      "copied": "Copied"
     }
   }
 }

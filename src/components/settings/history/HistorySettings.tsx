@@ -5,6 +5,7 @@ import {
   CheckIcon,
   CopyIcon,
   FolderOpenIcon,
+  ReadingSettingsIcon,
   RotateLeftIcon,
   SearchIcon,
   SpeakerIcon,
@@ -25,8 +26,13 @@ import { useOsType } from "@/hooks/useOsType";
 import { useSettings } from "@/hooks/useSettings";
 import { AudioPlayer, AudioPlayerGroup } from "../../ui/AudioPlayer";
 import { Button } from "../../ui/Button";
+import { SettingsGroup } from "../../ui/SettingsGroup";
+import { HistoryLimit } from "../HistoryLimit";
+import { RecordingRetentionPeriodSelector } from "../RecordingRetentionPeriod";
 import { copyToClipboard } from "./clipboard";
 
+/** An entry's action: an icon, named by a label that shows at once on
+ * hover or keyboard focus (a native title takes a second and looks foreign). */
 const IconButton: React.FC<{
   onClick: () => void;
   title: string;
@@ -34,18 +40,27 @@ const IconButton: React.FC<{
   active?: boolean;
   children: React.ReactNode;
 }> = ({ onClick, title, disabled, active, children }) => (
-  <button
-    onClick={onClick}
-    disabled={disabled}
-    className={`p-1.5 rounded-md flex items-center justify-center transition-colors cursor-pointer disabled:cursor-not-allowed disabled:text-text/20 ${
-      active
-        ? "text-logo-primary hover:text-logo-primary/80"
-        : "text-text/50 hover:text-logo-primary"
-    }`}
-    title={title}
-  >
-    {children}
-  </button>
+  <span className="relative group/tip flex">
+    <button
+      type="button"
+      onClick={onClick}
+      disabled={disabled}
+      aria-label={title}
+      className={`p-1.5 rounded-lg flex items-center justify-center transition-colors cursor-pointer disabled:cursor-not-allowed disabled:text-text/20 focus-visible:outline-2 focus-visible:outline-logo-primary ${
+        active
+          ? "text-logo-primary hover:bg-logo-primary/10"
+          : "text-text/50 hover:text-text hover:bg-row"
+      }`}
+    >
+      {children}
+    </button>
+    <span
+      role="tooltip"
+      className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-text px-2 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-opacity delay-150 group-hover/tip:opacity-100 group-has-[:focus-visible]/tip:opacity-100"
+    >
+      {title}
+    </span>
+  </span>
 );
 
 const PAGE_SIZE = 30;
@@ -72,16 +87,16 @@ const OpenRecordingsButton: React.FC<OpenRecordingsButtonProps> = ({
     onClick={onClick}
     variant="secondary"
     size="sm"
-    className="flex items-center gap-2"
+    className="h-9 w-9 grid place-items-center !px-0"
     title={label}
+    aria-label={label}
   >
     <FolderOpenIcon width={16} height={16} />
-    <span>{label}</span>
   </Button>
 );
 
 export const HistorySettings: React.FC = () => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const osType = useOsType();
   const [entries, setEntries] = useState<HistoryEntry[]>([]);
   const [loading, setLoading] = useState(true);
@@ -90,6 +105,8 @@ export const HistorySettings: React.FC = () => {
   const entriesRef = useRef<HistoryEntry[]>([]);
   const loadingRef = useRef(false);
   const [query, setQuery] = useState("");
+  // How long history is kept: folded under the header, opened by its button.
+  const [keepingOpen, setKeepingOpen] = useState(false);
   const [results, setResults] = useState<HistoryEntry[] | null>(null);
   const [stats, setStats] = useState<HistoryStats | null>(null);
 
@@ -298,13 +315,13 @@ export const HistorySettings: React.FC = () => {
 
   if (loading) {
     content = (
-      <div className="px-4 py-3 text-center text-text/60">
+      <div className="rounded-2xl border border-hairline bg-surface px-4 py-8 text-center text-sm text-mid-gray">
         {t("settings.history.loading")}
       </div>
     );
   } else if (shown.length === 0) {
     content = (
-      <div className="px-4 py-3 text-center text-text/60">
+      <div className="rounded-2xl border border-hairline bg-surface px-4 py-8 text-center text-sm text-mid-gray">
         {results
           ? t("settings.history.noResults", { defaultValue: "No matches" })
           : t("settings.history.empty")}
@@ -314,7 +331,7 @@ export const HistorySettings: React.FC = () => {
     content = (
       <>
         <AudioPlayerGroup>
-          <div>
+          <div className="flex flex-col gap-2">
             {shown.map((entry, index) => (
               <React.Fragment key={entry.id}>
                 {(index === 0 ||
@@ -341,32 +358,12 @@ export const HistorySettings: React.FC = () => {
     );
   }
 
+  // The page's name is in the window toolbar (App.tsx), so the page opens on
+  // its tools: search, how long history is kept, the recordings folder.
   return (
-    <div className="max-w-3xl w-full mx-auto space-y-6">
-      <div className="space-y-2">
-        <div className="px-4 flex items-center justify-between">
-          <div>
-            <h2 className="text-xs font-medium text-mid-gray uppercase tracking-wide">
-              {t("settings.history.title")}
-            </h2>
-          </div>
-          <OpenRecordingsButton
-            onClick={openRecordingsFolder}
-            label={t("settings.history.openFolder")}
-          />
-        </div>
-        {stats && stats.entries > 0 && (
-          <p className="px-4 text-sm text-text/60 tabular-nums">
-            {t("settings.history.stats", {
-              defaultValue:
-                "{{entries}} dictations · {{words}} words · about {{minutes}} min of typing saved",
-              entries: stats.entries.toLocaleString(),
-              words: stats.words.toLocaleString(),
-              minutes: stats.minutes_saved.toLocaleString(),
-            })}
-          </p>
-        )}
-        <label className="mx-4 flex items-center gap-2 px-3 py-2 rounded-xl border border-hairline bg-surface focus-within:border-logo-primary">
+    <div className="max-w-3xl w-full mx-auto space-y-4">
+      <div className="flex items-center gap-2">
+        <label className="flex-1 min-w-0 flex items-center gap-2 h-9 px-3 rounded-xl border border-hairline bg-surface focus-within:border-logo-primary">
           <SearchIcon width={16} height={16} className="text-mid-gray" />
           <input
             type="search"
@@ -375,13 +372,53 @@ export const HistorySettings: React.FC = () => {
             placeholder={t("settings.history.searchPlaceholder", {
               defaultValue: "Search what you said",
             })}
-            className="flex-1 bg-transparent text-sm outline-none"
+            className="flex-1 min-w-0 bg-transparent text-sm outline-none"
           />
         </label>
-        <div className="bg-surface border border-hairline rounded-2xl overflow-visible">
-          {content}
-        </div>
+        <Button
+          onClick={() => setKeepingOpen((open) => !open)}
+          variant="secondary"
+          size="sm"
+          className={`h-9 flex items-center gap-2 ${keepingOpen ? "border-logo-primary text-logo-primary" : ""}`}
+          aria-expanded={keepingOpen}
+        >
+          <ReadingSettingsIcon width={16} height={16} />
+          <span>{t("settings.history.keeping")}</span>
+        </Button>
+        <OpenRecordingsButton
+          onClick={openRecordingsFolder}
+          label={t("settings.history.openFolder")}
+        />
       </div>
+
+      {keepingOpen && (
+        <SettingsGroup>
+          <HistoryLimit descriptionMode="tooltip" grouped />
+          <RecordingRetentionPeriodSelector descriptionMode="tooltip" grouped />
+        </SettingsGroup>
+      )}
+
+      {stats && stats.entries > 0 && !results && (
+        <dl className="grid grid-cols-3 gap-2">
+          {[
+            [stats.entries, t("settings.history.statEntries")],
+            [stats.words, t("settings.history.statWords")],
+            [stats.minutes_saved, t("settings.history.statMinutes")],
+          ].map(([value, label]) => (
+            <div
+              key={String(label)}
+              className="rounded-2xl border border-hairline bg-surface px-4 py-3"
+            >
+              <dd className="font-display text-xl font-semibold tabular-nums">
+                {Number(value).toLocaleString(i18n.language)}
+              </dd>
+              <dt className="text-xs text-mid-gray">{label}</dt>
+            </div>
+          ))}
+        </dl>
+      )}
+
+      {content}
     </div>
   );
 };
@@ -403,7 +440,7 @@ const DayHeader: React.FC<{ timestamp: number }> = ({ timestamp }) => {
             month: "long",
           });
   return (
-    <h3 className="px-4 pt-3 pb-1 text-xs font-medium text-mid-gray uppercase tracking-wide border-t border-hairline first:border-t-0">
+    <h3 className="px-1 pt-3 first:pt-0 text-xs font-semibold text-mid-gray uppercase tracking-wide">
       {label}
     </h3>
   );
@@ -485,11 +522,12 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   );
 
   return (
-    <div className="group px-4 py-2.5 flex flex-col gap-1.5">
+    // One card per dictation: when, what it became, and what was said.
+    <div className="group rounded-2xl border border-hairline bg-surface px-4 py-3 flex flex-col gap-2 transition-colors hover:border-mid-gray/40">
       <div className="flex items-center gap-2">
-        <span className="text-xs text-text/50 tabular-nums">{time}</span>
+        <span className="text-xs text-mid-gray tabular-nums">{time}</span>
         {promptName && (
-          <span className="text-[11px] leading-4 px-1.5 rounded bg-logo-primary/15 text-logo-primary">
+          <span className="text-[11px] leading-5 px-2 rounded-full bg-logo-primary/15 text-logo-primary">
             {promptName}
           </span>
         )}
@@ -559,7 +597,7 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
           retrying
             ? ""
             : hasTranscription
-              ? "text-text/90 select-text cursor-text whitespace-pre-wrap break-words"
+              ? "text-[15px] leading-relaxed text-text select-text cursor-text whitespace-pre-wrap break-words"
               : "text-text/40"
         }`}
         style={
@@ -583,12 +621,14 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
             : t("settings.history.transcriptionFailed")}
       </p>
       {aiText && !retrying && (
-        <p className="text-xs text-text/50 select-text whitespace-pre-wrap break-words">
-          <span className="font-medium">
-            {t("settings.history.original", { defaultValue: "Original" })}:
-          </span>{" "}
-          {entry.transcription_text}
-        </p>
+        <div className="rounded-xl bg-row/70 px-3 py-2">
+          <p className="text-[11px] font-semibold uppercase tracking-wide text-mid-gray">
+            {t("settings.history.original", { defaultValue: "Original" })}
+          </p>
+          <p className="mt-0.5 text-[13px] leading-snug text-mid-gray select-text whitespace-pre-wrap break-words">
+            {entry.transcription_text}
+          </p>
+        </div>
       )}
 
       {listening && (

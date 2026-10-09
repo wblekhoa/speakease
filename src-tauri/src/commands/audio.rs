@@ -333,6 +333,15 @@ pub fn is_recording(app: AppHandle) -> bool {
     audio_manager.is_recording()
 }
 
+/// SpeakEase: the Speak page's microphone button. Starts a dictation with the
+/// main shortcut's settings, or stops the running one and transcribes it -
+/// the same toggle the CLI and signals use (signal_handle.rs).
+#[tauri::command]
+#[specta::specta]
+pub fn toggle_dictation(app: AppHandle) {
+    crate::signal_handle::send_transcription_input(&app, "transcribe", "speak_page");
+}
+
 #[tauri::command]
 #[specta::specta]
 pub async fn get_microphone_channels(device_name: String) -> Result<u16, String> {

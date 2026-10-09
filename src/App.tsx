@@ -25,7 +25,13 @@ import {
   type OnboardingPreviewStep,
 } from "./components/settings";
 import { ErrorBoundary } from "./components/ErrorBoundary";
-import { Sidebar, SidebarSection, SECTIONS_CONFIG } from "./components/Sidebar";
+import {
+  isSidebarSection,
+  Sidebar,
+  SidebarSection,
+  SECTIONS_CONFIG,
+} from "./components/Sidebar";
+import { NAVIGATE_EVENT } from "./lib/navigation";
 import { WhatsNewGate } from "./components/whats-new";
 import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
@@ -46,7 +52,7 @@ const renderSettingsContent = (
   }
 
   const ActiveComponent =
-    SECTIONS_CONFIG[section]?.component || SECTIONS_CONFIG.general.component;
+    SECTIONS_CONFIG[section]?.component || SECTIONS_CONFIG.speak.component;
   return <ActiveComponent />;
 };
 
@@ -144,6 +150,23 @@ function App() {
       refreshOutputDevices();
     }
   }, [onboardingStep, refreshAudioDevices, refreshOutputDevices]);
+
+  // Open a section when a page asks (the Speak page's "More settings"
+  // links) or the tray does ("Open History").
+  useEffect(() => {
+    const open = (section: unknown) => {
+      if (isSidebarSection(section)) setCurrentSection(section);
+    };
+    const onPage = (event: Event) => open((event as CustomEvent).detail);
+    window.addEventListener(NAVIGATE_EVENT, onPage);
+    const unlisten = listen<string>(NAVIGATE_EVENT, (event) =>
+      open(event.payload),
+    );
+    return () => {
+      window.removeEventListener(NAVIGATE_EVENT, onPage);
+      unlisten.then((fn) => fn());
+    };
+  }, []);
 
   // Handle keyboard shortcuts for debug mode toggle
   useEffect(() => {

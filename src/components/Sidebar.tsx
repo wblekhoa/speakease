@@ -4,7 +4,6 @@ import { FlaskConical } from "lucide-react";
 import {
   ClockIcon,
   CpuIcon,
-  InfoIcon,
   KeyboardIcon,
   MagicStarIcon,
   MicrophoneIcon,
@@ -14,14 +13,13 @@ import {
 import HandyTextLogo from "./icons/HandyTextLogo";
 import { useSettings } from "../hooks/useSettings";
 import {
-  GeneralSettings,
   SpeakPage,
-  AdvancedSettings,
   HistorySettings,
-  DebugSettings,
-  AboutSettings,
+  RecordingSettings,
+  RecognitionSettings,
   PostProcessingSettings,
-  ModelsSettings,
+  AppSettings,
+  DebugSettings,
 } from "./settings";
 
 export type SidebarSection = keyof typeof SECTIONS_CONFIG;
@@ -39,19 +37,18 @@ interface SectionConfig {
   icon: React.ComponentType<IconProps>;
   component: React.ComponentType;
   enabled: (settings: any) => boolean;
+  /** Sections under the "Settings" caption; the rest are for using the app. */
+  settings?: boolean;
 }
 
+// SpeakEase's sections. Speak and History are where the app is used; the
+// settings follow a dictation from start to end: recording it, turning it
+// into words, AI on the words, and the app around it.
 export const SECTIONS_CONFIG = {
   speak: {
     labelKey: "sidebar.speak",
     icon: MicrophoneIcon,
     component: SpeakPage,
-    enabled: () => true,
-  },
-  general: {
-    labelKey: "sidebar.general",
-    icon: KeyboardIcon,
-    component: GeneralSettings,
     enabled: () => true,
   },
   history: {
@@ -60,37 +57,45 @@ export const SECTIONS_CONFIG = {
     component: HistorySettings,
     enabled: () => true,
   },
-  models: {
-    labelKey: "sidebar.models",
-    icon: CpuIcon,
-    component: ModelsSettings,
+  recording: {
+    labelKey: "sidebar.recording",
+    icon: KeyboardIcon,
+    component: RecordingSettings,
     enabled: () => true,
+    settings: true,
   },
-  advanced: {
-    labelKey: "sidebar.advanced",
-    icon: ReadingSettingsIcon,
-    component: AdvancedSettings,
+  recognition: {
+    labelKey: "sidebar.recognition",
+    icon: CpuIcon,
+    component: RecognitionSettings,
     enabled: () => true,
+    settings: true,
   },
   postprocessing: {
     labelKey: "sidebar.postProcessing",
     icon: MagicStarIcon,
     component: PostProcessingSettings,
-    enabled: (settings) => settings?.post_process_enabled ?? false,
+    enabled: () => true,
+    settings: true,
+  },
+  app: {
+    labelKey: "sidebar.app",
+    icon: ReadingSettingsIcon,
+    component: AppSettings,
+    enabled: () => true,
+    settings: true,
   },
   debug: {
     labelKey: "sidebar.debug",
     icon: FlaskConical,
     component: DebugSettings,
     enabled: (settings) => settings?.debug_mode ?? false,
-  },
-  about: {
-    labelKey: "sidebar.about",
-    icon: InfoIcon,
-    component: AboutSettings,
-    enabled: () => true,
+    settings: true,
   },
 } as const satisfies Record<string, SectionConfig>;
+
+export const isSidebarSection = (value: unknown): value is SidebarSection =>
+  typeof value === "string" && value in SECTIONS_CONFIG;
 
 interface SidebarProps {
   activeSection: SidebarSection;
@@ -161,34 +166,53 @@ export const Sidebar: React.FC<SidebarProps> = ({
         <HandyTextLogo width={124} className="mx-4 mt-1 mb-4" />
       )}
       <div className="flex flex-col w-full gap-0.5 px-2.5 overflow-y-auto">
-        {availableSections.map((section) => {
+        {availableSections.map((section, index) => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;
           const label = t(section.labelKey);
+          const isSettings = "settings" in section && section.settings;
+          const previous = availableSections[index - 1];
+          const startsSettings =
+            isSettings &&
+            !(previous && "settings" in previous && previous.settings);
 
           return (
-            <button
-              type="button"
-              key={section.id}
-              aria-current={isActive ? "page" : undefined}
-              aria-label={collapsed ? label : undefined}
-              title={label}
-              className={`flex gap-2.5 items-center py-2 w-full rounded-xl text-start cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary ${
-                collapsed ? "justify-center px-0" : "px-3"
-              } ${
-                isActive
-                  ? "bg-glass-chosen text-text"
-                  : "text-text/80 hover:bg-glass-hover"
-              }`}
-              onClick={() => onSectionChange(section.id)}
-            >
-              <Icon
-                width={20}
-                height={20}
-                className={`shrink-0 ${isActive ? "text-text" : "text-mid-gray"}`}
-              />
-              {!collapsed && <span className="text-sm truncate">{label}</span>}
-            </button>
+            <React.Fragment key={section.id}>
+              {startsSettings &&
+                (collapsed ? (
+                  <div
+                    role="separator"
+                    className="mx-3 my-2 border-t border-hairline"
+                  />
+                ) : (
+                  <h2 className="px-3 pt-4 pb-1 text-[11px] font-semibold uppercase tracking-wide text-mid-gray">
+                    {t("sidebar.settingsGroup")}
+                  </h2>
+                ))}
+              <button
+                type="button"
+                aria-current={isActive ? "page" : undefined}
+                aria-label={collapsed ? label : undefined}
+                title={label}
+                className={`flex gap-2.5 items-center py-2 w-full rounded-xl text-start cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary ${
+                  collapsed ? "justify-center px-0" : "px-3"
+                } ${
+                  isActive
+                    ? "bg-glass-chosen text-text"
+                    : "text-text/80 hover:bg-glass-hover"
+                }`}
+                onClick={() => onSectionChange(section.id)}
+              >
+                <Icon
+                  width={20}
+                  height={20}
+                  className={`shrink-0 ${isActive ? "text-text" : "text-mid-gray"}`}
+                />
+                {!collapsed && (
+                  <span className="text-sm truncate">{label}</span>
+                )}
+              </button>
+            </React.Fragment>
           );
         })}
       </div>

@@ -303,6 +303,10 @@ fn initialize_core_logic(app_handle: &AppHandle) {
             "copy_last_transcript" => {
                 tray::copy_last_transcript(app);
             }
+            "open_history" => {
+                show_main_window(app);
+                let _ = app.emit("navigate-to-section", "history");
+            }
             "unload_model" => {
                 let transcription_manager = app.state::<Arc<TranscriptionManager>>();
                 if !transcription_manager.is_model_loaded() {
@@ -340,7 +344,10 @@ fn initialize_core_logic(app_handle: &AppHandle) {
                     tray::update_tray_menu(&app_clone);
                 });
             }
-            _ => {}
+            // SpeakEase quick items (language, AI tidy-up, translation).
+            id => {
+                tray::apply_quick_menu_item(app, id);
+            }
         })
         .build(app_handle)
         .unwrap();
@@ -668,6 +675,7 @@ pub fn run(cli_args: CliArgs) {
             shortcut::change_selected_language_setting,
             shortcut::change_speakease_enhance_prompt_id_setting,
             shortcut::change_speakease_translate_target_setting,
+            shortcut::change_speakease_translate_language_setting,
             shortcut::change_overlay_position_setting,
             shortcut::change_overlay_style_setting,
             shortcut::change_debug_mode_setting,
@@ -760,6 +768,7 @@ pub fn run(cli_args: CliArgs) {
             commands::audio::set_clamshell_microphone,
             commands::audio::get_clamshell_microphone,
             commands::audio::is_recording,
+            commands::audio::toggle_dictation,
             commands::audio::get_microphone_channels,
             commands::audio::set_selected_channel,
             commands::transcription::set_model_unload_timeout,

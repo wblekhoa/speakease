@@ -66,6 +66,7 @@ const history = [
 }));
 
 const settings: Json = structuredClone(settingsFixture) as Json;
+let dictating = false;
 const models = structuredClone(modelsFixture) as Json[];
 
 // `?onboarding` previews first run: nothing downloaded, onboarding not done.
@@ -157,6 +158,29 @@ function handle(cmd: string, args: Json): unknown {
     case "get_selected_microphone":
     case "get_selected_output_device":
       return "Default";
+    case "toggle_dictation":
+      // The Speak page's microphone: start, then stop and "transcribe".
+      if (!dictating) {
+        dictating = true;
+        void emit("dictation-state", "recording");
+      } else {
+        dictating = false;
+        void emit("dictation-state", "transcribing");
+        setTimeout(() => {
+          const entry = {
+            ...history[0],
+            id: Date.now(),
+            timestamp: Math.floor(Date.now() / 1000),
+            transcription_text: "thử nói một câu ngắn từ nút micro",
+            post_processed_text: "Thử nói một câu ngắn từ nút micro.",
+          };
+          void emit("history-update-payload", { action: "added", entry });
+          void emit("dictation-state", "idle");
+        }, 900);
+      }
+      return null;
+    case "check_custom_sounds":
+      return { start: false, stop: false };
     case "get_microphone_channels":
       return [];
     case "get_available_typing_tools":

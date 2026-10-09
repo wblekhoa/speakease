@@ -682,7 +682,13 @@ pub fn apply_window_theme(app: &AppHandle, theme: Theme) {
 pub fn change_translate_to_english_setting(app: AppHandle, enabled: bool) -> Result<(), String> {
     let mut settings = settings::get_settings(&app);
     settings.translate_to_english = enabled;
+    // SpeakEase: the model's own translation and the main shortcut's AI
+    // translation exclude each other; the Speak page's is switched off.
+    if enabled {
+        settings.speakease_translate_target = None;
+    }
     settings::write_settings(&app, settings);
+    tray::update_tray_menu(&app);
     Ok(())
 }
 
@@ -692,6 +698,8 @@ pub fn change_selected_language_setting(app: AppHandle, language: String) -> Res
     let mut settings = settings::get_settings(&app);
     settings.selected_language = language;
     settings::write_settings(&app, settings);
+    // The tray menu shows the language (tray.rs).
+    tray::update_tray_menu(&app);
     Ok(())
 }
 
@@ -706,11 +714,13 @@ pub fn change_speakease_enhance_prompt_id_setting(
     let mut settings = settings::get_settings(&app);
     settings.speakease_enhance_prompt_id = prompt_id.filter(|id| !id.is_empty());
     settings::write_settings(&app, settings);
+    tray::update_tray_menu(&app);
     Ok(())
 }
 
 /// SpeakEase quick setting: the language the main shortcut translates into
-/// (None or "" = off).
+/// (None or "" = off). A language also becomes the translate language
+/// (`AppSettings::set_translate_target`).
 #[tauri::command]
 #[specta::specta]
 pub fn change_speakease_translate_target_setting(
@@ -718,8 +728,24 @@ pub fn change_speakease_translate_target_setting(
     target: Option<String>,
 ) -> Result<(), String> {
     let mut settings = settings::get_settings(&app);
-    settings.speakease_translate_target = target.filter(|t| !t.is_empty());
+    settings.set_translate_target(target);
     settings::write_settings(&app, settings);
+    tray::update_tray_menu(&app);
+    Ok(())
+}
+
+/// SpeakEase: the language the translate shortcut translates into, and the
+/// main shortcut too while its translation is on.
+#[tauri::command]
+#[specta::specta]
+pub fn change_speakease_translate_language_setting(
+    app: AppHandle,
+    language: String,
+) -> Result<(), String> {
+    let mut settings = settings::get_settings(&app);
+    settings.set_translate_language(language);
+    settings::write_settings(&app, settings);
+    tray::update_tray_menu(&app);
     Ok(())
 }
 
@@ -1079,6 +1105,14 @@ pub fn change_auto_submit_key_setting(app: AppHandle, key: String) -> Result<(),
 #[tauri::command]
 #[specta::specta]
 pub fn change_post_process_enabled_setting(app: AppHandle, enabled: bool) -> Result<(), String> {
+    set_post_process_enabled(&app, enabled);
+    Ok(())
+}
+
+/// Switches AI on or off: the setting, the two AI shortcuts, and the tray
+/// menu's AI items. The Speak page's steps read the setting (actions.rs).
+pub fn set_post_process_enabled(app: &AppHandle, enabled: bool) {
+    let app = app.clone();
     let mut settings = settings::get_settings(&app);
     settings.post_process_enabled = enabled;
     settings::write_settings(&app, settings.clone());
@@ -1096,7 +1130,7 @@ pub fn change_post_process_enabled_setting(app: AppHandle, enabled: bool) -> Res
     }
 
     crate::secure_input::reconcile_fallback(&app);
-    Ok(())
+    tray::update_tray_menu(&app);
 }
 
 #[tauri::command]
@@ -1210,6 +1244,8 @@ pub fn add_post_process_prompt(
 
     settings.post_process_prompts.push(new_prompt.clone());
     settings::write_settings(&app, settings);
+    // The tray lists the prompts (AI cleanup submenu).
+    tray::update_tray_menu(&app);
 
     Ok(new_prompt)
 }
@@ -1232,6 +1268,8 @@ pub fn update_post_process_prompt(
         existing_prompt.name = name;
         existing_prompt.prompt = prompt;
         settings::write_settings(&app, settings);
+        // The tray lists the prompts (AI cleanup submenu).
+        tray::update_tray_menu(&app);
         Ok(())
     } else {
         Err(format!("Prompt with id '{}' not found", id))
@@ -1263,6 +1301,8 @@ pub fn delete_post_process_prompt(app: AppHandle, id: String) -> Result<(), Stri
     }
 
     settings::write_settings(&app, settings);
+    // The tray lists the prompts (AI cleanup submenu).
+    tray::update_tray_menu(&app);
     Ok(())
 }
 

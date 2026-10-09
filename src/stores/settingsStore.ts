@@ -13,6 +13,15 @@ import type {
 import { commands } from "@/bindings";
 import { toast } from "sonner";
 
+/** SpeakEase: settings whose change makes the backend change others
+ * (settings.rs set_translate_target / set_translate_language, and the
+ * model's own translation switching the Speak page's off). */
+const COUPLED_SETTINGS = new Set([
+  "speakease_translate_target",
+  "speakease_translate_language",
+  "translate_to_english",
+]);
+
 interface SettingsStore {
   settings: Settings | null;
   defaultSettings: Settings | null;
@@ -135,6 +144,8 @@ const settingUpdaters: {
     commands.changeSpeakeaseEnhancePromptIdSetting((value as string) || null),
   speakease_translate_target: (value) =>
     commands.changeSpeakeaseTranslateTargetSetting((value as string) || null),
+  speakease_translate_language: (value) =>
+    commands.changeSpeakeaseTranslateLanguageSetting(value as string),
   selected_language: (value) =>
     commands.changeSelectedLanguageSetting(value as string),
   overlay_position: (value) =>
@@ -335,6 +346,8 @@ export const useSettingsStore = create<SettingsStore>()(
         const updater = settingUpdaters[key];
         if (updater) {
           await updater(value);
+          // The backend changes the settings tied to this one too.
+          if (COUPLED_SETTINGS.has(updateKey)) await get().refreshSettings();
         } else if (key !== "bindings" && key !== "selected_model") {
           console.warn(`No handler for setting: ${String(key)}`);
         }

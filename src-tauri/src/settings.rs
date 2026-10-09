@@ -489,6 +489,12 @@ pub struct AppSettings {
     pub speakease_enhance_prompt_id: Option<String>,
     #[serde(default)]
     pub speakease_translate_target: Option<String>,
+    /// The language SpeakEase translates into: what the translate shortcut
+    /// uses, and what the main shortcut uses while its translation is on
+    /// (`speakease_translate_target` is then the same language). None until
+    /// one is chosen, which reads as English (`translate_language`).
+    #[serde(default)]
+    pub speakease_translate_language: Option<String>,
     #[serde(default)]
     pub mute_while_recording: bool,
     #[serde(default)]
@@ -1049,8 +1055,8 @@ pub fn get_default_settings() -> AppSettings {
         TRANSLATE_BINDING_ID.to_string(),
         ShortcutBinding {
             id: TRANSLATE_BINDING_ID.to_string(),
-            name: "Translate to English".to_string(),
-            description: "Converts your speech into English text.".to_string(),
+            name: "Translate".to_string(),
+            description: "Converts your speech into text in the translate language.".to_string(),
             default_binding: default_translate_shortcut.to_string(),
             current_binding: default_translate_shortcut.to_string(),
         },
@@ -1109,6 +1115,7 @@ pub fn get_default_settings() -> AppSettings {
         post_process_selected_prompt_id: Some(VI_CLEANUP_PROMPT_ID.to_string()),
         speakease_enhance_prompt_id: None,
         speakease_translate_target: None,
+        speakease_translate_language: None,
         mute_while_recording: false,
         append_trailing_space: false,
         app_language: default_app_language(),
@@ -1149,7 +1156,70 @@ impl Default for AppSettings {
 /// shipped translate prompt first, then this one.
 pub const ENGLISH_TO_PREFIX: &str = "speakease_english_to:";
 
+/// The languages SpeakEase translates into: the name the prompt uses (also
+/// the stored value) and the language's own name, for the tray menu. The
+/// Speak page keeps the same list (SpeakPage.tsx TARGETS).
+pub const TRANSLATE_TARGETS: &[(&str, &str)] = &[
+    ("English", "English"),
+    ("Vietnamese", "Tiếng Việt"),
+    ("Japanese", "日本語"),
+    ("Korean", "한국어"),
+    ("Chinese (Simplified)", "中文（简体）"),
+    ("French", "Français"),
+    ("German", "Deutsch"),
+    ("Spanish", "Español"),
+    ("Thai", "ไทย"),
+    ("Indonesian", "Bahasa Indonesia"),
+    ("Russian", "Русский"),
+    ("Portuguese", "Português"),
+];
+
+/// The prompts that turn text into `language`: English in one step,
+/// anything else through English (see ENGLISH_TO_PREFIX).
+pub fn translation_steps(language: &str) -> Vec<String> {
+    let mut steps = vec![TRANSLATE_PROMPT_ID.to_string()];
+    if !language.eq_ignore_ascii_case("English") {
+        steps.push(format!("{}{}", ENGLISH_TO_PREFIX, language));
+    }
+    steps
+}
+
 impl AppSettings {
+    /// The language SpeakEase translates into: the one chosen last, English
+    /// until one is.
+    pub fn translate_language(&self) -> String {
+        self.speakease_translate_language
+            .clone()
+            .or_else(|| self.speakease_translate_target.clone())
+            .filter(|language| !language.trim().is_empty())
+            .unwrap_or_else(|| "English".to_string())
+    }
+
+    /// Turns the main shortcut's translation on (into `target`) or off. A
+    /// target also becomes the translate language, and switches off the
+    /// model's own translation into English, which would translate the
+    /// text a second time before the AI does.
+    pub fn set_translate_target(&mut self, target: Option<String>) {
+        let target = target.filter(|target| !target.trim().is_empty());
+        if let Some(language) = &target {
+            self.speakease_translate_language = Some(language.clone());
+            self.translate_to_english = false;
+        }
+        self.speakease_translate_target = target;
+    }
+
+    /// Chooses the translate language. While the main shortcut translates,
+    /// it follows: the two are one choice.
+    pub fn set_translate_language(&mut self, language: String) {
+        if language.trim().is_empty() {
+            return;
+        }
+        if self.speakease_translate_target.is_some() {
+            self.speakease_translate_target = Some(language.clone());
+        }
+        self.speakease_translate_language = Some(language);
+    }
+
     /// The text of a prompt by id, including the generated translate ones.
     pub fn prompt_text(&self, id: &str) -> Option<String> {
         if let Some(target) = id.strip_prefix(ENGLISH_TO_PREFIX) {

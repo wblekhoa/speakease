@@ -1,10 +1,10 @@
 // Settings section components
-export { GeneralSettings } from "./general/GeneralSettings";
-export { AdvancedSettings } from "./advanced/AdvancedSettings";
+export { RecordingSettings } from "./recording/RecordingSettings";
+export { RecognitionSettings } from "./recognition/RecognitionSettings";
+export { AppSettings } from "./app/AppSettings";
 export { DebugSettings } from "./debug/DebugSettings";
 export type { OnboardingPreviewStep } from "./debug/OnboardingPreview";
 export { HistorySettings } from "./history/HistorySettings";
-export { AboutSettings } from "./about/AboutSettings";
 export { PostProcessingSettings } from "./post-processing/PostProcessingSettings";
 export { ModelsSettings } from "./models/ModelsSettings";
 
@@ -33,6 +33,4 @@ export { StartHidden } from "./StartHidden";
 export { HistoryLimit } from "./HistoryLimit";
 export { RecordingRetentionPeriodSelector } from "./RecordingRetentionPeriod";
 export { AutostartToggle } from "./AutostartToggle";
-export { UpdateChecksToggle } from "./UpdateChecksToggle";
-export { ShowWhatsNewOnUpdate } from "./ShowWhatsNewOnUpdate";
 export { SpeakPage } from "./speak/SpeakPage";

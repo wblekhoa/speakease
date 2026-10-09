@@ -2,6 +2,7 @@ import React, { useEffect, useState, useRef, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
 import { formatKeyCombination } from "../../lib/utils/keyboard";
+import { Keycaps } from "../ui/Keycaps";
 import { ResetButton } from "../ui/ResetButton";
 import { SettingContainer } from "../ui/SettingContainer";
 import { useSettings } from "../../hooks/useSettings";
@@ -333,10 +334,18 @@ export const HandyKeysShortcutInput: React.FC<HandyKeysShortcutInputProps> = ({
           </div>
         ) : (
           <div
-            className="px-2 py-1 text-sm font-semibold bg-mid-gray/10 border border-hairline hover:bg-logo-primary/10 rounded-xl cursor-pointer hover:border-logo-primary"
+            role="button"
+            tabIndex={0}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" || event.key === " ") {
+                event.preventDefault();
+                startRecording();
+              }
+            }}
+            className="p-1 rounded-xl border border-transparent hover:border-logo-primary hover:bg-logo-primary/10 cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary"
             onClick={startRecording}
           >
-            {formatKeyCombination(binding.current_binding, osType)}
+            <Keycaps combination={binding.current_binding} osType={osType} />
           </div>
         )}
         <ResetButton

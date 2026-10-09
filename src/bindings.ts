@@ -125,6 +125,14 @@ async changeSpeakeaseTranslateTargetSetting(target: string | null) : Promise<Res
     else return { status: "error", error: e  as any };
 }
 },
+async changeSpeakeaseTranslateLanguageSetting(language: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_speakease_translate_language_setting", { language }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async changeOverlayPositionSetting(position: string) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("change_overlay_position_setting", { position }) };
@@ -848,6 +856,14 @@ async getClamshellMicrophone() : Promise<Result<string, string>> {
 async isRecording() : Promise<boolean> {
     return await TAURI_INVOKE("is_recording");
 },
+/**
+ * SpeakEase: the Speak page's microphone button. Starts a dictation with the
+ * main shortcut's settings, or stops the running one and transcribes it -
+ * the same toggle the CLI and signals use (signal_handle.rs).
+ */
+async toggleDictation() : Promise<void> {
+    await TAURI_INVOKE("toggle_dictation");
+},
 async getMicrophoneChannels(deviceName: string) : Promise<Result<number, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_microphone_channels", { deviceName }) };
@@ -1036,7 +1052,7 @@ selected_channel?: number | null; clamshell_microphone?: string | null; selected
  * prompt to tidy what was said (None = off) and a language to
  * translate it into (None = off). The Speak page sets them.
  */
-speakease_enhance_prompt_id?: string | null; speakease_translate_target?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
+speakease_enhance_prompt_id?: string | null; speakease_translate_target?: string | null; speakease_translate_language?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
 /**
  * Debug-gated ("beta") receipt-sequenced paste: restore the clipboard only
  * after the target app actually reads the transcript, instead of after a

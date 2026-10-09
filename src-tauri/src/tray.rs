@@ -63,7 +63,47 @@ struct MenuInputs {
     downloaded_models: Vec<(String, String)>,
     locale: String,
     update_checks_enabled: bool,
+    /// SpeakEase quick settings, mirrored from the Speak page.
+    quick: QuickInputs,
 }
+
+/// What the tray's quick items show: the language listened for, and while
+/// AI is on, the tidy-up prompt and the translation of the main shortcut.
+#[derive(Clone, Debug, PartialEq, Eq)]
+struct QuickInputs {
+    listen_language: String,
+    ai_enabled: bool,
+    /// `(id, name)` of the prompts the main shortcut can tidy with.
+    enhance_prompts: Vec<(String, String)>,
+    enhance_id: Option<String>,
+    translate_target: Option<String>,
+}
+
+impl QuickInputs {
+    fn from_settings(settings: &settings::AppSettings) -> Self {
+        Self {
+            listen_language: settings.selected_language.clone(),
+            ai_enabled: settings.post_process_enabled,
+            enhance_prompts: settings
+                .post_process_prompts
+                .iter()
+                .filter(|prompt| prompt.id != settings::TRANSLATE_PROMPT_ID)
+                .map(|prompt| (prompt.id.clone(), prompt.name.clone()))
+                .collect(),
+            enhance_id: settings.speakease_enhance_prompt_id.clone(),
+            translate_target: settings.speakease_translate_target.clone(),
+        }
+    }
+}
+
+/// Menu ids of the quick items; the value follows the prefix ("" = off).
+const LISTEN_PREFIX: &str = "listen:";
+const ENHANCE_PREFIX: &str = "enhance:";
+const TRANSLATE_PREFIX: &str = "translate:";
+
+/// The languages the tray offers to listen for besides "auto": the app's
+/// two, by their own names.
+const LISTEN_LANGUAGES: [(&str, &str); 2] = [("vi", "Tiếng Việt"), ("en", "English")];
 
 /// Complete description of what the tray should look like.
 #[derive(Clone, Debug, PartialEq, Eq)]
@@ -217,6 +257,13 @@ pub fn get_icon_path(theme: AppTheme, state: TrayIconState, warning: bool) -> &'
 /// Sets the recording state shown by the tray (icon + Cancel/model menu).
 pub fn set_tray_state(app: &AppHandle, state: TrayIconState) {
     sync_tray_with(app, |inner| inner.icon_state = state);
+    // SpeakEase: the Speak page's microphone button shows the same state.
+    let phase = match state {
+        TrayIconState::Idle => "idle",
+        TrayIconState::Recording => "recording",
+        TrayIconState::Transcribing => "transcribing",
+    };
+    let _ = tauri::Emitter::emit(app, "dictation-state", phase);
 }
 
 /// Re-syncs the tray after something other than the recording state changed
@@ -330,6 +377,7 @@ fn compute_desired(app: &AppHandle, icon_state: TrayIconState) -> TrayDesired {
             busy: icon_state.is_busy(),
             warning,
             model_loaded,
+            quick: QuickInputs::from_settings(&settings),
             selected_model: settings.selected_model,
             downloaded_models,
             locale: settings.app_language,
@@ -509,6 +557,13 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
         true,
         None::<&str>,
     )?;
+    let open_history_i = MenuItem::with_id(
+        app,
+        "open_history",
+        &strings.open_history,
+        true,
+        None::<&str>,
+    )?;
     let quit_i = MenuItem::with_id(app, "quit", &strings.quit, true, quit_accelerator)?;
     let separator = || PredefinedMenuItem::separator(app);
 
@@ -554,22 +609,34 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
             None::<&str>,
         )?;
 
-        Menu::with_items(
-            app,
-            &[
-                &version_i,
-                &separator()?,
-                &copy_last_transcript_i,
-                &separator()?,
-                &model_submenu,
-                &unload_model_i,
-                &separator()?,
-                &settings_i,
-                &check_updates_i,
-                &separator()?,
-                &quit_i,
-            ],
-        )?
+        let (listen_submenu, enhance_submenu, translate_submenu) =
+            quick_submenus(app, &strings, &inputs.quick)?;
+        let (separator_a, separator_b, separator_c, separator_d) =
+            (separator()?, separator()?, separator()?, separator()?);
+        let mut items: Vec<&dyn tauri::menu::IsMenuItem<tauri::Wry>> = vec![
+            &version_i,
+            &separator_a,
+            &copy_last_transcript_i,
+            &open_history_i,
+            &separator_b,
+            &model_submenu,
+            &listen_submenu,
+        ];
+        if let Some(submenu) = &enhance_submenu {
+            items.push(submenu);
+        }
+        if let Some(submenu) = &translate_submenu {
+            items.push(submenu);
+        }
+        items.extend([
+            &unload_model_i as &dyn tauri::menu::IsMenuItem<tauri::Wry>,
+            &separator_c,
+            &settings_i,
+            &check_updates_i,
+            &separator_d,
+            &quit_i,
+        ]);
+        Menu::with_items(app, &items)?
     };
 
     // When update checks are forced off (e.g. HANDY_DISABLE_UPDATER, set by
@@ -592,6 +659,133 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
     }
 
     Ok((menu, tooltip))
+}
+
+/// The language submenu, then the AI tidy-up and translate ones (None while
+/// AI is off).
+type QuickSubmenus = (
+    Submenu<tauri::Wry>,
+    Option<Submenu<tauri::Wry>>,
+    Option<Submenu<tauri::Wry>>,
+);
+
+/// The tray's quick items, each a submenu labelled with its current value:
+/// the language listened for, and while AI is on, the tidy-up prompt and
+/// the translation of the main shortcut (the Speak page's chips).
+fn quick_submenus(
+    app: &AppHandle,
+    strings: &crate::tray_i18n::TrayStrings,
+    quick: &QuickInputs,
+) -> tauri::Result<QuickSubmenus> {
+    let titled = |title: &str, value: &str| format!("{title}: {value}");
+    let choice = |id: String, label: &str, chosen: bool| {
+        CheckMenuItem::with_id(app, id, label, true, chosen, None::<&str>)
+    };
+
+    let listen_name = LISTEN_LANGUAGES
+        .iter()
+        .find(|(code, _)| *code == quick.listen_language)
+        .map(|(_, name)| *name)
+        .unwrap_or(&strings.language_auto);
+    let listen = Submenu::with_id(
+        app,
+        "listen_submenu",
+        titled(&strings.language, listen_name),
+        true,
+    )?;
+    listen.append(&choice(
+        format!("{LISTEN_PREFIX}auto"),
+        &strings.language_auto,
+        quick.listen_language == "auto",
+    )?)?;
+    for (code, name) in LISTEN_LANGUAGES {
+        listen.append(&choice(
+            format!("{LISTEN_PREFIX}{code}"),
+            name,
+            quick.listen_language == code,
+        )?)?;
+    }
+
+    if !quick.ai_enabled {
+        return Ok((listen, None, None));
+    }
+
+    let enhance_name = quick
+        .enhance_prompts
+        .iter()
+        .find(|(id, _)| Some(id) == quick.enhance_id.as_ref())
+        .map(|(_, name)| name.as_str());
+    let enhance = Submenu::with_id(
+        app,
+        "enhance_submenu",
+        titled(&strings.ai_cleanup, enhance_name.unwrap_or(&strings.off)),
+        true,
+    )?;
+    enhance.append(&choice(
+        ENHANCE_PREFIX.to_string(),
+        &strings.off,
+        enhance_name.is_none(),
+    )?)?;
+    for (id, name) in &quick.enhance_prompts {
+        enhance.append(&choice(
+            format!("{ENHANCE_PREFIX}{id}"),
+            name,
+            Some(id) == quick.enhance_id.as_ref(),
+        )?)?;
+    }
+
+    let target_name = settings::TRANSLATE_TARGETS
+        .iter()
+        .find(|(value, _)| Some(*value) == quick.translate_target.as_deref())
+        .map(|(_, name)| *name);
+    let translate = Submenu::with_id(
+        app,
+        "translate_submenu",
+        titled(&strings.translate_to, target_name.unwrap_or(&strings.off)),
+        true,
+    )?;
+    translate.append(&choice(
+        TRANSLATE_PREFIX.to_string(),
+        &strings.off,
+        target_name.is_none(),
+    )?)?;
+    for (value, name) in settings::TRANSLATE_TARGETS {
+        translate.append(&choice(
+            format!("{TRANSLATE_PREFIX}{value}"),
+            name,
+            Some(*value) == quick.translate_target.as_deref(),
+        )?)?;
+    }
+
+    Ok((listen, Some(enhance), Some(translate)))
+}
+
+/// Applies a quick item the tray menu was clicked on. False when `id` is
+/// not one of them.
+pub fn apply_quick_menu_item(app: &AppHandle, id: &str) -> bool {
+    let mut settings = settings::get_settings(app);
+    let (setting, value) = if let Some(code) = id.strip_prefix(LISTEN_PREFIX) {
+        settings.selected_language = code.to_string();
+        ("selected_language", code)
+    } else if let Some(prompt_id) = id.strip_prefix(ENHANCE_PREFIX) {
+        settings.speakease_enhance_prompt_id =
+            Some(prompt_id.to_string()).filter(|id| !id.is_empty());
+        ("speakease_enhance_prompt_id", prompt_id)
+    } else if let Some(target) = id.strip_prefix(TRANSLATE_PREFIX) {
+        settings.set_translate_target(Some(target.to_string()));
+        ("speakease_translate_target", target)
+    } else {
+        return false;
+    };
+    settings::write_settings(app, settings);
+    update_tray_menu(app);
+    // The settings window re-reads what changed (settingsStore.ts).
+    let _ = tauri::Emitter::emit(
+        app,
+        "settings-changed",
+        serde_json::json!({ "setting": setting, "value": value }),
+    );
+    true
 }
 
 fn last_transcript_text(entry: &HistoryEntry) -> &str {
@@ -668,7 +862,9 @@ pub fn copy_last_transcript(app: &AppHandle) {
 
 #[cfg(test)]
 mod tests {
-    use super::{last_transcript_text, load_tray_icon, MenuInputs, TrayDesired, TrayIconState};
+    use super::{
+        last_transcript_text, load_tray_icon, MenuInputs, QuickInputs, TrayDesired, TrayIconState,
+    };
     use crate::managers::history::HistoryEntry;
 
     fn build_entry(transcription: &str, post_processed: Option<&str>) -> HistoryEntry {
@@ -694,7 +890,22 @@ mod tests {
             downloaded_models: vec![("small".to_string(), "Small".to_string())],
             locale: "en".to_string(),
             update_checks_enabled: true,
+            quick: QuickInputs::from_settings(&crate::settings::get_default_settings()),
         }
+    }
+
+    #[test]
+    fn the_quick_items_offer_tidy_prompts_but_not_the_translate_one() {
+        let mut settings = crate::settings::get_default_settings();
+        let quick = QuickInputs::from_settings(&settings);
+        assert!(!quick.enhance_prompts.is_empty());
+        assert!(quick
+            .enhance_prompts
+            .iter()
+            .all(|(id, _)| id != crate::settings::TRANSLATE_PROMPT_ID));
+        // A change on the Speak page is a change of menu: the tray rebuilds.
+        settings.set_translate_target(Some("Japanese".to_string()));
+        assert_ne!(QuickInputs::from_settings(&settings), quick);
     }
 
     #[test]

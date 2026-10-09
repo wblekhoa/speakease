@@ -12,6 +12,10 @@ interface SettingContainerProps {
   tooltipPosition?: "top" | "bottom";
 }
 
+/** A setting's explanation, under its name: smaller and quieter than the
+ * name, so a list of settings scans by its names. */
+const DESCRIPTION = "mt-0.5 text-[13px] leading-snug text-mid-gray";
+
 export const SettingContainer: React.FC<SettingContainerProps> = ({
   title,
   description,
@@ -47,15 +51,17 @@ export const SettingContainer: React.FC<SettingContainerProps> = ({
     setShowTooltip(!showTooltip);
   };
 
+  // Stacked settings hold a whole form (a picker, fields, buttons), so they
+  // get the same room at their edges as between their parts.
   const containerClasses = grouped
-    ? "px-4 p-2"
-    : "px-4 p-2 rounded-lg border border-mid-gray/20";
+    ? "px-4 py-4"
+    : "px-4 py-4 rounded-lg border border-mid-gray/20";
 
   if (layout === "stacked") {
     if (descriptionMode === "tooltip") {
       return (
         <div className={containerClasses}>
-          <div className="flex items-center gap-2 mb-2">
+          <div className="flex items-center gap-2 mb-3">
             <h3
               className={`text-sm font-medium ${disabled ? "opacity-50" : ""}`}
             >
@@ -106,11 +112,11 @@ export const SettingContainer: React.FC<SettingContainerProps> = ({
 
     return (
       <div className={containerClasses}>
-        <div className="mb-2">
+        <div className="mb-3">
           <h3 className={`text-sm font-medium ${disabled ? "opacity-50" : ""}`}>
             {title}
           </h3>
-          <p className={`text-sm ${disabled ? "opacity-50" : ""}`}>
+          <p className={`${DESCRIPTION} ${disabled ? "opacity-50" : ""}`}>
             {description}
           </p>
         </div>
@@ -121,8 +127,8 @@ export const SettingContainer: React.FC<SettingContainerProps> = ({
 
   // Horizontal layout (default)
   const horizontalContainerClasses = grouped
-    ? "flex items-center justify-between min-h-12 px-4 p-2"
-    : "flex items-center justify-between min-h-12 px-4 p-2 rounded-lg border border-mid-gray/20";
+    ? "flex items-center justify-between gap-6 min-h-12 px-4 py-2.5"
+    : "flex items-center justify-between gap-6 min-h-12 px-4 py-2.5 rounded-lg border border-mid-gray/20";
 
   if (descriptionMode === "tooltip") {
     return (
@@ -180,15 +186,15 @@ export const SettingContainer: React.FC<SettingContainerProps> = ({
 
   return (
     <div className={horizontalContainerClasses}>
-      <div className="max-w-2/3">
+      <div className="min-w-0 flex-1 max-w-xl">
         <h3 className={`text-sm font-medium ${disabled ? "opacity-50" : ""}`}>
           {title}
         </h3>
-        <p className={`text-sm ${disabled ? "opacity-50" : ""}`}>
+        <p className={`${DESCRIPTION} ${disabled ? "opacity-50" : ""}`}>
           {description}
         </p>
       </div>
-      <div className="relative">{children}</div>
+      <div className="relative shrink-0">{children}</div>
     </div>
   );
 };

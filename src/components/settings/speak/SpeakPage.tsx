@@ -1,12 +1,27 @@
 import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
-import type { ModelInfo } from "@/bindings";
+import { listen } from "@tauri-apps/api/event";
+import {
+  commands,
+  events,
+  type HistoryEntry,
+  type ModelInfo,
+} from "@/bindings";
 import { useOsType } from "@/hooks/useOsType";
 import { formatKeyCombination } from "@/lib/utils/keyboard";
 import { useSettings } from "../../../hooks/useSettings";
 import { useModelStore } from "../../../stores/modelStore";
+import { openSection } from "@/lib/navigation";
+import {
+  TRANSLATE_PROMPT_ID,
+  TRANSLATE_TARGETS as TARGETS,
+  translateTargetName,
+} from "@/lib/translateTargets";
+import type { SidebarSection } from "../../Sidebar";
+import { copyToClipboard } from "../history/clipboard";
 import {
   CheckIcon,
+  CopyIcon,
   CpuIcon,
   MagicStarIcon,
   MicrophoneIcon,
@@ -18,32 +33,24 @@ import {
 // dictation and the next, each one tap away. The main shortcut follows
 // what is set here (actions.rs quick_steps): the microphone, the model and
 // the language it listens for, an AI prompt that tidies the text, and a
-// language to translate it into.
-
-/** Translation targets. `value` is what the prompt says, so it stays in
- * English; the label is the reader's. */
-const TARGETS = [
-  { value: "English", code: "EN", flag: "🇬🇧" },
-  { value: "Vietnamese", code: "VI", flag: "🇻🇳" },
-  { value: "Japanese", code: "JA", flag: "🇯🇵" },
-  { value: "Korean", code: "KO", flag: "🇰🇷" },
-  { value: "Chinese (Simplified)", code: "ZH", flag: "🇨🇳" },
-  { value: "French", code: "FR", flag: "🇫🇷" },
-  { value: "German", code: "DE", flag: "🇩🇪" },
-  { value: "Spanish", code: "ES", flag: "🇪🇸" },
-  { value: "Thai", code: "TH", flag: "🇹🇭" },
-  { value: "Indonesian", code: "ID", flag: "🇮🇩" },
-  { value: "Russian", code: "RU", flag: "🇷🇺" },
-  { value: "Portuguese", code: "PT", flag: "🇵🇹" },
-] as const;
+// language to translate it into. Each menu ends in a link to the settings
+// page that holds the rest of that subject.
 
 /** The languages a model can be told to listen for, most useful first. */
 const LISTEN_FOR = ["auto", "vi", "en"] as const;
 
-/** The prompt the translate shortcut owns; it is offered as a target here. */
-const TRANSLATE_PROMPT_ID = "speakease_translate_en";
-
 type MenuId = "mic" | "model" | "ai" | "translate";
+
+/** Where a dictation is (tray.rs set_tray_state emits it). */
+type Phase = "idle" | "recording" | "transcribing";
+
+/** Where each menu's "More settings" link goes. */
+const MORE_SETTINGS: Record<MenuId, SidebarSection> = {
+  mic: "recording",
+  model: "recognition",
+  ai: "postprocessing",
+  translate: "postprocessing",
+};
 
 const MenuSection: React.FC<{ title: string; children: React.ReactNode }> = ({
   title,
@@ -104,6 +111,53 @@ export const SpeakPage: React.FC = () => {
   const selectModel = useModelStore((state) => state.selectModel);
   const [open, setOpen] = useState<MenuId | null>(null);
   const [targetQuery, setTargetQuery] = useState("");
+  // The microphone button: a dictation started here is shown here, since
+  // this window has no text field for it to be pasted into.
+  const [phase, setPhase] = useState<Phase>("idle");
+  const [result, setResult] = useState<HistoryEntry | null>(null);
+  const [copied, setCopied] = useState(false);
+  const awaitingResult = useRef(false);
+
+  useEffect(() => {
+    commands
+      .isRecording()
+      .then((recording) => recording && setPhase("recording"))
+      .catch(() => {});
+    const unlistenPhase = listen<Phase>("dictation-state", (event) =>
+      setPhase(event.payload),
+    );
+    const unlistenHistory = events.historyUpdatePayload.listen((event) => {
+      const update = event.payload;
+      if (update.action === "added" && awaitingResult.current) {
+        awaitingResult.current = false;
+        setResult(update.entry);
+        setCopied(false);
+      } else if (update.action === "updated") {
+        setResult((shown) =>
+          shown?.id === update.entry.id ? update.entry : shown,
+        );
+      }
+    });
+    return () => {
+      unlistenPhase.then((fn) => fn());
+      unlistenHistory.then((fn) => fn());
+    };
+  }, []);
+
+  const toggleDictation = () => {
+    if (phase === "transcribing") return;
+    if (phase === "idle") awaitingResult.current = true;
+    commands.toggleDictation().catch((error) => {
+      console.error("Failed to toggle dictation:", error);
+      awaitingResult.current = false;
+    });
+  };
+
+  const resultText = result
+    ? result.post_processed_text?.trim()
+      ? result.post_processed_text
+      : result.transcription_text
+    : "";
   const barRef = useRef<HTMLDivElement>(null);
   // Where the open menu stands: fixed to the window, above the bar, so the
   // page's scroll box cannot clip it, and no taller than the room up to the
@@ -179,20 +233,17 @@ export const SpeakPage: React.FC = () => {
       : (new Intl.DisplayNames([i18n.language], { type: "language" }).of(
           code,
         ) ?? code);
-  const targetName = (value: string) => {
-    const code = TARGETS.find((item) => item.value === value)?.code;
-    return code
-      ? (new Intl.DisplayNames([i18n.language], { type: "language" }).of(
-          code.toLowerCase(),
-        ) ?? value)
-      : value;
-  };
+  const targetName = (value: string) =>
+    translateTargetName(value, i18n.language);
 
+  // With AI switched off nothing tidies or translates (actions.rs
+  // quick_steps); the two AI chips say so instead of showing a choice.
+  const aiEnabled = settings?.post_process_enabled ?? false;
   const supportsLanguage = model?.supports_language_selection ?? true;
   const pipeline = [
     languageName(language),
-    enhance ? enhance.name : null,
-    target
+    aiEnabled && enhance ? enhance.name : null,
+    aiEnabled && target
       ? t("speak.pipeline.translate", { language: targetName(target.value) })
       : null,
   ].filter(Boolean);
@@ -231,19 +282,86 @@ export const SpeakPage: React.FC = () => {
     // The orb fills the page and the bar sits at its foot, as in a
     // dictation app: the menus open upward into the room the orb leaves.
     <div className="w-full max-w-3xl mx-auto flex flex-col items-center min-h-[calc(100vh-150px)]">
-      {/* The orb: what to press, and what will happen to what you say. */}
-      <div className="flex-1 flex flex-col items-center justify-center gap-5 text-center">
-        <div className="relative grid place-items-center size-32 rounded-full bg-logo-primary/10 shadow-[0_0_0_10px_color-mix(in_srgb,var(--color-logo-primary)_6%,transparent),0_0_60px_color-mix(in_srgb,var(--color-logo-primary)_25%,transparent)]">
-          <div className="grid place-items-center size-20 rounded-full bg-logo-primary text-white">
-            <MicrophoneIcon width={36} height={36} />
-          </div>
-        </div>
+      {/* The orb: what to press, and what will happen to what you say. A
+          click starts a dictation and the next one stops it, like the
+          shortcut pressed twice. */}
+      <div className="w-full flex-1 flex flex-col items-center justify-center gap-5 text-center">
+        <button
+          type="button"
+          onClick={toggleDictation}
+          disabled={phase === "transcribing"}
+          aria-label={
+            phase === "recording" ? t("speak.orb.stop") : t("speak.orb.start")
+          }
+          className="group relative grid place-items-center size-32 rounded-full bg-logo-primary/10 cursor-pointer disabled:cursor-progress focus-visible:outline-2 focus-visible:outline-offset-4 focus-visible:outline-logo-primary shadow-[0_0_0_10px_color-mix(in_srgb,var(--color-logo-primary)_6%,transparent),0_0_60px_color-mix(in_srgb,var(--color-logo-primary)_25%,transparent)]"
+        >
+          {phase === "recording" && (
+            <span
+              aria-hidden
+              className="absolute inset-0 rounded-full bg-logo-primary/25 animate-ping motion-reduce:animate-none"
+            />
+          )}
+          <span
+            className={`relative grid place-items-center size-20 rounded-full text-white transition-transform group-hover:scale-105 group-active:scale-95 ${
+              phase === "recording" ? "bg-error" : "bg-logo-primary"
+            }`}
+          >
+            {phase === "recording" ? (
+              <span aria-hidden className="size-7 rounded-md bg-white" />
+            ) : phase === "transcribing" ? (
+              <span
+                aria-hidden
+                className="size-9 rounded-full border-[3px] border-white/40 border-t-white animate-spin"
+              />
+            ) : (
+              <MicrophoneIcon width={36} height={36} />
+            )}
+          </span>
+        </button>
         <div className="space-y-1.5">
           <p className="font-display text-xl font-semibold">
-            {t("speak.hold", { keys })}
+            {phase === "recording"
+              ? t("speak.orb.stop")
+              : phase === "transcribing"
+                ? t("speak.orb.working")
+                : t("speak.hold", { keys })}
           </p>
-          <p className="text-sm text-mid-gray">{pipeline.join(" → ")}</p>
+          <p className="text-sm text-mid-gray">
+            {phase === "idle"
+              ? `${t("speak.orb.orClick")} · ${pipeline.join(" → ")}`
+              : pipeline.join(" → ")}
+          </p>
         </div>
+
+        {result && phase === "idle" && (
+          <div className="w-full max-w-md text-start rounded-2xl border border-hairline bg-surface px-4 py-3 space-y-2">
+            <div className="flex items-center justify-between gap-2">
+              <span className="text-[11px] font-semibold uppercase tracking-wide text-mid-gray">
+                {t("speak.result.title")}
+              </span>
+              <button
+                type="button"
+                onClick={async () => {
+                  if (await copyToClipboard(resultText)) {
+                    setCopied(true);
+                    setTimeout(() => setCopied(false), 2000);
+                  }
+                }}
+                className="flex items-center gap-1 px-2 py-1 rounded-lg text-xs font-medium text-logo-primary hover:bg-logo-primary/10 cursor-pointer"
+              >
+                {copied ? (
+                  <CheckIcon width={14} height={14} />
+                ) : (
+                  <CopyIcon width={14} height={14} />
+                )}
+                {copied ? t("speak.result.copied") : t("speak.result.copy")}
+              </button>
+            </div>
+            <p className="text-[15px] leading-relaxed select-text cursor-text whitespace-pre-wrap break-words">
+              {resultText || t("settings.history.transcriptionFailed")}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* The bar of quick settings, each opening its menu above it. */}
@@ -268,14 +386,18 @@ export const SpeakPage: React.FC = () => {
         {chip(
           "ai",
           <MagicStarIcon width={18} height={18} />,
-          enhance ? enhance.name : t("speak.ai.off"),
-          Boolean(enhance),
+          !aiEnabled
+            ? t("speak.ai.disabled")
+            : enhance
+              ? enhance.name
+              : t("speak.ai.off"),
+          aiEnabled && Boolean(enhance),
         )}
         {chip(
           "translate",
           <TranslateIcon width={18} height={18} />,
-          target ? `→ ${target.code}` : t("speak.translate.off"),
-          Boolean(target),
+          aiEnabled && target ? `→ ${target.code}` : t("speak.translate.off"),
+          aiEnabled && Boolean(target),
         )}
 
         {open && menuBox && (
@@ -352,7 +474,22 @@ export const SpeakPage: React.FC = () => {
               </>
             )}
 
-            {open === "ai" && (
+            {(open === "ai" || open === "translate") && !aiEnabled && (
+              <div className="px-3 py-2 space-y-2">
+                <p className="text-sm text-mid-gray">
+                  {t("speak.ai.disabledHint")}
+                </p>
+                <button
+                  type="button"
+                  onClick={() => updateSetting("post_process_enabled", true)}
+                  className="px-3 py-1.5 rounded-full text-sm font-medium bg-logo-primary text-white hover:opacity-90 cursor-pointer"
+                >
+                  {t("speak.ai.enable")}
+                </button>
+              </div>
+            )}
+
+            {open === "ai" && aiEnabled && (
               <MenuSection title={t("speak.ai.title")}>
                 <MenuRow
                   selected={!enhance}
@@ -384,7 +521,7 @@ export const SpeakPage: React.FC = () => {
               </MenuSection>
             )}
 
-            {open === "translate" && (
+            {open === "translate" && aiEnabled && (
               <MenuSection title={t("speak.translate.title")}>
                 <li className="px-1.5 pb-1">
                   <label className="flex items-center gap-2 px-2.5 py-1.5 rounded-xl bg-row">
@@ -425,6 +562,20 @@ export const SpeakPage: React.FC = () => {
                 ))}
               </MenuSection>
             )}
+
+            <div className="mt-1 pt-1 border-t border-hairline">
+              <button
+                type="button"
+                onClick={() => {
+                  const section = MORE_SETTINGS[open];
+                  setOpen(null);
+                  openSection(section);
+                }}
+                className="w-full px-3 py-2 rounded-xl text-start text-sm text-logo-primary hover:bg-row/60 cursor-pointer"
+              >
+                {t("speak.moreSettings")}
+              </button>
+            </div>
           </div>
         )}
       </div>

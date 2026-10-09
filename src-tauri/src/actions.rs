@@ -59,9 +59,20 @@ struct TranscribeAction {
     /// A prompt this binding always uses instead of the selected one
     /// (SpeakEase: the translate shortcut).
     prompt_override: Option<&'static str>,
-    /// SpeakEase: this is the main dictation shortcut, which follows the
-    /// Speak page's quick settings (AI tidy-up, translation).
-    quick: bool,
+    /// SpeakEase: the prompts this binding runs in a row, from the
+    /// settings of the moment (`Steps::None` = the selected prompt, if any).
+    steps: Steps,
+}
+
+/// SpeakEase: where a binding takes its run of prompts from.
+#[derive(Clone, Copy)]
+enum Steps {
+    None,
+    /// The main dictation shortcut: the Speak page's quick settings (AI
+    /// tidy-up, translation).
+    Quick,
+    /// The translate shortcut: into the translate language.
+    Translate,
 }
 
 /// Field name for structured output JSON schema
@@ -425,9 +436,12 @@ pub(crate) async fn process_transcription_output(
 
 /// The prompts the main shortcut runs, in order, from the Speak page's quick
 /// settings: tidy first (so the translation starts from clean text), then
-/// translate. Empty when both are off.
+/// translate. Empty when both are off, and while AI is switched off.
 fn quick_steps(settings: &AppSettings) -> Vec<String> {
     let mut steps = Vec::new();
+    if !settings.post_process_enabled {
+        return steps;
+    }
     if let Some(id) = settings
         .speakease_enhance_prompt_id
         .as_ref()
@@ -440,13 +454,18 @@ fn quick_steps(settings: &AppSettings) -> Vec<String> {
         .as_ref()
         .filter(|target| !target.is_empty())
     {
-        // Into English in one step; anything else through English.
-        steps.push(crate::settings::TRANSLATE_PROMPT_ID.to_string());
-        if !target.eq_ignore_ascii_case("English") {
-            steps.push(format!("{}{}", crate::settings::ENGLISH_TO_PREFIX, target));
-        }
+        steps.extend(crate::settings::translation_steps(target));
     }
     steps
+}
+
+/// The prompts the translate shortcut runs: into the translate language
+/// (English until another is chosen). Empty while AI is switched off.
+fn translate_steps(settings: &AppSettings) -> Vec<String> {
+    if !settings.post_process_enabled {
+        return Vec::new();
+    }
+    crate::settings::translation_steps(&settings.translate_language())
 }
 
 /// Runs the quick-setting prompts one after another. A step that yields
@@ -690,10 +709,10 @@ impl ShortcutAction for TranscribeAction {
         play_feedback_sound(app, SoundType::Stop);
 
         let binding_id = binding_id.to_string(); // Clone binding_id for the async task
-        let steps = if self.quick {
-            quick_steps(&get_settings(app))
-        } else {
-            Vec::new()
+        let steps = match self.steps {
+            Steps::None => Vec::new(),
+            Steps::Quick => quick_steps(&get_settings(app)),
+            Steps::Translate => translate_steps(&get_settings(app)),
         };
         let post_process = self.post_process || !steps.is_empty();
         let prompt_override = self.prompt_override;
@@ -972,7 +991,7 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
         Arc::new(TranscribeAction {
             post_process: false,
             prompt_override: None,
-            quick: true,
+            steps: Steps::Quick,
         }) as Arc<dyn ShortcutAction>,
     );
     map.insert(
@@ -980,7 +999,7 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
         Arc::new(TranscribeAction {
             post_process: true,
             prompt_override: None,
-            quick: false,
+            steps: Steps::None,
         }) as Arc<dyn ShortcutAction>,
     );
     map.insert(
@@ -988,7 +1007,7 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
         Arc::new(TranscribeAction {
             post_process: true,
             prompt_override: Some(crate::settings::TRANSLATE_PROMPT_ID),
-            quick: false,
+            steps: Steps::Translate,
         }) as Arc<dyn ShortcutAction>,
     );
     map.insert(
@@ -1122,6 +1141,32 @@ mod speakease_tests {
         settings.speakease_enhance_prompt_id = Some(String::new());
         settings.speakease_translate_target = Some("English".to_string());
         assert_eq!(quick_steps(&settings), ["speakease_translate_en"]);
+    }
+
+    #[test]
+    fn switching_ai_off_stops_the_speak_page_steps_too() {
+        let mut settings = crate::settings::get_default_settings();
+        settings.speakease_enhance_prompt_id = Some("speakease_vi_cleanup".to_string());
+        settings.set_translate_target(Some("English".to_string()));
+        assert_eq!(quick_steps(&settings).len(), 2);
+        settings.post_process_enabled = false;
+        assert!(quick_steps(&settings).is_empty());
+        assert!(translate_steps(&settings).is_empty());
+    }
+
+    #[test]
+    fn the_translate_shortcut_follows_the_translate_language() {
+        let mut settings = crate::settings::get_default_settings();
+        assert_eq!(translate_steps(&settings), ["speakease_translate_en"]);
+        // Chosen on the Speak page, then switched off there: the shortcut
+        // keeps the language.
+        settings.set_translate_target(Some("Japanese".to_string()));
+        settings.set_translate_target(None);
+        assert_eq!(
+            translate_steps(&settings),
+            ["speakease_translate_en", "speakease_english_to:Japanese"]
+        );
+        assert!(quick_steps(&settings).is_empty());
     }
 
     #[test]

@@ -7,7 +7,13 @@
     "model": "Mô hình",
     "quit": "Thoát",
     "cancel": "Hủy",
-    "secureInputWarning": "⚠ Phím tắt đang bị Secure Input chặn"
+    "secureInputWarning": "⚠ Phím tắt đang bị Secure Input chặn",
+    "openHistory": "Mở Lịch sử",
+    "language": "Nghe tiếng",
+    "languageAuto": "Tự nhận diện",
+    "aiCleanup": "AI sửa câu",
+    "translateTo": "Dịch sang",
+    "off": "Tắt"
   },
   "sidebar": {
     "general": "Chung",
@@ -20,7 +26,11 @@
     "expand": "Mở thanh bên",
     "collapse": "Thu gọn thanh bên",
     "label": "Các mục",
-    "speak": "Nói"
+    "speak": "Nói",
+    "recording": "Ghi âm",
+    "recognition": "Nhận dạng",
+    "app": "Ứng dụng",
+    "settingsGroup": "Cài đặt"
   },
   "onboarding": {
     "subtitle": "Để bắt đầu, hãy chọn một mô hình chép lời",
@@ -193,20 +203,20 @@
         "pressKeys": "Nhấn phím…",
         "bindings": {
           "transcribe": {
-            "name": "Phím đọc chính tả",
-            "description": "Giữ (hoặc bấm) để nói, thả ra là chữ được dán vào app đang mở."
+            "name": "Đọc chính tả",
+            "description": "Giữ hoặc bấm để nói, chữ được dán vào chỗ con trỏ."
           },
           "cancel": {
-            "name": "Phím hủy",
-            "description": "Phím tắt để hủy lần ghi âm đang chạy."
+            "name": "Hủy",
+            "description": "Dừng ghi âm, không dán gì."
           },
           "transcribe_with_post_process": {
-            "name": "Phím đọc + AI sửa câu",
-            "description": "Như phím đọc chính tả, rồi AI thêm dấu câu, viết hoa, sửa số và tên riêng (dùng mẫu đang chọn bên dưới)."
+            "name": "Đọc + AI sửa câu",
+            "description": "AI viết lại lời bạn nói theo mẫu của phím AI."
           },
           "transcribe_translate": {
-            "name": "Phím dịch sang tiếng Anh",
-            "description": "Nói tiếng Việt, chữ dán ra là tiếng Anh (dùng mẫu \"Dịch sang tiếng Anh\")."
+            "name": "Dịch",
+            "description": "Dán bản dịch, sang ngôn ngữ chọn ở AI & dịch."
           }
         },
         "errors": {
@@ -366,8 +376,9 @@
         }
       },
       "translateToEnglish": {
-        "label": "Dịch sang tiếng Anh",
-        "description": "Mô hình tự dịch lời nói sang tiếng Anh ngay khi chép (chỉ mô hình Whisper hỗ trợ)."
+        "label": "Mô hình tự dịch sang tiếng Anh",
+        "description": "Mô hình tự dịch lời nói sang tiếng Anh ngay khi chép (chỉ mô hình Whisper hỗ trợ).",
+        "aiTranslates": "Đang tắt vì trang Nói đã bật AI dịch; bật cả hai sẽ dịch hai lần."
       },
       "modelUnload": {
         "title": "Giải phóng mô hình",
@@ -453,7 +464,7 @@
         "title": "Mẫu cho AI",
         "selectedPrompt": {
           "title": "Mẫu đang dùng",
-          "description": "Mẫu mà phím \"Đọc + AI sửa câu\" sẽ dùng. Phím dịch luôn dùng mẫu \"Dịch sang tiếng Anh\"."
+          "description": "Mẫu mà phím \"Đọc + AI sửa câu\" dùng. Phím dịch dùng ngôn ngữ chọn ở trên."
         },
         "noPrompts": "Chưa có mẫu nào",
         "selectPrompt": "Chọn một mẫu",
@@ -468,8 +479,27 @@
         "createPrompt": "Tạo mẫu",
         "cancel": "Hủy",
         "selectToEdit": "Chọn một mẫu ở trên để xem và sửa.",
-        "createFirst": "Bấm \"Tạo mẫu mới\" để tạo mẫu đầu tiên."
-      }
+        "createFirst": "Bấm \"Tạo mẫu mới\" để tạo mẫu đầu tiên.",
+        "groupDescription": "Mẫu phím AI dùng. Sửa hoặc thêm mẫu của bạn; mọi mẫu cũng có trong mục AI sửa câu."
+      },
+      "main": {
+        "title": "Phím chính",
+        "groupDescription": "Cũng là hai nút AI ở trang Nói.",
+        "enhance": {
+          "title": "AI sửa câu",
+          "description": "Cách AI sửa mọi lần bạn đọc bằng phím chính."
+        },
+        "language": {
+          "title": "Dịch sang",
+          "description": "Ngôn ngữ phím dịch dùng, và phím chính dùng khi đang bật dịch."
+        },
+        "translate": {
+          "label": "Dịch mọi lần nói sang {{language}}",
+          "description": "Phím chính dán bản dịch thay cho lời bạn nói."
+        }
+      },
+      "shortcutsLive": "Phím dịch và phím AI được đặt cùng các phím khác, trong",
+      "shortcutsLink": "Ghi âm."
     },
     "history": {
       "title": "Lịch sử",
@@ -482,7 +512,7 @@
       "unsave": "Bỏ đánh dấu",
       "delete": "Xóa",
       "deleteError": "Không xóa được. Hãy thử lại.",
-      "retranscribe": "Chép lại",
+      "retranscribe": "Nhận dạng lại",
       "retranscribeError": "Không chép lại được. Hãy thử lại.",
       "transcribing": "Đang chép lời…",
       "transcriptionFailed": "Chép lời thất bại. Bấm nút chép lại để thử lần nữa.",
@@ -494,7 +524,11 @@
       "yesterday": "Hôm qua",
       "listen": "Nghe lại",
       "aiBadge": "AI",
-      "translatedBadge": "Đã dịch"
+      "translatedBadge": "Đã dịch",
+      "keeping": "Lưu trữ",
+      "statEntries": "lần đọc",
+      "statWords": "từ",
+      "statMinutes": "phút gõ phím tiết kiệm"
     },
     "debug": {
       "title": "Gỡ lỗi",
@@ -554,8 +588,8 @@
         "description": "Micro dùng khi gập nắp laptop"
       },
       "postProcessingToggle": {
-        "label": "AI sửa câu",
-        "description": "Bật bước AI sửa và dịch sau khi chép lời"
+        "label": "Dùng AI",
+        "description": "AI sửa câu và dịch lời bạn nói. Tắt: chữ dán ra đúng như lời nói, phím AI và phím dịch ngừng hoạt động."
       },
       "muteWhileRecording": {
         "label": "Tắt tiếng khi ghi âm",
@@ -661,6 +695,27 @@
       "whatsNewUpdates": {
         "label": "Hiện điểm mới",
         "description": "Hiện ghi chú phiên bản sau mỗi lần SpeakEase cập nhật"
+      }
+    },
+    "recording": {
+      "shortcuts": "Phím tắt",
+      "microphone": "Micro",
+      "feedback": "Lớp phủ & âm báo"
+    },
+    "recognition": {
+      "listening": "Nghe & chép lời",
+      "listeningWith": "Nghe bằng {{model}}",
+      "models": "Mô hình"
+    },
+    "app": {
+      "appearance": "Giao diện",
+      "startup": "Khởi động",
+      "output": "Dán chữ vào app",
+      "about": "Về SpeakEase",
+      "credits": {
+        "title": "Dựa trên Handy",
+        "description": "SpeakEase được xây trên Handy của CJ Pais (giấy phép MIT) và chạy mô hình giọng nói bằng ggml.",
+        "button": "Handy trên GitHub"
       }
     }
   },
@@ -787,13 +842,28 @@
     "ai": {
       "title": "AI sửa câu",
       "off": "Không sửa",
-      "offHint": "Dán đúng như lời nói"
+      "offHint": "Dán đúng như lời nói",
+      "disabled": "AI tắt",
+      "disabledHint": "AI đang tắt nên không sửa câu, không dịch. Chữ dán ra đúng như lời bạn nói.",
+      "enable": "Bật AI"
     },
     "translate": {
       "title": "Dịch sang",
       "off": "Không dịch",
       "offHint": "Giữ ngôn ngữ bạn nói",
       "search": "Tìm ngôn ngữ…"
+    },
+    "moreSettings": "Cài đặt thêm…",
+    "orb": {
+      "start": "Bấm để bắt đầu nói",
+      "stop": "Đang nghe… bấm để dừng",
+      "working": "Đang chép lời…",
+      "orClick": "hoặc bấm vào micro"
+    },
+    "result": {
+      "title": "Bạn vừa nói",
+      "copy": "Sao chép",
+      "copied": "Đã chép"
     }
   }
 }
