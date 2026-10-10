@@ -31,7 +31,8 @@
     "recording": "Ghi âm",
     "recognition": "Nhận dạng",
     "app": "Ứng dụng",
-    "settingsGroup": "Cài đặt"
+    "settingsGroup": "Cài đặt",
+    "resize": "Kéo để đổi độ rộng · bấm đúp để về độ rộng mặc định"
   },
   "onboarding": {
     "subtitle": "Để bắt đầu, hãy chọn một mô hình chép lời",

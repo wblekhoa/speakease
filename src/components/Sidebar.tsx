@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlaskConical } from "lucide-react";
 import {
@@ -103,6 +103,11 @@ interface SidebarProps {
   onSectionChange: (section: SidebarSection) => void;
   collapsed: boolean;
   onToggleCollapsed: () => void;
+  /** The open column's width in px - the person's to drag. */
+  width: number;
+  /** A width per move while the edge is dragged, then `null` when the hand
+   * lets go (the moment to remember it); NaN asks for the default. */
+  onResize: (width: number | null) => void;
 }
 
 /** The Mac's window buttons sit in the column's first 72px (lib.rs: x 20,
@@ -118,9 +123,39 @@ export const Sidebar: React.FC<SidebarProps> = ({
   onSectionChange,
   collapsed,
   onToggleCollapsed,
+  width,
+  onResize,
 }) => {
   const { t } = useTranslation();
   const { settings } = useSettings();
+
+  /* The edge as a handle, as ReadEase has it: a strip over the hairline,
+     pointer-captured so the drag survives leaving it, the width reported
+     per move and the width transition held off while a hand is on it (a
+     column that eases after the cursor lags). Double-click puts the
+     default back. */
+  const [dragging, setDragging] = useState(false);
+  const onGripDown = (event: React.PointerEvent<HTMLDivElement>) => {
+    if (event.button !== 0) return;
+    event.preventDefault();
+    const grip = event.currentTarget;
+    const start = event.clientX;
+    const from = width;
+    grip.setPointerCapture(event.pointerId);
+    setDragging(true);
+    const move = (moved: PointerEvent) =>
+      onResize(from + moved.clientX - start);
+    const stop = () => {
+      grip.removeEventListener("pointermove", move);
+      grip.removeEventListener("pointerup", stop);
+      grip.removeEventListener("pointercancel", stop);
+      setDragging(false);
+      onResize(null);
+    };
+    grip.addEventListener("pointermove", move);
+    grip.addEventListener("pointerup", stop);
+    grip.addEventListener("pointercancel", stop);
+  };
 
   const availableSections = Object.entries(SECTIONS_CONFIG)
     .filter(([_, config]) => config.enabled(settings))
@@ -157,8 +192,28 @@ export const Sidebar: React.FC<SidebarProps> = ({
     // column of icons.
     <nav
       aria-label={t("sidebar.label", { defaultValue: "Sections" })}
-      className={`side-panel shrink-0 flex flex-col h-full ${collapsed ? "w-[76px]" : "w-52"}`}
+      className="side-panel relative shrink-0 flex flex-col h-full"
+      // Inline, to beat .side-panel's own transition (App.css, unlayered).
+      style={{
+        width: collapsed ? 76 : width,
+        transition: dragging ? "none" : undefined,
+      }}
     >
+      {!collapsed && (
+        <div
+          role="separator"
+          aria-orientation="vertical"
+          aria-label={t("sidebar.resize")}
+          title={t("sidebar.resize")}
+          onPointerDown={onGripDown}
+          onDoubleClick={() => {
+            onResize(Number.NaN);
+            onResize(null);
+          }}
+          data-dragging={dragging || undefined}
+          className="rail-grip absolute inset-y-0 -end-0.5 z-20 w-1.5 cursor-col-resize"
+        />
+      )}
       <div
         data-tauri-drag-region
         className={`flex h-[60px] shrink-0 items-center ${

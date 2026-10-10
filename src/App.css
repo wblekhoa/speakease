@@ -166,6 +166,17 @@ html.glass[data-onboarding-active] {
   backdrop-filter: blur(24px) saturate(1.4);
   transition: width 220ms cubic-bezier(0.2, 0, 0, 1);
 }
+/* The resize grip is invisible until the pointer finds it; then the
+   hairline it sits on darkens, and stays dark while dragging - the way
+   Finder says "this edge moves" (ReadEase's rule). */
+.side-panel:has(> .rail-grip:hover),
+.side-panel:has(> .rail-grip[data-dragging]) {
+  border-inline-end-color: color-mix(
+    in srgb,
+    var(--color-text) 35%,
+    transparent
+  );
+}
 @media (prefers-reduced-motion: reduce) {
   .side-panel {
     transition: none;

@@ -67,6 +67,17 @@ const FirstRunFrame = ({ children }: { children: ReactNode }) => (
 );
 
 const SIDEBAR_COLLAPSED_KEY = "speakease.sidebar.collapsed";
+const SIDEBAR_WIDTH_KEY = "speakease.sidebar.width";
+/** The open side column's width, the person's to drag (ReadEase's rule). */
+const SIDEBAR_DEFAULT_WIDTH = 208;
+const SIDEBAR_MIN_WIDTH = 180;
+const SIDEBAR_MAX_WIDTH = 320;
+const clampSidebarWidth = (width: number) =>
+  Number.isFinite(width)
+    ? Math.round(
+        Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, width)),
+      )
+    : SIDEBAR_DEFAULT_WIDTH;
 
 function App() {
   const { t, i18n } = useTranslation();
@@ -88,6 +99,31 @@ function App() {
       return false;
     }
   });
+  // Remembered when the hand lets go, not per move.
+  const [sidebarWidth, setSidebarWidth] = useState(() => {
+    try {
+      const stored = localStorage.getItem(SIDEBAR_WIDTH_KEY);
+      return stored === null
+        ? SIDEBAR_DEFAULT_WIDTH
+        : clampSidebarWidth(Number(stored));
+    } catch {
+      return SIDEBAR_DEFAULT_WIDTH;
+    }
+  });
+  const resizeSidebar = useCallback((width: number | null) => {
+    if (width === null) {
+      setSidebarWidth((current) => {
+        try {
+          localStorage.setItem(SIDEBAR_WIDTH_KEY, String(current));
+        } catch {
+          // private storage: the width just isn't remembered
+        }
+        return current;
+      });
+      return;
+    }
+    setSidebarWidth(clampSidebarWidth(width));
+  }, []);
   const toggleSidebar = useCallback(() => {
     setSidebarCollapsed((collapsed) => {
       try {
@@ -464,6 +500,8 @@ function App() {
           onSectionChange={setCurrentSection}
           collapsed={sidebarCollapsed}
           onToggleCollapsed={toggleSidebar}
+          width={sidebarWidth}
+          onResize={resizeSidebar}
         />
         <div className="app-ground flex-1 min-w-0 flex flex-col overflow-hidden">
           {/* The toolbar: the window's drag handle (the title bar is an
