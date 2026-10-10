@@ -55,9 +55,6 @@ export const RecognitionSettings: React.FC = () => {
         <h2 className="px-4 text-xs font-semibold text-mid-gray uppercase tracking-wide">
           {t("settings.recognition.models")}
         </h2>
-        <p className="px-4 text-xs text-mid-gray">
-          {t("settings.models.description")}
-        </p>
         <ModelsSettings />
       </section>
     </div>
