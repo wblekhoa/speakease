@@ -305,7 +305,8 @@
         "title": "Âm lượng",
         "description": "Độ lớn của tiếng báo"
       },
-      "defaultOutput": "Loa mặc định của máy"
+      "defaultOutput": "Loa mặc định của máy",
+      "previewTheme": "Nghe thử âm bắt đầu và kết thúc"
     },
     "advanced": {
       "groups": {
@@ -772,7 +773,8 @@
     "open": "Mở",
     "copy": "Sao chép",
     "clear": "Xóa hết",
-    "noOptionsFound": "Không tìm thấy tùy chọn"
+    "noOptionsFound": "Không tìm thấy tùy chọn",
+    "resetToDefault": "Đặt lại mặc định"
   },
   "accessibility": {
     "permissionsDescription": "SpeakEase cần quyền Trợ năng để dán chữ vừa chép vào ứng dụng.",

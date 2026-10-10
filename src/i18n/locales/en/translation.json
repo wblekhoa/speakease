@@ -305,7 +305,8 @@
         "title": "Volume",
         "description": "Adjust the volume of audio feedback sounds"
       },
-      "defaultOutput": "System default output"
+      "defaultOutput": "System default output",
+      "previewTheme": "Play the start and stop sounds"
     },
     "advanced": {
       "groups": {
@@ -775,7 +776,8 @@
     "open": "Open",
     "copy": "Copy",
     "clear": "Clear",
-    "noOptionsFound": "No options found"
+    "noOptionsFound": "No options found",
+    "resetToDefault": "Reset to default"
   },
   "accessibility": {
     "permissionsDescription": "SpeakEase needs accessibility permissions to type transcribed text.",

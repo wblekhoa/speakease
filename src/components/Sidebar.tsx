@@ -11,6 +11,7 @@ import {
   SidebarIcon,
 } from "./icons/bulk";
 import HandyTextLogo from "./icons/HandyTextLogo";
+import { IconTip } from "./ui/IconTip";
 import { useSettings } from "../hooks/useSettings";
 import {
   SpeakPage,
@@ -130,16 +131,17 @@ export const Sidebar: React.FC<SidebarProps> = ({
     : t("sidebar.collapse", { defaultValue: "Hide sidebar" });
 
   const toggle = (
-    <button
-      type="button"
-      onClick={onToggleCollapsed}
-      aria-label={toggleLabel}
-      aria-expanded={!collapsed}
-      title={toggleLabel}
-      className="p-1.5 rounded-lg text-mid-gray hover:text-text hover:bg-glass-hover transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-logo-primary"
-    >
-      <SidebarIcon />
-    </button>
+    <IconTip label={toggleLabel} side={collapsed ? "right" : "bottom"}>
+      <button
+        type="button"
+        onClick={onToggleCollapsed}
+        aria-label={toggleLabel}
+        aria-expanded={!collapsed}
+        className="p-1.5 rounded-lg text-mid-gray hover:text-text hover:bg-glass-hover transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-logo-primary"
+      >
+        <SidebarIcon />
+      </button>
+    </IconTip>
   );
 
   return (
@@ -193,7 +195,9 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 type="button"
                 aria-current={isActive ? "page" : undefined}
                 aria-label={collapsed ? label : undefined}
-                title={label}
+                // Folded, only the icon shows; the scroll box would clip an
+                // IconTip, so the native title names it.
+                title={collapsed ? label : undefined}
                 className={`flex gap-2.5 items-center py-2 w-full rounded-xl text-start cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary ${
                   collapsed ? "justify-center px-0" : "px-3"
                 } ${

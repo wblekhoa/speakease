@@ -26,13 +26,13 @@ import { useOsType } from "@/hooks/useOsType";
 import { useSettings } from "@/hooks/useSettings";
 import { AudioPlayer, AudioPlayerGroup } from "../../ui/AudioPlayer";
 import { Button } from "../../ui/Button";
+import { IconTip } from "../../ui/IconTip";
 import { SettingsGroup } from "../../ui/SettingsGroup";
 import { HistoryLimit } from "../HistoryLimit";
 import { RecordingRetentionPeriodSelector } from "../RecordingRetentionPeriod";
 import { copyToClipboard } from "./clipboard";
 
-/** An entry's action: an icon, named by a label that shows at once on
- * hover or keyboard focus (a native title takes a second and looks foreign). */
+/** An entry's action: an icon, named the moment it is reached (IconTip). */
 const IconButton: React.FC<{
   onClick: () => void;
   title: string;
@@ -40,7 +40,7 @@ const IconButton: React.FC<{
   active?: boolean;
   children: React.ReactNode;
 }> = ({ onClick, title, disabled, active, children }) => (
-  <span className="relative group/tip flex">
+  <IconTip label={title}>
     <button
       type="button"
       onClick={onClick}
@@ -54,13 +54,7 @@ const IconButton: React.FC<{
     >
       {children}
     </button>
-    <span
-      role="tooltip"
-      className="pointer-events-none absolute bottom-full left-1/2 z-20 mb-1.5 -translate-x-1/2 whitespace-nowrap rounded-md bg-text px-2 py-1 text-xs font-medium text-background opacity-0 shadow-lg transition-opacity delay-150 group-hover/tip:opacity-100 group-has-[:focus-visible]/tip:opacity-100"
-    >
-      {title}
-    </span>
-  </span>
+  </IconTip>
 );
 
 const PAGE_SIZE = 30;
@@ -83,16 +77,17 @@ const OpenRecordingsButton: React.FC<OpenRecordingsButtonProps> = ({
   onClick,
   label,
 }) => (
-  <Button
-    onClick={onClick}
-    variant="secondary"
-    size="sm"
-    className="h-9 w-9 grid place-items-center !px-0"
-    title={label}
-    aria-label={label}
-  >
-    <FolderOpenIcon width={16} height={16} />
-  </Button>
+  <IconTip label={label} align="end">
+    <Button
+      onClick={onClick}
+      variant="secondary"
+      size="sm"
+      className="h-9 w-9 grid place-items-center !px-0"
+      aria-label={label}
+    >
+      <FolderOpenIcon width={16} height={16} />
+    </Button>
+  </IconTip>
 );
 
 export const HistorySettings: React.FC = () => {

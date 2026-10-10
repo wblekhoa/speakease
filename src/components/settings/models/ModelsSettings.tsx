@@ -22,6 +22,7 @@ import { useSettingsStore } from "@/stores/settingsStore";
 import { vietnameseResult } from "@/lib/utils/vietnameseModels";
 import { pickModels } from "@/lib/utils/modelPicks";
 import { ModelPicks } from "./ModelPicks";
+import { IconTip } from "@/components/ui/IconTip";
 import { languageName } from "@/lib/utils/languageName";
 import type { ModelInfo } from "@/bindings";
 
@@ -330,49 +331,52 @@ export const ModelsSettings: React.FC = () => {
             </h2>
             <div className="flex items-center gap-2">
               {/* Rescan local sources for models added outside Handy */}
-              <button
-                type="button"
-                onClick={() => rescanLocalModels()}
-                disabled={isRescanning}
-                title={t("settings.models.rescan.tooltip")}
-                aria-label={t("settings.models.rescan.tooltip")}
-                className="flex items-center justify-center w-8 h-8 text-sm font-medium rounded-lg bg-mid-gray/10 text-text/60 hover:bg-mid-gray/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-              >
-                <RefreshCw
-                  className={`w-3.5 h-3.5 ${isRescanning ? "animate-spin" : ""}`}
-                />
-              </button>
+              <IconTip label={t("settings.models.rescan.tooltip")}>
+                <button
+                  type="button"
+                  onClick={() => rescanLocalModels()}
+                  disabled={isRescanning}
+                  aria-label={t("settings.models.rescan.tooltip")}
+                  className="flex items-center justify-center w-8 h-8 text-sm font-medium rounded-lg bg-mid-gray/10 text-text/60 hover:bg-mid-gray/20 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  <RefreshCw
+                    className={`w-3.5 h-3.5 ${isRescanning ? "animate-spin" : ""}`}
+                  />
+                </button>
+              </IconTip>
 
               {/* Vertical divider separating action from filters */}
               <div className="h-4 w-px bg-mid-gray/30 mx-0.5" />
-              <button
-                type="button"
-                onClick={() => setFilterStreaming((enabled) => !enabled)}
-                title={t("settings.models.filters.streaming")}
-                aria-label={t("settings.models.filters.streaming")}
-                aria-pressed={filterStreaming}
-                className={`flex items-center justify-center w-8 h-8 text-sm font-medium rounded-lg transition-colors ${
-                  filterStreaming
-                    ? "bg-logo-primary/20 text-logo-primary hover:bg-logo-primary/30"
-                    : "bg-mid-gray/10 text-text/60 hover:bg-mid-gray/20"
-                }`}
-              >
-                <AudioLines className="w-3.5 h-3.5" />
-              </button>
-              <button
-                type="button"
-                onClick={() => setFilterTranslation((enabled) => !enabled)}
-                title={t("settings.models.filters.translation")}
-                aria-label={t("settings.models.filters.translation")}
-                aria-pressed={filterTranslation}
-                className={`flex items-center justify-center w-8 h-8 text-sm font-medium rounded-lg transition-colors ${
-                  filterTranslation
-                    ? "bg-logo-primary/20 text-logo-primary hover:bg-logo-primary/30"
-                    : "bg-mid-gray/10 text-text/60 hover:bg-mid-gray/20"
-                }`}
-              >
-                <Languages className="w-3.5 h-3.5" />
-              </button>
+              <IconTip label={t("settings.models.filters.streaming")}>
+                <button
+                  type="button"
+                  onClick={() => setFilterStreaming((enabled) => !enabled)}
+                  aria-label={t("settings.models.filters.streaming")}
+                  aria-pressed={filterStreaming}
+                  className={`flex items-center justify-center w-8 h-8 text-sm font-medium rounded-lg transition-colors ${
+                    filterStreaming
+                      ? "bg-logo-primary/20 text-logo-primary hover:bg-logo-primary/30"
+                      : "bg-mid-gray/10 text-text/60 hover:bg-mid-gray/20"
+                  }`}
+                >
+                  <AudioLines className="w-3.5 h-3.5" />
+                </button>
+              </IconTip>
+              <IconTip label={t("settings.models.filters.translation")}>
+                <button
+                  type="button"
+                  onClick={() => setFilterTranslation((enabled) => !enabled)}
+                  aria-label={t("settings.models.filters.translation")}
+                  aria-pressed={filterTranslation}
+                  className={`flex items-center justify-center w-8 h-8 text-sm font-medium rounded-lg transition-colors ${
+                    filterTranslation
+                      ? "bg-logo-primary/20 text-logo-primary hover:bg-logo-primary/30"
+                      : "bg-mid-gray/10 text-text/60 hover:bg-mid-gray/20"
+                  }`}
+                >
+                  <Languages className="w-3.5 h-3.5" />
+                </button>
+              </IconTip>
               {/* Language filter dropdown */}
               <div className="relative" ref={languageDropdownRef}>
                 <button
