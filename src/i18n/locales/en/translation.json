@@ -797,7 +797,23 @@
     "modelLoadFailedUnknown": "unknown model",
     "pasteFailedTitle": "Failed to Paste Text",
     "pasteFailed": "Text could not be pasted into the active application.",
-    "transcriptionFailedTitle": "Transcription Failed"
+    "transcriptionFailedTitle": "Transcription Failed",
+    "transcription": {
+      "repetition": {
+        "title": "Couldn't make out what you said",
+        "description": "Try again, or set the language you speak on the Speak page. The recording is in History: re-transcribe it from there."
+      },
+      "noModel": {
+        "title": "No speech model is ready",
+        "description": "Choose or download one in Recognition.",
+        "action": "Open"
+      }
+    },
+    "aiSkipped": {
+      "title": "AI didn't run, so what you said was pasted as is",
+      "description": "Apple Intelligence may be unavailable, or the AI service or its key failed.",
+      "action": "Check AI"
+    }
   },
   "appLanguage": {
     "title": "Application Language",
@@ -868,7 +884,8 @@
       "title": "Listen for",
       "auto": "Detect the language",
       "autoShort": "Auto",
-      "viHint": "More accurate when you only speak Vietnamese"
+      "viHint": "More accurate when you only speak Vietnamese",
+      "autoTriesBoth": "Tries Vietnamese and English, remembers what you speak"
     },
     "ai": {
       "title": "AI cleanup",

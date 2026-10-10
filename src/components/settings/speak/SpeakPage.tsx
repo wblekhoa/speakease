@@ -475,7 +475,15 @@ export const SpeakPage: React.FC = () => {
                       onPick={() => updateSetting("selected_language", code)}
                       label={languageName(code)}
                       hint={
-                        code === "vi" ? t("speak.language.viHint") : undefined
+                        code === "vi"
+                          ? t("speak.language.viHint")
+                          : code === "auto" &&
+                              model &&
+                              !model.supports_language_detection
+                            ? // The model cannot tell; SpeakEase tries both
+                              // (transcription.rs languages_to_try).
+                              t("speak.language.autoTriesBoth")
+                            : undefined
                       }
                     />
                   ))}

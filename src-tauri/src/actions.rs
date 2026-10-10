@@ -412,9 +412,11 @@ pub(crate) async fn process_transcription_output(
     let mut post_process_prompt: Option<String> = None;
 
     if post_process {
-        if let Some(processed_text) =
-            post_process_transcription(&settings, &final_text, prompt_override).await
-        {
+        let processed = post_process_transcription(&settings, &final_text, prompt_override).await;
+        if processed.is_none() {
+            notify_ai_step_skipped(app, transcription);
+        }
+        if let Some(processed_text) = processed {
             post_processed_text = Some(processed_text.clone());
             final_text = processed_text;
 
@@ -471,6 +473,16 @@ fn translate_steps(settings: &AppSettings) -> Vec<String> {
 /// Runs the quick-setting prompts one after another. A step that yields
 /// nothing (AI unavailable, a refusal) is skipped and the text carries on,
 /// so the user always gets at least what they said.
+/// SpeakEase: tells the window that an AI step was asked for but gave
+/// nothing back (Apple Intelligence unavailable, a refusal, a provider or key
+/// error, no prompt chosen), so what was said is pasted as it is. Before,
+/// that happened silently and the missing cleanup looked like a bug.
+fn notify_ai_step_skipped(app: &AppHandle, transcription: &str) {
+    if !transcription.trim().is_empty() {
+        let _ = app.emit("ai-step-skipped", ());
+    }
+}
+
 async fn process_quick_steps(
     app: &AppHandle,
     transcription: &str,
@@ -479,11 +491,17 @@ async fn process_quick_steps(
     let settings = get_settings(app);
     let mut text = transcription.to_string();
     let mut last_prompt: Option<String> = None;
+    let mut skipped = false;
     for step in steps {
         if let Some(next) = post_process_transcription(&settings, &text, Some(step)).await {
             text = next;
             last_prompt = settings.prompt_text(step);
+        } else {
+            skipped = true;
         }
+    }
+    if skipped {
+        notify_ai_step_skipped(app, transcription);
     }
     let changed = last_prompt.is_some();
     ProcessedTranscription {

@@ -238,9 +238,48 @@ function App() {
   // Listen for transcription failures and show a toast.
   // The payload is the backend error message (also logged to handy.log).
   useEffect(() => {
+    // SpeakEase: what went wrong in words a person can act on; the engine's
+    // own message stays in handy.log and backs up anything not recognised.
     const unlisten = listen<string>("transcription-error", (event) => {
-      toast.error(t("errors.transcriptionFailedTitle"), {
-        description: event.payload,
+      const detail = event.payload ?? "";
+      const known = /repeat/i.test(detail)
+        ? "repetition"
+        : /not loaded|no model/i.test(detail)
+          ? "noModel"
+          : null;
+      toast.error(
+        known
+          ? t(`errors.transcription.${known}.title`)
+          : t("errors.transcriptionFailedTitle"),
+        {
+          description: known
+            ? t(`errors.transcription.${known}.description`)
+            : detail,
+          action:
+            known === "noModel"
+              ? {
+                  label: t("errors.transcription.noModel.action"),
+                  onClick: () => setCurrentSection("recognition"),
+                }
+              : undefined,
+        },
+      );
+    });
+    return () => {
+      unlisten.then((fn) => fn());
+    };
+  }, [t]);
+
+  // SpeakEase: an AI step was asked for but gave nothing back, so what was
+  // said went out as it is (actions.rs notify_ai_step_skipped).
+  useEffect(() => {
+    const unlisten = listen("ai-step-skipped", () => {
+      toast(t("errors.aiSkipped.title"), {
+        description: t("errors.aiSkipped.description"),
+        action: {
+          label: t("errors.aiSkipped.action"),
+          onClick: () => setCurrentSection("postprocessing"),
+        },
       });
     });
     return () => {

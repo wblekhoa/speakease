@@ -794,7 +794,23 @@
     "modelLoadFailedUnknown": "mô hình không xác định",
     "pasteFailedTitle": "Không dán được chữ",
     "pasteFailed": "Không dán được chữ vào ứng dụng đang mở.",
-    "transcriptionFailedTitle": "Chép lời thất bại"
+    "transcriptionFailedTitle": "Chép lời thất bại",
+    "transcription": {
+      "repetition": {
+        "title": "Chưa nghe rõ lời bạn nói",
+        "description": "Thử nói lại, hoặc chọn đúng ngôn ngữ bạn nói ở trang Nói. Bản ghi vẫn còn trong Lịch sử: bấm Nhận dạng lại ở đó."
+      },
+      "noModel": {
+        "title": "Chưa có mô hình nhận dạng nào sẵn sàng",
+        "description": "Chọn hoặc tải một mô hình ở trang Nhận dạng.",
+        "action": "Mở"
+      }
+    },
+    "aiSkipped": {
+      "title": "AI không chạy nên chữ được dán đúng như lời nói",
+      "description": "Có thể Apple Intelligence chưa sẵn sàng, hoặc dịch vụ AI hay khoá API bị lỗi.",
+      "action": "Kiểm tra AI"
+    }
   },
   "appLanguage": {
     "title": "Ngôn ngữ ứng dụng",
@@ -868,7 +884,8 @@
       "title": "Nghe tiếng",
       "auto": "Tự nhận ngôn ngữ",
       "autoShort": "Tự nhận",
-      "viHint": "Chính xác hơn khi bạn chỉ nói tiếng Việt"
+      "viHint": "Chính xác hơn khi bạn chỉ nói tiếng Việt",
+      "autoTriesBoth": "Thử tiếng Việt và tiếng Anh, nhớ thứ tiếng bạn nói"
     },
     "ai": {
       "title": "AI sửa câu",
