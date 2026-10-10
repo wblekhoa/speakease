@@ -1052,7 +1052,7 @@ selected_channel?: number | null; clamshell_microphone?: string | null; selected
  * prompt to tidy what was said (None = off) and a language to
  * translate it into (None = off). The Speak page sets them.
  */
-speakease_enhance_prompt_id?: string | null; speakease_translate_target?: string | null; speakease_translate_language?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
+speakease_enhance_prompt_id?: string | null; speakease_translate_target?: string | null; speakease_translate_language?: string | null; speakease_last_spoken_language?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
 /**
  * Debug-gated ("beta") receipt-sequenced paste: restore the clipboard only
  * after the target app actually reads the transcript, instead of after a

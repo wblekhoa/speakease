@@ -495,6 +495,11 @@ pub struct AppSettings {
     /// one is chosen, which reads as English (`translate_language`).
     #[serde(default)]
     pub speakease_translate_language: Option<String>,
+    /// The language a dictation last came out in when SpeakEase had to
+    /// choose it - the model cannot detect it and the intent is "auto"
+    /// (transcription.rs languages_to_try). Tried first next time.
+    #[serde(default)]
+    pub speakease_last_spoken_language: Option<String>,
     #[serde(default)]
     pub mute_while_recording: bool,
     #[serde(default)]
@@ -1116,6 +1121,7 @@ pub fn get_default_settings() -> AppSettings {
         speakease_enhance_prompt_id: None,
         speakease_translate_target: None,
         speakease_translate_language: None,
+        speakease_last_spoken_language: None,
         mute_while_recording: false,
         append_trailing_space: false,
         app_language: default_app_language(),

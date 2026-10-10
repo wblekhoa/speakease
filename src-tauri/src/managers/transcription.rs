@@ -1125,6 +1125,26 @@ impl TranscriptionManager {
         .emit(&self.app_handle);
     }
 
+    /// SpeakEase: keeps the language a dictation came out in, so the next
+    /// one tries it first (languages_to_try).
+    fn remember_spoken_language(&self, language: &str) {
+        let mut settings = get_settings(&self.app_handle);
+        if settings.speakease_last_spoken_language.as_deref() != Some(language) {
+            settings.speakease_last_spoken_language = Some(language.to_string());
+            crate::settings::write_settings(&self.app_handle, settings);
+            // The store saves on a short delay; save now, so a quit (or the
+            // CLI exiting) right after this dictation does not lose it.
+            use tauri_plugin_store::StoreExt;
+            if let Ok(store) = self.app_handle.store(crate::portable::store_path(
+                crate::settings::SETTINGS_STORE_PATH,
+            )) {
+                if let Err(err) = store.save() {
+                    warn!("Could not save the last spoken language: {err}");
+                }
+            }
+        }
+    }
+
     pub fn transcribe(&self, audio: Vec<f32>) -> Result<String> {
         #[cfg(debug_assertions)]
         if std::env::var("HANDY_FORCE_TRANSCRIPTION_FAILURE").is_ok() {
@@ -1185,12 +1205,61 @@ impl TranscriptionManager {
             );
         }
 
+        // SpeakEase: with "auto" and a model that cannot detect the language,
+        // forcing one language turned Vietnamese speech into a failed English
+        // run - every retry too. Vietnamese and English are tried in turn
+        // instead, the one that last worked first.
+        let languages = match self.model_manager.get_model_info(&active_model) {
+            Some(info) => languages_to_try(
+                &settings.selected_language,
+                &info.supported_languages,
+                info.supports_language_detection,
+                &validated_language,
+                settings.speakease_last_spoken_language.as_deref(),
+                &settings.app_language,
+            ),
+            None => vec![validated_language.clone()],
+        };
+
         // Perform transcription with the appropriate engine.
-        let run = match self.engine.loaded() {
-            Some(info) => {
-                self.transcribe_cpp(info, audio, &settings, &validated_language, &active_model)?
+        let mut audio = audio;
+        let mut attempt = 0;
+        let run = loop {
+            let language = &languages[attempt];
+            let last = attempt + 1 == languages.len();
+            let result = match self.engine.loaded() {
+                Some(info) => {
+                    // The engine takes the samples; keep a copy while another
+                    // language may still be needed.
+                    let samples = if last {
+                        std::mem::take(&mut audio)
+                    } else {
+                        audio.clone()
+                    };
+                    self.transcribe_cpp(info, samples, &settings, language, &active_model)
+                }
+                None => self.transcribe_onnx(&audio, &settings, language, &active_model),
+            };
+            let cancelled = matches!(&result, Err(err) if err.chain().any(|cause| {
+                matches!(cause.downcast_ref::<EngineError>(), Some(EngineError::Cancelled))
+            }));
+            let usable = matches!(&result, Ok(run) if !run.text.trim().is_empty());
+            if usable || last || cancelled {
+                if usable && languages.len() > 1 {
+                    self.remember_spoken_language(language);
+                }
+                break result?;
             }
-            None => self.transcribe_onnx(&audio, &settings, &validated_language, &active_model)?,
+            warn!(
+                "Transcription in '{}' gave nothing usable ({}); trying '{}'",
+                language,
+                match &result {
+                    Err(err) => format!("{err:#}"),
+                    Ok(_) => "empty text".to_string(),
+                },
+                languages[attempt + 1]
+            );
+            attempt += 1;
         };
 
         let output_language = with_model_detected_language(
@@ -1648,6 +1717,42 @@ fn real_time_factor(audio_secs: f64, compute_secs: f64) -> f64 {
 
 /// Resolve the persisted language intent into the language a specific model can
 /// use without writing the coerced value back to settings.
+/// SpeakEase: the languages to try, in order, for one run. One - the resolved
+/// language - unless the intent is "auto" and the model cannot detect the
+/// language; then SpeakEase's two languages the model knows, ordered by the
+/// one that last worked, then the interface's, then Vietnamese first.
+pub(crate) fn languages_to_try(
+    intent: &str,
+    supported: &[String],
+    detects: bool,
+    resolved: &str,
+    last_spoken: Option<&str>,
+    ui_language: &str,
+) -> Vec<String> {
+    if intent != "auto" || detects {
+        return vec![resolved.to_string()];
+    }
+    let base = |code: &str| code.split(['-', '_']).next().unwrap_or(code).to_lowercase();
+    let mut order: Vec<String> = Vec::new();
+    for wanted in [last_spoken, Some(ui_language), Some("vi"), Some("en")]
+        .into_iter()
+        .flatten()
+        .map(base)
+        .filter(|code| code == "vi" || code == "en")
+    {
+        if let Some(language) = supported.iter().find(|l| base(l) == wanted) {
+            if !order.contains(language) {
+                order.push(language.clone());
+            }
+        }
+    }
+    if order.is_empty() {
+        vec![resolved.to_string()]
+    } else {
+        order
+    }
+}
+
 fn effective_language_for_model(
     settings: &AppSettings,
     model_manager: &ModelManager,
@@ -2139,6 +2244,41 @@ pub fn get_available_accelerators(tm: &TranscriptionManager) -> AvailableAcceler
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn auto_without_detection_tries_both_languages_last_good_first() {
+        let cohere: Vec<String> = ["en", "fr", "de", "vi", "ja"].map(String::from).to_vec();
+        let try_ = |last: Option<&str>, ui: &str| {
+            super::languages_to_try("auto", &cohere, false, "en", last, ui)
+        };
+        // The interface's language first, then the other one.
+        assert_eq!(try_(None, "en"), ["en", "vi"]);
+        assert_eq!(try_(None, "vi"), ["vi", "en"]);
+        // What worked last time beats the interface.
+        assert_eq!(try_(Some("vi"), "en"), ["vi", "en"]);
+        // Only SpeakEase's two languages are ever tried.
+        assert_eq!(try_(Some("fr"), "en"), ["en", "vi"]);
+    }
+
+    #[test]
+    fn a_chosen_language_or_a_detecting_model_runs_once() {
+        let langs: Vec<String> = ["en", "vi"].map(String::from).to_vec();
+        assert_eq!(
+            super::languages_to_try("vi", &langs, false, "vi", Some("en"), "en"),
+            ["vi"]
+        );
+        assert_eq!(
+            super::languages_to_try("auto", &langs, true, "auto", Some("vi"), "en"),
+            ["auto"]
+        );
+        // A model with neither language keeps the resolved one.
+        let ja: Vec<String> = vec!["ja".into()];
+        assert_eq!(
+            super::languages_to_try("auto", &ja, false, "ja", None, "vi"),
+            ["ja"]
+        );
+    }
+
     use super::*;
 
     fn languages(codes: &[&str]) -> Vec<String> {
