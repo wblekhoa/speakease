@@ -198,8 +198,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
                 // Folded, only the icon shows; the scroll box would clip an
                 // IconTip, so the native title names it.
                 title={collapsed ? label : undefined}
-                className={`flex gap-2.5 items-center py-2 w-full rounded-xl text-start cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary ${
-                  collapsed ? "justify-center px-0" : "px-3"
+                className={`flex gap-2.5 items-center rounded-xl text-start cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary ${
+                  // Folded, each section is a square key around its icon.
+                  collapsed
+                    ? "size-11 shrink-0 self-center justify-center"
+                    : "w-full py-2 px-3"
                 } ${
                   isActive
                     ? "bg-glass-chosen text-text"
