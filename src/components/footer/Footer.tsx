@@ -2,6 +2,7 @@ import React, { useState, useEffect } from "react";
 import { getVersion } from "@tauri-apps/api/app";
 
 import ModelSelector from "../model-selector";
+import UpdateChecker from "../update-checker";
 
 const Footer: React.FC = () => {
   const [version, setVersion] = useState("");
@@ -26,12 +27,17 @@ const Footer: React.FC = () => {
           <ModelSelector />
         </div>
 
-        {/* SpeakEase updates by hand (the updater is off, settings.rs
-            update_checks_forced_disabled), so only the version shows. */}
-        {version && (
-          // eslint-disable-next-line i18next/no-literal-string
-          <span>v{version}</span>
-        )}
+        {/* Update status (SpeakEase's own releases), then the version. */}
+        <div className="flex items-center gap-1">
+          <UpdateChecker />
+          {version && (
+            <>
+              <span>•</span>
+              {/* eslint-disable-next-line i18next/no-literal-string */}
+              <span>v{version}</span>
+            </>
+          )}
+        </div>
       </div>
     </div>
   );

@@ -188,7 +188,49 @@ fn should_force_show_permissions_window(app: &AppHandle) -> bool {
     false
 }
 
+/// SpeakEase: "Check for Updates…" in the app menu, under About, as Mac apps
+/// have it. Same event as the tray item (UpdateChecker.tsx listens). Not
+/// added when packaging turned the updater off.
+#[cfg(target_os = "macos")]
+fn install_app_menu(app: &AppHandle) {
+    use tauri::menu::{Menu, MenuItem, MenuItemKind};
+    if settings::update_checks_forced_disabled() {
+        return;
+    }
+    let language = settings::get_settings(app).app_language;
+    let strings = crate::tray_i18n::get_tray_translations(Some(language));
+    let Ok(menu) = Menu::default(app) else {
+        return;
+    };
+    if let Ok(items) = menu.items() {
+        if let Some(MenuItemKind::Submenu(app_menu)) = items.first() {
+            if let Ok(item) = MenuItem::with_id(
+                app,
+                "app_check_updates",
+                &strings.check_updates,
+                true,
+                None::<&str>,
+            ) {
+                let _ = app_menu.insert(&item, 1);
+            }
+        }
+    }
+    if let Err(err) = app.set_menu(menu) {
+        log::warn!("Could not set the app menu: {err}");
+        return;
+    }
+    app.on_menu_event(|app, event| {
+        if event.id().as_ref() == "app_check_updates" {
+            show_main_window(app);
+            let _ = app.emit("check-for-updates", ());
+        }
+    });
+}
+
 fn initialize_core_logic(app_handle: &AppHandle) {
+    #[cfg(target_os = "macos")]
+    install_app_menu(app_handle);
+
     // Note: Enigo (keyboard/mouse simulation) is NOT initialized here.
     // The frontend is responsible for calling the `initialize_enigo` command
     // after onboarding completes. This avoids triggering permission dialogs

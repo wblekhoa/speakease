@@ -1468,8 +1468,9 @@ fn apply_settings_migrations(
 pub fn update_checks_forced_disabled() -> bool {
     use std::sync::OnceLock;
     static IS_UPDATER_DISABLED: OnceLock<bool> = OnceLock::new();
-    // SpeakEase fork: upstream's update feed would replace this app with Handy.
-    *IS_UPDATER_DISABLED.get_or_init(|| true)
+    // SpeakEase updates from its own releases (tauri.conf.json plugins.updater),
+    // so only the packaging flag turns it off, as upstream.
+    *IS_UPDATER_DISABLED.get_or_init(|| crate::utils::env_flag_enabled("HANDY_DISABLE_UPDATER"))
 }
 
 /// Effective updater state: the user's stored preference, overridden to `false`

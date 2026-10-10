@@ -764,7 +764,8 @@
     "portableUpdateMessage": "Bản di động không tự cập nhật được. Hãy tải trình cài đặt cho máy bạn bên dưới, chạy nó và cài vào đúng thư mục cũ — thư mục Data/ (cài đặt, mô hình, bản ghi âm) được giữ nguyên.",
     "portableUpdateButton": "Tải trình cài đặt",
     "portableUpdateBrowseMessage": "Bản di động không tự cập nhật được. Hãy tải bản mới nhất cho máy bạn từ GitHub Releases và cài vào đúng thư mục cũ — thư mục Data/ (cài đặt, mô hình, bản ghi âm) được giữ nguyên.",
-    "portableUpdateBrowseButton": "Mở GitHub Releases"
+    "portableUpdateBrowseButton": "Mở GitHub Releases",
+    "checkFailed": "Không kiểm tra được bản mới. Kiểm tra kết nối mạng rồi thử lại."
   },
   "common": {
     "loading": "Đang tải…",

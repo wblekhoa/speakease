@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { check } from "@tauri-apps/plugin-updater";
 import { relaunch } from "@tauri-apps/plugin-process";
 import { listen } from "@tauri-apps/api/event";
+import { toast } from "sonner";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { arch, platform } from "@tauri-apps/plugin-os";
 import { ProgressBar } from "../shared";
@@ -107,6 +108,11 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({ className = "" }) => {
       }
     } catch (error) {
       console.error("Failed to check for updates:", error);
+      // SpeakEase: a check someone asked for answers even when it fails,
+      // instead of doing nothing (offline, GitHub unreachable).
+      if (isManualCheckRef.current) {
+        toast.error(t("footer.checkFailed"));
+      }
     } finally {
       setIsChecking(false);
       isManualCheckRef.current = false;

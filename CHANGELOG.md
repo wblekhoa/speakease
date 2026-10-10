@@ -21,5 +21,7 @@ The first version of SpeakEase, on top of Handy at `f6b3f82`.
 - **History**: search, counters, one card per dictation with the original
   under the AI version, playback and re-transcription.
 - **Tray menu**: listening language, model, AI cleanup and translation.
-- Removed what only made sense for Handy: its updater (SpeakEase is updated by
-  hand), donation links, and the update controls.
+- **Updates from SpeakEase's own releases**: Check for Updates… in the app
+  menu and the tray, an automatic check that can be switched off in App, and
+  updates signed with SpeakEase's own key (Handy's feed is gone).
+- Removed what only made sense for Handy: donation links and its update feed.

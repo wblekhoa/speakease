@@ -22,6 +22,7 @@ import { AccelerationSelector } from "../AccelerationSelector";
 import { LazyStreamClose } from "../LazyStreamClose";
 import { VadBackendSelector } from "../VadBackendSelector";
 import { AppDataDirectory } from "../AppDataDirectory";
+import { UpdateChecksToggle } from "../UpdateChecksToggle";
 import { LogDirectory } from "../debug";
 
 /** SpeakEase is built on Handy; its MIT licence asks for the credit. */
@@ -85,6 +86,7 @@ export const AppSettings: React.FC = () => {
             <span className="text-sm font-mono">v{version}</span>
           )}
         </SettingContainer>
+        <UpdateChecksToggle descriptionMode="tooltip" grouped />
         <AppDataDirectory descriptionMode="tooltip" grouped />
         <LogDirectory grouped />
         <SettingContainer

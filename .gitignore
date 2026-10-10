@@ -45,3 +45,6 @@ result
 
 # Python bytecode (scripts/)
 __pycache__/
+
+# scripts/release-mac.sh output
+/release
