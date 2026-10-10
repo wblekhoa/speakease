@@ -1230,6 +1230,7 @@ mod tests {
         Duration::from_millis(n)
     }
 
+    // SE-REC-001
     /// Hold-or-toggle: a key held past the threshold is push-to-talk — the
     /// (deferred) release stops recording.
     #[test]
@@ -1250,6 +1251,7 @@ mod tests {
         assert_eq!(state.stage, Stage::Processing);
     }
 
+    // SE-REC-002
     /// Hold-or-toggle: a tap keeps recording (locked on); the next press stops.
     #[test]
     fn hold_or_toggle_tap_locks_recording_until_next_press() {

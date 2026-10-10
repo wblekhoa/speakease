@@ -13,6 +13,7 @@ const models = (catalog as unknown as ModelInfo[]).filter(
 const names = (language: string) =>
   pickModels(models, language).map((pick) => `${pick.kind}:${pick.model.name}`);
 
+// SE-REC-006
 // Vietnamese: measured models only, best by word errors first.
 const vi = pickModels(models, "vi");
 assert.equal(vi[0].kind, "best");
@@ -41,6 +42,7 @@ assert.ok(
   ),
 );
 
+// SE-REC-007
 // No language chosen: nothing to suggest.
 assert.deepEqual(pickModels(models, "all"), []);
 

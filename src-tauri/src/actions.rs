@@ -473,6 +473,7 @@ fn translate_steps(settings: &AppSettings) -> Vec<String> {
 /// Runs the quick-setting prompts one after another. A step that yields
 /// nothing (AI unavailable, a refusal) is skipped and the text carries on,
 /// so the user always gets at least what they said.
+// SE-AI-003
 /// SpeakEase: tells the window that an AI step was asked for but gave
 /// nothing back (Apple Intelligence unavailable, a refusal, a provider or key
 /// error, no prompt chosen), so what was said is pasted as it is. Before,
@@ -1132,6 +1133,7 @@ mod tests {
 mod speakease_tests {
     use super::*;
 
+    // SE-AI-001
     #[test]
     fn a_fenced_template_gets_a_fenced_transcript() {
         let fenced = "<transcript>\n${output}\n</transcript>\nClean it.";
@@ -1142,6 +1144,7 @@ mod speakease_tests {
         assert_eq!(wrap_for_prompt("Clean it.", "xin chào"), "xin chào");
     }
 
+    // SE-AI-004
     #[test]
     fn quick_steps_tidy_before_they_translate() {
         let mut settings = crate::settings::get_default_settings();
@@ -1161,6 +1164,7 @@ mod speakease_tests {
         assert_eq!(quick_steps(&settings), ["speakease_translate_en"]);
     }
 
+    // SE-AI-005
     #[test]
     fn switching_ai_off_stops_the_speak_page_steps_too() {
         let mut settings = crate::settings::get_default_settings();
@@ -1172,6 +1176,7 @@ mod speakease_tests {
         assert!(translate_steps(&settings).is_empty());
     }
 
+    // SE-AI-006
     #[test]
     fn the_translate_shortcut_follows_the_translate_language() {
         let mut settings = crate::settings::get_default_settings();
@@ -1187,6 +1192,7 @@ mod speakease_tests {
         assert!(quick_steps(&settings).is_empty());
     }
 
+    // SE-AI-002
     #[test]
     fn canned_refusals_are_not_pasted_but_real_text_is() {
         assert!(is_model_refusal("Unable to work with that request."));

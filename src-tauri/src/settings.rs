@@ -1201,6 +1201,7 @@ impl AppSettings {
             .unwrap_or_else(|| "English".to_string())
     }
 
+    // SE-AI-010
     /// Turns the main shortcut's translation on (into `target`) or off. A
     /// target also becomes the translate language, and switches off the
     /// model's own translation into English, which would translate the
@@ -1537,6 +1538,7 @@ mod tests {
             .any(|prompt| prompt.id == id)
     }
 
+    // SE-AI-008
     #[test]
     fn a_handy_era_store_adopts_the_speakease_prompts_once() {
         let mut settings = handy_era_settings();
@@ -1577,6 +1579,7 @@ mod tests {
         assert!(!adopt_speakease_prompts(&mut settings));
     }
 
+    // SE-AI-008
     #[test]
     fn later_choices_survive_and_only_the_translate_prompt_comes_back() {
         let mut settings = handy_era_settings();
@@ -1594,6 +1597,7 @@ mod tests {
         assert_eq!(settings.history_limit, 5);
     }
 
+    // SE-AI-009
     #[test]
     fn a_provider_with_a_key_is_kept() {
         let mut settings = handy_era_settings();
@@ -1604,6 +1608,7 @@ mod tests {
         assert_eq!(settings.post_process_provider_id, "openai");
     }
 
+    // SE-AI-004
     #[test]
     fn a_second_leg_exists_for_any_target() {
         let settings = get_default_settings();
@@ -1632,6 +1637,7 @@ mod tests {
         }
     }
 
+    // SE-AI-007
     #[test]
     fn the_translate_shortcut_is_a_default_post_process_binding() {
         let settings = get_default_settings();

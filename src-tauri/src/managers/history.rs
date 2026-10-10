@@ -752,6 +752,7 @@ mod speakease_tests {
         conn
     }
 
+    // SE-HIST-001
     #[test]
     fn search_folds_vietnamese_case_and_needs_every_word() {
         let conn = conn_with(&[
@@ -767,6 +768,7 @@ mod speakease_tests {
         assert_eq!(search_in(&conn, "báo chợ").unwrap().len(), 0);
     }
 
+    // SE-HIST-002
     #[test]
     fn stats_count_the_text_the_user_got() {
         let conn = conn_with(&[("ờ một hai ba", Some("Một, hai, ba.")), ("bốn năm", None)]);

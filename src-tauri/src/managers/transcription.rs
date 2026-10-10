@@ -1125,6 +1125,7 @@ impl TranscriptionManager {
         .emit(&self.app_handle);
     }
 
+    // SE-REC-005
     /// SpeakEase: keeps the language a dictation came out in, so the next
     /// one tries it first (languages_to_try).
     fn remember_spoken_language(&self, language: &str) {
@@ -2245,6 +2246,7 @@ pub fn get_available_accelerators(tm: &TranscriptionManager) -> AvailableAcceler
 #[cfg(test)]
 mod tests {
 
+    // SE-REC-003
     #[test]
     fn auto_without_detection_tries_both_languages_last_good_first() {
         let cohere: Vec<String> = ["en", "fr", "de", "vi", "ja"].map(String::from).to_vec();
@@ -2260,6 +2262,7 @@ mod tests {
         assert_eq!(try_(Some("fr"), "en"), ["en", "vi"]);
     }
 
+    // SE-REC-004
     #[test]
     fn a_chosen_language_or_a_detecting_model_runs_once() {
         let langs: Vec<String> = ["en", "vi"].map(String::from).to_vec();

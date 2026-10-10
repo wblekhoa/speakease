@@ -516,6 +516,7 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
     { hour: "2-digit", minute: "2-digit" },
   );
 
+  // SE-HIST-003
   const endsOnOriginal = Boolean(aiText) && !retrying && !listening;
 
   return (
