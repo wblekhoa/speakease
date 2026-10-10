@@ -6,7 +6,7 @@ import {
   CopyIcon,
   FolderOpenIcon,
   ReadingSettingsIcon,
-  RotateLeftIcon,
+  RefreshArrowIcon,
   SearchIcon,
   SpeakerIcon,
   StarIcon,
@@ -579,7 +579,7 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
                   : undefined
               }
             >
-              <RotateLeftIcon width={18} height={18} />
+              <RefreshArrowIcon width={18} height={18} />
             </span>
           </IconButton>
           <IconButton
