@@ -32,7 +32,8 @@
     "recognition": "Recognition",
     "app": "App",
     "settingsGroup": "Settings",
-    "resize": "Drag to resize · double-click for the default width"
+    "resize": "Drag to resize, or drag in to fold · double-click for the default width",
+    "unfoldDrag": "Drag out to open the sidebar · double-click to open it"
   },
   "onboarding": {
     "subtitle": "To get started, choose a transcription model",

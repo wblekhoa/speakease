@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlaskConical } from "lucide-react";
 import {
@@ -13,6 +13,10 @@ import {
 import HandyTextLogo from "./icons/HandyTextLogo";
 import { IconTip } from "./ui/IconTip";
 import { useSettings } from "../hooks/useSettings";
+import {
+  SIDEBAR_FOLDED_WIDTH,
+  sidebarDrag,
+} from "../lib/utils/sidebarWidth";
 import {
   SpeakPage,
   HistorySettings,
@@ -102,7 +106,8 @@ interface SidebarProps {
   activeSection: SidebarSection;
   onSectionChange: (section: SidebarSection) => void;
   collapsed: boolean;
-  onToggleCollapsed: () => void;
+  /** Fold (true) or open the column: its switch, or a drag on its edge. */
+  onFold: (folded: boolean) => void;
   /** The open column's width in px - the person's to drag. */
   width: number;
   /** A width per move while the edge is dragged, then `null` when the hand
@@ -122,7 +127,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   activeSection,
   onSectionChange,
   collapsed,
-  onToggleCollapsed,
+  onFold,
   width,
   onResize,
 }) => {
@@ -132,24 +137,43 @@ export const Sidebar: React.FC<SidebarProps> = ({
   /* The edge as a handle, as ReadEase has it: a strip over the hairline,
      pointer-captured so the drag survives leaving it, the width reported
      per move and the width transition held off while a hand is on it (a
-     column that eases after the cursor lags). Double-click puts the
-     default back. */
+     column that eases after the cursor lags). The same edge folds and
+     unfolds the column, Finder's way (lib/utils/sidebarWidth.ts): the
+     snap itself, and the settle when the hand lets go, do ease. Double-
+     click puts the default width back, or opens a folded column. */
   const [dragging, setDragging] = useState(false);
+  /** The width drawn mid-drag, rubber band included; null otherwise. */
+  const [shown, setShown] = useState<number | null>(null);
+  /** True for one transition after a mid-drag fold or unfold. */
+  const [snapping, setSnapping] = useState(false);
+  const snapTimer = useRef<number | undefined>(undefined);
   const onGripDown = (event: React.PointerEvent<HTMLDivElement>) => {
     if (event.button !== 0) return;
     event.preventDefault();
     const grip = event.currentTarget;
     const start = event.clientX;
-    const from = width;
+    const from = collapsed ? SIDEBAR_FOLDED_WIDTH : width;
+    let folded = collapsed;
     grip.setPointerCapture(event.pointerId);
     setDragging(true);
-    const move = (moved: PointerEvent) =>
-      onResize(from + moved.clientX - start);
+    const move = (moved: PointerEvent) => {
+      const drag = sidebarDrag(from + moved.clientX - start);
+      if (drag.folded !== folded) {
+        folded = drag.folded;
+        onFold(folded);
+        setSnapping(true);
+        window.clearTimeout(snapTimer.current);
+        snapTimer.current = window.setTimeout(() => setSnapping(false), 240);
+      }
+      if (!drag.folded) onResize(drag.settled);
+      setShown(drag.folded ? null : drag.shown);
+    };
     const stop = () => {
       grip.removeEventListener("pointermove", move);
       grip.removeEventListener("pointerup", stop);
       grip.removeEventListener("pointercancel", stop);
       setDragging(false);
+      setShown(null);
       onResize(null);
     };
     grip.addEventListener("pointermove", move);
@@ -165,11 +189,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
     ? t("sidebar.expand", { defaultValue: "Show sidebar" })
     : t("sidebar.collapse", { defaultValue: "Hide sidebar" });
 
+  const gripLabel = collapsed ? t("sidebar.unfoldDrag") : t("sidebar.resize");
+
   const toggle = (
     <IconTip label={toggleLabel} side={collapsed ? "right" : "bottom"}>
       <button
         type="button"
-        onClick={onToggleCollapsed}
+        onClick={() => onFold(!collapsed)}
         aria-label={toggleLabel}
         aria-expanded={!collapsed}
         className={`text-mid-gray hover:text-text hover:bg-glass-hover transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-logo-primary ${
@@ -195,25 +221,27 @@ export const Sidebar: React.FC<SidebarProps> = ({
       className="side-panel relative shrink-0 flex flex-col h-full"
       // Inline, to beat .side-panel's own transition (App.css, unlayered).
       style={{
-        width: collapsed ? 76 : width,
-        transition: dragging ? "none" : undefined,
+        width: collapsed ? SIDEBAR_FOLDED_WIDTH : (shown ?? width),
+        transition: dragging && !snapping ? "none" : undefined,
       }}
     >
-      {!collapsed && (
-        <div
-          role="separator"
-          aria-orientation="vertical"
-          aria-label={t("sidebar.resize")}
-          title={t("sidebar.resize")}
-          onPointerDown={onGripDown}
-          onDoubleClick={() => {
-            onResize(Number.NaN);
-            onResize(null);
-          }}
-          data-dragging={dragging || undefined}
-          className="rail-grip absolute inset-y-0 -end-0.5 z-20 w-1.5 cursor-col-resize"
-        />
-      )}
+      <div
+        role="separator"
+        aria-orientation="vertical"
+        aria-label={gripLabel}
+        title={gripLabel}
+        onPointerDown={onGripDown}
+        onDoubleClick={() => {
+          if (collapsed) {
+            onFold(false);
+            return;
+          }
+          onResize(Number.NaN);
+          onResize(null);
+        }}
+        data-dragging={dragging || undefined}
+        className="rail-grip absolute inset-y-0 -end-0.5 z-20 w-1.5 cursor-col-resize"
+      />
       <div
         data-tauri-drag-region
         className={`flex h-[60px] shrink-0 items-center ${

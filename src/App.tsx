@@ -37,6 +37,10 @@ import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
 import { commands } from "@/bindings";
 import { getLanguageDirection, initializeRTL } from "@/lib/utils/rtl";
+import {
+  SIDEBAR_DEFAULT_WIDTH,
+  clampSidebarWidth,
+} from "@/lib/utils/sidebarWidth";
 
 type OnboardingStep = "accessibility" | "model" | "done";
 
@@ -68,17 +72,6 @@ const FirstRunFrame = ({ children }: { children: ReactNode }) => (
 
 const SIDEBAR_COLLAPSED_KEY = "speakease.sidebar.collapsed";
 const SIDEBAR_WIDTH_KEY = "speakease.sidebar.width";
-/** The open side column's width, the person's to drag (ReadEase's rule). */
-const SIDEBAR_DEFAULT_WIDTH = 208;
-const SIDEBAR_MIN_WIDTH = 180;
-const SIDEBAR_MAX_WIDTH = 320;
-const clampSidebarWidth = (width: number) =>
-  Number.isFinite(width)
-    ? Math.round(
-        Math.min(SIDEBAR_MAX_WIDTH, Math.max(SIDEBAR_MIN_WIDTH, width)),
-      )
-    : SIDEBAR_DEFAULT_WIDTH;
-
 function App() {
   const { t, i18n } = useTranslation();
   const [onboardingStep, setOnboardingStep] = useState<OnboardingStep | null>(
@@ -124,15 +117,14 @@ function App() {
     }
     setSidebarWidth(clampSidebarWidth(width));
   }, []);
-  const toggleSidebar = useCallback(() => {
-    setSidebarCollapsed((collapsed) => {
-      try {
-        localStorage.setItem(SIDEBAR_COLLAPSED_KEY, collapsed ? "0" : "1");
-      } catch {
-        // private storage: the fold just isn't remembered
-      }
-      return !collapsed;
-    });
+  // The switch and a drag on the column's edge both fold it.
+  const foldSidebar = useCallback((folded: boolean) => {
+    setSidebarCollapsed(folded);
+    try {
+      localStorage.setItem(SIDEBAR_COLLAPSED_KEY, folded ? "1" : "0");
+    } catch {
+      // private storage: the fold just isn't remembered
+    }
   }, []);
   const { settings, updateSetting } = useSettings();
   const direction = getLanguageDirection(i18n.language);
@@ -499,7 +491,7 @@ function App() {
           activeSection={currentSection}
           onSectionChange={setCurrentSection}
           collapsed={sidebarCollapsed}
-          onToggleCollapsed={toggleSidebar}
+          onFold={foldSidebar}
           width={sidebarWidth}
           onResize={resizeSidebar}
         />

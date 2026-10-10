@@ -32,7 +32,8 @@
     "recognition": "Nhận dạng",
     "app": "Ứng dụng",
     "settingsGroup": "Cài đặt",
-    "resize": "Kéo để đổi độ rộng · bấm đúp để về độ rộng mặc định"
+    "resize": "Kéo để đổi độ rộng, kéo hẳn vào để thu gọn · bấm đúp để về độ rộng mặc định",
+    "unfoldDrag": "Kéo ra để mở thanh bên · bấm đúp để mở"
   },
   "onboarding": {
     "subtitle": "Để bắt đầu, hãy chọn một mô hình chép lời",
