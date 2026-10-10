@@ -516,9 +516,17 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
     { hour: "2-digit", minute: "2-digit" },
   );
 
+  const endsOnOriginal = Boolean(aiText) && !retrying && !listening;
+
   return (
     // One card per dictation: when, what it became, and what was said.
-    <div className="group rounded-2xl border border-hairline bg-surface px-4 py-3 flex flex-col gap-2 transition-colors hover:border-mid-gray/40">
+    <div
+      className={`group rounded-2xl border border-hairline bg-surface px-4 pt-3 flex flex-col gap-2 transition-colors hover:border-mid-gray/40 ${
+        // A card that ends on the inset "original" box keeps the same 16px
+        // around that box below as beside it; text ends on the usual 12px.
+        endsOnOriginal ? "pb-4" : "pb-3"
+      }`}
+    >
       <div className="flex items-center gap-2">
         <span className="text-xs text-mid-gray tabular-nums">{time}</span>
         {promptName && (

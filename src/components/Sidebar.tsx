@@ -13,10 +13,7 @@ import {
 import HandyTextLogo from "./icons/HandyTextLogo";
 import { IconTip } from "./ui/IconTip";
 import { useSettings } from "../hooks/useSettings";
-import {
-  SIDEBAR_FOLDED_WIDTH,
-  sidebarDrag,
-} from "../lib/utils/sidebarWidth";
+import { SIDEBAR_FOLDED_WIDTH, sidebarDrag } from "../lib/utils/sidebarWidth";
 import {
   SpeakPage,
   HistorySettings,
