@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/brand/speakease-icon.svg" width="112" alt="SpeakEase icon: a white speech bubble with a pink sound wave, on pink"></p>
+<p align="center"><img src="assets/brand/speakease-icon.svg" width="112" alt="SpeakEase icon: a pink speech bubble holding three white beats, the middle one speaking"></p>
 
 # SpeakEase
 
