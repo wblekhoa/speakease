@@ -137,7 +137,12 @@ export const Sidebar: React.FC<SidebarProps> = ({
         onClick={onToggleCollapsed}
         aria-label={toggleLabel}
         aria-expanded={!collapsed}
-        className="p-1.5 rounded-lg text-mid-gray hover:text-text hover:bg-glass-hover transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-logo-primary"
+        className={`text-mid-gray hover:text-text hover:bg-glass-hover transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-logo-primary ${
+          // Folded, the same 44 pt square key as the sections below it.
+          collapsed
+            ? "size-11 grid place-items-center rounded-xl"
+            : "p-1.5 rounded-lg"
+        }`}
       >
         <SidebarIcon />
       </button>
@@ -167,7 +172,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
       ) : (
         <HandyTextLogo width={124} className="mx-4 mt-1 mb-4" />
       )}
-      <div className="flex flex-col w-full gap-0.5 px-2.5 overflow-y-auto">
+      {/* Folded, the few keys always fit, and a scroll box would clip the
+          names that open beside them. */}
+      <div
+        className={`flex flex-col w-full gap-0.5 px-2.5 ${
+          collapsed ? "" : "overflow-y-auto"
+        }`}
+      >
         {availableSections.map((section, index) => {
           const Icon = section.icon;
           const isActive = activeSection === section.id;
@@ -177,6 +188,32 @@ export const Sidebar: React.FC<SidebarProps> = ({
           const startsSettings =
             isSettings &&
             !(previous && "settings" in previous && previous.settings);
+
+          const key = (
+            <button
+              type="button"
+              aria-current={isActive ? "page" : undefined}
+              aria-label={collapsed ? label : undefined}
+              className={`flex gap-2.5 items-center rounded-xl text-start cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary ${
+                // Folded, each section is a square key around its icon.
+                collapsed
+                  ? "size-11 shrink-0 self-center justify-center"
+                  : "w-full py-2 px-3"
+              } ${
+                isActive
+                  ? "bg-glass-chosen text-text"
+                  : "text-text/80 hover:bg-glass-hover"
+              }`}
+              onClick={() => onSectionChange(section.id)}
+            >
+              <Icon
+                width={20}
+                height={20}
+                className={`shrink-0 ${isActive ? "text-text" : "text-mid-gray"}`}
+              />
+              {!collapsed && <span className="text-sm truncate">{label}</span>}
+            </button>
+          );
 
           return (
             <React.Fragment key={section.id}>
@@ -191,34 +228,13 @@ export const Sidebar: React.FC<SidebarProps> = ({
                     {t("sidebar.settingsGroup")}
                   </h2>
                 ))}
-              <button
-                type="button"
-                aria-current={isActive ? "page" : undefined}
-                aria-label={collapsed ? label : undefined}
-                // Folded, only the icon shows; the scroll box would clip an
-                // IconTip, so the native title names it.
-                title={collapsed ? label : undefined}
-                className={`flex gap-2.5 items-center rounded-xl text-start cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary ${
-                  // Folded, each section is a square key around its icon.
-                  collapsed
-                    ? "size-11 shrink-0 self-center justify-center"
-                    : "w-full py-2 px-3"
-                } ${
-                  isActive
-                    ? "bg-glass-chosen text-text"
-                    : "text-text/80 hover:bg-glass-hover"
-                }`}
-                onClick={() => onSectionChange(section.id)}
-              >
-                <Icon
-                  width={20}
-                  height={20}
-                  className={`shrink-0 ${isActive ? "text-text" : "text-mid-gray"}`}
-                />
-                {!collapsed && (
-                  <span className="text-sm truncate">{label}</span>
-                )}
-              </button>
+              {collapsed ? (
+                <IconTip label={label} side="right" className="self-center">
+                  {key}
+                </IconTip>
+              ) : (
+                key
+              )}
             </React.Fragment>
           );
         })}

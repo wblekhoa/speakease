@@ -11,8 +11,10 @@ export const IconTip: React.FC<{
   side?: "top" | "bottom" | "right";
   /** Keep the label inside a container whose edge the control sits on. */
   align?: "center" | "end";
+  /** Extra classes for the wrapper, e.g. its place in a flex column. */
+  className?: string;
   children: React.ReactNode;
-}> = ({ label, side = "top", align = "center", children }) => {
+}> = ({ label, side = "top", align = "center", className = "", children }) => {
   const position =
     side === "right"
       ? "left-full top-1/2 ms-2 -translate-y-1/2"
@@ -20,7 +22,7 @@ export const IconTip: React.FC<{
           align === "end" ? "end-0" : "left-1/2 -translate-x-1/2"
         }`;
   return (
-    <span className="relative group/tip inline-flex">
+    <span className={`relative group/tip inline-flex ${className}`}>
       {children}
       <span
         role="tooltip"
