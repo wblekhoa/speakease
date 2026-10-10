@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/brand/speakease-icon.svg" width="112" alt="SpeakEase icon: a white speech bubble with a pink sound wave, on pink"></p>
+
 # SpeakEase
 
 **Free and source-available — for noncommercial use** ([PolyForm Noncommercial 1.0.0](LICENSE); the Handy code it is built on stays MIT, see [NOTICE.md](NOTICE.md)).

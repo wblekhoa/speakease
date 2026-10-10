@@ -4,7 +4,7 @@ import mark from "../../assets/speakease-mark.png";
 // SpeakEase wordmark: the app's own icon, shrunk, beside the name set in
 // the display face (Plus Jakarta Sans, as ReadEase titles are). Real text,
 // not SVG text, so it renders crisp and in the loaded face. "Ease" takes
-// the brand blue - the half the name shares with ReadEase. The file keeps
+// the brand pink, SpeakEase's own colour (theme.css). The file keeps
 // its upstream name so merges from Handy stay small.
 
 // A brand name, not copy: it is the same in every language.

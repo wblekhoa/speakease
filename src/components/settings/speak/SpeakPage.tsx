@@ -304,7 +304,7 @@ export const SpeakPage: React.FC = () => {
           )}
           <span
             className={`relative grid place-items-center size-20 rounded-full text-white transition-transform group-hover:scale-105 group-active:scale-95 ${
-              phase === "recording" ? "bg-error" : "bg-logo-primary"
+              phase === "recording" ? "bg-error" : "bg-background-ui"
             }`}
           >
             {phase === "recording" ? (
@@ -499,7 +499,7 @@ export const SpeakPage: React.FC = () => {
                 <button
                   type="button"
                   onClick={() => updateSetting("post_process_enabled", true)}
-                  className="px-3 py-1.5 rounded-full text-sm font-medium bg-logo-primary text-white hover:opacity-90 cursor-pointer"
+                  className="px-3 py-1.5 rounded-full text-sm font-medium bg-background-ui text-white hover:bg-brand-deep cursor-pointer"
                 >
                   {t("speak.ai.enable")}
                 </button>

@@ -1,8 +1,11 @@
-/* SpeakEase colors: the same DOL DS ramps ReadEase uses, so the two apps
-   read as one family (values copied from readease
-   app/src/styles/ds-tokens.css, 09/10/2026). Neutral n00 is the desk, n10
-   the raised surface, n100 the secondary ink, n180 the ink; blue b100 is
-   the brand, b80 its pressed/hover step. */
+/* SpeakEase colors. The neutrals are the DOL DS ramps ReadEase uses
+   (values copied from readease app/src/styles/ds-tokens.css, 09/10/2026):
+   n00 is the desk, n10 the raised surface, n100 the secondary ink, n180 the
+   ink. The brand is SpeakEase's own pink (10/10/2026), in two roles that one
+   shade cannot serve in dark mode: `logo-primary` is the accent - text,
+   icons, bars, outlines - and must read on the desk; `background-ui` fills
+   buttons that carry white text and must stay deep enough for it. Contrast:
+   #D6246E 4.8:1 with white and on white; #F06C9B 5.9:1 on the dark desk. */
 
 :root {
   /* Palette source of truth. Each themed color is defined once as a
@@ -10,11 +13,11 @@
      reference these, so a hex value lives in exactly one place. */
   --light-color-text: #2b3138; /* n180 */
   --light-color-background: #ffffff; /* n00 */
-  --light-color-logo-primary: #2b52d4; /* b100 */
+  --light-color-logo-primary: #d6246e; /* pink */
   --light-color-logo-stroke: #2b3138;
   --light-color-mid-gray: #6c7885; /* n100 */
-  --light-color-background-ui: #2b52d4; /* b100 */
-  --light-color-brand-deep: #2446b4; /* b120 */
+  --light-color-background-ui: #d6246e; /* pink */
+  --light-color-brand-deep: #b81b5b; /* pink, pressed */
   /* Surfaces ReadEase layers its panels with: a raised card, the chosen row
      of a list, and the hairline between them. In light the card is the
      desk's own white and the hairline does the separating; in dark the fill
@@ -32,11 +35,11 @@
 
   --dark-color-text: #f8f8f8; /* n180 */
   --dark-color-background: #1c1d1e; /* n00 */
-  --dark-color-logo-primary: #486af2; /* b100 */
+  --dark-color-logo-primary: #f06c9b; /* pink, light for the dark desk */
   --dark-color-logo-stroke: #f8f8f8;
   --dark-color-mid-gray: #8d8f91; /* n100 */
-  --dark-color-background-ui: #486af2; /* b100 */
-  --dark-color-brand-deep: #4563cc; /* b80 */
+  --dark-color-background-ui: #d6246e; /* pink, deep for white text */
+  --dark-color-brand-deep: #be185d; /* pink, pressed */
   --dark-color-surface: #262727; /* n10 */
   --dark-color-row: #363637; /* n40 */
   --dark-color-hairline: #2d2e2e; /* n20 */

@@ -93,7 +93,7 @@ export const ModelPicks: React.FC<ModelPicksProps> = ({
         className={`px-3 py-1.5 rounded-full text-xs font-semibold cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary ${
           download
             ? "bg-row text-text hover:bg-logo-primary/15 hover:text-logo-primary"
-            : "bg-logo-primary text-white hover:opacity-90"
+            : "bg-background-ui text-white hover:bg-brand-deep"
         }`}
       >
         {download

@@ -1,3 +1,5 @@
+<p align="center"><img src="assets/brand/speakease-icon.svg" width="112" alt="Biểu tượng SpeakEase: bong bóng lời nói trắng có sóng âm hồng, trên nền hồng"></p>
+
 # SpeakEase
 
 **Miễn phí, mã nguồn công khai — dùng phi thương mại** ([PolyForm Noncommercial 1.0.0](LICENSE); phần gốc Handy vẫn là MIT, xem [NOTICE.md](NOTICE.md)).
