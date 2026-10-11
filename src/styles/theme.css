@@ -1,5 +1,6 @@
-/* SpeakEase colors. The neutrals are the DOL DS ramps ReadEase uses
-   (values copied from readease app/src/styles/ds-tokens.css, 09/10/2026):
+/* SpeakEase colors. The neutrals and r100 are the owner's WAVE design
+   system ramps (values checked equal to WAVE packages/tokens on 11/10/2026;
+   first copied via ReadEase's snapshot on 09/10/2026):
    n00 is the desk, n10 the raised surface, n100 the secondary ink, n180 the
    ink. The brand is SpeakEase's own pink (10/10/2026), in two roles that one
    shade cannot serve in dark mode: `logo-primary` is the accent - text,

@@ -12,6 +12,22 @@ updated: 2026-10-11
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
 
+## 2026-10-11 · Colour source is now the WAVE design system (P5), values unchanged
+
+- **Context**: the owner's design system moved from the former-employer DS-Token (frozen) to a new one named WAVE.
+  `src/styles/theme.css` holds hand-copied values: the neutral ramp (n00, n10, n20, n40, n100, n180, light and dark),
+  and red r100. The glass fills are tuned from the ink alpha ramp (na05/na20) rather than copied verbatim, and the brand
+  is SpeakEase's own pink; neither comes from the design system as a value.
+- **Decision**: name WAVE as the source. Copy step when the design system changes: in a WAVE checkout run
+  `npm run tokens:build`, read the resolved light and dark values of those tokens from
+  `packages/tokens/studio/public/tokens.css` (`:root` and `[data-theme="dark"]`), and type them into the
+  `--light-*` / `--dark-*` pairs at the top of `theme.css`, one hex in one place. Nothing else is copied.
+- **Evidence**: on 2026-10-11 every copied value already equals WAVE (light n00 `#ffffff`, n10 `#f0f2f5`, n20
+  `#e1e5ea`, n100 `#6c7885`, n180 `#2b3138`, r100 `#e44b18`; dark n00 `#1c1d1e`, n10 `#262727`, n20 `#2d2e2e`, n40
+  `#363637`, n100 `#8d8f91`, n180 `#f8f8f8`, r100 `#c45330`), so there is no visual change; only the comment in
+  `theme.css` changed. `bun run lint`, `bun run test:unit`, `bun run build` pass before and after.
+- **Reversal**: revert this commit.
+
 ## 2026-10-11 · Product docs live in `docs/product/` with REQ-IDs next to the evidence
 
 - **Context**: behaviour was described only in commits, code comments and the README.
