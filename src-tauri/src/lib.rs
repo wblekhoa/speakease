@@ -336,8 +336,9 @@ fn initialize_core_logic(app_handle: &AppHandle) {
                 show_main_window(app);
             }
             "check_updates" => {
-                let settings = settings::get_settings(app);
-                if settings::update_checks_effectively_enabled(&settings) {
+                // SE-APP-009: asked for by hand, so it runs even with
+                // automatic checks off (the item is gone when forced off).
+                if !settings::update_checks_forced_disabled() {
                     show_main_window(app);
                     let _ = app.emit("check-for-updates", ());
                 }

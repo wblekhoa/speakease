@@ -54,9 +54,10 @@ relations:
   **Experimental** (extra switches appear when it is on), and **About** (version, automatic update checks, app data
   and log folders, and a **Built on Handy** credit linking to its source). Descriptions sit behind an info icon.
 - **Tray menu**: **Open SpeakEase** (window on Speak), **History** (window on History) and **Check for Updates…**
-  (disabled when automatic checks are off), besides the dictation and AI items.
+  (it works whether or not automatic checks are on), besides the dictation and AI items.
 - **App menu**: **SpeakEase › Check for Updates…** under About.
-- **Updates**: checked once at launch when on; an available update shows in the window's footer, downloads with a
+- **Updates**: checked once at launch when the **Check for Updates** switch in App is on; a check by hand (footer,
+  menu or tray) works either way; an available update shows in the window's footer, downloads with a
   progress figure and relaunches the app. A check the user asked for that fails shows "Couldn't check for updates. Check your connection and try again.";
   the launch check never interrupts.
 - **First launch**: a permissions step (Accessibility to paste, Microphone to listen), then a model to download; the
@@ -97,5 +98,6 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-13: Check for Updates… by hand now works with automatic checks off.
 - 2026-10-13: created, covering the side column (fold and resize by drag, 10/10), the App page, tray and app menu
   entries, updates and first launch.

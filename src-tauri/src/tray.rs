@@ -62,7 +62,6 @@ struct MenuInputs {
     /// `(id, name)` of downloaded models, sorted by name.
     downloaded_models: Vec<(String, String)>,
     locale: String,
-    update_checks_enabled: bool,
     /// SpeakEase quick settings, mirrored from the Speak page.
     quick: QuickInputs,
 }
@@ -381,7 +380,6 @@ fn compute_desired(app: &AppHandle, icon_state: TrayIconState) -> TrayDesired {
             selected_model: settings.selected_model,
             downloaded_models,
             locale: settings.app_language,
-            update_checks_enabled: settings.update_checks_enabled,
         },
     }
 }
@@ -547,7 +545,9 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
         app,
         "check_updates",
         &strings.check_updates,
-        inputs.update_checks_enabled,
+        // SE-APP-009: a check the user asks for runs even with automatic
+        // checks off; only HANDY_DISABLE_UPDATER removes the item (below).
+        true,
         None::<&str>,
     )?;
     let copy_last_transcript_i = MenuItem::with_id(
@@ -652,9 +652,7 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
     // When update checks are forced off (e.g. HANDY_DISABLE_UPDATER, set by
     // the Nix package), the item is dropped from the menu rather than shown
     // disabled — it can never do anything in that case, and a disabled item
-    // still shifts every entry below it by one position. A manually-disabled
-    // toggle in Debug Settings keeps the old greyed-out behavior via the
-    // enabled flag.
+    // still shifts every entry below it by one position.
     if settings::update_checks_forced_disabled() {
         menu.remove(&check_updates_i)?;
     }
@@ -899,7 +897,6 @@ mod tests {
             selected_model: "small".to_string(),
             downloaded_models: vec![("small".to_string(), "Small".to_string())],
             locale: "en".to_string(),
-            update_checks_enabled: true,
             quick: QuickInputs::from_settings(&crate::settings::get_default_settings()),
         }
     }

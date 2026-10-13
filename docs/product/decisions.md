@@ -12,6 +12,17 @@ updated: 2026-10-13
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
 
+## 2026-10-13 · Checking for updates by hand works with automatic checks off
+
+- **Context**: writing the app-shell docs showed that with the App page's **Check for Updates** switch off, the app
+  menu's **Check for Updates…** did nothing (the checker stopped listening) and the tray item was greyed out.
+- **Decision**: the switch means "check automatically at launch". A check the user asks for - footer, app menu,
+  tray - always runs; only `HANDY_DISABLE_UPDATER` (an immutable install) removes it. Chosen over greying out the
+  menu item too, because someone who turned off automatic checks still wants to update on their own schedule.
+- **Evidence**: `UpdateChecker.tsx` (`canUpdate` vs `updateChecksEnabled`), `lib.rs` `"check_updates"`, `tray.rs`
+  (the item is always enabled); rule SE-APP-009.
+- **Reversal**: revert this commit.
+
 ## 2026-10-11 · Colour source is now the WAVE design system (P5), values unchanged
 
 - **Context**: the owner's design system moved from the former-employer DS-Token (frozen) to a new one named WAVE.

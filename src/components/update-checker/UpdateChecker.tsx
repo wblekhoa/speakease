@@ -42,6 +42,10 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({ className = "" }) => {
   // updater state.
   const updateChecksEnabled =
     (settings?.update_checks_enabled ?? false) && updateChecksLocked === false;
+  // SE-APP-009: the App switch turns off the automatic check at launch; a
+  // check the user asks for (footer, app menu, tray) still runs. Only the
+  // system lock turns updating off altogether.
+  const canUpdate = updateChecksLocked === false;
 
   const upToDateTimeoutRef = useRef<ReturnType<typeof setTimeout>>();
   const isManualCheckRef = useRef(false);
@@ -52,7 +56,7 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({ className = "" }) => {
     // Wait for settings to load before doing anything
     if (!settingsLoaded) return;
 
-    if (!updateChecksEnabled) {
+    if (!canUpdate) {
       if (upToDateTimeoutRef.current) {
         clearTimeout(upToDateTimeoutRef.current);
       }
@@ -62,7 +66,7 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({ className = "" }) => {
       return;
     }
 
-    checkForUpdates();
+    if (updateChecksEnabled) checkForUpdates();
 
     // Listen for update check events
     const updateUnlisten = listen("check-for-updates", () => {
@@ -75,11 +79,11 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({ className = "" }) => {
       }
       updateUnlisten.then((fn) => fn());
     };
-  }, [settingsLoaded, updateChecksEnabled]);
+  }, [settingsLoaded, canUpdate, updateChecksEnabled]);
 
   // Update checking functions
   const checkForUpdates = async () => {
-    if (!updateChecksEnabled || isChecking) return;
+    if (!canUpdate || isChecking) return;
 
     try {
       setIsChecking(true);
@@ -121,13 +125,13 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({ className = "" }) => {
   };
 
   const handleManualUpdateCheck = () => {
-    if (!updateChecksEnabled) return;
+    if (!canUpdate) return;
     isManualCheckRef.current = true;
     checkForUpdates();
   };
 
   const installUpdate = async () => {
-    if (!updateChecksEnabled) return;
+    if (!canUpdate) return;
 
     const portable = await commands.isPortable();
     if (portable) {
@@ -179,7 +183,7 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({ className = "" }) => {
 
   // Update status functions
   const getUpdateStatusText = () => {
-    if (!updateChecksEnabled) {
+    if (!canUpdate) {
       return t("footer.updateCheckingDisabled");
     }
     if (isInstalling) {
@@ -198,14 +202,14 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({ className = "" }) => {
   };
 
   const getUpdateStatusAction = () => {
-    if (!updateChecksEnabled) return undefined;
+    if (!canUpdate) return undefined;
     if (updateAvailable && !isInstalling) return installUpdate;
     if (!isChecking && !isInstalling && !updateAvailable)
       return handleManualUpdateCheck;
     return undefined;
   };
 
-  const isUpdateDisabled = !updateChecksEnabled || isChecking || isInstalling;
+  const isUpdateDisabled = !canUpdate || isChecking || isInstalling;
   const isUpdateClickable =
     !isUpdateDisabled && (updateAvailable || (!isChecking && !showUpToDate));
 

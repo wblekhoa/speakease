@@ -4,7 +4,7 @@ type: logic
 product: speakease
 title: "SpeakEase — AI cleanup and translation (logic)"
 status: active
-updated: 2026-10-11
+updated: 2026-10-13
 reqPrefix: SE-AI
 relations:
   specifiedBy: [speakease-ux-ai-cleanup]
@@ -63,4 +63,5 @@ or code named in Evidence.
 
 ## Change log
 
+- 2026-10-13: reviewed after `settings.rs` changed (an SE-APP-008 comment only); no SE-AI rule changed.
 - 2026-10-11: created; REQ-IDs added as one-line comments next to the evidence in the same commit.
