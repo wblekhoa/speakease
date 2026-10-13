@@ -141,6 +141,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   const [dragging, setDragging] = useState(false);
   /** The width drawn mid-drag, rubber band included; null otherwise. */
   const [shown, setShown] = useState<number | null>(null);
+  // SE-APP-004
   /** True for one transition after a mid-drag fold or unfold. */
   const [snapping, setSnapping] = useState(false);
   const snapTimer = useRef<number | undefined>(undefined);
@@ -228,6 +229,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
         aria-label={gripLabel}
         title={gripLabel}
         onPointerDown={onGripDown}
+        // SE-APP-005
         onDoubleClick={() => {
           if (collapsed) {
             onFold(false);

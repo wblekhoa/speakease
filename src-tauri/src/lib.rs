@@ -345,6 +345,7 @@ fn initialize_core_logic(app_handle: &AppHandle) {
             "copy_last_transcript" => {
                 tray::copy_last_transcript(app);
             }
+            // SE-APP-007
             "open_app" => {
                 show_main_window(app);
                 let _ = app.emit("navigate-to-section", "speak");

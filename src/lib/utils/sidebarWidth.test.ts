@@ -7,9 +7,11 @@ import {
   sidebarDrag,
 } from "./sidebarWidth";
 
+// SE-APP-001
 // Inside the range the column follows the cursor exactly.
 assert.deepEqual(sidebarDrag(250), { folded: false, shown: 250, settled: 250 });
 
+// SE-APP-002
 // Past the halfway mark between the rail and MIN, it folds.
 assert.equal(SIDEBAR_FOLD_AT, 128);
 assert.deepEqual(sidebarDrag(127), {
@@ -19,6 +21,7 @@ assert.deepEqual(sidebarDrag(127), {
 });
 assert.equal(sidebarDrag(-40).folded, true);
 
+// SE-APP-003
 // Between the mark and MIN: a rubber band, settling at MIN.
 const band = sidebarDrag(150);
 assert.equal(band.folded, false);

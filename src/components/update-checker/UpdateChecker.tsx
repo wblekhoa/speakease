@@ -108,6 +108,7 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({ className = "" }) => {
       }
     } catch (error) {
       console.error("Failed to check for updates:", error);
+      // SE-APP-009
       // SpeakEase: a check someone asked for answers even when it fails,
       // instead of doing nothing (offline, GitHub unreachable).
       if (isManualCheckRef.current) {

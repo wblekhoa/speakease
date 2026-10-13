@@ -4,7 +4,7 @@ type: decision
 product: speakease
 title: "SpeakEase — Decisions"
 status: active
-updated: 2026-10-11
+updated: 2026-10-13
 ---
 
 # SpeakEase — Decisions (append-only, newest first)
@@ -36,6 +36,18 @@ repo; each cites its source.
   files get nothing beyond such one-line comments.
 - **Evidence**: this commit; `docs/product/logic/*.md`.
 - **Reversal**: remove the folder and the `// SE-…` comments; a new entry here.
+
+## 2026-10-10 · The side column's edge resizes it, and folds and opens it
+
+- **Context**: the owner asked for the column to be resized by dragging its edge, as in ReadEase, then for the same
+  drag to fold and open it with smooth motion. ReadEase's edge only resizes.
+- **Decision**: one edge does both, the way Finder's sidebar does: 180-320 px by hand (208 default), a fold mark
+  halfway between the 76 px rail and 180 px, a rubber band (a third of the cursor's travel) beyond either end, and
+  easing only on the fold, the open and the settle - never while the edge tracks the cursor. The arithmetic is a pure
+  function so it can be tested (`src/lib/utils/sidebarWidth.ts`).
+- **Evidence**: `bun run test:unit` (`sidebarWidth: ok`); a per-frame probe in the browser preview measured the fold
+  easing 170 → 150 → 105 → 88 → 76 px over about 210 ms; commits `09da9b2`, `2b1babb`. Rules SE-APP-001…006.
+- **Reversal**: revert those commits; the switch alone still folds the column.
 
 ## 2026-10-10 · Updates come from SpeakEase's own releases
 

@@ -117,6 +117,7 @@ function App() {
     }
     setSidebarWidth(clampSidebarWidth(width));
   }, []);
+  // SE-APP-006
   // The switch and a drag on the column's edge both fold it.
   const foldSidebar = useCallback((folded: boolean) => {
     setSidebarCollapsed(folded);
@@ -343,6 +344,7 @@ function App() {
     }
   };
 
+  // SE-APP-010
   const checkOnboardingStatus = async () => {
     try {
       const settingsResult = await commands.getAppSettings();
