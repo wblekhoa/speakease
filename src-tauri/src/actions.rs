@@ -162,7 +162,7 @@ fn should_use_streaming_overlay(style: OverlayStyle, is_streaming: bool) -> bool
     style == OverlayStyle::Live && is_streaming
 }
 
-async fn post_process_transcription(
+pub(crate) async fn post_process_transcription(
     settings: &AppSettings,
     transcription: &str,
     prompt_override: Option<&str>,

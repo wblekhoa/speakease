@@ -557,36 +557,67 @@ fn run_headless_transcription(app: &AppHandle, args: &CliArgs) -> i32 {
         return 0;
     };
 
-    // read_wav_samples reads 16-bit int samples and does no validation; the app
-    // only ever saves 16 kHz mono 16-bit PCM, so reject anything else rather than
-    // transcribe garbage / mis-time / mis-decode.
-    match hound::WavReader::open(&wav) {
-        Ok(reader) => {
-            let spec = reader.spec();
-            if spec.sample_rate != 16_000
-                || spec.channels != 1
-                || spec.bits_per_sample != 16
-                || spec.sample_format != hound::SampleFormat::Int
-            {
+    // SpeakEase: anything that is not a WAV goes through the Files page's
+    // decoder (SE-FILE-001), so a video or MP3 can be measured headlessly.
+    let is_wav = wav
+        .extension()
+        .and_then(|e| e.to_str())
+        .is_some_and(|e| e.eq_ignore_ascii_case("wav"));
+    let decoded = if is_wav {
+        None
+    } else {
+        let started = std::time::Instant::now();
+        match commands::files::decode_to_16k_mono(&wav, &|_| {}) {
+            Ok(samples) => {
                 eprintln!(
-                    "error: expected 16 kHz mono 16-bit PCM WAV, got {} Hz / {} ch / {}-bit {:?}",
-                    spec.sample_rate, spec.channels, spec.bits_per_sample, spec.sample_format
+                    "decoded {:.1}s of audio in {} ms",
+                    samples.len() as f64 / 16_000.0,
+                    started.elapsed().as_millis()
                 );
+                Some(samples)
+            }
+            Err(e) => {
+                eprintln!("error: cannot decode {}: {}", wav.display(), e);
                 return 2;
             }
         }
-        Err(e) => {
-            eprintln!("error: cannot open {}: {}", wav.display(), e);
-            return 2;
+    };
+
+    // read_wav_samples reads 16-bit int samples and does no validation; the app
+    // only ever saves 16 kHz mono 16-bit PCM, so reject anything else rather than
+    // transcribe garbage / mis-time / mis-decode.
+    if decoded.is_none() {
+        match hound::WavReader::open(&wav) {
+            Ok(reader) => {
+                let spec = reader.spec();
+                if spec.sample_rate != 16_000
+                    || spec.channels != 1
+                    || spec.bits_per_sample != 16
+                    || spec.sample_format != hound::SampleFormat::Int
+                {
+                    eprintln!(
+                    "error: expected 16 kHz mono 16-bit PCM WAV, got {} Hz / {} ch / {}-bit {:?}",
+                    spec.sample_rate, spec.channels, spec.bits_per_sample, spec.sample_format
+                );
+                    return 2;
+                }
+            }
+            Err(e) => {
+                eprintln!("error: cannot open {}: {}", wav.display(), e);
+                return 2;
+            }
         }
     }
 
-    let samples = match crate::audio_toolkit::read_wav_samples(&wav) {
-        Ok(s) => s,
-        Err(e) => {
-            eprintln!("error: failed to read {}: {}", wav.display(), e);
-            return 2;
-        }
+    let samples = match decoded {
+        Some(samples) => samples,
+        None => match crate::audio_toolkit::read_wav_samples(&wav) {
+            Ok(s) => s,
+            Err(e) => {
+                eprintln!("error: failed to read {}: {}", wav.display(), e);
+                return 2;
+            }
+        },
     };
     let audio_secs = samples.len() as f64 / 16_000.0;
 
@@ -829,6 +860,10 @@ pub fn run(cli_args: CliArgs) {
             commands::history::get_audio_file_path,
             commands::history::delete_history_entry,
             commands::history::retry_history_entry_transcription,
+            commands::files::transcribe_media,
+            commands::files::enhance_history_entry,
+            commands::files::cancel_file_job,
+            commands::files::write_text_file,
             commands::history::update_history_limit,
             commands::history::update_recording_retention_period,
             helpers::clamshell::is_laptop,

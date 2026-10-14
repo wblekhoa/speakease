@@ -115,7 +115,8 @@ async changeSpeakeaseEnhancePromptIdSetting(promptId: string | null) : Promise<R
 },
 /**
  * SpeakEase quick setting: the language the main shortcut translates into
- * (None or "" = off).
+ * (None or "" = off). A language also becomes the translate language
+ * (`AppSettings::set_translate_target`).
  */
 async changeSpeakeaseTranslateTargetSetting(target: string | null) : Promise<Result<null, string>> {
     try {
@@ -125,6 +126,10 @@ async changeSpeakeaseTranslateTargetSetting(target: string | null) : Promise<Res
     else return { status: "error", error: e  as any };
 }
 },
+/**
+ * SpeakEase: the language the translate shortcut translates into, and the
+ * main shortcut too while its translation is on.
+ */
 async changeSpeakeaseTranslateLanguageSetting(language: string) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("change_speakease_translate_language_setting", { language }) };
@@ -955,6 +960,49 @@ async retryHistoryEntryTranscription(id: number) : Promise<Result<null, string>>
     else return { status: "error", error: e  as any };
 }
 },
+/**
+ * Transcribes a file or a link's audio into a new History entry, reporting
+ * `file-progress` as it goes. Errors are short codes the page translates:
+ * busy, cancelled, unsupported, no audio, no speech, bad link, download
+ * failed, needs yt-dlp, no model.
+ */
+async transcribeMedia(source: MediaSource) : Promise<Result<HistoryEntry, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("transcribe_media", { source }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Rewrites or translates an entry's original text, a piece at a time so a
+ * long transcript fits the AI, and stores the result as its AI version.
+ */
+async enhanceHistoryEntry(id: number, enhancement: Enhancement) : Promise<Result<HistoryEntry, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("enhance_history_entry", { id, enhancement }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Stops the file job in progress (download, reading or transcription).
+ */
+async cancelFileJob() : Promise<void> {
+    await TAURI_INVOKE("cancel_file_job");
+},
+/**
+ * Writes text to a file the person picked in a Save dialog.
+ */
+async writeTextFile(path: string, contents: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("write_text_file", { path, contents }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async updateHistoryLimit(limit: number) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("update_history_limit", { limit }) };
@@ -1052,7 +1100,20 @@ selected_channel?: number | null; clamshell_microphone?: string | null; selected
  * prompt to tidy what was said (None = off) and a language to
  * translate it into (None = off). The Speak page sets them.
  */
-speakease_enhance_prompt_id?: string | null; speakease_translate_target?: string | null; speakease_translate_language?: string | null; speakease_last_spoken_language?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
+speakease_enhance_prompt_id?: string | null; speakease_translate_target?: string | null; 
+/**
+ * The language SpeakEase translates into: what the translate shortcut
+ * uses, and what the main shortcut uses while its translation is on
+ * (`speakease_translate_target` is then the same language). None until
+ * one is chosen, which reads as English (`translate_language`).
+ */
+speakease_translate_language?: string | null; 
+/**
+ * The language a dictation last came out in when SpeakEase had to
+ * choose it - the model cannot detect it and the intent is "auto"
+ * (transcription.rs languages_to_try). Tried first next time.
+ */
+speakease_last_spoken_language?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
 /**
  * Debug-gated ("beta") receipt-sequenced paste: restore the clipboard only
  * after the target app actually reads the transcript, instead of after a
@@ -1102,6 +1163,18 @@ export type EngineType =
  * the file, so this one variant covers the whole transcribe-cpp family.
  */
 "TranscribeCpp" | "Parakeet" | "Moonshine" | "MoonshineStreaming" | "SenseVoice" | "GigaAM" | "Canary" | "Cohere"
+/**
+ * What to do with an entry's text.
+ */
+export type Enhancement = 
+/**
+ * A prompt id from AI & Translate's prompts.
+ */
+{ kind: "prompt"; value: string } | 
+/**
+ * A translate target, as on the Speak page ("English", "Japanese"…).
+ */
+{ kind: "translate"; value: string }
 export type GpuDeviceOption = { id: string; name: string; total_vram_mb: number }
 export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean }
 /**
@@ -1130,6 +1203,10 @@ key_down: number; key_up: number; flags_changed: number; mouse: number; duration
 export type KeyboardImplementation = "tauri" | "handy_keys"
 export type LLMPrompt = { id: string; name: string; prompt: string }
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error"
+/**
+ * What the Files page hands over: a file on disk, or a link.
+ */
+export type MediaSource = { kind: "path"; value: string } | { kind: "url"; value: string }
 export type ModelInfo = { id: string; name: string; description: string; filename: string; source: ModelSource; size_mb: number; is_downloaded: boolean; is_downloading: boolean; partial_size: number; is_directory: boolean; engine_type: EngineType; accuracy_score: number; speed_score: number; supports_translation: boolean; is_recommended: boolean; supported_languages: string[]; supports_language_selection: boolean; is_custom: boolean; supports_streaming: boolean; supports_language_detection: boolean }
 export type ModelLoadStatus = { is_loaded: boolean; current_model: string | null }
 /**

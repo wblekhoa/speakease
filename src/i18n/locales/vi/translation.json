@@ -33,7 +33,8 @@
     "app": "Ứng dụng",
     "settingsGroup": "Cài đặt",
     "resize": "Kéo để đổi độ rộng, kéo hẳn vào để thu gọn · bấm đúp để về độ rộng mặc định",
-    "unfoldDrag": "Kéo ra để mở thanh bên · bấm đúp để mở"
+    "unfoldDrag": "Kéo ra để mở thanh bên · bấm đúp để mở",
+    "files": "Tệp"
   },
   "onboarding": {
     "subtitle": "Để bắt đầu, hãy chọn một mô hình chép lời",
@@ -562,7 +563,9 @@
       "keeping": "Lưu trữ",
       "statEntries": "lần đọc",
       "statWords": "từ",
-      "statMinutes": "phút gõ phím tiết kiệm"
+      "statMinutes": "phút gõ phím tiết kiệm",
+      "showAll": "Xem hết",
+      "showLess": "Thu gọn"
     },
     "debug": {
       "title": "Gỡ lỗi",
@@ -925,5 +928,50 @@
     "translation": "dịch được sang tiếng Anh",
     "detection": "tự nhận ngôn ngữ",
     "streaming": "hiện chữ ngay khi nói"
+  },
+  "files": {
+    "drop": "Kéo file audio hoặc video vào đây",
+    "dropNow": "Thả để lấy chữ",
+    "formats": "MP3, M4A, MP4, MOV, WAV, FLAC, OGG · chỉ lấy phần tiếng, không xử lý hình",
+    "choose": "Chọn file",
+    "filterName": "Audio và video",
+    "linkPlaceholder": "Hoặc dán link: YouTube, hoặc link tới file .mp3 / .mp4",
+    "fromLink": "Lấy chữ",
+    "cancel": "Huỷ",
+    "phase": {
+      "download": "Đang tải tiếng từ link",
+      "read": "Đang đọc phần tiếng",
+      "transcribe": "Đang chép lời",
+      "transcribeParts": "Đang chép lời · đoạn {{done}}/{{total}}",
+      "enhance": "Đang xử lý bằng AI",
+      "enhanceParts": "Đang xử lý bằng AI · phần {{done}}/{{total}}"
+    },
+    "words_one": "{{count}} từ",
+    "words_other": "{{count}} từ",
+    "aiVersion": "bản AI",
+    "copy": "Sao chép",
+    "copied": "Đã chép",
+    "saveTxt": "Lưu .txt",
+    "textFile": "Văn bản",
+    "saved": "Đã lưu file",
+    "rewrite": "Viết lại…",
+    "translate": "Dịch sang…",
+    "translatingInto": "Dịch sang {{language}}",
+    "turnOnAi": "Bật AI để viết lại và dịch",
+    "openAi": "Mở AI & Dịch",
+    "recent": "File gần đây",
+    "errors": {
+      "busy": "Đang xử lý một file khác. Đợi xong hoặc huỷ rồi thử lại.",
+      "unsupported": "Chưa đọc được định dạng này. Dùng MP3, M4A, MP4, MOV, WAV, FLAC hoặc OGG.",
+      "no_audio": "File không có phần tiếng.",
+      "no_speech": "Không nghe thấy lời nói nào trong file.",
+      "bad_link": "Link không hợp lệ. Dán link bắt đầu bằng https://.",
+      "download_failed": "Không tải được từ link này. Kiểm tra mạng hoặc link rồi thử lại.",
+      "needs_yt_dlp": "Link này là một trang web. Cài yt-dlp (brew install yt-dlp) để lấy tiếng từ YouTube và các trang video.",
+      "no_model": "Chưa có mô hình nhận dạng. Tải một mô hình trong Nhận dạng.",
+      "ai_off": "AI đang tắt. Bật AI trong AI & Dịch để viết lại và dịch.",
+      "ai_failed": "AI không trả lời. Kiểm tra AI & Dịch rồi thử lại.",
+      "other": "Có lỗi khi xử lý file. Thử lại."
+    }
   }
 }

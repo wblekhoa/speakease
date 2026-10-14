@@ -4,6 +4,7 @@ import { FlaskConical } from "lucide-react";
 import {
   ClockIcon,
   CpuIcon,
+  FolderOpenIcon,
   KeyboardIcon,
   MagicStarIcon,
   MicrophoneIcon,
@@ -16,6 +17,7 @@ import { useSettings } from "../hooks/useSettings";
 import { SIDEBAR_FOLDED_WIDTH, sidebarDrag } from "../lib/utils/sidebarWidth";
 import {
   SpeakPage,
+  FilesPage,
   HistorySettings,
   RecordingSettings,
   RecognitionSettings,
@@ -43,7 +45,7 @@ interface SectionConfig {
   settings?: boolean;
 }
 
-// SpeakEase's sections. Speak and History are where the app is used; the
+// SpeakEase's sections. Speak, Files and History are where the app is used; the
 // settings follow a dictation from start to end: recording it, turning it
 // into words, AI on the words, and the app around it.
 export const SECTIONS_CONFIG = {
@@ -51,6 +53,12 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.speak",
     icon: MicrophoneIcon,
     component: SpeakPage,
+    enabled: () => true,
+  },
+  files: {
+    labelKey: "sidebar.files",
+    icon: FolderOpenIcon,
+    component: FilesPage,
     enabled: () => true,
   },
   history: {

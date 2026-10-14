@@ -12,6 +12,25 @@ updated: 2026-10-14
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
 
+## 2026-10-14 · Files: only the sound, decoded in memory; yt-dlp only if installed
+
+- **Context**: the owner wants a video, an audio file or a link turned into text and then rewritten or translated -
+  "only the sound", "as fast as possible", suggesting a conversion to MP3.
+- **Decision**: no MP3 step. The bundled decoder (Symphonia, through rodio) reads the audio track out of the
+  container and decodes it straight to 16 kHz mono in memory; the picture is never decoded, and re-encoding to MP3
+  would only cost time and quality. The audio kept is the 16 kHz WAV a dictation keeps, so History, playback and
+  re-transcription work unchanged, without a database migration (a file entry is `file-….wav`, titled with its name).
+  Links: a media-file link is downloaded; YouTube and other pages use yt-dlp only when the Mac already has it,
+  asking for the M4A audio stream. yt-dlp is not bundled (a new third-party binary, and downloading is subject to
+  each site's terms) - left to the owner. Rewrite and Translate send the text 1,200 characters at a time so long
+  transcripts fit Apple Intelligence. No new dependency.
+- **Evidence**: the installed-build CLI (`handy --transcribe-file`, which now reads any of these formats): a 10.6-min
+  talk as WAV, MP4 and MOV (H.264 720p + AAC), M4A and MP3 → 1,944 words each, word error 0.5-0.7 %; reading the sound
+  took 1.0 s (MP4/MOV) and 0.6 s (M4A/MP3), the whole job about 11 s. A 3-min 1080p 20 Mb/s MP4 (453 MB): sound read
+  in 0.6 s. WebM/Opus refused ("unsupported"). YouTube "Me at the zoo" through the same yt-dlp arguments: 309 KB
+  audio-only M4A in 3 s, transcribed. Unit tests SE-FILE-001/003/004; the page driven end to end in the preview.
+- **Reversal**: remove the Files section and `commands/files.rs`; History keeps any file entries as ordinary ones.
+
 ## 2026-10-14 · Split long audio at silences before recognition
 
 - **Context**: while sizing a "transcribe a file" feature, a 70 s Vietnamese clip (macOS voice "Linh" reading a known

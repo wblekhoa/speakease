@@ -464,6 +464,11 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   const [showCopied, setShowCopied] = useState(false);
   const [retrying, setRetrying] = useState(false);
   const [listening, setListening] = useState(false);
+  // A file's transcript can run to thousands of words: folded to a few
+  // lines until asked for (SE-FILE-002).
+  const fromFile = entry.file_name.startsWith("file-");
+  const [expanded, setExpanded] = useState(false);
+  const folded = fromFile && !expanded;
 
   const hasTranscription = entry.transcription_text.trim().length > 0;
   const aiText = entry.post_processed_text?.trim()
@@ -517,7 +522,8 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   );
 
   // SE-HIST-003
-  const endsOnOriginal = Boolean(aiText) && !retrying && !listening;
+  const endsOnOriginal =
+    Boolean(aiText) && !retrying && !listening && !fromFile;
 
   return (
     // One card per dictation: when, what it became, and what was said.
@@ -530,6 +536,15 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
     >
       <div className="flex items-center gap-2">
         <span className="text-xs text-mid-gray tabular-nums">{time}</span>
+        {fromFile && (
+          <span
+            className="min-w-0 flex items-center gap-1 text-xs text-mid-gray"
+            title={entry.title}
+          >
+            <FolderOpenIcon width={14} height={14} className="shrink-0" />
+            <span className="truncate max-w-56">{entry.title}</span>
+          </span>
+        )}
         {promptName && (
           <span className="text-[11px] leading-5 px-2 rounded-full bg-logo-primary/15 text-logo-primary">
             {promptName}
@@ -601,7 +616,9 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
           retrying
             ? ""
             : hasTranscription
-              ? "text-[15px] leading-relaxed text-text select-text cursor-text whitespace-pre-wrap break-words"
+              ? `text-[15px] leading-relaxed text-text select-text cursor-text whitespace-pre-wrap break-words ${
+                  folded ? "line-clamp-6" : ""
+                }`
               : "text-text/40"
         }`}
         style={
@@ -629,10 +646,26 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
           <p className="text-[11px] font-semibold uppercase tracking-wide text-mid-gray">
             {t("settings.history.original", { defaultValue: "Original" })}
           </p>
-          <p className="mt-0.5 text-[13px] leading-snug text-mid-gray select-text whitespace-pre-wrap break-words">
+          <p
+            className={`mt-0.5 text-[13px] leading-snug text-mid-gray select-text whitespace-pre-wrap break-words ${
+              folded ? "line-clamp-3" : ""
+            }`}
+          >
             {entry.transcription_text}
           </p>
         </div>
+      )}
+
+      {fromFile && hasTranscription && !retrying && (
+        <button
+          type="button"
+          onClick={() => setExpanded((open) => !open)}
+          className="self-start text-xs font-medium text-logo-primary hover:underline cursor-pointer"
+        >
+          {expanded
+            ? t("settings.history.showLess")
+            : t("settings.history.showAll")}
+        </button>
       )}
 
       {listening && (

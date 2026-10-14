@@ -65,6 +65,79 @@ const history = [
   post_process_requested: entry.ai !== null,
 }));
 
+// A transcript made from a file (Files page), as transcribe_media saves it.
+const FILE_TEXT =
+  "Xin chào các bạn, hôm nay mình sẽ chia sẻ cách mình lên kế hoạch cho một video trên kênh YouTube. Đầu tiên mình viết ra ý tưởng chính trong một câu ngắn. Sau đó mình chia nội dung thành ba phần: mở đầu, phần chính và phần kết. Ở phần mở đầu, mình cố gắng nói rõ người xem sẽ nhận được gì sau khi xem hết video. Phần chính là nơi mình đưa ra ví dụ cụ thể, số liệu và những sai lầm mình từng gặp. Cuối cùng, mình tóm tắt lại ba điều quan trọng nhất và mời mọi người để lại bình luận. Một mẹo nhỏ là mình luôn quay thử một đoạn ngắn trước để kiểm tra âm thanh và ánh sáng. Nếu âm thanh bị rè, cả video sẽ mất đi nhiều giá trị. Mình thường dùng một chiếc micro cài áo và ngồi trong phòng có nhiều rèm để giảm tiếng vang.";
+history.unshift({
+  id: 101,
+  file_name: "file-1760000000000.wav",
+  timestamp: Math.floor((now - 40 * MINUTE) / 1000),
+  saved: false,
+  title: "vlog-len-ke-hoach-video.mp4",
+  transcription_text: FILE_TEXT,
+  post_processed_text: null,
+  post_process_prompt: null,
+  post_process_requested: false,
+});
+
+const wait = (ms: number) => new Promise((done) => setTimeout(done, ms));
+let fileCancelled = false;
+
+/** transcribe_media as the app does it: progress events, then a new entry. */
+async function mockTranscribeMedia(source: { kind: string; value: string }) {
+  fileCancelled = false;
+  const name =
+    source.kind === "url"
+      ? "youtube-video"
+      : (source.value.split("/").pop() ?? "file");
+  const steps: [string, number][] = [
+    ...(source.kind === "url" ? ([["download", 1]] as [string, number][]) : []),
+    ["read", 1000],
+    ["transcribe", 6],
+  ];
+  for (const [phase, total] of steps) {
+    for (let done = 0; done <= total; done += total === 1000 ? 250 : 1) {
+      if (fileCancelled) throw "cancelled";
+      await emit("file-progress", { phase, done, total });
+      await wait(250);
+    }
+  }
+  const entry = {
+    id: Date.now() % 1_000_000,
+    file_name: `file-${Date.now()}.wav`,
+    timestamp: Math.floor(Date.now() / 1000),
+    saved: false,
+    title: name,
+    transcription_text: FILE_TEXT,
+    post_processed_text: null,
+    post_process_prompt: null,
+    post_process_requested: false,
+  };
+  history.unshift(entry);
+  await emit("history-update-payload", { action: "added", entry });
+  return entry;
+}
+
+async function mockEnhance(
+  id: number,
+  enhancement: { kind: string; value: string },
+) {
+  const entry = history.find((e) => e.id === id);
+  if (!entry) throw "not found";
+  if (!settings.post_process_enabled) throw "ai off";
+  for (let done = 0; done <= 3; done++) {
+    await emit("file-progress", { phase: "enhance", done, total: 3 });
+    await wait(300);
+  }
+  entry.post_processed_text =
+    enhancement.kind === "translate"
+      ? "Hi everyone, today I'll share how I plan a video for my YouTube channel. First I write the main idea in one short sentence. Then I split the content into three parts: the opening, the main part and the ending."
+      : "Xin chào các bạn! Hôm nay mình chia sẻ cách lên kế hoạch cho một video YouTube.\n\nĐầu tiên, viết ý tưởng chính trong một câu ngắn. Sau đó chia nội dung thành ba phần: mở đầu, phần chính và phần kết.";
+  entry.post_process_prompt = enhancement.value;
+  await emit("history-update-payload", { action: "updated", entry });
+  return entry;
+}
+
 const settings: Json = structuredClone(settingsFixture) as Json;
 let dictating = false;
 const models = structuredClone(modelsFixture) as Json[];
@@ -117,6 +190,24 @@ function handle(cmd: string, args: Json): unknown {
       return cmd === "is_model_loading" ? false : settings.selected_model;
     case "get_model_load_status":
       return { is_loaded: true, current_model: settings.selected_model };
+    case "transcribe_media":
+      return mockTranscribeMedia(
+        args.source as { kind: string; value: string },
+      );
+    case "enhance_history_entry":
+      return mockEnhance(
+        args.id as number,
+        args.enhancement as { kind: string; value: string },
+      );
+    case "cancel_file_job":
+      fileCancelled = true;
+      return null;
+    case "write_text_file":
+      return null;
+    case "plugin:dialog|open":
+      return "/Users/you/Movies/phong-van-khach-hang.mov";
+    case "plugin:dialog|save":
+      return "/Users/you/Documents/phong-van-khach-hang.txt";
     case "get_history_entries":
       return { entries: history, has_more: false };
     case "search_history_entries": {

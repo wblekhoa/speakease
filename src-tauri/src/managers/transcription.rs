@@ -1147,6 +1147,16 @@ impl TranscriptionManager {
     }
 
     pub fn transcribe(&self, audio: Vec<f32>) -> Result<String> {
+        self.transcribe_reporting(audio, &|_, _| {})
+    }
+
+    /// As `transcribe`, calling `progress(done, total)` as the audio's
+    /// pieces finish (SE-REC-008), for a long file's progress bar.
+    pub fn transcribe_reporting(
+        &self,
+        audio: Vec<f32>,
+        progress: &(dyn Fn(usize, usize) + Sync),
+    ) -> Result<String> {
         #[cfg(debug_assertions)]
         if std::env::var("HANDY_FORCE_TRANSCRIPTION_FAILURE").is_ok() {
             return Err(anyhow::anyhow!(
@@ -1235,7 +1245,8 @@ impl TranscriptionManager {
             } else {
                 audio.clone()
             };
-            let result = self.transcribe_in_chunks(samples, &settings, language, &active_model);
+            let result =
+                self.transcribe_in_chunks(samples, &settings, language, &active_model, progress);
             let cancelled = matches!(&result, Err(err) if err.chain().any(|cause| {
                 matches!(cause.downcast_ref::<EngineError>(), Some(EngineError::Cancelled))
             }));
@@ -1335,10 +1346,15 @@ impl TranscriptionManager {
         settings: &AppSettings,
         language: &str,
         active_model: &str,
+        progress: &(dyn Fn(usize, usize) + Sync),
     ) -> Result<RunOutcome> {
         let bounds = chunk_bounds(&audio, CHUNK_MAX_SAMPLES, CHUNK_SEARCH_SAMPLES);
-        if bounds.len() == 1 {
-            return self.run_piece(&audio, settings, language, active_model);
+        let total = bounds.len();
+        progress(0, total);
+        if total == 1 {
+            let run = self.run_piece(&audio, settings, language, active_model)?;
+            progress(1, 1);
+            return Ok(run);
         }
         debug!(
             "Long audio ({:.1}s): {} chunks",
@@ -1346,8 +1362,9 @@ impl TranscriptionManager {
             bounds.len()
         );
         let mut merged: Option<RunOutcome> = None;
-        for (start, end) in bounds {
+        for (index, (start, end)) in bounds.into_iter().enumerate() {
             let run = self.run_piece(&audio[start..end], settings, language, active_model)?;
+            progress(index + 1, total);
             merged = Some(match merged {
                 None => run,
                 Some(mut so_far) => {

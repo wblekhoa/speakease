@@ -11,13 +11,18 @@ The first version of SpeakEase, on top of Handy at `f6b3f82`.
   (measured on Google FLEURS); custom words; a Vietnamese and English interface
   that follows the Mac's language.
 - **AI cleanup and translation** with Apple Intelligence on the Mac, or with
-  your own API key: *Vietnamese cleanup* and *Write as an email* prompts, and
+  your own API key: _Vietnamese cleanup_ and _Write as an email_ prompts, and
   translation into 12 languages (anything other than English goes through
   English, which translates far better on-device).
 - **Speak page**: the microphone, model, language, AI cleanup and translation
   one click away, and a microphone button that dictates without the shortcut.
 - **Settings in the order a dictation goes**: Recording, Recognition,
   AI & Translate, App. One switch turns every AI step off.
+- **Files**: drop an audio or video file, choose one, or paste a link, and get its words in seconds (only the
+  sound is read; a 10-minute video takes about 11 s). Then rewrite or translate the text, copy it or save it as
+  .txt. YouTube links need yt-dlp installed.
+- **Long recordings are no longer cut short**: speech over about 40 s lost words with Cohere Transcribe and
+  failed with Moonshine; audio is now split at pauses and nothing is dropped.
 - **History**: search, counters, one card per dictation with the original
   under the AI version, playback and re-transcription.
 - **Tray menu**: listening language, model, AI cleanup and translation.

@@ -33,7 +33,8 @@
     "app": "App",
     "settingsGroup": "Settings",
     "resize": "Drag to resize, or drag in to fold · double-click for the default width",
-    "unfoldDrag": "Drag out to open the sidebar · double-click to open it"
+    "unfoldDrag": "Drag out to open the sidebar · double-click to open it",
+    "files": "Files"
   },
   "onboarding": {
     "subtitle": "To get started, choose a transcription model",
@@ -562,7 +563,9 @@
       "keeping": "Storage",
       "statEntries": "dictations",
       "statWords": "words",
-      "statMinutes": "minutes of typing saved"
+      "statMinutes": "minutes of typing saved",
+      "showAll": "Show all",
+      "showLess": "Show less"
     },
     "debug": {
       "title": "Debug",
@@ -925,5 +928,50 @@
     "translation": "translates into English",
     "detection": "detects the language",
     "streaming": "shows words as you speak"
+  },
+  "files": {
+    "drop": "Drop an audio or video file here",
+    "dropNow": "Drop to get the words",
+    "formats": "MP3, M4A, MP4, MOV, WAV, FLAC, OGG · the sound only, the picture is ignored",
+    "choose": "Choose a file",
+    "filterName": "Audio and video",
+    "linkPlaceholder": "Or paste a link: YouTube, or a link to an .mp3 / .mp4 file",
+    "fromLink": "Get the words",
+    "cancel": "Cancel",
+    "phase": {
+      "download": "Downloading the sound",
+      "read": "Reading the sound",
+      "transcribe": "Transcribing",
+      "transcribeParts": "Transcribing · part {{done}} of {{total}}",
+      "enhance": "Working with AI",
+      "enhanceParts": "Working with AI · part {{done}} of {{total}}"
+    },
+    "words_one": "{{count}} word",
+    "words_other": "{{count}} words",
+    "aiVersion": "AI version",
+    "copy": "Copy",
+    "copied": "Copied",
+    "saveTxt": "Save .txt",
+    "textFile": "Text",
+    "saved": "File saved",
+    "rewrite": "Rewrite…",
+    "translate": "Translate to…",
+    "translatingInto": "Translating into {{language}}",
+    "turnOnAi": "Turn on AI to rewrite and translate",
+    "openAi": "Open AI & Translate",
+    "recent": "Recent files",
+    "errors": {
+      "busy": "Another file is being processed. Wait for it or cancel it, then try again.",
+      "unsupported": "This format can't be read yet. Use MP3, M4A, MP4, MOV, WAV, FLAC or OGG.",
+      "no_audio": "The file has no sound.",
+      "no_speech": "No speech was heard in the file.",
+      "bad_link": "That isn't a valid link. Paste one starting with https://.",
+      "download_failed": "Couldn't download from this link. Check your connection or the link and try again.",
+      "needs_yt_dlp": "This link is a web page. Install yt-dlp (brew install yt-dlp) to get the sound from YouTube and other video sites.",
+      "no_model": "No speech model yet. Download one in Recognition.",
+      "ai_off": "AI is off. Turn it on in AI & Translate to rewrite and translate.",
+      "ai_failed": "The AI didn't answer. Check AI & Translate and try again.",
+      "other": "Something went wrong with the file. Try again."
+    }
   }
 }

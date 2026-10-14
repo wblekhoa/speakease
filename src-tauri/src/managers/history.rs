@@ -214,6 +214,26 @@ impl HistoryManager {
         &self.recordings_dir
     }
 
+    // SE-FILE-002
+    /// SpeakEase: an entry made from a file, titled with the file's name
+    /// (dictations are titled with their time). Its audio is named
+    /// `file-….wav`, which is how the History page tells the two apart.
+    pub fn save_titled_entry(
+        &self,
+        file_name: String,
+        title: String,
+        transcription_text: String,
+    ) -> Result<HistoryEntry> {
+        self.insert_entry(
+            file_name,
+            Some(title),
+            transcription_text,
+            false,
+            None,
+            None,
+        )
+    }
+
     /// Save a new history entry to the database.
     /// The WAV file should already have been written to the recordings directory.
     pub fn save_entry(
@@ -224,8 +244,27 @@ impl HistoryManager {
         post_processed_text: Option<String>,
         post_process_prompt: Option<String>,
     ) -> Result<HistoryEntry> {
+        self.insert_entry(
+            file_name,
+            None,
+            transcription_text,
+            post_process_requested,
+            post_processed_text,
+            post_process_prompt,
+        )
+    }
+
+    fn insert_entry(
+        &self,
+        file_name: String,
+        title: Option<String>,
+        transcription_text: String,
+        post_process_requested: bool,
+        post_processed_text: Option<String>,
+        post_process_prompt: Option<String>,
+    ) -> Result<HistoryEntry> {
         let timestamp = Utc::now().timestamp();
-        let title = self.format_timestamp_title(timestamp);
+        let title = title.unwrap_or_else(|| self.format_timestamp_title(timestamp));
 
         let conn = self.get_connection()?;
         conn.execute(

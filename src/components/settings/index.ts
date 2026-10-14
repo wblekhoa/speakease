@@ -34,3 +34,4 @@ export { HistoryLimit } from "./HistoryLimit";
 export { RecordingRetentionPeriodSelector } from "./RecordingRetentionPeriod";
 export { AutostartToggle } from "./AutostartToggle";
 export { SpeakPage } from "./speak/SpeakPage";
+export { FilesPage } from "./files/FilesPage";
