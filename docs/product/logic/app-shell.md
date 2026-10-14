@@ -4,7 +4,7 @@ type: logic
 product: speakease
 title: "SpeakEase — App shell (logic)"
 status: active
-updated: 2026-10-13
+updated: 2026-10-14
 reqPrefix: SE-APP
 relations:
   specifiedBy: [speakease-ux-app-shell]
@@ -71,6 +71,7 @@ or code named in Evidence.
 
 ## Change log
 
+- 2026-10-14: reviewed after Files joined the side column and lib.rs gained the file commands; SE-APP-001…010 unchanged.
 - 2026-10-13: SE-APP-009 changed - manual checks no longer depend on the automatic-check switch (the app menu item used
   to do nothing with it off; the tray item was greyed out).
 - 2026-10-13: created; REQ-IDs added as one-line comments next to the evidence in the same commit.
