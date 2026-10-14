@@ -1364,6 +1364,9 @@ impl TranscriptionManager {
         let mut merged: Option<RunOutcome> = None;
         for (index, (start, end)) in bounds.into_iter().enumerate() {
             let run = self.run_piece(&audio[start..end], settings, language, active_model)?;
+            // A long file is in use the whole time: keep the idle unload
+            // (as short as 2 min) from stopping the model between pieces.
+            self.touch_activity();
             progress(index + 1, total);
             merged = Some(match merged {
                 None => run,

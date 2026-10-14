@@ -24,6 +24,7 @@ A dictation app for macOS, **made for Vietnamese first**. Hold a key, speak, let
 - **On-device recognition.** Pick and download a model inside the app; it works offline after that.
 - **AI cleanup.** Punctuation, capitalised names, numbers written as digits, filler words gone. Ships with *Vietnamese cleanup* and *Write as an email* prompts; add your own.
 - **Translate as you speak.** Speak Vietnamese, paste English (or one of 11 other languages): for every dictation, or only with the translate shortcut.
+- **Text from files and videos.** Drop in an MP3, M4A, MP4, MOV… or paste a link (YouTube links need yt-dlp): only the sound is read, so a 10-minute video is text in about 11 seconds. Then rewrite or translate it, copy it or save it as .txt.
 - **Custom words.** Teach it names, brands and terms so it spells them right.
 - **History.** Search what you said, play it back, copy, re-transcribe, and see how many minutes of typing you saved. All of it stays on your Mac.
 - **Quick changes from the menu bar.** Listening language, model, AI cleanup and translation, without opening the window.

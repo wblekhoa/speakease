@@ -210,7 +210,7 @@ async fn fetch_with_ytdlp(
     let output = tauri::async_runtime::spawn_blocking(move || {
         // The audio stream only, in a container the decoder reads (M4A/AAC
         // is what YouTube offers alongside Opus).
-        Command::new(&ytdlp)
+        let mut child = Command::new(&ytdlp)
             .args([
                 "--no-playlist",
                 "--no-progress",
@@ -220,11 +220,28 @@ async fn fetch_with_ytdlp(
             ])
             .arg(dir.join("%(title).120B.%(ext)s"))
             .args(["--print", "after_move:filepath", "--", &url])
-            .output()
+            .stdout(std::process::Stdio::piped())
+            .stderr(std::process::Stdio::piped())
+            .spawn()?;
+        // Cancel stops the download itself, not only what follows it.
+        loop {
+            if CANCEL.load(Ordering::SeqCst) {
+                let _ = child.kill();
+                break;
+            }
+            if child.try_wait()?.is_some() {
+                break;
+            }
+            std::thread::sleep(Duration::from_millis(150));
+        }
+        child.wait_with_output()
     })
     .await
     .map_err(|e| e.to_string())?
-    .map_err(|e| format!("yt-dlp: {e}"))?;
+    .map_err(|e| {
+        warn!("yt-dlp could not run: {e}");
+        "download failed".to_string()
+    })?;
     cancelled()?;
     if !output.status.success() {
         let err = String::from_utf8_lossy(&output.stderr);
@@ -372,30 +389,36 @@ pub async fn transcribe_media(
 
         let tm = Arc::clone(&transcription_manager);
         let progress_app = app.clone();
-        let text = tauri::async_runtime::spawn_blocking(move || {
+        let transcribed = tauri::async_runtime::spawn_blocking(move || {
             tm.transcribe_reporting(samples, &|done, total| {
                 report(&progress_app, "transcribe", done, total)
             })
         })
-        .await
-        .map_err(|e| e.to_string())?
-        .map_err(|e| {
-            if CANCEL.load(Ordering::SeqCst) {
-                "cancelled".to_string()
-            } else if e.to_string().contains("not loaded") {
-                "no model".to_string()
-            } else {
-                e.to_string()
+        .await;
+        // The audio is kept only with an entry: never leave a WAV behind.
+        let written = match saved.await {
+            Ok(Ok(())) => Ok(()),
+            Ok(Err(e)) => Err(e.to_string()),
+            Err(e) => Err(e.to_string()),
+        };
+        let text = match transcribed {
+            Ok(Ok(text)) => Ok(text),
+            Ok(Err(e)) if CANCEL.load(Ordering::SeqCst) => Err(format!("cancelled: {e}")),
+            Ok(Err(e)) if e.to_string().contains("not loaded") => Err("no model".to_string()),
+            Ok(Err(e)) => Err(e.to_string()),
+            Err(e) => Err(e.to_string()),
+        };
+        let text = match (text, written) {
+            (Ok(text), Ok(())) if !text.trim().is_empty() => text,
+            (text, written) => {
+                let _ = std::fs::remove_file(history_manager.get_audio_file_path(&file_name));
+                return Err(match (text, written) {
+                    (Err(code), _) => code,
+                    (Ok(_), Err(err)) => err,
+                    (Ok(_), Ok(())) => "no speech".to_string(),
+                });
             }
-        })?;
-        saved
-            .await
-            .map_err(|e| e.to_string())?
-            .map_err(|e| e.to_string())?;
-        if text.trim().is_empty() {
-            let _ = std::fs::remove_file(history_manager.get_audio_file_path(&file_name));
-            return Err("no speech".to_string());
-        }
+        };
         info!(
             "File of {:.0}s transcribed in {:.1}s",
             audio_secs,

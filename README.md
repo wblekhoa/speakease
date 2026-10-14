@@ -24,6 +24,7 @@
 - **Nhận dạng trên máy.** Chọn và tải mô hình ngay trong app; sau đó chạy offline.
 - **AI sửa câu.** Thêm dấu câu, viết hoa tên riêng, đổi số đọc bằng chữ thành chữ số, bỏ từ đệm (ờ, ừm, à…). Có sẵn mẫu *Sửa câu tiếng Việt* và *Viết thành email*; bạn tự thêm được mẫu của mình.
 - **Dịch khi nói.** Nói tiếng Việt, dán ra tiếng Anh (hoặc 11 ngôn ngữ khác). Bật cho mọi lần nói, hoặc chỉ khi bấm phím dịch riêng.
+- **Lấy chữ từ file và video.** Kéo vào file MP3, M4A, MP4, MOV… hoặc dán link (link YouTube cần cài yt-dlp): app chỉ đọc phần tiếng, video 10 phút ra chữ trong khoảng 11 giây. Sau đó viết lại hoặc dịch, sao chép hay lưu .txt.
 - **Từ riêng.** Dạy app tên người, tên công ty, thuật ngữ để nó viết đúng.
 - **Lịch sử.** Tìm theo nội dung, nghe lại, sao chép, nhận dạng lại, xem đã tiết kiệm bao nhiêu phút gõ phím. Mọi thứ nằm trên máy bạn.
 - **Đổi nhanh từ thanh menu.** Ngôn ngữ nghe, mô hình, AI sửa câu, dịch sang — không cần mở cửa sổ.

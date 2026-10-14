@@ -565,7 +565,10 @@
       "statWords": "từ",
       "statMinutes": "phút gõ phím tiết kiệm",
       "showAll": "Xem hết",
-      "showLess": "Thu gọn"
+      "showLess": "Thu gọn",
+      "aiMenu": "Viết lại hoặc dịch",
+      "rewriteWith": "Viết lại:",
+      "translateInto": "Dịch sang:"
     },
     "debug": {
       "title": "Gỡ lỗi",

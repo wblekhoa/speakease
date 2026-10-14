@@ -565,7 +565,10 @@
       "statWords": "words",
       "statMinutes": "minutes of typing saved",
       "showAll": "Show all",
-      "showLess": "Show less"
+      "showLess": "Show less",
+      "aiMenu": "Rewrite or translate",
+      "rewriteWith": "Rewrite:",
+      "translateInto": "Translate into:"
     },
     "debug": {
       "title": "Debug",

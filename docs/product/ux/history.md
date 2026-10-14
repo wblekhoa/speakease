@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — History (UX)"
 status: active
-updated: 2026-10-11
+updated: 2026-10-14
 relations:
   specifies: [speakease:src/components/settings/history/HistorySettings.tsx]
   dependsOn: [speakease-logic-history]
@@ -35,7 +35,8 @@ relations:
 - **Counters** at the top: dictations, words, and about how many minutes of typing were saved.
 - **One card per dictation**, grouped by Today / Yesterday / date. A card with an AI version shows it first, with an
   **AI** or **Translated** badge, and the **Original** in an inset box under it.
-- Per card: **Play back** the recording, **Copy**, **Save** (kept beyond the limit), **Delete**, **Re-transcribe**
+- Per card: **Play back** the recording, **Copy**, **Save** (kept beyond the limit), **Rewrite or translate** (the AI
+  & Translate prompts and the Speak page's languages, shown in the card; `logic/files.md` SE-FILE-003), **Delete**, **Re-transcribe**
   (useful after switching model or language).
 - **Storage** sets how many dictations are kept and when recordings are deleted. Everything stays on the Mac.
 
@@ -68,4 +69,5 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-14: Rewrite or translate on every card; file entries show their name and fold to six lines.
 - 2026-10-11: created (doc-engine rollout).

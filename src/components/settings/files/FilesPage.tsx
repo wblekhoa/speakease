@@ -20,6 +20,7 @@ import {
 import { Button } from "../../ui/Button";
 import { Dropdown } from "../../ui/Dropdown";
 import { copyToClipboard } from "../history/clipboard";
+import { fileErrorKey } from "./fileErrors";
 import { CheckIcon, CopyIcon, FolderOpenIcon } from "../../icons/bulk";
 
 /** What the decoder reads (commands/files.rs MEDIA_EXTENSIONS). */
@@ -107,21 +108,9 @@ export const FilesPage: React.FC = () => {
   }, []);
 
   const failed = useCallback(
-    (code: string) => {
-      if (code === "cancelled") return;
-      const known = [
-        "busy",
-        "unsupported",
-        "no audio",
-        "no speech",
-        "bad link",
-        "download failed",
-        "needs yt-dlp",
-        "no model",
-        "ai off",
-        "ai failed",
-      ];
-      const key = known.includes(code) ? code.replace(/ /g, "_") : "other";
+    (error: string) => {
+      const key = fileErrorKey(error);
+      if (key === "cancelled") return;
       if (key === "ai_off") {
         toast.error(t("files.errors.ai_off"), {
           action: {

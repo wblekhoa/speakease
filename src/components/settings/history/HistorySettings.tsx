@@ -5,6 +5,7 @@ import {
   CheckIcon,
   CopyIcon,
   FolderOpenIcon,
+  MagicStarIcon,
   ReadingSettingsIcon,
   RefreshArrowIcon,
   SearchIcon,
@@ -24,6 +25,13 @@ import {
 } from "@/bindings";
 import { useOsType } from "@/hooks/useOsType";
 import { useSettings } from "@/hooks/useSettings";
+import {
+  TRANSLATE_PROMPT_ID,
+  TRANSLATE_TARGETS,
+  translateTargetName,
+} from "@/lib/translateTargets";
+import { openSection } from "@/lib/navigation";
+import { fileErrorKey } from "../files/fileErrors";
 import { AudioPlayer, AudioPlayerGroup } from "../../ui/AudioPlayer";
 import { Button } from "../../ui/Button";
 import { IconTip } from "../../ui/IconTip";
@@ -469,6 +477,27 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   const fromFile = entry.file_name.startsWith("file-");
   const [expanded, setExpanded] = useState(false);
   const folded = fromFile && !expanded;
+  // Rewrite or translate any entry after the fact (SE-FILE-003).
+  const { settings } = useSettings();
+  const [aiMenu, setAiMenu] = useState(false);
+  const [aiWorking, setAiWorking] = useState(false);
+  const aiOn = settings?.post_process_enabled ?? false;
+  const prompts = (settings?.post_process_prompts ?? []).filter(
+    (prompt) => prompt.id !== TRANSLATE_PROMPT_ID,
+  );
+  const runAi = async (enhancement: {
+    kind: "prompt" | "translate";
+    value: string;
+  }) => {
+    setAiMenu(false);
+    setAiWorking(true);
+    const result = await commands.enhanceHistoryEntry(entry.id, enhancement);
+    setAiWorking(false);
+    if (result.status === "error") {
+      const key = fileErrorKey(result.error);
+      if (key !== "cancelled") toast.error(t(`files.errors.${key}`));
+    }
+  };
 
   const hasTranscription = entry.transcription_text.trim().length > 0;
   const aiText = entry.post_processed_text?.trim()
@@ -523,7 +552,12 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
 
   // SE-HIST-003
   const endsOnOriginal =
-    Boolean(aiText) && !retrying && !listening && !fromFile;
+    Boolean(aiText) &&
+    !retrying &&
+    !listening &&
+    !fromFile &&
+    !aiMenu &&
+    !aiWorking;
 
   return (
     // One card per dictation: when, what it became, and what was said.
@@ -584,6 +618,14 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
             ) : (
               <StarOutlineIcon width={18} height={18} />
             )}
+          </IconButton>
+          <IconButton
+            onClick={() => setAiMenu((open) => !open)}
+            disabled={!hasTranscription || retrying || aiWorking}
+            active={aiMenu}
+            title={t("settings.history.aiMenu")}
+          >
+            <MagicStarIcon width={18} height={18} />
           </IconButton>
           <IconButton
             onClick={handleRetranscribe}
@@ -653,6 +695,65 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
           >
             {entry.transcription_text}
           </p>
+        </div>
+      )}
+
+      {aiWorking && (
+        <p className="text-xs text-mid-gray animate-pulse">
+          {t("files.phase.enhance")}…
+        </p>
+      )}
+
+      {aiMenu && (
+        <div className="rounded-xl border border-hairline px-3 py-2.5 space-y-2">
+          {aiOn ? (
+            <>
+              {prompts.length > 0 && (
+                <div className="flex flex-wrap items-center gap-1.5">
+                  <span className="text-xs text-mid-gray me-1">
+                    {t("settings.history.rewriteWith")}
+                  </span>
+                  {prompts.map((prompt) => (
+                    <button
+                      key={prompt.id}
+                      type="button"
+                      onClick={() =>
+                        runAi({ kind: "prompt", value: prompt.id })
+                      }
+                      className="text-xs px-2.5 py-1 rounded-full bg-row hover:bg-logo-primary/15 hover:text-logo-primary cursor-pointer transition-colors"
+                    >
+                      {prompt.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+              <div className="flex flex-wrap items-center gap-1.5">
+                <span className="text-xs text-mid-gray me-1">
+                  {t("settings.history.translateInto")}
+                </span>
+                {TRANSLATE_TARGETS.map((target) => (
+                  <button
+                    key={target.value}
+                    type="button"
+                    onClick={() =>
+                      runAi({ kind: "translate", value: target.value })
+                    }
+                    className="text-xs px-2.5 py-1 rounded-full bg-row hover:bg-logo-primary/15 hover:text-logo-primary cursor-pointer transition-colors"
+                  >
+                    {translateTargetName(target.value, i18n.language)}
+                  </button>
+                ))}
+              </div>
+            </>
+          ) : (
+            <button
+              type="button"
+              onClick={() => openSection("postprocessing")}
+              className="text-xs text-logo-primary hover:underline cursor-pointer"
+            >
+              {t("files.turnOnAi")}
+            </button>
+          )}
         </div>
       )}
 

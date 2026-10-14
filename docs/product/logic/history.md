@@ -4,7 +4,7 @@ type: logic
 product: speakease
 title: "SpeakEase — History (logic)"
 status: active
-updated: 2026-10-11
+updated: 2026-10-14
 reqPrefix: SE-HIST
 relations:
   specifiedBy: [speakease-ux-history]
@@ -53,4 +53,5 @@ or code named in Evidence.
 
 ## Change log
 
+- 2026-10-14: reviewed after file entries and the card's Rewrite or translate button (SE-FILE-002/003); SE-HIST-001…003 unchanged - the original still shows under any AI version.
 - 2026-10-11: created; REQ-IDs added as one-line comments next to the evidence in the same commit.

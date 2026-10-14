@@ -46,7 +46,8 @@ relations:
   shows on top with the **Original** under it. With AI off, both menus are greyed out and a link turns AI on.
 - **Recent files** lists the last six files; choosing one shows its text again.
 - **In History** a file shows its name beside the time, and its text is folded to six lines with **Show all**.
-  Play back and Re-transcribe work as for dictations.
+  Play back and Re-transcribe work as for dictations. Every card, dictation or file, has a **Rewrite or translate**
+  button that opens the same prompts and languages in the card.
 - **Links**: a link to an audio or video file works as it is. YouTube and other video pages need yt-dlp installed
   (`brew install yt-dlp`); the message says so.
 - **Errors** say what went wrong and what to do: unsupported format, no sound, no speech, bad link, download failed,
