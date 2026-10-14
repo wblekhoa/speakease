@@ -1228,19 +1228,14 @@ impl TranscriptionManager {
         let run = loop {
             let language = &languages[attempt];
             let last = attempt + 1 == languages.len();
-            let result = match self.engine.loaded() {
-                Some(info) => {
-                    // The engine takes the samples; keep a copy while another
-                    // language may still be needed.
-                    let samples = if last {
-                        std::mem::take(&mut audio)
-                    } else {
-                        audio.clone()
-                    };
-                    self.transcribe_cpp(info, samples, &settings, language, &active_model)
-                }
-                None => self.transcribe_onnx(&audio, &settings, language, &active_model),
+            // The engine takes the samples; keep a copy while another
+            // language may still be needed.
+            let samples = if last {
+                std::mem::take(&mut audio)
+            } else {
+                audio.clone()
             };
+            let result = self.transcribe_in_chunks(samples, &settings, language, &active_model);
             let cancelled = matches!(&result, Err(err) if err.chain().any(|cause| {
                 matches!(cause.downcast_ref::<EngineError>(), Some(EngineError::Cancelled))
             }));
@@ -1326,6 +1321,88 @@ impl TranscriptionManager {
     /// the ModelManager copy. The whisper run extension is kind-tagged, so
     /// non-whisper archs (parakeet, voxtral, …) reject it with INVALID_ARG;
     /// attach it — and translate — only where supported.
+    /// SE-REC-008: audio longer than one chunk is cut at its quietest moments
+    /// and run a chunk at a time. Measured 14/10/2026 on a 70 s Vietnamese
+    /// clip: Cohere Transcribe silently dropped 73 of 216 words from the
+    /// middle and Moonshine Base (Vietnamese) failed outright, while 20-26 s
+    /// pieces came back whole (215/216). Every model goes through the same
+    /// cut: a model that handles long audio itself loses nothing from it. A
+    /// piece the engine reports as truncated (a token cap, as Moonshine's 194)
+    /// is halved at its quietest point and run again.
+    fn transcribe_in_chunks(
+        &self,
+        audio: Vec<f32>,
+        settings: &AppSettings,
+        language: &str,
+        active_model: &str,
+    ) -> Result<RunOutcome> {
+        let bounds = chunk_bounds(&audio, CHUNK_MAX_SAMPLES, CHUNK_SEARCH_SAMPLES);
+        if bounds.len() == 1 {
+            return self.run_piece(&audio, settings, language, active_model);
+        }
+        debug!(
+            "Long audio ({:.1}s): {} chunks",
+            audio.len() as f64 / 16_000.0,
+            bounds.len()
+        );
+        let mut merged: Option<RunOutcome> = None;
+        for (start, end) in bounds {
+            let run = self.run_piece(&audio[start..end], settings, language, active_model)?;
+            merged = Some(match merged {
+                None => run,
+                Some(mut so_far) => {
+                    so_far.text = join_chunk_texts(&so_far.text, &run.text);
+                    if so_far.model_detected_language.is_none() {
+                        so_far.model_detected_language = run.model_detected_language;
+                    }
+                    so_far
+                }
+            });
+        }
+        merged.ok_or_else(|| anyhow::anyhow!("no audio chunks"))
+    }
+
+    /// Runs one piece; if the engine cut its output short, runs the two
+    /// halves instead (down to CHUNK_MIN_SAMPLES).
+    fn run_piece(
+        &self,
+        piece: &[f32],
+        settings: &AppSettings,
+        language: &str,
+        active_model: &str,
+    ) -> Result<RunOutcome> {
+        match self.run_engine(piece.to_vec(), settings, language, active_model) {
+            Err(err) if is_truncated(&err) && piece.len() >= 2 * CHUNK_MIN_SAMPLES => {
+                let cut = halve_at_quiet(piece);
+                debug!(
+                    "Output truncated on {:.1}s of audio; running it in two",
+                    piece.len() as f64 / 16_000.0
+                );
+                let mut first = self.run_piece(&piece[..cut], settings, language, active_model)?;
+                let second = self.run_piece(&piece[cut..], settings, language, active_model)?;
+                first.text = join_chunk_texts(&first.text, &second.text);
+                if first.model_detected_language.is_none() {
+                    first.model_detected_language = second.model_detected_language;
+                }
+                Ok(first)
+            }
+            other => other,
+        }
+    }
+
+    fn run_engine(
+        &self,
+        samples: Vec<f32>,
+        settings: &AppSettings,
+        language: &str,
+        active_model: &str,
+    ) -> Result<RunOutcome> {
+        match self.engine.loaded() {
+            Some(info) => self.transcribe_cpp(info, samples, settings, language, active_model),
+            None => self.transcribe_onnx(&samples, settings, language, active_model),
+        }
+    }
+
     fn transcribe_cpp(
         &self,
         info: LoadedInfo,
@@ -1705,6 +1782,72 @@ impl StreamPerf {
 
     fn compute_secs(&self) -> f64 {
         self.stream_compute_elapsed.as_secs_f64()
+    }
+}
+
+/// The longest piece one engine run gets (16 kHz samples). Cohere
+/// Transcribe started losing words between 40 and 45 s (14/10/2026), so
+/// 30 s keeps a margin.
+const CHUNK_MAX_SAMPLES: usize = 30 * 16_000;
+/// Where a cut may fall: within the last this-many samples of a chunk.
+const CHUNK_SEARCH_SAMPLES: usize = 10 * 16_000;
+/// The quiet stretch looked for: 100 ms, checked every 10 ms.
+const QUIET_FRAME: usize = 1_600;
+const QUIET_HOP: usize = 160;
+
+/// Splits `audio` into `(start, end)` pieces of at most `max` samples, each
+/// cut at the quietest 100 ms within the last `search` samples of the piece,
+/// so a cut lands between words rather than inside one. Pieces cover the
+/// audio exactly, in order, with no gap or overlap.
+fn chunk_bounds(audio: &[f32], max: usize, search: usize) -> Vec<(usize, usize)> {
+    let len = audio.len();
+    if len <= max || max == 0 {
+        return vec![(0, len)];
+    }
+    let mut bounds = Vec::new();
+    let mut start = 0;
+    while len - start > max {
+        let window_end = start + max;
+        let window_start = window_end.saturating_sub(search).max(start + 1);
+        let mut best = (f32::INFINITY, window_end);
+        let mut at = window_start;
+        while at + QUIET_FRAME <= window_end {
+            let energy: f32 = audio[at..at + QUIET_FRAME].iter().map(|x| x * x).sum();
+            if energy < best.0 {
+                best = (energy, at + QUIET_FRAME / 2);
+            }
+            at += QUIET_HOP;
+        }
+        bounds.push((start, best.1));
+        start = best.1;
+    }
+    bounds.push((start, len));
+    bounds
+}
+
+/// The shortest piece a truncated run is halved into.
+const CHUNK_MIN_SAMPLES: usize = 4 * 16_000;
+
+/// The quietest point in the middle half of `audio`: where a piece the
+/// engine truncated is split in two.
+fn halve_at_quiet(audio: &[f32]) -> usize {
+    let len = audio.len();
+    chunk_bounds(audio, len - len / 4, len / 2)[0].1
+}
+
+/// Whether the engine stopped because it ran out of output room (the
+/// transcribe.cpp OutputTruncated error, carried across the worker as text).
+fn is_truncated(err: &anyhow::Error) -> bool {
+    err.chain()
+        .any(|cause| cause.to_string().contains("output truncated"))
+}
+
+/// Joins two chunks' text with one space, dropping empty pieces.
+fn join_chunk_texts(before: &str, after: &str) -> String {
+    match (before.trim(), after.trim()) {
+        ("", a) => a.to_string(),
+        (b, "") => b.to_string(),
+        (b, a) => format!("{b} {a}"),
     }
 }
 
@@ -2245,6 +2388,74 @@ pub fn get_available_accelerators(tm: &TranscriptionManager) -> AvailableAcceler
 
 #[cfg(test)]
 mod tests {
+    // SE-REC-008
+    #[test]
+    fn long_audio_is_cut_in_the_quiet_into_pieces_that_cover_it() {
+        let rate = 16_000;
+        // 70 s of "speech" (a tone) with a 0.4 s silence at 24 s and 51 s.
+        let mut audio: Vec<f32> = (0..70 * rate)
+            .map(|i| ((i % 40) as f32 / 40.0) - 0.5)
+            .collect();
+        for gap in [24 * rate, 51 * rate] {
+            audio[gap..gap + rate * 2 / 5]
+                .iter_mut()
+                .for_each(|x| *x = 0.0);
+        }
+        let bounds = super::chunk_bounds(&audio, 30 * rate, 10 * rate);
+        assert_eq!(bounds.len(), 3);
+        // Every cut falls inside a silence.
+        assert!((24 * rate..24 * rate + rate * 2 / 5).contains(&bounds[0].1));
+        assert!((51 * rate..51 * rate + rate * 2 / 5).contains(&bounds[1].1));
+        // Contiguous, complete, none longer than the limit.
+        assert_eq!(bounds[0].0, 0);
+        assert_eq!(bounds.last().unwrap().1, audio.len());
+        for pair in bounds.windows(2) {
+            assert_eq!(pair[0].1, pair[1].0);
+        }
+        assert!(bounds.iter().all(|(a, b)| b - a <= 30 * rate));
+    }
+
+    #[test]
+    fn short_audio_is_one_piece_and_silence_free_audio_still_splits() {
+        let rate = 16_000;
+        assert_eq!(
+            super::chunk_bounds(&vec![0.1; 20 * rate], 30 * rate, 10 * rate),
+            vec![(0, 20 * rate)]
+        );
+        let loud = vec![0.5; 95 * rate];
+        let bounds = super::chunk_bounds(&loud, 30 * rate, 10 * rate);
+        assert_eq!(bounds.last().unwrap().1, loud.len());
+        assert!(bounds.iter().all(|(a, b)| b > a && b - a <= 30 * rate));
+    }
+
+    #[test]
+    fn a_truncated_piece_is_halved_in_its_quiet_middle() {
+        let rate = 16_000;
+        let mut audio = vec![0.5f32; 30 * rate];
+        audio[13 * rate..13 * rate + rate / 5]
+            .iter_mut()
+            .for_each(|x| *x = 0.0);
+        let cut = super::halve_at_quiet(&audio);
+        assert!((13 * rate..13 * rate + rate / 5).contains(&cut));
+        // Without a pause the cut still lands in the middle half.
+        let flat = vec![0.5f32; 30 * rate];
+        let cut = super::halve_at_quiet(&flat);
+        assert!((7 * rate..=23 * rate).contains(&cut));
+        assert!(super::is_truncated(&anyhow::anyhow!(
+            "transcribe-cpp transcription failed: output truncated before end-of-stream"
+        )));
+        assert!(!super::is_truncated(&anyhow::anyhow!("model not loaded")));
+    }
+
+    #[test]
+    fn chunk_texts_join_with_one_space_and_skip_empty_pieces() {
+        assert_eq!(
+            super::join_chunk_texts("xin chào ", " các bạn"),
+            "xin chào các bạn"
+        );
+        assert_eq!(super::join_chunk_texts("", "các bạn"), "các bạn");
+        assert_eq!(super::join_chunk_texts("xin chào", "  "), "xin chào");
+    }
 
     // SE-REC-003
     #[test]

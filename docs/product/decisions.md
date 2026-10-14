@@ -4,13 +4,34 @@ type: decision
 product: speakease
 title: "SpeakEase — Decisions"
 status: active
-updated: 2026-10-13
+updated: 2026-10-14
 ---
 
 # SpeakEase — Decisions (append-only, newest first)
 
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
+
+## 2026-10-14 · Split long audio at silences before recognition
+
+- **Context**: while sizing a "transcribe a file" feature, a 70 s Vietnamese clip (macOS voice "Linh" reading a known
+  216-word script) came back from Cohere Transcribe, the model suggested first for Vietnamese, with 143/216 words: a
+  run of 73 words from the middle was missing, with no error. The same clip cut by length showed the threshold: 40 s
+  whole, 45 s missing 20 words, 60 s missing 50. Moonshine Base (Vietnamese) refused the 70 s clip ("output
+  truncated"). Fun-ASR, Qwen3-ASR 0.6B/1.7B, Whisper Large v3 Turbo and Nemotron returned it whole. transcribe.cpp
+  documents its long-form capability as Whisper-only; the app passed any length in one run, so every dictation over
+  about 40 s with Cohere lost words.
+- **Decision**: the app cuts audio longer than 30 s at the quietest 100 ms within the last 10 s of each piece and runs
+  the pieces in turn, for every model (a model that handles long audio itself loses nothing). Cuts use signal energy,
+  not the Silero VAD: recordings are already VAD-trimmed, the function stays pure and testable, and it found the
+  pauses between sentences in the probe. A piece the engine reports as truncated (Moonshine's 194-token cap) is
+  halved at its quietest point in the middle and run again, down to 4 s. Rule SE-REC-008.
+- **Evidence**: `handy --transcribe-file <wav> --json` on the installed build: 70 s whole → 143/216 words; the same
+  audio cut into three 21-27 s pieces → 215/216. Unit tests in `managers/transcription.rs` (cuts land in silences,
+  pieces cover the audio with no gap, none longer than 30 s). After the change, same installed-build command: Cohere 70 s → 213/216, Moonshine 70 s →
+  208/216 (was an error), a 10.6-minute file → 1,944/1,944 words in 9.6 s, a 30.7-minute file in 31 s, peak memory
+  about 2.0 GB either way.
+- **Reversal**: revert this commit; Cohere then needs dictations under 40 s.
 
 ## 2026-10-13 · Checking for updates by hand works with automatic checks off
 
