@@ -80,7 +80,10 @@ history.unshift({
   post_process_requested: false,
 });
 
-const wait = (ms: number) => new Promise((done) => setTimeout(done, ms));
+// `?slow` stretches the file jobs tenfold, to watch the progress bar
+// through a long step.
+const SLOW = new URLSearchParams(location.search).has("slow") ? 10 : 1;
+const wait = (ms: number) => new Promise((done) => setTimeout(done, ms * SLOW));
 let fileCancelled = false;
 
 /** transcribe_media as the app does it: progress events, then a new entry. */

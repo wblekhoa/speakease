@@ -975,6 +975,8 @@
       "ai_off": "AI đang tắt. Bật AI trong AI & Dịch để viết lại và dịch.",
       "ai_failed": "AI không trả lời. Kiểm tra AI & Dịch rồi thử lại.",
       "other": "Có lỗi khi xử lý file. Thử lại."
-    }
+    },
+    "etaSeconds": "còn khoảng {{count}} giây",
+    "etaMinutes": "còn khoảng {{count}} phút"
   }
 }

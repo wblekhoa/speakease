@@ -975,6 +975,8 @@
       "ai_off": "AI is off. Turn it on in AI & Translate to rewrite and translate.",
       "ai_failed": "The AI didn't answer. Check AI & Translate and try again.",
       "other": "Something went wrong with the file. Try again."
-    }
+    },
+    "etaSeconds": "about {{count}} s left",
+    "etaMinutes": "about {{count}} min left"
   }
 }

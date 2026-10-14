@@ -182,3 +182,34 @@ html.glass[data-onboarding-active] {
     transition: none;
   }
 }
+
+/* A working progress bar always shows motion (Files page, SE-FILE-005): a
+   band of light runs along the filled part, so a long step never looks
+   frozen. Still with Reduce Motion; the bar's own creep remains. */
+.progress-sheen {
+  position: relative;
+  overflow: hidden;
+}
+.progress-sheen::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    color-mix(in srgb, white 45%, transparent),
+    transparent
+  );
+  transform: translateX(-100%);
+  animation: progress-sheen 1.6s ease-in-out infinite;
+}
+@keyframes progress-sheen {
+  to {
+    transform: translateX(100%);
+  }
+}
+@media (prefers-reduced-motion: reduce) {
+  .progress-sheen::after {
+    animation: none;
+  }
+}

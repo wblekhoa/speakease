@@ -39,8 +39,9 @@ relations:
 - **Bring a file in** three ways: drop it anywhere on the window while Files is open, **Choose a file**, or paste a
   link and press **Get the words**. Formats: MP3, M4A, MP4, MOV, WAV, FLAC, OGG. Only the sound is used; a video's
   picture is never processed, so a large video is as quick as its sound.
-- **Progress** names the step - downloading the sound, reading the sound, transcribing "part 3 of 21" - with a bar,
-  a percentage and **Cancel**.
+- **Progress** names the step and the part being worked on - downloading the sound, reading the sound,
+  transcribing "part 4 of 21" - with a bar that keeps creeping between parts and a moving sheen, so a slow AI part
+  never looks frozen; the elapsed time and the time left sit beside it, with **Cancel**.
 - **The result** shows the file's name, a word count and the text, with **Copy** and **Save .txt**. **Rewrite…**
   offers the prompts from AI & Translate; **Translate to…** the same languages as the Speak page. The AI version
   shows on top with the **Original** under it. With AI off, both menus are greyed out and a link turns AI on.
@@ -89,4 +90,5 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-14: progress keeps moving and shows elapsed time and time left.
 - 2026-10-14: created with the first version of Files.

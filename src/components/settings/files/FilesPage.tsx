@@ -21,6 +21,7 @@ import { Button } from "../../ui/Button";
 import { Dropdown } from "../../ui/Dropdown";
 import { copyToClipboard } from "../history/clipboard";
 import { fileErrorKey } from "./fileErrors";
+import { estimateProgress, formatElapsed } from "@/lib/utils/progressEstimate";
 import { CheckIcon, CopyIcon, FolderOpenIcon } from "../../icons/bulk";
 
 /** What the decoder reads (commands/files.rs MEDIA_EXTENSIONS). */
@@ -43,6 +44,14 @@ interface Progress {
   total: number;
 }
 
+/** Seconds a part usually takes, until the job's own pace is known. */
+const FALLBACK_PACE: Record<Phase, number> = {
+  download: 3,
+  read: 1,
+  transcribe: 1.5,
+  enhance: 6,
+};
+
 /** An entry made from a file (FilesPage → transcribe_media). */
 export const isFileEntry = (entry: HistoryEntry) =>
   entry.file_name.startsWith("file-");
@@ -62,6 +71,38 @@ export const FilesPage: React.FC = () => {
   const [dragging, setDragging] = useState(false);
   const [copied, setCopied] = useState(false);
   const busy = progress !== null;
+  // When the job, the phase and the last finished part began (SE-FILE-005).
+  const timing = useRef({
+    jobAt: 0,
+    phase: "",
+    startedAt: 0,
+    stepAt: 0,
+    done: -1,
+  });
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    if (!busy) return;
+    const id = setInterval(() => setNow(Date.now()), 200);
+    return () => clearInterval(id);
+  }, [busy]);
+  useEffect(() => {
+    const clock = timing.current;
+    const at = Date.now();
+    if (!progress) {
+      clock.jobAt = 0;
+      return;
+    }
+    if (!clock.jobAt) clock.jobAt = at;
+    if (clock.phase !== progress.phase) {
+      clock.phase = progress.phase;
+      clock.startedAt = at;
+      clock.stepAt = at;
+      clock.done = progress.done;
+    } else if (progress.done !== clock.done) {
+      clock.stepAt = at;
+      clock.done = progress.done;
+    }
+  }, [progress]);
   const busyRef = useRef(false);
   busyRef.current = busy;
 
@@ -230,22 +271,44 @@ export const FilesPage: React.FC = () => {
     else toast.error(t("files.errors.other"));
   };
 
-  const percent = progress
-    ? Math.min(100, Math.round((progress.done / progress.total) * 100))
-    : 0;
+  const estimate = progress
+    ? estimateProgress(
+        {
+          done: progress.done,
+          total: progress.total,
+          startedAt: timing.current.startedAt || now,
+          stepAt: timing.current.stepAt || now,
+        },
+        now,
+        FALLBACK_PACE[progress.phase],
+      )
+    : { fraction: 0, secondsLeft: null };
+  const percent = Math.min(99, Math.floor(estimate.fraction * 100));
+  // The part being worked on, not the last one finished: "part 5 of 15".
+  const current = progress ? Math.min(progress.done + 1, progress.total) : 0;
   const phaseLabel = progress
     ? progress.phase === "transcribe" && progress.total > 1
       ? t("files.phase.transcribeParts", {
-          done: progress.done,
+          done: current,
           total: progress.total,
         })
       : progress.phase === "enhance" && progress.total > 1
         ? t("files.phase.enhanceParts", {
-            done: progress.done,
+            done: current,
             total: progress.total,
           })
         : t(`files.phase.${progress.phase}`)
     : "";
+  const elapsed = timing.current.jobAt
+    ? formatElapsed((now - timing.current.jobAt) / 1000)
+    : "0:00";
+  const left = estimate.secondsLeft;
+  const leftLabel =
+    left === null
+      ? null
+      : left < 60
+        ? t("files.etaSeconds", { count: Math.max(5, Math.ceil(left / 5) * 5) })
+        : t("files.etaMinutes", { count: Math.ceil(left / 60) });
 
   return (
     <div className="max-w-3xl w-full mx-auto space-y-5">
@@ -266,15 +329,28 @@ export const FilesPage: React.FC = () => {
               {t("files.cancel")}
             </Button>
           </div>
-          <div className="h-1.5 rounded-full bg-row overflow-hidden">
+          <div
+            className="h-1.5 rounded-full bg-row overflow-hidden"
+            role="progressbar"
+            aria-valuemin={0}
+            aria-valuemax={100}
+            aria-valuenow={percent}
+            aria-valuetext={phaseLabel}
+          >
             <div
-              className="h-full bg-logo-primary transition-[width] duration-300"
-              style={{ width: `${Math.max(percent, 3)}%` }}
+              className="progress-sheen h-full rounded-full bg-logo-primary transition-[width] duration-200 ease-linear"
+              style={{ width: `${Math.max(percent, 2)}%` }}
             />
           </div>
-          <p className="text-xs text-mid-gray tabular-nums">
-            {phaseLabel} · {percent}%
-          </p>
+          <div className="flex items-center justify-between gap-3 text-xs text-mid-gray tabular-nums">
+            <span>
+              {phaseLabel} · {percent}%
+            </span>
+            <span>
+              {elapsed}
+              {leftLabel ? ` · ${leftLabel}` : ""}
+            </span>
+          </div>
         </div>
       ) : (
         <div
