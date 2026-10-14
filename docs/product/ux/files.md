@@ -29,7 +29,7 @@ relations:
 
 ## Scope
 
-- Included: the **Files** section (between Speak and History): drop area, Choose a file, paste a link, progress and
+- Included: the **Files & links** section ("Tệp/liên kết", between Speak and History): drop area, Choose a file, paste a link, progress and
   Cancel, the result with Copy / Save .txt / Rewrite / Translate, recent files; file entries in History.
 - Excluded: subtitles with timestamps (.srt), speaker names, MKV/WebM, bundled YouTube downloading - see
   `logic/files.md` Open questions.

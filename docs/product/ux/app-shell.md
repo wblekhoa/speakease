@@ -40,7 +40,7 @@ relations:
 ## Current truth
 
 - **Side column**, flush with the window's left edge with the Mac's window buttons in its top corner. **Speak**,
-  **Files** and **History** come first; under a **Settings** caption follow **Recording**, **Recognition**, **AI & Translate** and
+  **Files & links** and **History** come first; under a **Settings** caption follow **Recording**, **Recognition**, **AI & Translate** and
   **App** - the order a dictation goes through. **Debug** appears only in debug mode (⌘⇧D).
 - **Folding**: the switch at the top folds the column to a rail of square icon keys, each naming its section in a
   tooltip; the same switch opens it.
