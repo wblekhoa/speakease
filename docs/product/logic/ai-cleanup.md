@@ -4,7 +4,7 @@ type: logic
 product: speakease
 title: "SpeakEase — AI cleanup and translation (logic)"
 status: active
-updated: 2026-10-13
+updated: 2026-10-14
 reqPrefix: SE-AI
 relations:
   specifiedBy: [speakease-ux-ai-cleanup]
@@ -63,5 +63,6 @@ or code named in Evidence.
 
 ## Change log
 
+- 2026-10-14: reviewed after Files reused the AI step (`post_process_transcription` now crate-visible); no SE-AI rule changed, and the AI switch still gates Rewrite and Translate (`enhance_history_entry` refuses with "ai off").
 - 2026-10-13: reviewed after `settings.rs` changed (an SE-APP-008 comment only); no SE-AI rule changed.
 - 2026-10-11: created; REQ-IDs added as one-line comments next to the evidence in the same commit.
