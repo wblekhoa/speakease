@@ -34,7 +34,8 @@
     "settingsGroup": "Cài đặt",
     "resize": "Kéo để đổi độ rộng, kéo hẳn vào để thu gọn · bấm đúp để về độ rộng mặc định",
     "unfoldDrag": "Kéo ra để mở thanh bên · bấm đúp để mở",
-    "files": "Tệp/liên kết"
+    "files": "Tệp/liên kết",
+    "language": "Ngôn ngữ giao diện"
   },
   "onboarding": {
     "subtitle": "Để bắt đầu, hãy chọn một mô hình chép lời",

@@ -13,6 +13,7 @@ import {
 } from "./icons/bulk";
 import HandyTextLogo from "./icons/HandyTextLogo";
 import { IconTip } from "./ui/IconTip";
+import { LanguageMenu } from "./LanguageMenu";
 import { useSettings } from "../hooks/useSettings";
 import { SIDEBAR_FOLDED_WIDTH, sidebarDrag } from "../lib/utils/sidebarWidth";
 import {
@@ -224,7 +225,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
     // column of icons.
     <nav
       aria-label={t("sidebar.label", { defaultValue: "Sections" })}
-      className="side-panel relative shrink-0 flex flex-col h-full"
+      className="side-panel relative z-30 shrink-0 flex flex-col h-full"
       // Inline, to beat .side-panel's own transition (App.css, unlayered).
       style={{
         width: collapsed ? SIDEBAR_FOLDED_WIDTH : (shown ?? width),
@@ -265,7 +266,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
       {/* Folded, the few keys always fit, and a scroll box would clip the
           names that open beside them. */}
       <div
-        className={`flex flex-col w-full gap-0.5 px-2.5 ${
+        className={`flex flex-col w-full gap-0.5 px-2.5 flex-1 min-h-0 ${
           collapsed ? "" : "overflow-y-auto"
         }`}
       >
@@ -328,6 +329,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
             </React.Fragment>
           );
         })}
+      </div>
+      {/* The interface language, always in sight (SE-APP-011). */}
+      <div className="shrink-0 px-2.5 pt-2 pb-3 border-t border-hairline">
+        <LanguageMenu collapsed={collapsed} />
       </div>
     </nav>
   );

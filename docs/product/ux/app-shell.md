@@ -42,6 +42,9 @@ relations:
 - **Side column**, flush with the window's left edge with the Mac's window buttons in its top corner. **Speak**,
   **Files & links** and **History** come first; under a **Settings** caption follow **Recording**, **Recognition**, **AI & Translate** and
   **App** - the order a dictation goes through. **Debug** appears only in debug mode (⌘⇧D).
+- **Interface language** sits at the foot of the column: a globe with the current language (Tiếng Việt / English);
+  click it for a menu with each language in its own name, the current one ticked. Folded, it is a square key with a
+  tooltip and the menu opens beside it. App › Appearance keeps the same choice.
 - **Folding**: the switch at the top folds the column to a rail of square icon keys, each naming its section in a
   tooltip; the same switch opens it.
 - **Resizing by hand**: the column's right edge darkens under the pointer. Dragging it resizes the column; dragging
@@ -98,6 +101,7 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-14: interface language menu at the foot of the side column.
 - 2026-10-14: Files joins Speak and History at the top of the side column.
 - 2026-10-13: Check for Updates… by hand now works with automatic checks off.
 - 2026-10-13: created, covering the side column (fold and resize by drag, 10/10), the App page, tray and app menu
