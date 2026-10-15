@@ -30,6 +30,17 @@ assert.deepEqual(
   { fraction: 1, secondsLeft: 0 },
 );
 
+// Reading reports thousandths: 750 of 1000 in 0.75 s leaves well under 1 s,
+// shown as the 1 s minimum rather than a long wait.
+assert.equal(
+  estimateProgress(
+    { done: 750, total: 1000, startedAt: 0, stepAt: 750 },
+    760,
+    1,
+  ).secondsLeft,
+  1,
+);
+
 assert.equal(formatElapsed(42.7), "0:42");
 assert.equal(formatElapsed(725), "12:05");
 

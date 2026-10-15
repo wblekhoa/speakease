@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — Files (UX)"
 status: active
-updated: 2026-10-14
+updated: 2026-10-15
 summary: "How a user turns an audio or video file, or a link, into text and then rewrites or translates it on the Files & links page, with progress that never stalls."
 tags: [area/audio, area/data-import, area/translation, stack/react]
 relations:
@@ -38,9 +38,11 @@ relations:
 
 ## Current truth
 
-- **Bring a file in** three ways: drop it anywhere on the window while Files is open, **Choose a file**, or paste a
+- **Bring a file in** three ways: drop it on the window from any page (it opens Files & links), **Choose a file**, or paste a
   link and press **Get the words**. Formats: MP3, M4A, MP4, MOV, WAV, FLAC, OGG. Only the sound is used; a video's
   picture is never processed, so a large video is as quick as its sound.
+- **Several files** - dropped together or chosen together - wait in a line and run one after another; the progress
+  card says how many wait, and Cancel stops the line.
 - **Progress** names the step and the part being worked on - downloading the sound, reading the sound,
   transcribing "part 4 of 21" - with a bar that keeps creeping between parts and a moving sheen, so a slow AI part
   never looks frozen; the elapsed time and the time left sit beside it, with **Cancel**.
@@ -92,5 +94,6 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-15: drop on any page, a line of files, refused AI pieces kept with a notice.
 - 2026-10-14: progress keeps moving and shows elapsed time and time left.
 - 2026-10-14: created with the first version of Files.

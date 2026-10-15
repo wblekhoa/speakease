@@ -327,6 +327,7 @@ const RecordingOverlay: React.FC = () => {
         <MagicStarIcon width={13} height={13} />
         <span>{cleanupName}</span>
       </button>
+      <span className="sopts-sep" aria-hidden="true" />
       <button
         type="button"
         className={`schip ${translateOn ? "on" : ""}`}

@@ -593,6 +593,8 @@ fn default_autostart_enabled() -> bool {
     false
 }
 
+// SE-APP-008: on by default; HANDY_DISABLE_UPDATER (update_checks_forced_disabled)
+// turns checks off for the run without touching the stored choice.
 fn default_update_checks_enabled() -> bool {
     true
 }
@@ -643,7 +645,9 @@ fn default_debug_mode() -> bool {
 }
 
 fn default_log_level() -> LogLevel {
-    LogLevel::Debug
+    // SpeakEase: Info for new installs. Debug wrote every simulated key press
+    // of a paste to the log; Debug Settings can still turn it back on.
+    LogLevel::Info
 }
 
 fn default_word_correction_threshold() -> f64 {
@@ -1472,15 +1476,6 @@ pub fn update_checks_forced_disabled() -> bool {
     // SpeakEase updates from its own releases (tauri.conf.json plugins.updater),
     // so only the packaging flag turns it off, as upstream.
     *IS_UPDATER_DISABLED.get_or_init(|| crate::utils::env_flag_enabled("HANDY_DISABLE_UPDATER"))
-}
-
-/// Effective updater state: the user's stored preference, overridden to `false`
-/// while `HANDY_DISABLE_UPDATER` is set. Callers deciding whether to actually
-/// check for updates must use this rather than reading `update_checks_enabled`
-/// directly, so the forced-off state never leaks into the persisted setting.
-// SE-APP-008
-pub fn update_checks_effectively_enabled(settings: &AppSettings) -> bool {
-    settings.update_checks_enabled && !update_checks_forced_disabled()
 }
 
 pub fn write_settings(app: &AppHandle, settings: AppSettings) {

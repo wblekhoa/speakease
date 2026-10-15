@@ -208,7 +208,12 @@ function handle(cmd: string, args: Json): unknown {
     case "write_text_file":
       return null;
     case "plugin:dialog|open":
-      return "/Users/you/Movies/phong-van-khach-hang.mov";
+      return (args.options as { multiple?: boolean } | undefined)?.multiple
+        ? [
+            "/Users/you/Movies/phong-van-khach-hang.mov",
+            "/Users/you/Music/podcast-tap-12.mp3",
+          ]
+        : "/Users/you/Movies/phong-van-khach-hang.mov";
     case "plugin:dialog|save":
       return "/Users/you/Documents/phong-van-khach-hang.txt";
     case "get_history_entries":

@@ -60,10 +60,13 @@ const OVERLAY_STREAM_HEIGHT: f64 = 120.0 + OVERLAY_OPTIONS_H;
 
 /// Overlay window size (logical) for a given UI state.
 fn overlay_dimensions(state: &str) -> (f64, f64) {
-    if state == "streaming" {
-        (OVERLAY_STREAM_WIDTH, OVERLAY_STREAM_HEIGHT)
-    } else {
-        (OVERLAY_WIDTH, OVERLAY_HEIGHT)
+    match state {
+        "streaming" => (OVERLAY_STREAM_WIDTH, OVERLAY_STREAM_HEIGHT),
+        // The chips show only while listening; a working pill keeps the
+        // short window, so no empty strip above it catches clicks meant for
+        // the app underneath.
+        "recording" => (OVERLAY_WIDTH, OVERLAY_HEIGHT),
+        _ => (OVERLAY_WIDTH, OVERLAY_HEIGHT - OVERLAY_OPTIONS_H),
     }
 }
 

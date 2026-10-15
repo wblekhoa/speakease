@@ -37,6 +37,7 @@ import { useSettings } from "./hooks/useSettings";
 import { useSettingsStore } from "./stores/settingsStore";
 import { commands } from "@/bindings";
 import { getLanguageDirection, initializeRTL } from "@/lib/utils/rtl";
+import { isMediaPath, queueFiles } from "@/lib/fileQueue";
 import {
   SIDEBAR_DEFAULT_WIDTH,
   clampSidebarWidth,
@@ -302,6 +303,15 @@ function App() {
   // SpeakEase: an AI step was asked for but gave nothing back, so what was
   // said went out as it is (actions.rs notify_ai_step_skipped).
   useEffect(() => {
+    // SE-FILE-003: a long rewrite or translation where the AI refused some
+    // pieces keeps those in their original words; say how many.
+    const unlistenKept = listen<{ kept: number; total: number }>(
+      "enhance-kept-original",
+      (event) =>
+        toast(t("files.keptOriginal", event.payload), {
+          description: t("files.keptOriginalHint"),
+        }),
+    );
     const unlisten = listen("ai-step-skipped", () => {
       toast(t("errors.aiSkipped.title"), {
         description: t("errors.aiSkipped.description"),
@@ -313,7 +323,38 @@ function App() {
     });
     return () => {
       unlisten.then((fn) => fn());
+      unlistenKept.then((fn) => fn());
     };
+  }, [t]);
+
+  // SE-FILE-006: an audio or video file dropped on any page opens Files &
+  // links and joins its line; the page takes them one at a time.
+  useEffect(() => {
+    let unlisten: (() => void) | undefined;
+    import("@tauri-apps/api/webview")
+      .then(({ getCurrentWebview }) =>
+        getCurrentWebview().onDragDropEvent((event) => {
+          if (event.payload.type !== "drop") return;
+          const paths = event.payload.paths;
+          const media = paths.filter(isMediaPath);
+          if (media.length === 0) {
+            if (paths.length > 0) toast.error(t("files.errors.unsupported"));
+            return;
+          }
+          if (media.length < paths.length) {
+            toast.error(t("files.errors.unsupported"));
+          }
+          setCurrentSection("files");
+          queueFiles(media);
+        }),
+      )
+      .then((fn) => {
+        unlisten = fn;
+      })
+      .catch(() => {
+        // No webview (browser preview).
+      });
+    return () => unlisten?.();
   }, [t]);
 
   // Listen for model loading failures and show a toast

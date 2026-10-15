@@ -984,6 +984,10 @@
       "other": "Something went wrong with the file. Try again."
     },
     "etaSeconds": "about {{count}} s left",
-    "etaMinutes": "about {{count}} min left"
+    "etaMinutes": "about {{count}} min left",
+    "keptOriginal": "{{kept}} of {{total}} parts kept their original words",
+    "keptOriginalHint": "The AI wouldn't process those parts (often Apple Intelligence's safety filter). The rest is done.",
+    "waiting_one": "{{count}} file waiting",
+    "waiting_other": "{{count}} files waiting"
   }
 }

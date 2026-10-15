@@ -984,6 +984,10 @@
       "other": "Có lỗi khi xử lý file. Thử lại."
     },
     "etaSeconds": "còn khoảng {{count}} giây",
-    "etaMinutes": "còn khoảng {{count}} phút"
+    "etaMinutes": "còn khoảng {{count}} phút",
+    "keptOriginal": "{{kept}}/{{total}} phần giữ nguyên lời gốc",
+    "keptOriginalHint": "AI không xử lý được các phần này (thường do bộ lọc an toàn của Apple Intelligence). Phần còn lại đã xong.",
+    "waiting_one": "còn {{count}} file chờ",
+    "waiting_other": "còn {{count}} file chờ"
   }
 }

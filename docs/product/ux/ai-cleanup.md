@@ -53,7 +53,7 @@ relations:
   Indonesian, Russian, Portuguese. Anything other than English goes through English first.
 - **Dictate with AI (⌥ ⇧ Space)** rewrites with the prompt selected in AI & Translate.
 - **Tray menu**: AI cleanup and translation can be changed without opening the window.
-- **Recording pill**: while it listens, two chips sit beside it - the cleanup prompt ("Không sửa câu" / the prompt's
+- **Recording pill**: while it listens, one box beside it holds two choices - the cleanup prompt ("Không sửa câu" / the prompt's
   name) and translation ("Không dịch" / "Dịch: Tiếng Anh"). A click changes the output of the dictation being spoken;
   the choice stays for the next one. The chips hide once transcribing starts.
 - **When AI gives nothing back** (Apple Intelligence unavailable, a refusal, a provider or key error), what was said

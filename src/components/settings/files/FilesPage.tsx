@@ -22,20 +22,16 @@ import { Dropdown } from "../../ui/Dropdown";
 import { copyToClipboard } from "../history/clipboard";
 import { fileErrorKey } from "./fileErrors";
 import { estimateProgress, formatElapsed } from "@/lib/utils/progressEstimate";
+import {
+  MEDIA_EXTENSIONS,
+  clearFileQueue,
+  isMediaPath,
+  onFileQueueChange,
+  queueFiles,
+  takeNextFile,
+  waitingFiles,
+} from "@/lib/fileQueue";
 import { CheckIcon, CopyIcon, FolderOpenIcon } from "../../icons/bulk";
-
-/** What the decoder reads (commands/files.rs MEDIA_EXTENSIONS). */
-const MEDIA_EXTENSIONS = [
-  "mp3",
-  "m4a",
-  "mp4",
-  "mov",
-  "m4v",
-  "wav",
-  "flac",
-  "ogg",
-  "aac",
-];
 
 type Phase = "download" | "read" | "transcribe" | "enhance";
 interface Progress {
@@ -188,34 +184,38 @@ export const FilesPage: React.FC = () => {
     [failed],
   );
 
-  const runPath = useCallback(
-    (path: string) => {
-      const name = path.split(/[\\/]/).pop() ?? path;
-      const ext = name.split(".").pop()?.toLowerCase() ?? "";
-      if (!MEDIA_EXTENSIONS.includes(ext)) {
+  // SE-FILE-006: files wait in one line (dropped on any page, or several
+  // chosen at once) and are taken one at a time.
+  const [waiting, setWaiting] = useState(waitingFiles());
+  useEffect(() => onFileQueueChange(() => setWaiting(waitingFiles())), []);
+  useEffect(() => {
+    if (busy) return;
+    const next = takeNextFile();
+    if (next) {
+      run({ kind: "path", value: next }, next.split(/[\\/]/).pop() ?? next);
+    }
+  }, [busy, waiting, run]);
+
+  const addPaths = useCallback(
+    (paths: string[]) => {
+      const media = paths.filter(isMediaPath);
+      if (media.length < paths.length) {
         toast.error(t("files.errors.unsupported"));
-        return;
       }
-      run({ kind: "path", value: path }, name);
+      queueFiles(media);
     },
-    [run, t],
+    [t],
   );
 
-  // Files dropped anywhere on the window land here while this page shows.
+  // The highlight while a file is dragged over the page; App.tsx takes the
+  // drop itself, on any page.
   useEffect(() => {
     let unlisten: (() => void) | undefined;
     import("@tauri-apps/api/webview")
       .then(({ getCurrentWebview }) =>
         getCurrentWebview().onDragDropEvent((event) => {
-          const payload = event.payload;
-          if (payload.type === "over" || payload.type === "enter") {
-            setDragging(!busyRef.current);
-          } else if (payload.type === "drop") {
-            setDragging(false);
-            if (payload.paths[0]) runPath(payload.paths[0]);
-          } else {
-            setDragging(false);
-          }
+          const type = event.payload.type;
+          setDragging(type === "over" || type === "enter");
         }),
       )
       .then((fn) => {
@@ -225,15 +225,16 @@ export const FilesPage: React.FC = () => {
         // No webview (browser preview): the picker still works.
       });
     return () => unlisten?.();
-  }, [runPath]);
+  }, []);
 
   const pick = async () => {
     const chosen = await open({
-      multiple: false,
+      multiple: true,
       directory: false,
       filters: [{ name: t("files.filterName"), extensions: MEDIA_EXTENSIONS }],
     });
-    if (typeof chosen === "string") runPath(chosen);
+    if (Array.isArray(chosen)) addPaths(chosen);
+    else if (typeof chosen === "string") addPaths([chosen]);
   };
 
   const submitLink = (event: React.FormEvent) => {
@@ -324,7 +325,10 @@ export const FilesPage: React.FC = () => {
             <Button
               variant="secondary"
               size="sm"
-              onClick={() => commands.cancelFileJob()}
+              onClick={() => {
+                clearFileQueue();
+                commands.cancelFileJob();
+              }}
             >
               {t("files.cancel")}
             </Button>
@@ -345,6 +349,7 @@ export const FilesPage: React.FC = () => {
           <div className="flex items-center justify-between gap-3 text-xs text-mid-gray tabular-nums">
             <span>
               {phaseLabel} · {percent}%
+              {waiting > 0 && ` · ${t("files.waiting", { count: waiting })}`}
             </span>
             <span>
               {elapsed}

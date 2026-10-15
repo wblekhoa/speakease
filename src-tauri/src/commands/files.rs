@@ -446,6 +446,13 @@ pub enum Enhancement {
     Translate(String),
 }
 
+/// Pieces the AI would not process, kept in their original words.
+#[derive(Clone, Serialize, Type)]
+pub struct EnhanceKept {
+    pub kept: u32,
+    pub total: u32,
+}
+
 /// The longest piece of text sent to the AI in one request: Apple
 /// Intelligence on the Mac reads a few thousand tokens at most, and
 /// Vietnamese runs to more tokens per character than English.
@@ -481,17 +488,44 @@ pub async fn enhance_history_entry(
     report(&app, "enhance", 0, total);
     let mut out = Vec::with_capacity(pieces.len());
     let mut done = 0;
+    // A piece the AI refuses (Apple Intelligence's guardrails, a provider
+    // error) keeps its original words; the rest carry on. Only when every
+    // piece fails does the job fail (owner's log, 14/10: one refusal used to
+    // throw away a whole long translation).
+    let mut kept = 0;
+    let pieces_total = pieces.len();
     for piece in pieces {
-        let mut text = piece;
+        let mut text = piece.clone();
+        let mut refused = false;
         for step in &steps {
             cancelled()?;
-            text = crate::actions::post_process_transcription(&settings, &text, Some(step))
-                .await
-                .ok_or_else(|| "ai failed".to_string())?;
+            if !refused {
+                match crate::actions::post_process_transcription(&settings, &text, Some(step)).await
+                {
+                    Some(next) => text = next,
+                    None => refused = true,
+                }
+            }
             done += 1;
             report(&app, "enhance", done, total);
         }
+        if refused {
+            kept += 1;
+            text = piece;
+        }
         out.push(text.trim().to_string());
+    }
+    if kept == pieces_total {
+        return Err("ai failed".to_string());
+    }
+    if kept > 0 {
+        let _ = app.emit(
+            "enhance-kept-original",
+            EnhanceKept {
+                kept: kept as u32,
+                total: pieces_total as u32,
+            },
+        );
     }
     let label = match &enhancement {
         Enhancement::Prompt(id) => settings.prompt_text(id),

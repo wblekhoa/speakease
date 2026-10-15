@@ -22,7 +22,8 @@ export const secondsPerPart = (
   fallback: number,
 ): number =>
   sample.done > 0
-    ? Math.max(0.2, (sample.stepAt - sample.startedAt) / 1000 / sample.done)
+    ? // No floor worth a person's attention: reading reports in thousandths.
+      Math.max(0.001, (sample.stepAt - sample.startedAt) / 1000 / sample.done)
     : fallback;
 
 /** What to draw at `now`: a fraction 0-1, and an estimate of the seconds

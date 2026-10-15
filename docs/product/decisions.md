@@ -4,7 +4,7 @@ type: decision
 product: speakease
 title: "SpeakEase — Decisions"
 status: active
-updated: 2026-10-14
+updated: 2026-10-15
 summary: "Append-only record of SpeakEase's product and engineering decisions, newest first, each with its context, evidence and how to reverse it."
 tags: [area/docs]
 ---
@@ -13,6 +13,19 @@ tags: [area/docs]
 
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
+
+## 2026-10-15 · Long AI jobs keep refused pieces; logs default to Info
+
+- **Context**: the owner's log (14/10 16:55) shows Apple Intelligence refusing a piece ("the model's safety guardrails
+  were triggered"). For a dictation that already falls back to the original (SE-AI), but Rewrite/Translate on a long
+  file failed the whole job when one of its 15 pieces was refused. Separately, the default log level was Debug, which
+  writes every simulated key press of a paste.
+- **Decision**: a refused piece keeps its original words, the others carry on, and the page says how many were kept;
+  only an all-refused job fails (SE-FILE-003). New installs log at Info; Debug Settings can raise it, and stores that
+  already hold `debug` (the owner's included) keep it. The unused `trigger_update_check` command is gone.
+- **Evidence**: log line above; `history.db` metadata shows the owner's two file entries with AI versions. `bun run
+test:unit`, `cargo test --lib` pass.
+- **Reversal**: revert the commit.
 
 ## 2026-10-14 · Files: only the sound, decoded in memory; yt-dlp only if installed
 
