@@ -942,7 +942,7 @@
   "files": {
     "drop": "Kéo file audio hoặc video vào đây",
     "dropNow": "Thả để lấy chữ",
-    "formats": "MP3, M4A, MP4, MOV, WAV, FLAC, OGG · chỉ lấy phần tiếng, không xử lý hình",
+    "formats": "MP3, M4A, MP4, MOV, MKV, WebM, WAV, FLAC, OGG, Opus · chỉ lấy phần tiếng, không xử lý hình",
     "choose": "Chọn file",
     "filterName": "Audio và video",
     "linkPlaceholder": "Hoặc dán link: YouTube, hoặc link tới file .mp3 / .mp4",
@@ -972,7 +972,7 @@
     "recent": "File gần đây",
     "errors": {
       "busy": "Đang xử lý một file khác. Đợi xong hoặc huỷ rồi thử lại.",
-      "unsupported": "Chưa đọc được định dạng này. Dùng MP3, M4A, MP4, MOV, WAV, FLAC hoặc OGG.",
+      "unsupported": "Chưa đọc được định dạng này. Dùng MP3, M4A, MP4, MOV, MKV, WebM, WAV, FLAC, OGG hoặc Opus.",
       "no_audio": "File không có phần tiếng.",
       "no_speech": "Không nghe thấy lời nói nào trong file.",
       "bad_link": "Link không hợp lệ. Dán link bắt đầu bằng https://.",

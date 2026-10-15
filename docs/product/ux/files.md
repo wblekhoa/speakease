@@ -33,13 +33,13 @@ relations:
 
 - Included: the **Files & links** section ("Tệp/liên kết", between Speak and History): drop area, Choose a file, paste a link, progress and
   Cancel, the result with Copy / Save .txt / Rewrite / Translate, recent files; file entries in History.
-- Excluded: subtitles with timestamps (.srt), speaker names, MKV/WebM, bundled YouTube downloading - see
-  `logic/files.md` Open questions.
+- Excluded: subtitles with timestamps (.srt), speaker names, bundled YouTube downloading (owner: yt-dlp stays
+  optional).
 
 ## Current truth
 
 - **Bring a file in** three ways: drop it on the window from any page (it opens Files & links), **Choose a file**, or paste a
-  link and press **Get the words**. Formats: MP3, M4A, MP4, MOV, WAV, FLAC, OGG. Only the sound is used; a video's
+  link and press **Get the words**. Formats: MP3, M4A, MP4, MOV, MKV, WebM, WAV, FLAC, OGG, Opus - voice messages from Telegram or WhatsApp too. Only the sound is used; a video's
   picture is never processed, so a large video is as quick as its sound.
 - **Several files** - dropped together or chosen together - wait in a line and run one after another; the progress
   card says how many wait, and Cancel stops the line.

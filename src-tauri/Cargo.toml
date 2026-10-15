@@ -60,6 +60,12 @@ vad-rs = { git = "https://github.com/cjpais/vad-rs", default-features = false }
 earshot = "1.2.2"
 enigo = "0.6.1"
 rodio = { git = "https://github.com/cjpais/rodio.git" }
+# SpeakEase (Files & links, SE-FILE-001): MKV/WebM containers and Opus audio,
+# which the decoder rodio bundles does not read. Same Symphonia version rodio
+# uses (feature unification adds the MKV demuxer); libopus is built from the
+# vendored source (BSD) by the adapter.
+symphonia = { version = "0.5.5", default-features = false, features = ["mkv"] }
+symphonia-adapter-libopus = "0.2.9"
 reqwest = { version = "0.12", features = ["json", "stream", "gzip", "brotli", "deflate"] }
 futures-util = "0.3"
 rustfft = "6.4.0"

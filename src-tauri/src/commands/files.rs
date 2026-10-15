@@ -8,7 +8,7 @@
 //! it can be played back and re-transcribed.
 
 use std::fs::File;
-use std::io::{BufReader, Write};
+use std::io::Write;
 use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::sync::atomic::{AtomicBool, Ordering};
@@ -16,7 +16,6 @@ use std::sync::Arc;
 use std::time::Duration;
 
 use log::{debug, info, warn};
-use rodio::Source;
 use serde::{Deserialize, Serialize};
 use specta::Type;
 use tauri::{AppHandle, Emitter, Manager, State};
@@ -85,68 +84,130 @@ pub fn cancel_file_job(transcription_manager: State<'_, Arc<TranscriptionManager
 }
 
 // SE-FILE-001
-/// Decodes the audio of `path` to 16 kHz mono. Containers and codecs are the
-/// ones the bundled decoder reads: WAV, MP3, FLAC, Ogg Vorbis, and MP4 / M4A
-/// / MOV with AAC. A video track is skipped, not decoded.
+/// Decodes the audio of `path` to 16 kHz mono. Containers: WAV, MP3, FLAC,
+/// Ogg, MP4 / M4A / MOV, and MKV / WebM; codecs: AAC, MP3, FLAC, Vorbis,
+/// PCM and Opus (libopus). Only the first audio track is read: a video
+/// track's packets are skipped, never decoded.
 pub fn decode_to_16k_mono(path: &Path, on_progress: &dyn Fn(f64)) -> Result<Vec<f32>, String> {
+    use symphonia::core::audio::SampleBuffer;
+    use symphonia::core::codecs::{DecoderOptions, CODEC_TYPE_NULL};
+    use symphonia::core::errors::Error as MediaError;
+    use symphonia::core::formats::FormatOptions;
+    use symphonia::core::io::MediaSourceStream;
+    use symphonia::core::meta::MetadataOptions;
+    use symphonia::core::probe::Hint;
+
     let file = File::open(path).map_err(|e| format!("open: {e}"))?;
-    let byte_len = file.metadata().map(|m| m.len()).ok();
-    let mut builder = rodio::Decoder::builder()
-        .with_data(BufReader::with_capacity(1 << 20, file))
-        .with_seekable(true)
-        .with_gapless(true);
-    if let Some(len) = byte_len {
-        builder = builder.with_byte_len(len);
-    }
+    let stream = MediaSourceStream::new(Box::new(file), Default::default());
+    let mut hint = Hint::new();
     if let Some(ext) = path.extension().and_then(|e| e.to_str()) {
         let ext = ext.to_ascii_lowercase();
-        // QuickTime is the MP4 family to the decoder.
-        let hint = if ext == "mov" { "mp4".to_string() } else { ext };
-        builder = builder.with_hint(&hint);
+        // QuickTime is the MP4 family to the demuxer.
+        hint.with_extension(if ext == "mov" || ext == "m4v" {
+            "mp4"
+        } else {
+            &ext
+        });
     }
-    let decoder = builder.build().map_err(|e| format!("unsupported: {e}"))?;
+    let probed = symphonia::default::get_probe()
+        .format(
+            &hint,
+            stream,
+            &FormatOptions {
+                enable_gapless: true,
+                ..Default::default()
+            },
+            &MetadataOptions::default(),
+        )
+        .map_err(|e| format!("unsupported: {e}"))?;
+    let mut format = probed.format;
+    let track = format
+        .tracks()
+        .iter()
+        .find(|t| t.codec_params.codec != CODEC_TYPE_NULL && t.codec_params.sample_rate.is_some())
+        .ok_or_else(|| "no audio".to_string())?;
+    let track_id = track.id;
+    let total_frames = track.codec_params.n_frames;
+    let mut decoder = codec_registry()
+        .make(&track.codec_params, &DecoderOptions::default())
+        .map_err(|e| format!("unsupported: {e}"))?;
 
-    let channels = decoder.channels().max(1) as usize;
-    let rate = decoder.sample_rate().max(1) as usize;
-    let expected = decoder
-        .total_duration()
-        .map(|d| d.as_secs_f64() * rate as f64 * channels as f64);
-
-    let mut resampler = FrameResampler::new(rate, 16_000, Duration::from_millis(30));
     let mut out = Vec::with_capacity(
-        expected
-            .map(|n| (n / channels as f64 * 16_000.0 / rate as f64) as usize + 16_000)
+        total_frames
+            .zip(track.codec_params.sample_rate)
+            .map(|(n, rate)| (n as f64 * 16_000.0 / rate as f64) as usize + 16_000)
             .unwrap_or(16_000 * 60),
     );
+    let mut resampler: Option<FrameResampler> = None;
+    let mut interleaved: Option<SampleBuffer<f32>> = None;
     let mut mono = Vec::with_capacity(8192);
-    let (mut acc, mut ch, mut read) = (0.0f32, 0usize, 0usize);
-    for sample in decoder {
-        acc += sample;
-        ch += 1;
-        read += 1;
-        if ch == channels {
-            mono.push(acc / channels as f32);
-            acc = 0.0;
-            ch = 0;
-            if mono.len() == 8192 {
-                resampler.push(&mono, |frame| out.extend_from_slice(frame));
-                mono.clear();
-                cancelled()?;
-                if let Some(total) = expected {
-                    if read % (1 << 20) < 8192 * channels {
-                        on_progress((read as f64 / total).min(1.0));
-                    }
-                }
+    let (mut frames_read, mut packets) = (0u64, 0u64);
+    loop {
+        let packet = match format.next_packet() {
+            Ok(packet) => packet,
+            Err(MediaError::IoError(e)) if e.kind() == std::io::ErrorKind::UnexpectedEof => break,
+            Err(MediaError::ResetRequired) => break,
+            Err(e) => return Err(format!("unsupported: {e}")),
+        };
+        if packet.track_id() != track_id {
+            continue; // a video (or second audio) track: never decoded
+        }
+        let decoded = match decoder.decode(&packet) {
+            Ok(decoded) => decoded,
+            // A damaged packet costs its few milliseconds, not the file.
+            Err(MediaError::DecodeError(_)) | Err(MediaError::IoError(_)) => continue,
+            Err(e) => return Err(format!("unsupported: {e}")),
+        };
+        let spec = *decoded.spec();
+        let channels = spec.channels.count().max(1);
+        let buffer = interleaved
+            .get_or_insert_with(|| SampleBuffer::<f32>::new(decoded.capacity() as u64, spec));
+        if buffer.capacity() < decoded.capacity() * channels {
+            *buffer = SampleBuffer::<f32>::new(decoded.capacity() as u64, spec);
+        }
+        buffer.copy_interleaved_ref(decoded);
+        mono.clear();
+        mono.extend(
+            buffer
+                .samples()
+                .chunks(channels)
+                .map(|frame| frame.iter().sum::<f32>() / channels as f32),
+        );
+        frames_read += mono.len() as u64;
+        resampler
+            .get_or_insert_with(|| {
+                FrameResampler::new(spec.rate as usize, 16_000, Duration::from_millis(30))
+            })
+            .push(&mono, |frame| out.extend_from_slice(frame));
+        packets += 1;
+        if packets % 64 == 0 {
+            cancelled()?;
+            if let Some(total) = total_frames.filter(|n| *n > 0) {
+                on_progress((frames_read as f64 / total as f64).min(1.0));
             }
         }
     }
-    resampler.push(&mono, |frame| out.extend_from_slice(frame));
-    resampler.finish(|frame| out.extend_from_slice(frame));
+    if let Some(resampler) = resampler.as_mut() {
+        resampler.finish(|frame| out.extend_from_slice(frame));
+    }
     on_progress(1.0);
     if out.len() < 1_600 {
         return Err("no audio".to_string());
     }
     Ok(out)
+}
+
+/// Symphonia's codecs (the ones this build enables) plus libopus for Opus,
+/// which Symphonia 0.5 cannot decode itself.
+fn codec_registry() -> &'static symphonia::core::codecs::CodecRegistry {
+    static REGISTRY: std::sync::OnceLock<symphonia::core::codecs::CodecRegistry> =
+        std::sync::OnceLock::new();
+    REGISTRY.get_or_init(|| {
+        let mut registry = symphonia::core::codecs::CodecRegistry::new();
+        symphonia::default::register_enabled_codecs(&mut registry);
+        registry.register_all::<symphonia_adapter_libopus::OpusDecoder>();
+        registry
+    })
 }
 
 // SE-FILE-004
@@ -177,8 +238,8 @@ fn looks_like_media_file(url: &str) -> bool {
         .any(|ext| path.ends_with(&format!(".{ext}")))
 }
 
-pub const MEDIA_EXTENSIONS: [&str; 9] = [
-    "mp3", "m4a", "mp4", "mov", "wav", "flac", "ogg", "aac", "m4v",
+pub const MEDIA_EXTENSIONS: [&str; 13] = [
+    "mp3", "m4a", "mp4", "mov", "wav", "flac", "ogg", "aac", "m4v", "mkv", "webm", "opus", "oga",
 ];
 
 /// Whether a link to a page (YouTube and the like) can be fetched here:
@@ -224,7 +285,7 @@ async fn fetch_with_ytdlp(
                 "--no-playlist",
                 "--no-progress",
                 "-f",
-                "bestaudio[ext=m4a]/bestaudio[acodec^=mp4a]/best[ext=mp4]",
+                "bestaudio[ext=m4a]/bestaudio/best",
                 "-o",
             ])
             .arg(dir.join("%(title).120B.%(ext)s"))

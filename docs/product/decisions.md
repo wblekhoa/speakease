@@ -14,6 +14,22 @@ tags: [area/docs]
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
 
+## 2026-10-15 · Files read MKV/WebM and Opus through Symphonia + libopus
+
+- **Context**: Files & links refused MKV and WebM; most WebM (YouTube, browsers, screen recorders) and voice messages
+  (Telegram/WhatsApp `.ogg`/`.opus`) carry Opus, which Symphonia 0.5 cannot decode. The owner chose to add both
+  (15/10: "theo đề xuất của bạn" to "MKV + Opus").
+- **Decision**: two new dependencies: `symphonia` 0.5.5 itself with its `mkv` feature (the same version rodio uses, so
+  the MKV/WebM demuxer joins the existing build) and `symphonia-adapter-libopus` 0.2.9 (MIT/Apache; the last release
+  for Symphonia 0.5), which builds libopus (BSD-3-Clause) from source with CMake. The file decoder calls Symphonia
+  directly with a codec registry of Symphonia's codecs plus libopus, instead of rodio's decoder, which cannot take an
+  extra codec. libopus's notice ships in `licenses/` and inside the app (`NOTICE.md`). yt-dlp may now return Opus/WebM
+  audio when no M4A stream exists.
+- **Evidence**: installed-build CLI on a 70 s Vietnamese clip: WebM/Opus 0.9 % word error (with a VP8 video track
+  0.5 %), WebM/Vorbis 0.9 %, MKV/AAC 0.9 %, Opus voice message `.ogg`/`.opus` at 24 kb/s 1.4 % (WAV 1.4 %); reading
+  took 11-50 ms. No regression: 10-min MP4/M4A/MP3 at 0.5-0.7 %, MP4 read in 0.5 s (was 1.0 s with rodio).
+- **Reversal**: revert the commit; the two dependencies go with it.
+
 ## 2026-10-15 · Long AI jobs keep refused pieces; logs default to Info
 
 - **Context**: the owner's log (14/10 16:55) shows Apple Intelligence refusing a piece ("the model's safety guardrails

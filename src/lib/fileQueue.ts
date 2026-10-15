@@ -16,6 +16,10 @@ export const MEDIA_EXTENSIONS = [
   "flac",
   "ogg",
   "aac",
+  "mkv",
+  "webm",
+  "opus",
+  "oga",
 ];
 
 export const isMediaPath = (path: string) =>

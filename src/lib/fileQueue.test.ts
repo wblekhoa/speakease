@@ -12,7 +12,9 @@ import {
 assert.ok(isMediaPath("/Users/you/Movies/Phỏng vấn.MOV"));
 assert.ok(isMediaPath("a.m4a"));
 assert.ok(!isMediaPath("notes.txt"));
-assert.ok(!isMediaPath("video.webm"));
+assert.ok(isMediaPath("video.webm"));
+assert.ok(isMediaPath("voice-message.opus"));
+assert.ok(!isMediaPath("video.avi"));
 
 let changes = 0;
 const stop = onFileQueueChange(() => changes++);

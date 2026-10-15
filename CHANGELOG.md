@@ -3,6 +3,12 @@
 All notable changes to SpeakEase. SpeakEase is built on Handy; changes that
 come from merging Handy are summarised, not repeated.
 
+## Unreleased — 0.1.1
+
+- **More formats in Files & links**: MKV and WebM videos, and Opus audio -
+  including voice messages from Telegram or WhatsApp (.ogg, .opus).
+- MP4 and MOV files are read about twice as fast.
+
 ## 0.1.0 — 2026-10-15
 
 The first version of SpeakEase, on top of Handy at `f6b3f82`. Apple Silicon Macs.

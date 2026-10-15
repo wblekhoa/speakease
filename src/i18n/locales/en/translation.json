@@ -942,7 +942,7 @@
   "files": {
     "drop": "Drop an audio or video file here",
     "dropNow": "Drop to get the words",
-    "formats": "MP3, M4A, MP4, MOV, WAV, FLAC, OGG · the sound only, the picture is ignored",
+    "formats": "MP3, M4A, MP4, MOV, MKV, WebM, WAV, FLAC, OGG, Opus · the sound only, the picture is ignored",
     "choose": "Choose a file",
     "filterName": "Audio and video",
     "linkPlaceholder": "Or paste a link: YouTube, or a link to an .mp3 / .mp4 file",
@@ -972,7 +972,7 @@
     "recent": "Recent files",
     "errors": {
       "busy": "Another file is being processed. Wait for it or cancel it, then try again.",
-      "unsupported": "This format can't be read yet. Use MP3, M4A, MP4, MOV, WAV, FLAC or OGG.",
+      "unsupported": "This format can't be read yet. Use MP3, M4A, MP4, MOV, MKV, WebM, WAV, FLAC, OGG or Opus.",
       "no_audio": "The file has no sound.",
       "no_speech": "No speech was heard in the file.",
       "bad_link": "That isn't a valid link. Paste one starting with https://.",

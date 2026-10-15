@@ -23,4 +23,11 @@ Speech recognition models, the AI services you choose to connect, fonts and
 other third-party components keep their own licences. Models are downloaded at
 your request from their publishers and are not part of this repository.
 
+Native code compiled into the app keeps its own licence too. One library asks
+for its notice to travel with the app:
+
+| Library | Licence | Notice |
+| --- | --- | --- |
+| libopus (Opus audio decoding, built from source by `opusic-sys`) | BSD-3-Clause | `licenses/libopus-COPYING.txt`, also inside the app at `Contents/Resources/legal/` |
+
 The root `LICENSE` controls if this summary differs from the licence text.
