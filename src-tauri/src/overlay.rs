@@ -46,12 +46,17 @@ tauri_panel! {
 // Compact overlay (Minimal / transcribing / processing): the 40h pill animates
 // width from 172 (--ov-rest-w) to 216 (--ov-work-w) and expands from center, so
 // the window must fit the widest state plus a little slack.
-const OVERLAY_WIDTH: f64 = 256.0;
-const OVERLAY_HEIGHT: f64 = 50.0;
+//
+// SpeakEase: both forms also hold the output chips (SE-AI-011) - a 26px row
+// plus a 6px gap beside the card, two chips of at most 136px - hence the
+// extra 34px of height and the compact window's 300px width.
+const OVERLAY_OPTIONS_H: f64 = 34.0;
+const OVERLAY_WIDTH: f64 = 300.0;
+const OVERLAY_HEIGHT: f64 = 50.0 + OVERLAY_OPTIONS_H;
 
 // Actual is 394x118, just a little extra
 const OVERLAY_STREAM_WIDTH: f64 = 400.0;
-const OVERLAY_STREAM_HEIGHT: f64 = 120.0;
+const OVERLAY_STREAM_HEIGHT: f64 = 120.0 + OVERLAY_OPTIONS_H;
 
 /// Overlay window size (logical) for a given UI state.
 fn overlay_dimensions(state: &str) -> (f64, f64) {

@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — AI cleanup and translation (UX)"
 status: active
-updated: 2026-10-11
+updated: 2026-10-15
 relations:
   specifies:
     - speakease:src/components/settings/speak/SpeakPage.tsx
@@ -51,6 +51,9 @@ relations:
   Indonesian, Russian, Portuguese. Anything other than English goes through English first.
 - **Dictate with AI (⌥ ⇧ Space)** rewrites with the prompt selected in AI & Translate.
 - **Tray menu**: AI cleanup and translation can be changed without opening the window.
+- **Recording pill**: while it listens, two chips sit beside it - the cleanup prompt ("Không sửa câu" / the prompt's
+  name) and translation ("Không dịch" / "Dịch: Tiếng Anh"). A click changes the output of the dictation being spoken;
+  the choice stays for the next one. The chips hide once transcribing starts.
 - **When AI gives nothing back** (Apple Intelligence unavailable, a refusal, a provider or key error), what was said
   is pasted as is, and a toast says "AI didn't run, so what you said was pasted as is" with **Check AI**.
 - A user upgrading from a Handy settings store gets the SpeakEase prompts once, with AI switched on; prompts they
@@ -93,4 +96,5 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-15: output chips on the recording pill.
 - 2026-10-11: created (doc-engine rollout).

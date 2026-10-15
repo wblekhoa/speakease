@@ -12,6 +12,11 @@ import type {
 import i18n, { syncLanguageFromSettings } from "@/i18n";
 import type { ModelStateEvent } from "@/lib/types/events";
 import { getLanguageDirection } from "@/lib/utils/rtl";
+import {
+  TRANSLATE_PROMPT_ID,
+  translateTargetName,
+} from "@/lib/translateTargets";
+import { MagicStarIcon, TranslateIcon } from "@/components/icons/bulk";
 
 type OverlayState = "recording" | "streaming" | "transcribing" | "processing";
 
@@ -25,8 +30,21 @@ const WAVE_BARS = 9;
 // the user is speaking; cold loads can take 40s+.
 const SLOW_MODEL_LOAD_MS = 2000;
 
+/** The main shortcut's output choices, as the Speak page's quick bar sets
+ * them (SE-AI-011): read when the overlay shows, written back on a click.
+ * They apply to the dictation in progress - the steps are read when the
+ * key is let go (actions.rs). */
+interface QuickOutput {
+  aiOn: boolean;
+  prompts: { id: string; name: string }[];
+  enhance: string | null;
+  target: string | null;
+  language: string;
+}
+
 const RecordingOverlay: React.FC = () => {
   const { t } = useTranslation();
+  const [quick, setQuick] = useState<QuickOutput | null>(null);
   const [isVisible, setIsVisible] = useState(false);
   const [state, setState] = useState<OverlayState>("recording");
   // `Stream::play()` returning does not mean hardware callbacks are flowing.
@@ -93,6 +111,7 @@ const RecordingOverlay: React.FC = () => {
             setPosition(
               settings.data.overlay_position === "top" ? "top" : "bottom",
             );
+            setQuick(quickFrom(settings.data));
           }
         } catch {
           // Keep the previous/default placement if settings can't be read.
@@ -211,6 +230,34 @@ const RecordingOverlay: React.FC = () => {
     setOverflowing(false);
   }, [session]);
 
+  const reloadQuick = async () => {
+    const settings = await commands.getAppSettings();
+    if (settings.status === "ok") setQuick(quickFrom(settings.data));
+  };
+
+  // SE-AI-011: one click moves to the next cleanup prompt (none → each
+  // prompt → none); the other turns translation into the translate language
+  // on or off. Choosing either while AI is off turns AI on.
+  const cycleCleanup = async () => {
+    if (!quick) return;
+    const ids = [null, ...quick.prompts.map((prompt) => prompt.id)];
+    const current = quick.aiOn ? quick.enhance : null;
+    const next = ids[(ids.indexOf(current) + 1) % ids.length];
+    if (next && !quick.aiOn)
+      await commands.changePostProcessEnabledSetting(true);
+    await commands.changeSpeakeaseEnhancePromptIdSetting(next);
+    await reloadQuick();
+  };
+  const toggleTranslate = async () => {
+    if (!quick) return;
+    const on = quick.aiOn && Boolean(quick.target);
+    const next = on ? null : quick.language;
+    if (next && !quick.aiOn)
+      await commands.changePostProcessEnabledSetting(true);
+    await commands.changeSpeakeaseTranslateTargetSetting(next);
+    await reloadQuick();
+  };
+
   if (!isVisible) return null;
 
   // Re-pin when the user is within ~a line of the bottom; unpin otherwise.
@@ -258,6 +305,45 @@ const RecordingOverlay: React.FC = () => {
     </button>
   );
 
+  const cleanupOn = Boolean(quick?.aiOn && quick.enhance);
+  const translateOn = Boolean(quick?.aiOn && quick.target);
+  const cleanupName = cleanupOn
+    ? (quick?.prompts.find((prompt) => prompt.id === quick.enhance)?.name ??
+      t("overlay.cleanup"))
+    : t("overlay.noCleanup");
+  const languageName = translateTargetName(
+    (translateOn ? quick?.target : quick?.language) ?? "English",
+    i18n.language,
+  );
+  const optionsRow = quick && (
+    <div className="sopts">
+      <button
+        type="button"
+        className={`schip ${cleanupOn ? "on" : ""}`}
+        title={t("overlay.cleanupHint")}
+        aria-label={`${t("overlay.cleanupHint")}: ${cleanupName}`}
+        onClick={cycleCleanup}
+      >
+        <MagicStarIcon width={13} height={13} />
+        <span>{cleanupName}</span>
+      </button>
+      <button
+        type="button"
+        className={`schip ${translateOn ? "on" : ""}`}
+        title={t("overlay.translateHint", { language: languageName })}
+        aria-pressed={translateOn}
+        onClick={toggleTranslate}
+      >
+        <TranslateIcon width={13} height={13} />
+        <span>
+          {translateOn
+            ? t("overlay.translateTo", { language: languageName })
+            : t("overlay.noTranslate")}
+        </span>
+      </button>
+    </div>
+  );
+
   // dot (left) | waveform (center) | timer + cancel (right) — same structure for
   // pill & panel, so the Live morph is a pure width change.
   const listeningRow = (showTimer: boolean, showCancel: boolean) => (
@@ -302,44 +388,47 @@ const RecordingOverlay: React.FC = () => {
 
     return (
       <div dir={direction} className={`ov-stage ${position}`}>
-        <div
-          key={session}
-          className={`scard ${open ? "open" : ""} ${collapsed ? "working" : ""} ${
-            isVisible ? "" : "leaving"
-          }`}
-        >
-          <div className="stext">
-            <div className="stext-clip">
-              <div
-                className={`stext-cap ${overflowing ? "overflowing" : ""}`}
-                ref={capRef}
-                onScroll={handleStreamScroll}
-              >
-                <p>
-                  {loadingNotice && (
-                    <span className="sloading">
-                      {t("overlay.loadingModel")}
+        <div className="ov-col">
+          {!working && optionsRow}
+          <div
+            key={session}
+            className={`scard ${open ? "open" : ""} ${collapsed ? "working" : ""} ${
+              isVisible ? "" : "leaving"
+            }`}
+          >
+            <div className="stext">
+              <div className="stext-clip">
+                <div
+                  className={`stext-cap ${overflowing ? "overflowing" : ""}`}
+                  ref={capRef}
+                  onScroll={handleStreamScroll}
+                >
+                  <p>
+                    {loadingNotice && (
+                      <span className="sloading">
+                        {t("overlay.loadingModel")}
+                      </span>
+                    )}
+                    <span className="committed">
+                      {streamText.committed ? streamText.committed + " " : ""}
                     </span>
-                  )}
-                  <span className="committed">
-                    {streamText.committed ? streamText.committed + " " : ""}
-                  </span>
-                  <span className="tentative">{streamText.tentative}</span>
-                  {/* Drop the blinking caret once finalizing — it's no longer
+                    <span className="tentative">{streamText.tentative}</span>
+                    {/* Drop the blinking caret once finalizing — it's no longer
                       capturing, and a static spinner conveys the work. */}
-                  {!working && !loadingNotice && <span className="scaret" />}
-                </p>
+                    {!working && !loadingNotice && <span className="scaret" />}
+                  </p>
+                </div>
               </div>
             </div>
+            {working
+              ? workingRow(
+                  workKind === "polishing"
+                    ? t("overlay.processing")
+                    : transcribingLabel,
+                  true,
+                )
+              : listeningRow(open, true)}
           </div>
-          {working
-            ? workingRow(
-                workKind === "polishing"
-                  ? t("overlay.processing")
-                  : transcribingLabel,
-                true,
-              )
-            : listeningRow(open, true)}
         </div>
       </div>
     );
@@ -357,13 +446,34 @@ const RecordingOverlay: React.FC = () => {
       dir={direction}
       className={`ov-stage ${position} ov-fade ${isVisible ? "show" : ""}`}
     >
-      <div
-        className={`scard compact ${working && isVisible ? "cworking" : ""}`}
-      >
-        {working ? workingRow(workLabel, true) : listeningRow(false, true)}
+      <div className="ov-col">
+        {!working && optionsRow}
+        <div
+          className={`scard compact ${working && isVisible ? "cworking" : ""}`}
+        >
+          {working ? workingRow(workLabel, true) : listeningRow(false, true)}
+        </div>
       </div>
     </div>
   );
 };
+
+function quickFrom(settings: {
+  post_process_enabled?: boolean;
+  post_process_prompts?: { id: string; name: string }[];
+  speakease_enhance_prompt_id?: string | null;
+  speakease_translate_target?: string | null;
+  speakease_translate_language?: string | null;
+}): QuickOutput {
+  return {
+    aiOn: settings.post_process_enabled ?? false,
+    prompts: (settings.post_process_prompts ?? [])
+      .filter((prompt) => prompt.id !== TRANSLATE_PROMPT_ID)
+      .map(({ id, name }) => ({ id, name })),
+    enhance: settings.speakease_enhance_prompt_id || null,
+    target: settings.speakease_translate_target || null,
+    language: settings.speakease_translate_language || "English",
+  };
+}
 
 export default RecordingOverlay;

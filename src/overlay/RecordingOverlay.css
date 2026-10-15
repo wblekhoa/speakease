@@ -469,3 +469,77 @@
   overflow: hidden;
   text-overflow: ellipsis;
 }
+
+/* ============================================================
+   Output choices (SE-AI-011): two chips beside the pill while it listens -
+   the cleanup prompt and translation - so the output can change mid-sentence.
+   Above the pill at the bottom of the screen, below it at the top.
+   ============================================================ */
+.ov-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+}
+.ov-stage.top .ov-col {
+  flex-direction: column-reverse;
+}
+.sopts {
+  display: flex;
+  gap: 6px;
+  animation: sopts-in 260ms cubic-bezier(0.22, 1, 0.36, 1);
+}
+@keyframes sopts-in {
+  from {
+    opacity: 0;
+    transform: scale(0.94);
+  }
+}
+.schip {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  height: 26px;
+  max-width: 136px;
+  padding: 0 10px;
+  border-radius: 13px;
+  border: 1px solid var(--s-border);
+  background: var(--s-surface);
+  color: var(--s-muted);
+  font: 500 11.5px var(--s-font);
+  white-space: nowrap;
+  cursor: pointer;
+  -webkit-appearance: none;
+  appearance: none;
+  transition:
+    background-color 150ms ease,
+    color 150ms ease,
+    border-color 150ms ease,
+    transform 100ms ease;
+}
+.schip span {
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.schip svg {
+  flex: none;
+}
+.schip:hover {
+  color: var(--color-text);
+}
+.schip:active {
+  transform: scale(0.96);
+}
+.schip.on {
+  color: var(--color-text);
+  background: color-mix(in srgb, var(--s-accent) 14%, var(--s-surface));
+  border-color: color-mix(in srgb, var(--s-accent) 45%, transparent);
+}
+.schip.on svg {
+  color: var(--s-accent);
+}
+@media (prefers-reduced-motion: reduce) {
+  .sopts {
+    animation: none;
+  }
+}

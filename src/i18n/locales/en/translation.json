@@ -843,7 +843,13 @@
   "overlay": {
     "transcribing": "Transcribing...",
     "processing": "Processing...",
-    "loadingModel": "Loading model..."
+    "loadingModel": "Loading model...",
+    "cleanup": "AI cleanup",
+    "noCleanup": "No cleanup",
+    "noTranslate": "No translation",
+    "translateTo": "To {{language}}",
+    "cleanupHint": "Click to change the AI cleanup",
+    "translateHint": "Click to turn translation into {{language}} on or off"
   },
   "secureInput": {
     "blockedWithCulprit_one": "{{name}} may be blocking 1 shortcut",

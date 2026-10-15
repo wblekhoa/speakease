@@ -840,7 +840,13 @@
   "overlay": {
     "transcribing": "Đang chép lời…",
     "processing": "AI đang xử lý…",
-    "loadingModel": "Đang nạp mô hình…"
+    "loadingModel": "Đang nạp mô hình…",
+    "cleanup": "AI sửa câu",
+    "noCleanup": "Không sửa câu",
+    "noTranslate": "Không dịch",
+    "translateTo": "Dịch: {{language}}",
+    "cleanupHint": "Bấm để đổi kiểu AI sửa câu",
+    "translateHint": "Bấm để bật hoặc tắt dịch sang {{language}}"
   },
   "whatsNew": {
     "title": "Điểm mới trong SpeakEase v{{version}}"
