@@ -5,6 +5,8 @@ product: speakease
 title: "SpeakEase — Releases"
 status: active
 updated: 2026-10-14
+summary: "What each published SpeakEase version shipped and to whom; 0.1.0 is not released yet and lists the rules it will ship."
+tags: [area/release, area/updater]
 relations:
   presentedBy: [github:wblekhoa/speakease/releases]
 ---

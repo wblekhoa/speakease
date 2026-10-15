@@ -5,6 +5,8 @@ product: speakease
 title: "SpeakEase — History (UX)"
 status: active
 updated: 2026-10-14
+summary: "How past dictations and files are found and reused: search, counters, cards with the original under the AI version, playback, rewrite or translate, storage."
+tags: [area/search, area/storage, stack/react]
 relations:
   specifies: [speakease:src/components/settings/history/HistorySettings.tsx]
   dependsOn: [speakease-logic-history]

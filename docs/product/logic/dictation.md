@@ -5,6 +5,8 @@ product: speakease
 title: "SpeakEase — Dictation (logic)"
 status: active
 updated: 2026-10-14
+summary: "Rules for turning speech into text: language fallback, model suggestions measured on Vietnamese, and long audio split at pauses so nothing is dropped (SE-REC)."
+tags: [area/audio, area/i18n, stack/rust]
 reqPrefix: SE-REC
 relations:
   specifiedBy: [speakease-ux-dictation]

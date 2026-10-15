@@ -5,6 +5,8 @@ product: speakease
 title: "SpeakEase — Dictation (UX)"
 status: active
 updated: 2026-10-11
+summary: "How a user dictates: the shortcut, the Speak page, the listening language, model suggestions by language, the recording pill and the error messages."
+tags: [area/audio, area/hotkeys, stack/react, surface/macos]
 relations:
   specifies:
     - speakease:src/components/settings/speak/SpeakPage.tsx

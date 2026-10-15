@@ -5,6 +5,8 @@ product: speakease
 title: "SpeakEase — Files (UX)"
 status: active
 updated: 2026-10-14
+summary: "How a user turns an audio or video file, or a link, into text and then rewrites or translates it on the Files & links page, with progress that never stalls."
+tags: [area/audio, area/data-import, area/translation, stack/react]
 relations:
   specifies:
     - speakease:src/components/settings/files/FilesPage.tsx

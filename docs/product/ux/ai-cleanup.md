@@ -5,6 +5,8 @@ product: speakease
 title: "SpeakEase — AI cleanup and translation (UX)"
 status: active
 updated: 2026-10-15
+summary: "How AI cleanup and translation look to the user: prompts, the translate language, quick choices on the Speak page, the tray and the recording pill."
+tags: [area/ai, area/translation, stack/react]
 relations:
   specifies:
     - speakease:src/components/settings/speak/SpeakPage.tsx

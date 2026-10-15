@@ -5,6 +5,8 @@ product: speakease
 title: "SpeakEase — App shell (UX)"
 status: active
 updated: 2026-10-14
+summary: "The window around the features: the side column (sections, fold and resize by drag, language menu), the App page, tray and app-menu entries, updates and first launch."
+tags: [area/layout, area/updater, area/i18n, surface/macos]
 relations:
   specifies:
     - speakease:src/components/Sidebar.tsx

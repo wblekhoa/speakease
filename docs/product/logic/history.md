@@ -5,6 +5,8 @@ product: speakease
 title: "SpeakEase — History (logic)"
 status: active
 updated: 2026-10-14
+summary: "Rules for History: Vietnamese case-insensitive search across both texts, counters on the delivered text, and the original always shown (SE-HIST)."
+tags: [area/search, area/storage, stack/sqlite]
 reqPrefix: SE-HIST
 relations:
   specifiedBy: [speakease-ux-history]

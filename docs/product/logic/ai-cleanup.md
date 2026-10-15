@@ -5,6 +5,8 @@ product: speakease
 title: "SpeakEase — AI cleanup and translation (logic)"
 status: active
 updated: 2026-10-15
+summary: "Rules for the AI steps after recognition: one AI switch, prompts, translation through English, skipped-step notices and output chips on the recording pill (SE-AI)."
+tags: [area/ai, area/translation, stack/rust]
 reqPrefix: SE-AI
 relations:
   specifiedBy: [speakease-ux-ai-cleanup]

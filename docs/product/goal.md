@@ -5,6 +5,8 @@ product: speakease
 title: "SpeakEase — Product goal"
 status: active
 updated: 2026-10-11
+summary: "Why SpeakEase exists: on-device Vietnamese-first dictation for Mac users who write a lot, its promise, audience, success measures and non-goals."
+tags: [area/audio, area/ai, surface/macos]
 ---
 
 # SpeakEase — Product goal

@@ -5,6 +5,8 @@ product: speakease
 title: "SpeakEase — Decisions"
 status: active
 updated: 2026-10-14
+summary: "Append-only record of SpeakEase's product and engineering decisions, newest first, each with its context, evidence and how to reverse it."
+tags: [area/docs]
 ---
 
 # SpeakEase — Decisions (append-only, newest first)
