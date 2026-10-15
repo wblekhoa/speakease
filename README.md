@@ -59,7 +59,9 @@
 
 ## Cài đặt
 
-Bản cài sẵn sẽ được đăng ở [trang Releases](https://github.com/wblekhoa/speakease/releases). Trong lúc chờ, bạn build từ mã nguồn:
+**Tải bản cài sẵn** (Mac chip Apple, đã ký và được Apple công chứng): mở [bản mới nhất](https://github.com/wblekhoa/speakease/releases/latest), tải `SpeakEase-…-arm64.dmg`, mở ra rồi kéo **SpeakEase** vào **Applications**. App tự kiểm tra và cài bản cập nhật về sau.
+
+Hoặc build từ mã nguồn:
 
 1. Cài Xcode Command Line Tools (`xcode-select --install`), [Rust](https://rustup.rs/) và [Bun](https://bun.sh/).
 2. Chạy:

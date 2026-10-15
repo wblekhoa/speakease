@@ -4,7 +4,7 @@ type: goal
 product: speakease
 title: "SpeakEase — Product goal"
 status: active
-updated: 2026-10-11
+updated: 2026-10-15
 summary: "Why SpeakEase exists: on-device Vietnamese-first dictation for Mac users who write a lot, its promise, audience, success measures and non-goals."
 tags: [area/audio, area/ai, surface/macos]
 ---
@@ -31,13 +31,13 @@ tags: [area/audio, area/ai, surface/macos]
 
 ## Success measures
 
-| Measure                                               | Today (observed 2026-10-11)                       | Target  | How it is measured (command, dashboard, store data)                                                                     |
-| ----------------------------------------------------- | ------------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------- |
-| Public releases shipped                               | 0 (0.1.0 is still "Unreleased" in `CHANGELOG.md`) | not set | `gh release list -R wblekhoa/speakease`                                                                                 |
-| Installer downloads                                   | not measured (no release assets yet)              | not set | `gh api repos/wblekhoa/speakease/releases --paginate --jq '[.[].assets[].download_count] \| add'` once a release exists |
-| GitHub stars / forks                                  | 0 / 0 (GitHub API, 2026-10-11)                    | not set | `gh api repos/wblekhoa/speakease --jq '{stars:.stargazers_count,forks:.forks_count}'`                                   |
-| Vietnamese word error rate of the top suggested model | 6.3 % (Cohere Transcribe, 60 FLEURS sentences)    | not set | measured with the app's own engine; figures in `src/lib/utils/vietnameseModels.ts` and the README table                 |
-| Active users / retention                              | not measured                                      | not set | no method: the app has no usage tracking by design (`PRIVACY.md`)                                                       |
+| Measure                                               | Today (observed 2026-10-11)                    | Target  | How it is measured (command, dashboard, store data)                                                                     |
+| ----------------------------------------------------- | ---------------------------------------------- | ------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Public releases shipped                               | 1 (v0.1.0, 2026-10-15)                         | not set | `gh release list -R wblekhoa/speakease`                                                                                 |
+| Installer downloads                                   | 0 at publishing (2026-10-15)                   | not set | `gh api repos/wblekhoa/speakease/releases --paginate --jq '[.[].assets[].download_count] \| add'` once a release exists |
+| GitHub stars / forks                                  | 0 / 0 (GitHub API, 2026-10-11)                 | not set | `gh api repos/wblekhoa/speakease --jq '{stars:.stargazers_count,forks:.forks_count}'`                                   |
+| Vietnamese word error rate of the top suggested model | 6.3 % (Cohere Transcribe, 60 FLEURS sentences) | not set | measured with the app's own engine; figures in `src/lib/utils/vietnameseModels.ts` and the README table                 |
+| Active users / retention                              | not measured                                   | not set | no method: the app has no usage tracking by design (`PRIVACY.md`)                                                       |
 
 ## Non-goals
 

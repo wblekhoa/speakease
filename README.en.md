@@ -59,7 +59,9 @@ Measured on 60 read sentences (12.9 minutes) of Google FLEURS Vietnamese, with t
 
 ## Install
 
-Ready-made builds will be posted on the [Releases page](https://github.com/wblekhoa/speakease/releases). Until then, build it from source:
+**Download the ready-made build** (Apple Silicon, signed and notarized by Apple): open the [latest release](https://github.com/wblekhoa/speakease/releases/latest), download `SpeakEase-…-arm64.dmg`, open it and drag **SpeakEase** into **Applications**. The app checks for and installs updates itself after that.
+
+Or build it from source:
 
 1. Install the Xcode Command Line Tools (`xcode-select --install`), [Rust](https://rustup.rs/) and [Bun](https://bun.sh/).
 2. Run:
