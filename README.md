@@ -1,4 +1,4 @@
-<p align="center"><img src="assets/brand/speakease-icon.svg" width="112" alt="Biểu tượng SpeakEase: bong bóng lời nói màu hồng, bên trong ba viên nhịp trắng, viên giữa đang lên tiếng"></p>
+<p align="center"><img src="assets/brand/speakease-app-icon.svg" width="112" alt="Biểu tượng SpeakEase: ô vuông bo góc màu hồng, bên trong bong bóng lời nói trắng với ba viên nhịp hồng, viên giữa đang lên tiếng"></p>
 
 # SpeakEase
 

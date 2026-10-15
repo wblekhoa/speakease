@@ -3,6 +3,11 @@
 All notable changes to SpeakEase. SpeakEase is built on Handy; changes that
 come from merging Handy are summarised, not repeated.
 
+## Unreleased — 0.1.2
+
+- **New app icon** that macOS 26 and later show whole, instead of inside a grey
+  box: the pink speech bubble now sits, in white, on a pink rounded square.
+
 ## 0.1.1 — 2026-10-15
 
 - **More formats in Files & links**: MKV and WebM videos, and Opus audio -

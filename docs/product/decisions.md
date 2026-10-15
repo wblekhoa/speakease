@@ -14,6 +14,20 @@ tags: [area/docs]
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
 
+## 2026-10-15 · App icon: the bubble inside a squircle, so macOS shows it whole
+
+- **Context**: on macOS 26 and later the Dock drew the app icon inside a grey box (owner's screenshot). The icon's
+  outline was the B1 speech bubble itself (one square corner), and macOS puts any icon whose outline is not its
+  rounded-square shape into that box.
+- **Decision**: the app icon's outline is now a squircle on Apple's grid (824 px in 1024, continuous corners) filled
+  with the brand pink; the B1 bubble sits inside it in white with the three beats in one pink (owner chose this over a
+  plain pink tile with white beats, then asked for the beats in one colour). Source:
+  `assets/brand/speakease-app-icon.svg`; every size regenerated with `bunx tauri icon`. The in-app mark and
+  `speakease-icon.svg` keep the bubble; the README header shows the app icon.
+- **Evidence**: `NSWorkspace.icon(forFile:)` on the installed app - the old icon came back inside the grey box, the new
+  one fills the frame (rendered 15/10 on macOS 27.0).
+- **Reversal**: revert the commit (the box returns on macOS 26+).
+
 ## 2026-10-15 · Files read MKV/WebM and Opus through Symphonia + libopus
 
 - **Context**: Files & links refused MKV and WebM; most WebM (YouTube, browsers, screen recorders) and voice messages
