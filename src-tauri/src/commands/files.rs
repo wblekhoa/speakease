@@ -181,6 +181,15 @@ pub const MEDIA_EXTENSIONS: [&str; 9] = [
     "mp3", "m4a", "mp4", "mov", "wav", "flac", "ogg", "aac", "m4v",
 ];
 
+/// Whether a link to a page (YouTube and the like) can be fetched here:
+/// yt-dlp is installed. The page shows how to install it before a try fails
+/// (owner, 15/10: keep yt-dlp optional, explain it clearly).
+#[tauri::command]
+#[specta::specta]
+pub fn ytdlp_available() -> bool {
+    find_ytdlp().is_some()
+}
+
 fn find_ytdlp() -> Option<PathBuf> {
     ["/opt/homebrew/bin/yt-dlp", "/usr/local/bin/yt-dlp"]
         .iter()

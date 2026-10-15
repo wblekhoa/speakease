@@ -2,6 +2,7 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
 import { open, save } from "@tauri-apps/plugin-dialog";
+import { openUrl } from "@tauri-apps/plugin-opener";
 import { toast } from "sonner";
 import {
   commands,
@@ -34,6 +35,11 @@ import {
 import { CheckIcon, CopyIcon, FolderOpenIcon } from "../../icons/bulk";
 
 type Phase = "download" | "read" | "transcribe" | "enhance";
+
+/** The one command that installs yt-dlp with Homebrew. */
+const YTDLP_INSTALL = "brew install yt-dlp";
+/** Homebrew's site, for a Mac without it. */
+const BREW_SITE = "brew.sh";
 interface Progress {
   phase: Phase;
   done: number;
@@ -148,6 +154,7 @@ export const FilesPage: React.FC = () => {
     (error: string) => {
       const key = fileErrorKey(error);
       if (key === "cancelled") return;
+      if (key === "needs_yt_dlp") setYtdlp(false);
       if (key === "ai_off") {
         toast.error(t("files.errors.ai_off"), {
           action: {
@@ -236,6 +243,27 @@ export const FilesPage: React.FC = () => {
     if (Array.isArray(chosen)) addPaths(chosen);
     else if (typeof chosen === "string") addPaths([chosen]);
   };
+
+  // SE-FILE-004: a page link (YouTube and the like) needs yt-dlp. Say so
+  // as soon as such a link is pasted, with the one command to install it.
+  const [ytdlp, setYtdlp] = useState<boolean | null>(null);
+  const [guideCopied, setGuideCopied] = useState(false);
+  const checkYtdlp = useCallback(
+    () =>
+      commands
+        .ytdlpAvailable()
+        .then(setYtdlp)
+        .catch(() => setYtdlp(null)),
+    [],
+  );
+  useEffect(() => {
+    checkYtdlp();
+  }, [checkYtdlp]);
+  const trimmedLink = link.trim();
+  const isPageLink =
+    /^https?:\/\/\S+/i.test(trimmedLink) &&
+    !isMediaPath(trimmedLink.split(/[?#]/)[0]);
+  const showYtdlpGuide = isPageLink && ytdlp === false;
 
   const submitLink = (event: React.FormEvent) => {
     event.preventDefault();
@@ -401,6 +429,48 @@ export const FilesPage: React.FC = () => {
               {t("files.fromLink")}
             </Button>
           </form>
+          {showYtdlpGuide && (
+            <div className="w-full max-w-lg text-start rounded-xl bg-row/70 px-3.5 py-3 space-y-2">
+              <p className="text-sm font-medium">{t("files.ytdlp.title")}</p>
+              <p className="text-xs text-mid-gray">{t("files.ytdlp.body")}</p>
+              <div className="flex items-center gap-2">
+                <code className="flex-1 min-w-0 px-2.5 py-1.5 rounded-lg bg-background text-xs font-mono select-all truncate">
+                  {YTDLP_INSTALL}
+                </code>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={async () => {
+                    if (await copyToClipboard(YTDLP_INSTALL)) {
+                      setGuideCopied(true);
+                      setTimeout(() => setGuideCopied(false), 2000);
+                    }
+                  }}
+                >
+                  {guideCopied ? t("files.copied") : t("files.copy")}
+                </Button>
+                <Button
+                  type="button"
+                  variant="secondary"
+                  size="sm"
+                  onClick={checkYtdlp}
+                >
+                  {t("files.ytdlp.recheck")}
+                </Button>
+              </div>
+              <p className="text-xs text-mid-gray">
+                {t("files.ytdlp.noBrew")}{" "}
+                <button
+                  type="button"
+                  onClick={() => openUrl(`https://${BREW_SITE}`)}
+                  className="text-logo-primary hover:underline cursor-pointer"
+                >
+                  {BREW_SITE}
+                </button>
+              </p>
+            </div>
+          )}
         </div>
       )}
 

@@ -995,6 +995,14 @@ async writeTextFile(path: string, contents: string) : Promise<Result<null, strin
     else return { status: "error", error: e  as any };
 }
 },
+/**
+ * Whether a link to a page (YouTube and the like) can be fetched here:
+ * yt-dlp is installed. The page shows how to install it before a try fails
+ * (owner, 15/10: keep yt-dlp optional, explain it clearly).
+ */
+async ytdlpAvailable() : Promise<boolean> {
+    return await TAURI_INVOKE("ytdlp_available");
+},
 async updateHistoryLimit(limit: number) : Promise<Result<null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("update_history_limit", { limit }) };

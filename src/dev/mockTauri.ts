@@ -207,6 +207,9 @@ function handle(cmd: string, args: Json): unknown {
       return null;
     case "write_text_file":
       return null;
+    case "ytdlp_available":
+      // The preview plays a Mac without yt-dlp, to show the guide.
+      return false;
     case "plugin:dialog|open":
       return (args.options as { multiple?: boolean } | undefined)?.multiple
         ? [

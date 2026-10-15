@@ -988,6 +988,12 @@
     "keptOriginal": "{{kept}}/{{total}} phần giữ nguyên lời gốc",
     "keptOriginalHint": "AI không xử lý được các phần này (thường do bộ lọc an toàn của Apple Intelligence). Phần còn lại đã xong.",
     "waiting_one": "còn {{count}} file chờ",
-    "waiting_other": "còn {{count}} file chờ"
+    "waiting_other": "còn {{count}} file chờ",
+    "ytdlp": {
+      "title": "Link trang web như YouTube cần yt-dlp",
+      "body": "SpeakEase dùng yt-dlp để lấy riêng phần tiếng từ trang video. Cài một lần bằng lệnh dưới đây trong Terminal, rồi bấm Lấy chữ lại.",
+      "recheck": "Đã cài, kiểm tra lại",
+      "noBrew": "Chưa có Homebrew? Cài theo hướng dẫn ở"
+    }
   }
 }

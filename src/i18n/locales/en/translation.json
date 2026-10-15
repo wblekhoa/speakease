@@ -988,6 +988,12 @@
     "keptOriginal": "{{kept}} of {{total}} parts kept their original words",
     "keptOriginalHint": "The AI wouldn't process those parts (often Apple Intelligence's safety filter). The rest is done.",
     "waiting_one": "{{count}} file waiting",
-    "waiting_other": "{{count}} files waiting"
+    "waiting_other": "{{count}} files waiting",
+    "ytdlp": {
+      "title": "Page links like YouTube need yt-dlp",
+      "body": "SpeakEase uses yt-dlp to take only the sound from a video page. Install it once with the command below in Terminal, then press Get the words again.",
+      "recheck": "Installed, check again",
+      "noBrew": "No Homebrew yet? Install it from"
+    }
   }
 }

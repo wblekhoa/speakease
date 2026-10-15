@@ -851,6 +851,7 @@ pub fn run(cli_args: CliArgs) {
             commands::files::enhance_history_entry,
             commands::files::cancel_file_job,
             commands::files::write_text_file,
+            commands::files::ytdlp_available,
             commands::history::update_history_limit,
             commands::history::update_recording_retention_period,
             helpers::clamshell::is_laptop,

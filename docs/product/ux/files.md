@@ -54,7 +54,8 @@ relations:
   Play back and Re-transcribe work as for dictations. Every card, dictation or file, has a **Rewrite or translate**
   button that opens the same prompts and languages in the card.
 - **Links**: a link to an audio or video file works as it is. YouTube and other video pages need yt-dlp installed
-  (`brew install yt-dlp`); the message says so.
+  (`brew install yt-dlp`): pasting such a link without it shows that command with **Copy** and **Installed, check
+  again**, and a pointer to Homebrew.
 - **Errors** say what went wrong and what to do: unsupported format, no sound, no speech, bad link, download failed,
   needs yt-dlp, no model, another file in progress.
 
