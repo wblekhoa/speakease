@@ -47,26 +47,22 @@ tauri_panel! {
 // width from 172 (--ov-rest-w) to 216 (--ov-work-w) and expands from center, so
 // the window must fit the widest state plus a little slack.
 //
-// SpeakEase: both forms also hold the output chips (SE-AI-011) - a 26px row
-// plus a 6px gap beside the card, two chips of at most 136px - hence the
-// extra 34px of height and the compact window's 300px width.
-const OVERLAY_OPTIONS_H: f64 = 34.0;
-const OVERLAY_WIDTH: f64 = 300.0;
-const OVERLAY_HEIGHT: f64 = 50.0 + OVERLAY_OPTIONS_H;
+// SpeakEase: the listening pill also holds the two output buttons (SE-AI-011),
+// so it rests at 236 (--ov-rest-w / --ov-pill-w); the compact window is 276,
+// the pill plus slack.
+const OVERLAY_WIDTH: f64 = 276.0;
+const OVERLAY_HEIGHT: f64 = 50.0;
 
 // Actual is 394x118, just a little extra
 const OVERLAY_STREAM_WIDTH: f64 = 400.0;
-const OVERLAY_STREAM_HEIGHT: f64 = 120.0 + OVERLAY_OPTIONS_H;
+const OVERLAY_STREAM_HEIGHT: f64 = 120.0;
 
 /// Overlay window size (logical) for a given UI state.
 fn overlay_dimensions(state: &str) -> (f64, f64) {
-    match state {
-        "streaming" => (OVERLAY_STREAM_WIDTH, OVERLAY_STREAM_HEIGHT),
-        // The chips show only while listening; a working pill keeps the
-        // short window, so no empty strip above it catches clicks meant for
-        // the app underneath.
-        "recording" => (OVERLAY_WIDTH, OVERLAY_HEIGHT),
-        _ => (OVERLAY_WIDTH, OVERLAY_HEIGHT - OVERLAY_OPTIONS_H),
+    if state == "streaming" {
+        (OVERLAY_STREAM_WIDTH, OVERLAY_STREAM_HEIGHT)
+    } else {
+        (OVERLAY_WIDTH, OVERLAY_HEIGHT)
     }
 }
 

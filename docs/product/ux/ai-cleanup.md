@@ -53,9 +53,10 @@ relations:
   Indonesian, Russian, Portuguese. Anything other than English goes through English first.
 - **Dictate with AI (⌥ ⇧ Space)** rewrites with the prompt selected in AI & Translate.
 - **Tray menu**: AI cleanup and translation can be changed without opening the window.
-- **Recording pill**: while it listens, one box beside it holds two choices - the cleanup prompt ("Không sửa câu" / the prompt's
-  name) and translation ("Không dịch" / "Dịch: Tiếng Anh"). A click changes the output of the dictation being spoken;
-  the choice stays for the next one. The chips hide once transcribing starts.
+- **Recording pill**: two icon buttons sit inside the pill, beside cancel - ✦ the cleanup prompt (each click moves to the
+  next: none, then each prompt) and 文A translation (on/off into the translate language). Pink means on. A click shows
+  the new choice's name where the waveform is for about a second; the tooltip names it too. It changes the dictation
+  being spoken and stays for the next one. The buttons hide once transcribing starts.
 - **When AI gives nothing back** (Apple Intelligence unavailable, a refusal, a provider or key error), what was said
   is pasted as is, and a toast says "AI didn't run, so what you said was pasted as is" with **Check AI**.
 - A user upgrading from a Handy settings store gets the SpeakEase prompts once, with AI switched on; prompts they
@@ -98,5 +99,6 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-15: output choices inside the recording pill.
 - 2026-10-15: output chips on the recording pill.
 - 2026-10-11: created (doc-engine rollout).

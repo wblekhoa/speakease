@@ -45,6 +45,15 @@ interface QuickOutput {
 const RecordingOverlay: React.FC = () => {
   const { t } = useTranslation();
   const [quick, setQuick] = useState<QuickOutput | null>(null);
+  // The new choice's name, shown where the waveform is for a moment after a
+  // click, so icon-only buttons still say what they picked.
+  const [flash, setFlash] = useState<string | null>(null);
+  const flashTimer = useRef<ReturnType<typeof setTimeout>>();
+  const showFlash = (text: string) => {
+    setFlash(text);
+    clearTimeout(flashTimer.current);
+    flashTimer.current = setTimeout(() => setFlash(null), 1300);
+  };
   const [isVisible, setIsVisible] = useState(false);
   const [state, setState] = useState<OverlayState>("recording");
   // `Stream::play()` returning does not mean hardware callbacks are flowing.
@@ -232,8 +241,22 @@ const RecordingOverlay: React.FC = () => {
 
   const reloadQuick = async () => {
     const settings = await commands.getAppSettings();
-    if (settings.status === "ok") setQuick(quickFrom(settings.data));
+    if (settings.status !== "ok") return null;
+    const next = quickFrom(settings.data);
+    setQuick(next);
+    return next;
   };
+  const cleanupLabel = (q: QuickOutput | null) =>
+    q?.aiOn && q.enhance
+      ? (q.prompts.find((prompt) => prompt.id === q.enhance)?.name ??
+        t("overlay.cleanup"))
+      : t("overlay.noCleanup");
+  const translateLabel = (q: QuickOutput | null) =>
+    q?.aiOn && q.target
+      ? t("overlay.translateTo", {
+          language: translateTargetName(q.target, i18n.language),
+        })
+      : t("overlay.noTranslate");
 
   // SE-AI-011: one click moves to the next cleanup prompt (none → each
   // prompt → none); the other turns translation into the translate language
@@ -246,7 +269,7 @@ const RecordingOverlay: React.FC = () => {
     if (next && !quick.aiOn)
       await commands.changePostProcessEnabledSetting(true);
     await commands.changeSpeakeaseEnhancePromptIdSetting(next);
-    await reloadQuick();
+    showFlash(cleanupLabel(await reloadQuick()));
   };
   const toggleTranslate = async () => {
     if (!quick) return;
@@ -255,7 +278,7 @@ const RecordingOverlay: React.FC = () => {
     if (next && !quick.aiOn)
       await commands.changePostProcessEnabledSetting(true);
     await commands.changeSpeakeaseTranslateTargetSetting(next);
-    await reloadQuick();
+    showFlash(translateLabel(await reloadQuick()));
   };
 
   if (!isVisible) return null;
@@ -307,54 +330,53 @@ const RecordingOverlay: React.FC = () => {
 
   const cleanupOn = Boolean(quick?.aiOn && quick.enhance);
   const translateOn = Boolean(quick?.aiOn && quick.target);
-  const cleanupName = cleanupOn
-    ? (quick?.prompts.find((prompt) => prompt.id === quick.enhance)?.name ??
-      t("overlay.cleanup"))
-    : t("overlay.noCleanup");
   const languageName = translateTargetName(
     (translateOn ? quick?.target : quick?.language) ?? "English",
     i18n.language,
   );
-  const optionsRow = quick && (
-    <div className="sopts">
+  // SE-AI-011: inside the pill, beside cancel (owner, 15/10: the choices
+  // belong in the recording box itself).
+  const optionButtons = quick && (
+    <>
       <button
         type="button"
-        className={`schip ${cleanupOn ? "on" : ""}`}
-        title={t("overlay.cleanupHint")}
-        aria-label={`${t("overlay.cleanupHint")}: ${cleanupName}`}
+        className={`sopt ${cleanupOn ? "on" : ""}`}
+        title={`${t("overlay.cleanupHint")} · ${cleanupLabel(quick)}`}
+        aria-label={`${t("overlay.cleanupHint")}: ${cleanupLabel(quick)}`}
         onClick={cycleCleanup}
       >
-        <MagicStarIcon width={13} height={13} />
-        <span>{cleanupName}</span>
+        <MagicStarIcon width={14} height={14} />
       </button>
-      <span className="sopts-sep" aria-hidden="true" />
       <button
         type="button"
-        className={`schip ${translateOn ? "on" : ""}`}
-        title={t("overlay.translateHint", { language: languageName })}
+        className={`sopt ${translateOn ? "on" : ""}`}
+        title={`${t("overlay.translateHint", { language: languageName })} · ${translateLabel(quick)}`}
+        aria-label={translateLabel(quick)}
         aria-pressed={translateOn}
         onClick={toggleTranslate}
       >
-        <TranslateIcon width={13} height={13} />
-        <span>
-          {translateOn
-            ? t("overlay.translateTo", { language: languageName })
-            : t("overlay.noTranslate")}
-        </span>
+        <TranslateIcon width={14} height={14} />
       </button>
-    </div>
+    </>
   );
 
   // dot (left) | waveform (center) | timer + cancel (right) — same structure for
   // pill & panel, so the Live morph is a pure width change.
   const listeningRow = (showTimer: boolean, showCancel: boolean) => (
-    <div className="sbase">
+    <div className={`sbase ${optionButtons ? "with-opts" : ""}`}>
       <div className="sbase-l">
         <span className={`sdot ${captureReady ? "ready" : "arming"}`} />
       </div>
-      {waveform}
+      {flash ? (
+        <span className="sflash" aria-live="polite">
+          {flash}
+        </span>
+      ) : (
+        waveform
+      )}
       <div className="sbase-r">
         {showTimer && <span className="stimer">{fmtTime(elapsed)}</span>}
+        {optionButtons}
         {showCancel && cancelBtn}
       </div>
     </div>
@@ -390,7 +412,6 @@ const RecordingOverlay: React.FC = () => {
     return (
       <div dir={direction} className={`ov-stage ${position}`}>
         <div className="ov-col">
-          {!working && optionsRow}
           <div
             key={session}
             className={`scard ${open ? "open" : ""} ${collapsed ? "working" : ""} ${
@@ -448,7 +469,6 @@ const RecordingOverlay: React.FC = () => {
       className={`ov-stage ${position} ov-fade ${isVisible ? "show" : ""}`}
     >
       <div className="ov-col">
-        {!working && optionsRow}
         <div
           className={`scard compact ${working && isVisible ? "cworking" : ""}`}
         >

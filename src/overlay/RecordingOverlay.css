@@ -50,9 +50,9 @@
      the card's max footprint (--ov-work-w for compact, --ov-open-w for Live),
      since the card is anchored flush to the screen edge in CSS. Keep overlay.rs
      in sync when these change. */
-  --ov-rest-w: 172px; /* resting compact pill (minimal, recording) -- roomy enough
+  --ov-rest-w: 236px; /* resting compact pill (minimal, recording) -- roomy enough
                          for the English working label before the grow starts */
-  --ov-pill-w: 184px; /* base width / Live pill before it opens or collapses */
+  --ov-pill-w: 236px; /* base width / Live pill before it opens or collapses */
   --ov-work-w: 216px; /* working pill (transcribing / polishing) -- wide enough to
                          center longer labels; shared by Live (collapsed) + minimal */
   --ov-open-w: 392px; /* Live panel, expanded */
@@ -471,87 +471,71 @@
 }
 
 /* ============================================================
-   Output choices (SE-AI-011): two chips beside the pill while it listens -
-   the cleanup prompt and translation - so the output can change mid-sentence.
-   Above the pill at the bottom of the screen, below it at the top.
+   Output choices (SE-AI-011): two icon buttons inside the pill, beside
+   cancel - the cleanup prompt and translation. The row then lays out as
+   dot | waveform (or the choice's name, briefly) | buttons, so it needs no
+   mirrored right column on the left.
    ============================================================ */
-.ov-col {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 6px;
+.sbase.with-opts {
+  grid-template-columns: auto 1fr auto;
+  column-gap: 8px;
 }
-.ov-stage.top .ov-col {
-  flex-direction: column-reverse;
+.sbase.with-opts > .swave,
+.sbase.with-opts > .sflash {
+  justify-self: center;
 }
-.sopts {
-  /* Both choices in one box beside the pill (owner, 15/10: "vào trong 1 box
-     cho gọn"), split by a hairline. */
-  display: flex;
-  align-items: center;
-  padding: 2px;
-  border-radius: 15px;
-  border: 1px solid var(--s-border);
-  background: var(--s-surface);
-  animation: sopts-in 260ms cubic-bezier(0.22, 1, 0.36, 1);
+.sbase.with-opts .sbase-r {
+  gap: 4px;
 }
-@keyframes sopts-in {
-  from {
-    opacity: 0;
-    transform: scale(0.94);
-  }
-}
-.sopts-sep {
-  width: 1px;
-  height: 14px;
-  margin: 0 2px;
-  background: var(--s-border);
-  flex: none;
-}
-.schip {
-  display: flex;
-  align-items: center;
-  gap: 5px;
+.sopt {
+  width: 24px;
   height: 24px;
-  max-width: 136px;
-  padding: 0 9px;
-  border-radius: 12px;
+  border-radius: 50%;
+  flex: none;
+  padding: 0;
   border: 0;
-  background: transparent;
-  color: var(--s-muted);
-  font: 500 11.5px var(--s-font);
-  white-space: nowrap;
-  cursor: pointer;
   -webkit-appearance: none;
   appearance: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--s-faint);
+  background: transparent;
+  cursor: pointer;
   transition:
     background-color 150ms ease,
     color 150ms ease,
     transform 100ms ease;
 }
-.schip span {
-  overflow: hidden;
-  text-overflow: ellipsis;
-}
-.schip svg {
-  flex: none;
-}
-.schip:hover {
+.sopt:hover {
   color: var(--color-text);
   background: var(--s-hair);
 }
-.schip:active {
-  transform: scale(0.96);
+.sopt:active {
+  transform: scale(0.92);
 }
-.schip.on {
-  color: var(--color-text);
-  background: color-mix(in srgb, var(--s-accent) 16%, transparent);
-}
-.schip.on svg {
+.sopt.on {
   color: var(--s-accent);
+  background: var(--s-accent-soft);
+}
+.sflash {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11.5px;
+  font-weight: 500;
+  color: var(--color-text);
+  animation: sflash-in 180ms ease-out;
+}
+@keyframes sflash-in {
+  from {
+    opacity: 0;
+    transform: translateY(2px);
+  }
 }
 @media (prefers-reduced-motion: reduce) {
-  .sopts {
+  .sflash {
     animation: none;
   }
 }

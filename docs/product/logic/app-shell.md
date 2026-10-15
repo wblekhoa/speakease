@@ -4,7 +4,7 @@ type: logic
 product: speakease
 title: "SpeakEase — App shell (logic)"
 status: active
-updated: 2026-10-14
+updated: 2026-10-15
 summary: "Rules for the side column's widths and folding, the language menu, tray navigation, the update feed and manual checks, and first-launch permissions (SE-APP)."
 tags: [area/layout, area/updater, area/permissions, stack/tauri]
 reqPrefix: SE-APP
@@ -74,6 +74,7 @@ or code named in Evidence.
 
 ## Change log
 
+- 2026-10-15: reviewed after App.tsx took file drops (SE-FILE-006), the dead update command went and SE-APP-008's comment moved to `default_update_checks_enabled`; SE-APP rules unchanged.
 - 2026-10-14: SE-APP-011 - the interface language gets its own menu at the foot of the side column.
 - 2026-10-14: reviewed after Files joined the side column and lib.rs gained the file commands; SE-APP-001…010 unchanged.
 - 2026-10-13: SE-APP-009 changed - manual checks no longer depend on the automatic-check switch (the app menu item used
