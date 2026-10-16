@@ -4,7 +4,7 @@ type: decision
 product: speakease
 title: "SpeakEase — Decisions"
 status: active
-updated: 2026-10-15
+updated: 2026-10-16
 summary: "Append-only record of SpeakEase's product and engineering decisions, newest first, each with its context, evidence and how to reverse it."
 tags: [area/docs]
 ---
@@ -13,6 +13,29 @@ tags: [area/docs]
 
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
+
+## 2026-10-16 · Live subtitles beta: translated captions from one app's sound (round 1)
+
+- **Context**: the owner asked whether SpeakEase could translate an English YouTube video into Vietnamese while it
+  plays, then widened it to "many apps, not only YouTube" and asked for a beta plan. Option form round 1 (16/10).
+  Measured before the form: a 6.4 s English clip recognised in 0.53 s by the current model (Qwen3-ASR 1.7B, Metal,
+  M4 Max), word-perfect; macOS process taps can capture one app's output with only an audio-capture permission.
+- **Owner's answers** (near-verbatim): source = choose one app; display = floating bar at the bottom of the screen;
+  content = bilingual; languages = user picks source and target; translator = the AI already set up in the app (owner
+  accepted the per-sentence cost); on/off = own shortcut, tray menu, button in the window; after watching = save to
+  History; beta reaches users through the Experimental switch in a release; new Swift bridge, possible library and the
+  audio-capture permission = agreed; pass = under 3 s delay, faithful natural translation, works on YouTube, Zoom and
+  podcasts; speed vs accuracy = 2 of 5 (leaning to "show now, may correct").
+- **Not chosen**: whole-machine sound, auto-follow the playing app, app + microphone for meetings; side panel, notch,
+  in-window page; Vietnamese-only or transcript-only; macOS's own translator or an on-device translation model;
+  automatic start; .srt export, AI summary; owner-only or friends-only builds; "Mac stays cool" and "one hour without
+  error" were not picked as pass criteria (kept as watched numbers, not gates).
+- **Risks raised by the AI and accepted**: 2-4 s behind speech; every sentence costs one AI call and needs a network;
+  quality drops with overlapping voices or loud music; process taps need macOS 14.2+ while the app supports 10.15, so
+  the feature is hidden on older macOS; a release with the Experimental switch still waits for "phát hành".
+- **Consequences**: plan `ai-memory/plans/live-subtitles-beta.md`; ux/logic docs are written when the feature is
+  built. Open for round 2: bar look and size, which languages appear in the pickers, the shortcut's default key.
+- **Reversal**: a new entry here.
 
 ## 2026-10-15 · App icon: the bubble inside a squircle, so macOS shows it whole
 
