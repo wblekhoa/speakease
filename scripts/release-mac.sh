@@ -10,7 +10,8 @@
 #
 # The updater archive is made HERE, from the stapled app - not by
 # `tauri build`, which would sign the bundle before notarization (the same
-# choice as ReadEase). Secrets come from Apps/.env and are never printed:
+# choice as ReadEase). Secrets come from $SPEAKEASE_ENV_FILE (default
+# ~/JAK/.env, outside the repo) and are never printed:
 #   SPEAKEASE_UPDATER_KEY_PATH, TAURI_SIGNING_PRIVATE_KEY_PASSWORD_SPEAKEASE
 # Notarization uses the keychain profile SPEAKEASE_NOTARY_PROFILE
 # (default: readease-notary - the same developer account).
@@ -21,7 +22,7 @@ publish=0
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
-env_file="${SPEAKEASE_ENV_FILE:-$HOME/Library/CloudStorage/GoogleDrive-wblekhoa@gmail.com/My Drive/JAK/Work - Design/Code/Apps/.env}"
+env_file="${SPEAKEASE_ENV_FILE:-$HOME/JAK/.env}"
 if [[ -f "$env_file" ]]; then
   set -a
   # shellcheck disable=SC1090
