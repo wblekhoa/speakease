@@ -1,5 +1,3 @@
-If this checkout lives under `~/JAK` (the owner's workspace), read `~/JAK/AGENTS.md` first (map + floor rules), then `~/JAK/companies/app-studio/AGENTS.md`. Standalone clones can ignore this line.
-
 # AGENTS.md
 
 This file provides guidance to AI coding assistants working with code in this repository.
