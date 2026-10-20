@@ -10,6 +10,7 @@ import {
   MicrophoneIcon,
   ReadingSettingsIcon,
   SidebarIcon,
+  TranslateIcon,
 } from "./icons/bulk";
 import HandyTextLogo from "./icons/HandyTextLogo";
 import { IconTip } from "./ui/IconTip";
@@ -19,6 +20,7 @@ import { SIDEBAR_FOLDED_WIDTH, sidebarDrag } from "../lib/utils/sidebarWidth";
 import {
   SpeakPage,
   FilesPage,
+  LiveSubtitlesPage,
   HistorySettings,
   RecordingSettings,
   RecognitionSettings,
@@ -46,7 +48,8 @@ interface SectionConfig {
   settings?: boolean;
 }
 
-// SpeakEase's sections. Speak, Files and History are where the app is used; the
+// SpeakEase's sections. Speak, Files, Live subtitles (beta) and History are
+// where the app is used; the
 // settings follow a dictation from start to end: recording it, turning it
 // into words, AI on the words, and the app around it.
 export const SECTIONS_CONFIG = {
@@ -61,6 +64,13 @@ export const SECTIONS_CONFIG = {
     icon: FolderOpenIcon,
     component: FilesPage,
     enabled: () => true,
+  },
+  // Live subtitles (beta): its own section, shown with Experimental on.
+  subtitles: {
+    labelKey: "sidebar.subtitles",
+    icon: TranslateIcon,
+    component: LiveSubtitlesPage,
+    enabled: (settings) => settings?.experimental_enabled ?? false,
   },
   history: {
     labelKey: "sidebar.history",

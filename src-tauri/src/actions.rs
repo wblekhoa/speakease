@@ -1003,7 +1003,7 @@ impl ShortcutAction for LiveSubtitlesAction {
     fn start(&self, app: &AppHandle, _binding_id: &str, _shortcut_str: &str) {
         if !crate::live_subtitles::session::toggle(app) {
             crate::show_main_window(app);
-            let _ = app.emit("navigate-to-section", "speak");
+            let _ = app.emit("navigate-to-section", "subtitles");
         }
     }
 

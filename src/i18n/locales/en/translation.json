@@ -36,7 +36,8 @@
     "resize": "Drag to resize, or drag in to fold · double-click for the default width",
     "unfoldDrag": "Drag out to open the sidebar · double-click to open it",
     "files": "Files & links",
-    "language": "Interface language"
+    "language": "Interface language",
+    "subtitles": "Live subtitles"
   },
   "onboarding": {
     "subtitle": "To get started, choose a transcription model",
@@ -946,8 +947,18 @@
       "to": "Translate into",
       "start": "Turn on subtitles",
       "stop": "Turn off subtitles",
-      "on": "Subtitling {{app}}. Translations appear in the bar at the bottom of the screen.",
-      "hint": "Translated on this Mac with Apple Intelligence. When you stop, the whole session is saved to History."
+      "on": "Translations appear in the bar at the bottom of the screen. Press × on the bar or Turn off subtitles to stop.",
+      "onTitle": "Subtitling {{app}}",
+      "ready": "Ready to subtitle {{app}}.",
+      "pickFirst": "Choose an app below to start.",
+      "shortcut": "Quick on/off:",
+      "appHint": "Apps playing sound are listed first.",
+      "noApps": "No apps are open.",
+      "languages": "Languages",
+      "noteDevice": "Translated on this Mac with Apple Intelligence; neither the sound nor the text leaves it.",
+      "noteContext": "SpeakEase reads the title of what is playing (a video’s title, a file’s name) to get names and terms right.",
+      "noteHistory": "When you turn subtitles off, the whole session is saved to History.",
+      "notePermission": "The first time, macOS asks to let SpeakEase record system audio."
     }
   },
   "modelDescription": {

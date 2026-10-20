@@ -36,7 +36,8 @@
     "resize": "Kéo để đổi độ rộng, kéo hẳn vào để thu gọn · bấm đúp để về độ rộng mặc định",
     "unfoldDrag": "Kéo ra để mở thanh bên · bấm đúp để mở",
     "files": "Tệp/liên kết",
-    "language": "Ngôn ngữ giao diện"
+    "language": "Ngôn ngữ giao diện",
+    "subtitles": "Phụ đề trực tiếp"
   },
   "onboarding": {
     "subtitle": "Để bắt đầu, hãy chọn một mô hình chép lời",
@@ -946,8 +947,18 @@
       "to": "Dịch sang",
       "start": "Bật phụ đề",
       "stop": "Tắt phụ đề",
-      "on": "Đang phụ đề {{app}}. Câu dịch hiện ở thanh dưới màn hình.",
-      "hint": "Dịch ngay trên máy bằng Apple Intelligence. Xong phiên, toàn bộ được lưu vào Lịch sử."
+      "on": "Câu dịch hiện ở thanh dưới màn hình. Bấm × trên thanh hoặc Tắt phụ đề để dừng.",
+      "onTitle": "Đang phụ đề {{app}}",
+      "ready": "Sẵn sàng phụ đề {{app}}.",
+      "pickFirst": "Chọn một ứng dụng bên dưới để bắt đầu.",
+      "shortcut": "Bật/tắt nhanh:",
+      "appHint": "Ứng dụng đang phát tiếng nằm đầu danh sách.",
+      "noApps": "Chưa có ứng dụng nào đang mở.",
+      "languages": "Ngôn ngữ",
+      "noteDevice": "Dịch ngay trên máy bằng Apple Intelligence; âm thanh và chữ không rời khỏi máy.",
+      "noteContext": "SpeakEase đọc tiêu đề của thứ đang phát (tên video, tên file) để dịch đúng tên riêng và thuật ngữ.",
+      "noteHistory": "Tắt phụ đề thì cả phiên được lưu vào Lịch sử.",
+      "notePermission": "Lần đầu bật, macOS sẽ hỏi quyền ghi âm thanh hệ thống cho SpeakEase."
     }
   },
   "modelDescription": {

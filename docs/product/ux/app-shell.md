@@ -42,7 +42,7 @@ relations:
 ## Current truth
 
 - **Side column**, flush with the window's left edge with the Mac's window buttons in its top corner. **Speak**,
-  **Files & links** and **History** come first; under a **Settings** caption follow **Recording**, **Recognition**, **AI & Translate** and
+  **Files & links**, **Live subtitles** (only with App › Experimental on) and **History** come first; under a **Settings** caption follow **Recording**, **Recognition**, **AI & Translate** and
   **App** - the order a dictation goes through. **Debug** appears only in debug mode (⌘⇧D).
 - **Interface language** sits at the foot of the column: a globe with the current language (Tiếng Việt / English);
   click it for a menu with each language in its own name, the current one ticked. Folded, it is a square key with a
@@ -104,6 +104,7 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-20: Live subtitles gets its own section in the side column while Experimental is on.
 - 2026-10-20: the tray gains a Live subtitles item while Experimental is on.
 - 2026-10-14: interface language menu at the foot of the side column.
 - 2026-10-14: Files joins Speak and History at the top of the side column.

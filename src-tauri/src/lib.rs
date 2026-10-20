@@ -363,7 +363,7 @@ fn initialize_core_logic(app_handle: &AppHandle) {
             "live_subtitles" => {
                 if !live_subtitles::session::toggle(app) {
                     show_main_window(app);
-                    let _ = app.emit("navigate-to-section", "speak");
+                    let _ = app.emit("navigate-to-section", "subtitles");
                 }
             }
             "unload_model" => {

@@ -9,7 +9,7 @@ summary: "Beta behind Experimental: pick one app, the language it speaks and the
 tags: [area/audio, area/capture, area/translation, surface/macos, stack/react]
 relations:
   specifies:
-    - speakease:src/components/settings/speak/LiveSubtitlesCard.tsx
+    - speakease:src/components/settings/subtitles/LiveSubtitlesPage.tsx
     - speakease:src/subtitles/LiveSubtitles.tsx
     - speakease:src-tauri/src/tray.rs
   dependsOn: [speakease-logic-live-subtitles]
@@ -33,20 +33,22 @@ relations:
 
 ## Scope
 
-- Included: the Live subtitles card on Speak, the floating bar, the tray item, the shortcut on Recording, the History
+- Included: the Live subtitles page, the floating bar, the tray item, the shortcut on Recording, the History
   entry a session leaves.
 - Excluded: dictation (`ux/dictation.md`); the History page itself (`ux/history.md`); cloud translation (owner,
   20/10: on-device only).
 
 ## Current truth
 
-- **Where it lives**: with App › Experimental on and macOS 14.2 or later, Speak shows a **Live subtitles · Beta** card
-  above the quick-settings bar; Recording lists a **Live subtitles** shortcut (⌃⌥⌘S by default); the tray gains a
-  **Live subtitles** item with a tick while it runs.
-- **Card**: three pickers - **Listen to** (running apps, those playing sound first, marked "playing"), **Spoken
-  language** and **Translate into** (the shared translate language unless that is the spoken one) - and a
-  **Turn on subtitles** / **Turn off subtitles** button. The pickers lock while subtitles run. A line under them says
-  what is happening, an error in plain words, and shows the shortcut.
+- **Where it lives**: with App › Experimental on, the side column gains **Live subtitles** between Files & links and
+  History - its own page, because it is used differently from dictation (another app's sound, not your voice).
+  Recording lists a **Live subtitles** shortcut (⌃⌥⌘S by default); the tray gains a **Live subtitles** item with a tick
+  while it runs. On macOS older than 14.2 the page says it needs 14.2.
+- **Page**: a top block with the state ("Ready to subtitle Google Chrome", "Subtitling Google Chrome", or an error in
+  plain words), the shortcut, and **Turn on subtitles** / **Turn off subtitles**; then **Listen to** - running apps
+  as a list to pick from, those playing sound first with a "playing" mark; then **Languages** - the spoken language
+  → the one to read (the shared translate language unless that is the spoken one); then four short notes (on-device,
+  reads the title for context, saved to History, the one-time permission). The choices lock while subtitles run.
 - **Bar**: a rounded panel at the bottom centre of the screen with the pointer, above the Dock. It never takes focus
   from the app being watched. The top line is what is being said, small and grey, updating about once a second
   (newest words stay in view); the line under it, larger, is the latest translation, two lines at most. When a
@@ -56,7 +58,7 @@ relations:
 - **Ending**: from the card, the bar's ×, the tray or the shortcut. What was heard is saved to History as one entry,
   titled with what was playing (a YouTube video's title, a file's name) or the app's name, with the translation as
   its AI version.
-- **Tray and shortcut**: start with the app and languages used last; with none yet, they open Speak to choose.
+- **Tray and shortcut**: start with the app and languages used last; with none yet, they open the Live subtitles page.
 - **Errors** (card line or bar): macOS too old; no recognition model; the app played nothing for 30 s; SpeakEase may
   not record system audio (with where to allow it); the speech detector did not start.
 - **Permission**: the first start asks macOS for "record system audio" for SpeakEase; Accessibility, already granted
@@ -64,17 +66,17 @@ relations:
 
 ## Screens and states
 
-| Screen        | States                                                                            | Entry                           | Exit / next                                             |
-| ------------- | --------------------------------------------------------------------------------- | ------------------------------- | ------------------------------------------------------- |
-| Card on Speak | hidden (Experimental off / unsupported) · ready · no app chosen · running · error | Speak page                      | bar                                                     |
-| Bar           | getting ready · listening · lines · quiet (dimmed) · error                        | start from card, tray, shortcut | ×, card, tray, shortcut → History entry                 |
-| Tray item     | hidden · off · on (ticked)                                                        | tray menu                       | starts or stops; opens Speak when nothing is remembered |
+| Screen              | States                                                     | Entry                                                                | Exit / next                                             |
+| ------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------- |
+| Live subtitles page | unsupported · no app chosen · ready · running · error      | side column (Experimental on), tray/shortcut with nothing remembered | bar                                                     |
+| Bar                 | getting ready · listening · lines · quiet (dimmed) · error | start from card, tray, shortcut                                      | ×, card, tray, shortcut → History entry                 |
+| Tray item           | hidden · off · on (ticked)                                 | tray menu                                                            | starts or stops; opens Speak when nothing is remembered |
 
 ## Flow
 
 ```mermaid
 flowchart LR
-  A[Experimental on] --> B[Speak: pick app + languages]
+  A[Experimental on] --> B[Live subtitles page: pick app + languages]
   B --> C[Turn on subtitles]
   C --> D[Bar: listening]
   D --> E[Lines + translations]
@@ -94,4 +96,5 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-20: moved from a card on Speak to its own page in the side column (owner: its UX differs from dictation).
 - 2026-10-20: created - the card, the bar, tray item and shortcut, History entry (beta, behind Experimental).
