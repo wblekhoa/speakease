@@ -4,7 +4,7 @@ type: logic
 product: speakease
 title: "SpeakEase — AI cleanup and translation (logic)"
 status: active
-updated: 2026-10-15
+updated: 2026-10-20
 summary: "Rules for the AI steps after recognition: one AI switch, prompts, translation through English, skipped-step notices and output chips on the recording pill (SE-AI)."
 tags: [area/ai, area/translation, stack/rust]
 reqPrefix: SE-AI
@@ -66,6 +66,7 @@ or code named in Evidence.
 
 ## Change log
 
+- 2026-10-20: reviewed after `post_process_transcription` was split so live subtitles can pass their own prompt (`post_process_with_prompt`) and a live-subtitles shortcut action joined `ACTION_MAP`; SE-AI rules unchanged.
 - 2026-10-15: the output choices moved inside the recording pill as icon buttons.
 - 2026-10-15: SE-AI-011 - output chips on the recording pill.
 - 2026-10-14: reviewed after Files reused the AI step (`post_process_transcription` now crate-visible); no SE-AI rule changed, and the AI switch still gates Rewrite and Translate (`enhance_history_entry` refuses with "ai off").

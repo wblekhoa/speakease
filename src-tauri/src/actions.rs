@@ -995,6 +995,21 @@ impl ShortcutAction for CancelAction {
     }
 }
 
+// SpeakEase live subtitles (beta): on/off with the remembered app and
+// languages; with none remembered yet, the window asks.
+struct LiveSubtitlesAction;
+
+impl ShortcutAction for LiveSubtitlesAction {
+    fn start(&self, app: &AppHandle, _binding_id: &str, _shortcut_str: &str) {
+        if !crate::live_subtitles::session::toggle(app) {
+            crate::show_main_window(app);
+            let _ = app.emit("navigate-to-section", "speak");
+        }
+    }
+
+    fn stop(&self, _app: &AppHandle, _binding_id: &str, _shortcut_str: &str) {}
+}
+
 // Test Action
 struct TestAction;
 
@@ -1048,6 +1063,10 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
     map.insert(
         "cancel".to_string(),
         Arc::new(CancelAction) as Arc<dyn ShortcutAction>,
+    );
+    map.insert(
+        crate::settings::LIVE_SUBTITLES_BINDING_ID.to_string(),
+        Arc::new(LiveSubtitlesAction) as Arc<dyn ShortcutAction>,
     );
     map.insert(
         "test".to_string(),

@@ -14,7 +14,8 @@
     "aiCleanup": "AI sửa câu",
     "translateTo": "Dịch sang",
     "off": "Tắt",
-    "openApp": "Mở SpeakEase"
+    "openApp": "Mở SpeakEase",
+    "liveSubtitles": "Phụ đề trực tiếp"
   },
   "sidebar": {
     "general": "Chung",
@@ -251,6 +252,10 @@
           "transcribe_translate": {
             "name": "Dịch",
             "description": "Dán bản dịch, sang ngôn ngữ chọn ở AI & dịch."
+          },
+          "live_subtitles": {
+            "name": "Phụ đề trực tiếp",
+            "description": "Bật hoặc tắt phụ đề cho ứng dụng đã chọn trên trang Nói."
           }
         },
         "errors": {
@@ -930,6 +935,19 @@
       "title": "Bạn vừa nói",
       "copy": "Sao chép",
       "copied": "Đã chép"
+    },
+    "subtitles": {
+      "title": "Phụ đề trực tiếp",
+      "beta": "Beta",
+      "app": "Nghe ứng dụng",
+      "pickApp": "Chọn ứng dụng",
+      "playing": "đang phát",
+      "from": "Tiếng đang nói",
+      "to": "Dịch sang",
+      "start": "Bật phụ đề",
+      "stop": "Tắt phụ đề",
+      "on": "Đang phụ đề {{app}}. Câu dịch hiện ở thanh dưới màn hình.",
+      "hint": "Dịch ngay trên máy bằng Apple Intelligence. Xong phiên, toàn bộ được lưu vào Lịch sử."
     }
   },
   "modelDescription": {
@@ -994,6 +1012,22 @@
       "body": "SpeakEase dùng yt-dlp để lấy riêng phần tiếng từ trang video. Cài một lần bằng lệnh dưới đây trong Terminal, rồi bấm Lấy chữ lại.",
       "recheck": "Đã cài, kiểm tra lại",
       "noBrew": "Chưa có Homebrew? Cài theo hướng dẫn ở"
+    }
+  },
+  "subtitles": {
+    "label": "Phụ đề trực tiếp",
+    "stop": "Tắt phụ đề",
+    "starting": "Đang chuẩn bị phụ đề…",
+    "listening": "Đang nghe {{app}}…",
+    "theApp": "ứng dụng đã chọn",
+    "errors": {
+      "unsupported": "Phụ đề trực tiếp cần macOS 14.2 trở lên.",
+      "no-model": "Chưa có mô hình nhận dạng. Tải một mô hình trong Nhận dạng rồi thử lại.",
+      "no-process": "{{app}} chưa phát âm thanh trong 30 giây. Bật nội dung lên rồi bật lại phụ đề.",
+      "tap": "Không nghe được {{app}}. Cho phép SpeakEase thu âm thanh hệ thống trong Cài đặt hệ thống › Quyền riêng tư & Bảo mật rồi thử lại.",
+      "vad": "Không khởi động được bộ phát hiện giọng nói. Mở lại SpeakEase rồi thử lại.",
+      "running": "Phụ đề đang bật.",
+      "other": "Phụ đề dừng do lỗi. Thử bật lại."
     }
   }
 }

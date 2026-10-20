@@ -5,6 +5,13 @@ come from merging Handy are summarised, not repeated.
 
 ## Unreleased — 0.1.2
 
+- **Live subtitles (beta)**, under App › Experimental: pick an app (a browser,
+  Zoom, a podcast or video player), the language it speaks and the one you
+  read, and a floating bar subtitles it as it plays, translated on the Mac with
+  Apple Intelligence. It reads what is playing (a video's title, a file's name)
+  so names and terms come out right, fixes a sentence once it is complete, and
+  saves the session to History. Needs macOS 14.2+ and asks once to record
+  system audio.
 - **New app icon** that macOS 26 and later show whole, instead of inside a grey
   box: the pink speech bubble now sits, in white, on a pink rounded square.
 

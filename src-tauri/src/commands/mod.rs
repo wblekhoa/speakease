@@ -1,6 +1,7 @@
 pub mod audio;
 pub mod files;
 pub mod history;
+pub mod live_subtitles;
 pub mod models;
 pub mod transcription;
 

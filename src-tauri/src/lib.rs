@@ -23,6 +23,7 @@ mod secure_input;
 mod settings;
 mod shortcut;
 mod signal_handle;
+mod subtitle_window;
 mod system_audio_tap;
 mod transcription_coordinator;
 mod tray;
@@ -98,7 +99,7 @@ fn build_console_filter() -> env_filter::Filter {
     builder.build()
 }
 
-fn show_main_window(app: &AppHandle) {
+pub(crate) fn show_main_window(app: &AppHandle) {
     if let Some(main_window) = app.get_webview_window("main") {
         if let Err(e) = main_window.unminimize() {
             log::error!("Failed to unminimize webview window: {}", e);
@@ -356,6 +357,14 @@ fn initialize_core_logic(app_handle: &AppHandle) {
             "open_history" => {
                 show_main_window(app);
                 let _ = app.emit("navigate-to-section", "history");
+            }
+            // Live subtitles (beta): with nothing remembered yet, the window
+            // asks which app to listen to.
+            "live_subtitles" => {
+                if !live_subtitles::session::toggle(app) {
+                    show_main_window(app);
+                    let _ = app.emit("navigate-to-section", "speak");
+                }
             }
             "unload_model" => {
                 let transcription_manager = app.state::<Arc<TranscriptionManager>>();
@@ -857,6 +866,11 @@ pub fn run(cli_args: CliArgs) {
             commands::files::transcribe_media,
             commands::files::enhance_history_entry,
             commands::files::cancel_file_job,
+            commands::live_subtitles::live_subtitles_supported,
+            commands::live_subtitles::live_subtitle_apps,
+            commands::live_subtitles::live_subtitles_state,
+            commands::live_subtitles::start_live_subtitles,
+            commands::live_subtitles::stop_live_subtitles,
             commands::files::write_text_file,
             commands::files::ytdlp_available,
             commands::history::update_history_limit,

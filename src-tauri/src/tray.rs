@@ -64,6 +64,9 @@ struct MenuInputs {
     locale: String,
     /// SpeakEase quick settings, mirrored from the Speak page.
     quick: QuickInputs,
+    /// Live subtitles (beta): None when hidden (Experimental off or the Mac
+    /// cannot tap an app), else whether they are on.
+    subtitles: Option<bool>,
 }
 
 /// What the tray's quick items show: the language listened for, and while
@@ -377,6 +380,8 @@ fn compute_desired(app: &AppHandle, icon_state: TrayIconState) -> TrayDesired {
             warning,
             model_loaded,
             quick: QuickInputs::from_settings(&settings),
+            subtitles: (settings.experimental_enabled && crate::system_audio_tap::available())
+                .then(crate::live_subtitles::session::is_running),
             selected_model: settings.selected_model,
             downloaded_models,
             locale: settings.app_language,
@@ -566,6 +571,18 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
     )?;
     // SpeakEase: the window itself, on the Speak page.
     let open_app_i = MenuItem::with_id(app, "open_app", &strings.open_app, true, None::<&str>)?;
+    // Live subtitles (beta): on/off with the remembered app and languages.
+    let subtitles_i = match inputs.subtitles {
+        Some(on) => Some(CheckMenuItem::with_id(
+            app,
+            "live_subtitles",
+            &strings.live_subtitles,
+            true,
+            on,
+            None::<&str>,
+        )?),
+        None => None,
+    };
     let quit_i = MenuItem::with_id(app, "quit", &strings.quit, true, quit_accelerator)?;
     let separator = || PredefinedMenuItem::separator(app);
 
@@ -628,10 +645,15 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
             &separator_e,
             &copy_last_transcript_i,
             &open_history_i,
-            &separator_b,
+        ];
+        if let Some(item) = &subtitles_i {
+            items.push(item);
+        }
+        items.extend([
+            &separator_b as &dyn tauri::menu::IsMenuItem<tauri::Wry>,
             &model_submenu,
             &listen_submenu,
-        ];
+        ]);
         if let Some(submenu) = &enhance_submenu {
             items.push(submenu);
         }
@@ -898,6 +920,7 @@ mod tests {
             downloaded_models: vec![("small".to_string(), "Small".to_string())],
             locale: "en".to_string(),
             quick: QuickInputs::from_settings(&crate::settings::get_default_settings()),
+            subtitles: None,
         }
     }
 

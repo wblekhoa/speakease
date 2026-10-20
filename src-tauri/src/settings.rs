@@ -24,6 +24,18 @@ pub fn is_post_process_binding(id: &str) -> bool {
     id == "transcribe_with_post_process" || id == TRANSLATE_BINDING_ID
 }
 
+/// Live subtitles (beta) on/off. Registers only while Experimental is on
+/// and the Mac can tap an app, so it never takes the keys from anyone else.
+pub const LIVE_SUBTITLES_BINDING_ID: &str = "live_subtitles";
+
+// SE-LIVE-001
+/// Whether a shortcut stays unregistered with these settings.
+pub fn binding_switched_off(id: &str, settings: &AppSettings) -> bool {
+    (is_post_process_binding(id) && !settings.post_process_enabled)
+        || (id == LIVE_SUBTITLES_BINDING_ID
+            && !(settings.experimental_enabled && crate::system_audio_tap::available()))
+}
+
 #[derive(Serialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
 #[serde(rename_all = "lowercase")]
 pub enum LogLevel {
@@ -500,6 +512,14 @@ pub struct AppSettings {
     /// (transcription.rs languages_to_try). Tried first next time.
     #[serde(default)]
     pub speakease_last_spoken_language: Option<String>,
+    /// Live subtitles (beta): the app last listened to (bundle id), and the
+    /// languages chosen for it. None until a session is started.
+    #[serde(default)]
+    pub live_subtitle_app: Option<String>,
+    #[serde(default)]
+    pub live_subtitle_source: Option<String>,
+    #[serde(default)]
+    pub live_subtitle_target: Option<String>,
     #[serde(default)]
     pub mute_while_recording: bool,
     #[serde(default)]
@@ -1070,6 +1090,21 @@ pub fn get_default_settings() -> AppSettings {
             current_binding: default_translate_shortcut.to_string(),
         },
     );
+    // Rarely taken by other apps; the user can change it.
+    #[cfg(target_os = "macos")]
+    let default_subtitles_shortcut = "control+option+command+s";
+    #[cfg(not(target_os = "macos"))]
+    let default_subtitles_shortcut = "ctrl+alt+shift+s";
+    bindings.insert(
+        LIVE_SUBTITLES_BINDING_ID.to_string(),
+        ShortcutBinding {
+            id: LIVE_SUBTITLES_BINDING_ID.to_string(),
+            name: "Live subtitles".to_string(),
+            description: "Turns live subtitles for the chosen app on or off.".to_string(),
+            default_binding: default_subtitles_shortcut.to_string(),
+            current_binding: default_subtitles_shortcut.to_string(),
+        },
+    );
     bindings.insert(
         "cancel".to_string(),
         ShortcutBinding {
@@ -1125,6 +1160,9 @@ pub fn get_default_settings() -> AppSettings {
         speakease_enhance_prompt_id: None,
         speakease_translate_target: None,
         speakease_translate_language: None,
+        live_subtitle_app: None,
+        live_subtitle_source: None,
+        live_subtitle_target: None,
         speakease_last_spoken_language: None,
         mute_while_recording: false,
         append_trailing_space: false,

@@ -234,6 +234,28 @@ impl HistoryManager {
         )
     }
 
+    /// SpeakEase live subtitles: one entry per session, the heard lines as
+    /// the transcript and their translation as the AI version. No audio is
+    /// kept; the `file-` prefix folds the long text like a file's.
+    pub fn save_subtitle_entry(
+        &self,
+        title: String,
+        heard: String,
+        translation: Option<String>,
+        label: String,
+    ) -> Result<HistoryEntry> {
+        let file_name = format!("file-subtitles-{}.wav", Utc::now().timestamp());
+        let requested = translation.is_some();
+        self.insert_entry(
+            file_name,
+            Some(title),
+            heard,
+            requested,
+            translation,
+            requested.then_some(label),
+        )
+    }
+
     /// Save a new history entry to the database.
     /// The WAV file should already have been written to the recordings directory.
     pub fn save_entry(

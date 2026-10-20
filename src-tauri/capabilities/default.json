@@ -2,11 +2,12 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capabilities for the app",
-  "windows": ["main", "recording_overlay"],
+  "windows": ["main", "recording_overlay", "live_subtitles"],
   "permissions": [
     "core:default",
     "core:window:allow-internal-toggle-maximize",
     "core:window:allow-start-dragging",
+    "core:window:allow-set-position",
     "opener:default",
     "store:default",
     "updater:default",

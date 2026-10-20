@@ -18,6 +18,15 @@ pub struct AudioProcess {
     pub playing: bool,
 }
 
+/// A running app the user can pick for subtitles.
+#[derive(Debug, Clone, Deserialize, serde::Serialize, specta::Type)]
+pub struct RunningApp {
+    pub bundle_id: String,
+    pub name: String,
+    /// Playing sound right now.
+    pub playing: bool,
+}
+
 /// What an app shows about what it plays (window title, open document).
 #[derive(Debug, Clone, Default, Deserialize)]
 #[serde(default)]
@@ -38,7 +47,7 @@ pub struct TapChunk {
 
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 mod imp {
-    use super::{AppContext, AudioProcess, TapChunk};
+    use super::{AppContext, AudioProcess, RunningApp, TapChunk};
     use std::ffi::{c_char, c_void, CStr, CString};
     use std::sync::mpsc::{channel, Receiver, Sender};
     use std::time::Instant;
@@ -58,6 +67,12 @@ mod imp {
         fn se_tap_stop(handle: i64);
         fn se_tap_free_string(pointer: *mut c_char);
         fn se_app_context(bundle: *const c_char) -> *mut c_char;
+        fn se_list_apps() -> *mut c_char;
+    }
+
+    pub fn list_apps() -> Vec<RunningApp> {
+        let json = take_string(unsafe { se_list_apps() });
+        serde_json::from_str(&json).unwrap_or_default()
     }
 
     pub fn app_context(bundle_id: &str) -> AppContext {
@@ -143,10 +158,14 @@ mod imp {
 
 #[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
 mod imp {
-    use super::{AppContext, AudioProcess, TapChunk};
+    use super::{AppContext, AudioProcess, RunningApp, TapChunk};
     use std::sync::mpsc::Receiver;
 
     pub struct AppTap;
+
+    pub fn list_apps() -> Vec<RunningApp> {
+        Vec::new()
+    }
 
     pub fn app_context(_bundle_id: &str) -> AppContext {
         AppContext::default()
@@ -188,4 +207,16 @@ pub fn start(bundle_id: &str, mute: bool) -> Result<(AppTap, Receiver<TapChunk>)
 /// (empty without the Accessibility permission).
 pub fn app_context(bundle_id: &str) -> AppContext {
     imp::app_context(bundle_id)
+}
+
+/// Running apps with a Dock icon, for the subtitle app picker, playing ones
+/// first.
+pub fn list_apps() -> Vec<RunningApp> {
+    let mut apps = imp::list_apps();
+    apps.sort_by(|a, b| {
+        b.playing
+            .cmp(&a.playing)
+            .then_with(|| a.name.to_lowercase().cmp(&b.name.to_lowercase()))
+    });
+    apps
 }

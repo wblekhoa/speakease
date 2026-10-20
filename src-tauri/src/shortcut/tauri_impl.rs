@@ -21,8 +21,8 @@ pub fn init_shortcuts(app: &AppHandle) {
         if id == "cancel" {
             continue; // Skip cancel shortcut, it will be registered dynamically
         }
-        // Skip post-processing shortcut when the feature is disabled
-        if crate::settings::is_post_process_binding(&id) && !user_settings.post_process_enabled {
+        // Skip shortcuts whose feature is off (AI, live subtitles)
+        if crate::settings::binding_switched_off(&id, &user_settings) {
             continue;
         }
         let binding = user_settings

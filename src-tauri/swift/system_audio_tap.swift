@@ -10,6 +10,7 @@
 //                                            mute silences the app while tapped
 //   se_tap_stop(handle)
 //   se_app_context(bundle)                   JSON: the app's window title + document
+//   se_list_apps()                           JSON: running apps, which are playing
 //   se_tap_free_string(ptr)                  frees strings returned above
 
 import AppKit
@@ -107,6 +108,7 @@ private func tapProcesses() -> [TapProcess] {
     }
 }
 
+// SE-LIVE-002
 /// Every process that plays for `app`: its own, helpers whose bundle id
 /// extends it, and helpers it is responsible for.
 private func belongsToApp(_ process: TapProcess, _ app: String) -> Bool {
@@ -374,5 +376,28 @@ public func se_app_context(_ bundle: UnsafePointer<CChar>?) -> UnsafeMutablePoin
     guard let data = try? JSONSerialization.data(withJSONObject: row),
         let json = String(data: data, encoding: .utf8)
     else { return cString("{}") }
+    return cString(json)
+}
+
+/// The apps a user can pick for subtitles: running apps with a Dock icon,
+/// those playing sound first.
+@_cdecl("se_list_apps")
+public func se_list_apps() -> UnsafeMutablePointer<CChar>? {
+    let own = ProcessInfo.processInfo.processIdentifier
+    let playing = Set(tapProcesses().filter { $0.playing }.compactMap { $0.appBundleID })
+    var seen = Set<String>()
+    var rows: [[String: Any]] = []
+    for app in NSWorkspace.shared.runningApplications
+    where app.activationPolicy == .regular && app.processIdentifier != own {
+        guard let bundleID = app.bundleIdentifier, seen.insert(bundleID).inserted else { continue }
+        rows.append([
+            "bundle_id": bundleID,
+            "name": app.localizedName ?? bundleID,
+            "playing": playing.contains(bundleID),
+        ])
+    }
+    guard let data = try? JSONSerialization.data(withJSONObject: rows),
+        let json = String(data: data, encoding: .utf8)
+    else { return cString("[]") }
     return cString(json)
 }

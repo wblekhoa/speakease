@@ -136,6 +136,25 @@ impl Segmenter {
         None
     }
 
+    /// How long the open line is so far.
+    pub fn open_ms(&self) -> u64 {
+        if self.in_speech() {
+            self.frames.len() as u64 * FRAME_MS
+        } else {
+            0
+        }
+    }
+
+    /// The open line's audio so far, for a partial recognition.
+    pub fn open_samples(&self) -> Option<Vec<f32>> {
+        self.in_speech().then(|| {
+            self.frames
+                .iter()
+                .flat_map(|f| f.0.iter().copied())
+                .collect()
+        })
+    }
+
     /// Closes whatever is open (end of stream).
     pub fn flush(&mut self) -> Option<Segment> {
         if self.in_speech() {
@@ -385,6 +404,7 @@ impl SentenceJoiner {
     }
 }
 
+// SE-LIVE-004
 /// Translates through Apple Intelligence on this Mac with the guardrails for
 /// transforming text the user did not write (owner, 20/10: on-device only).
 /// None when it is unavailable or declines; the source line stays shown.
@@ -419,145 +439,208 @@ pub fn percentile(values: &[u64], pct: f64) -> u64 {
     sorted[rank.clamp(1, sorted.len()) - 1]
 }
 
-pub mod probe {
-    //! `--live-subtitle-probe <bundle-id>`: Phase 0's measurement, run as a
-    //! headless instance launched through Launch Services so macOS asks
-    //! SpeakEase (not a terminal) for the audio-capture permission.
+pub mod pipeline {
+    //! Tap → lines → recognition → on-device translation, shared by the app's
+    //! subtitle session and `--live-subtitle-probe`. Three threads so a slow
+    //! step never holds up listening: capture (this one), recognition, AI.
+    //! The AI thread serves new lines first; re-joined sentences and the
+    //! topic note wait until no line is waiting (the on-device model answers
+    //! one request at a time - B3 showed a re-join pushing the next line past
+    //! 3 s).
 
     use super::{
-        percentile, playing_note, subtitle_instructions, topic_instructions, translate_on_device,
-        Segment, Segmenter, SentenceJoiner, SpeechContext, FRAME_SAMPLES,
+        playing_note, subtitle_instructions, topic_instructions, translate_on_device, Segment,
+        Segmenter, SentenceJoiner, SpeechContext, FRAME_SAMPLES,
     };
     use crate::audio_toolkit::audio::FrameResampler;
     use crate::audio_toolkit::vad::{SileroVad, VoiceActivityDetector};
-    use crate::cli::CliArgs;
     use crate::managers::transcription::TranscriptionManager;
     use crate::settings::get_settings;
-    use serde_json::json;
-    use std::fs::File;
-    use std::io::Write;
-    use std::path::PathBuf;
-    use std::sync::mpsc::{channel, RecvTimeoutError};
+    use serde::Serialize;
+    use std::collections::VecDeque;
+    use std::sync::atomic::{AtomicBool, AtomicUsize, Ordering};
+    use std::sync::mpsc::{channel, Receiver, RecvTimeoutError, TryRecvError};
     use std::sync::Arc;
     use std::time::{Duration, Instant};
     use tauri::{AppHandle, Manager};
 
     /// Peak below this for the whole run counts as silence.
-    const SILENT_PEAK: f32 = 1e-4;
+    pub const SILENT_PEAK: f32 = 1e-4;
+    /// The open line's text is refreshed this often while the recogniser is
+    /// idle (owner: "show now, may correct", 2 of 5).
+    const PARTIAL_EVERY: Duration = Duration::from_millis(1000);
+    const PARTIAL_MIN_MS: u64 = 1200;
 
-    struct Line {
-        file: File,
+    pub struct Config {
+        pub bundle_id: String,
+        pub source: String,
+        pub target: String,
+        /// Silence the app on the speakers while tapped (tests).
+        pub mute: bool,
+        pub model: Option<String>,
+        pub device_index: Option<usize>,
+        /// Send the open line's text about once a second.
+        pub partials: bool,
     }
 
-    impl Line {
-        fn write(&mut self, value: serde_json::Value) {
-            let _ = writeln!(self.file, "{}", value);
-            let _ = self.file.flush();
+    #[derive(Debug, Clone, Serialize)]
+    #[serde(tag = "kind", rename_all = "snake_case")]
+    pub enum Event {
+        Context {
+            app_name: String,
+            window_title: String,
+            document: String,
+            ax_trusted: String,
+            playing: Option<String>,
+        },
+        WarmUp {
+            ms: u64,
+            ok: bool,
+            error: Option<String>,
+        },
+        Tapping {
+            model: String,
+            load_ms: u64,
+        },
+        /// The open line so far; replaced by `Line` with the same index.
+        Partial {
+            index: usize,
+            source: String,
+        },
+        Line {
+            index: usize,
+            source: String,
+            audio_ms: u64,
+            capped: bool,
+            recognise_ms: u64,
+            source_delay_ms: u64,
+        },
+        Translation {
+            index: usize,
+            target: Option<String>,
+            error: Option<String>,
+            translate_ms: u64,
+            delay_ms: u64,
+        },
+        /// One translation for several lines, replacing theirs.
+        Rejoin {
+            indexes: Vec<usize>,
+            source: String,
+            target: Option<String>,
+            error: Option<String>,
+            translate_ms: u64,
+            delay_ms: u64,
+        },
+        Topic {
+            topic: Option<String>,
+            error: Option<String>,
+            ms: u64,
+        },
+        Error {
+            error: String,
+        },
+        Ended {
+            tapped_ms: u64,
+            peak: f32,
+            silent: bool,
+            first_sound_ms: Option<u64>,
+            lines: usize,
+        },
+    }
+
+    pub type Sink = Arc<dyn Fn(Event) + Send + Sync>;
+
+    enum Work {
+        Partial(usize, Vec<f32>),
+        Final(usize, Segment),
+    }
+
+    fn ensure_model(tm: &TranscriptionManager, model_id: &str, device: Option<usize>) {
+        if !tm.is_model_loaded() {
+            if let Err(e) = tm.load_model_with_device(model_id, device) {
+                log::warn!("Live subtitles: cannot load model '{model_id}': {e}");
+            }
         }
     }
 
-    pub fn run(app: &AppHandle, args: &CliArgs, bundle_id: &str) -> i32 {
-        let out_path = args
-            .probe_out
-            .clone()
-            .unwrap_or_else(|| PathBuf::from("live-subtitle-probe.jsonl"));
-        let mut out = match File::create(&out_path) {
-            Ok(file) => Line { file },
-            Err(e) => {
-                eprintln!("error: cannot write {}: {}", out_path.display(), e);
-                return 2;
-            }
+    /// Runs until `stop` is set or the tap ends; returns after the last
+    /// translation. Errors before tapping are sent as `Event::Error` too.
+    pub fn run(
+        app: &AppHandle,
+        config: Config,
+        stop: Arc<AtomicBool>,
+        sink: Sink,
+    ) -> Result<(), String> {
+        let fail = |error: String| {
+            sink(Event::Error {
+                error: error.clone(),
+            });
+            Err(error)
         };
-        let seconds = args.probe_seconds.unwrap_or(120);
-        let source = args
-            .subtitle_from
-            .clone()
-            .unwrap_or_else(|| "English".to_string());
-        let target = args
-            .subtitle_to
-            .clone()
-            .unwrap_or_else(|| "Vietnamese".to_string());
-
-        let available = crate::system_audio_tap::available();
-        let processes = crate::system_audio_tap::list_processes();
-        out.write(json!({
-            "kind": "start",
-            "bundle_id": bundle_id,
-            "seconds": seconds,
-            "source": source,
-            "target": target,
-            "tap_available": available,
-            "processes": processes.iter().map(|p| json!({
-                "pid": p.pid, "bundle_id": p.bundle_id,
-                "app_bundle_id": p.app_bundle_id, "playing": p.playing
-            })).collect::<Vec<_>>(),
-        }));
-        if !available {
-            out.write(json!({"kind": "error", "error": "process taps need macOS 14.2"}));
-            return 1;
+        if !crate::system_audio_tap::available() {
+            return fail("unsupported: live subtitles need macOS 14.2".to_string());
         }
 
         let settings = get_settings(app);
-        let model_id = args
+        let model_id = config
             .model
             .clone()
             .unwrap_or_else(|| settings.selected_model.clone());
+        if model_id.is_empty() {
+            return fail("no-model: no recognition model is selected".to_string());
+        }
         let tm = app.state::<Arc<TranscriptionManager>>().inner().clone();
         let load_started = Instant::now();
-        if let Err(e) = tm.load_model_with_device(&model_id, args.device_index) {
-            out.write(json!({"kind": "error", "error": format!("load model: {e}")}));
-            return 1;
+        if !tm.is_model_loaded() {
+            if let Err(e) = tm.load_model_with_device(&model_id, config.device_index) {
+                return fail(format!("no-model: {e}"));
+            }
         }
         let load_ms = load_started.elapsed().as_millis() as u64;
 
-        let vad_path = match app.path().resolve(
-            "resources/models/silero_vad_v4.onnx",
-            tauri::path::BaseDirectory::Resource,
-        ) {
-            Ok(path) => path,
-            Err(e) => {
-                out.write(json!({"kind": "error", "error": format!("VAD path: {e}")}));
-                return 1;
-            }
-        };
-        let mut vad = match SileroVad::new(vad_path, 0.5) {
-            Ok(vad) => vad,
-            Err(e) => {
-                out.write(json!({"kind": "error", "error": format!("VAD: {e}")}));
-                return 1;
-            }
-        };
+        let vad_path = app
+            .path()
+            .resolve(
+                "resources/models/silero_vad_v4.onnx",
+                tauri::path::BaseDirectory::Resource,
+            )
+            .map_err(|e| e.to_string());
+        let mut vad =
+            match vad_path.and_then(|path| SileroVad::new(path, 0.5).map_err(|e| e.to_string())) {
+                Ok(vad) => vad,
+                Err(e) => return fail(format!("vad: {e}")),
+            };
 
-        // What the app shows about what it plays: the topic for the prompt.
-        let shown = crate::system_audio_tap::app_context(bundle_id);
+        let shown = crate::system_audio_tap::app_context(&config.bundle_id);
         let playing = playing_note(&shown.app_name, &shown.window_title, &shown.document);
-        out.write(json!({
-            "kind": "context",
-            "app_name": shown.app_name,
-            "window_title": shown.window_title,
-            "document": shown.document,
-            "ax_trusted": shown.ax_trusted,
-            "playing": playing,
-        }));
+        sink(Event::Context {
+            app_name: shown.app_name,
+            window_title: shown.window_title,
+            document: shown.document,
+            ax_trusted: shown.ax_trusted,
+            playing: playing.clone(),
+        });
 
         // The first call loads the on-device model; pay it before the first line.
         let warm_started = Instant::now();
         let warm = translate_on_device(
-            &subtitle_instructions(&source, &target, &SpeechContext::default()),
+            &subtitle_instructions(&config.source, &config.target, &SpeechContext::default()),
             "Hello.",
         );
-        out.write(json!({
-            "kind": "warm_up",
-            "ms": warm_started.elapsed().as_millis() as u64,
-            "ok": warm.is_ok(),
-            "error": warm.err(),
-        }));
+        sink(Event::WarmUp {
+            ms: warm_started.elapsed().as_millis() as u64,
+            ok: warm.is_ok(),
+            error: warm.err(),
+        });
 
         // The app may not be playing yet: wait up to 30 s for its audio
         // process to appear.
         let waiting_since = Instant::now();
         let (tap, chunks) = loop {
-            match crate::system_audio_tap::start(bundle_id, args.probe_mute) {
+            if stop.load(Ordering::Relaxed) {
+                return Ok(());
+            }
+            match crate::system_audio_tap::start(&config.bundle_id, config.mute) {
                 Ok(started) => break started,
                 Err(e)
                     if e.starts_with("no-process")
@@ -565,126 +648,78 @@ pub mod probe {
                 {
                     std::thread::sleep(Duration::from_millis(100));
                 }
-                Err(e) => {
-                    out.write(json!({"kind": "error", "error": e}));
-                    return 1;
-                }
+                Err(e) => return fail(e),
             }
         };
-        let run_started = Instant::now();
-        out.write(json!({"kind": "tapping", "model": model_id, "load_ms": load_ms}));
+        sink(Event::Tapping {
+            model: model_id.clone(),
+            load_ms,
+        });
 
-        // Recognition and translation run on their own threads so a slow AI
-        // call never holds up listening. Each sentence keeps its order.
-        let (segment_tx, segment_rx) = channel::<(usize, Segment)>();
-        let (text_tx, text_rx) = channel::<(usize, Segment, String, Instant, u64)>();
-        let (done_tx, done_rx) = channel::<serde_json::Value>();
+        let busy = Arc::new(AtomicBool::new(false));
+        let last_final = Arc::new(AtomicUsize::new(0));
+        let (work_tx, work_rx) = channel::<Work>();
+        let (line_tx, line_rx) = channel::<(usize, Segment, String)>();
 
         let recogniser = {
             let tm = tm.clone();
+            let sink = sink.clone();
+            let busy = busy.clone();
+            let last_final = last_final.clone();
+            let model_id = model_id.clone();
+            let device = config.device_index;
             std::thread::spawn(move || {
-                for (index, segment) in segment_rx {
-                    let started = Instant::now();
-                    let text = tm.transcribe(segment.samples.clone()).unwrap_or_default();
-                    let recognise_ms = started.elapsed().as_millis() as u64;
-                    if text_tx
-                        .send((index, segment, text, Instant::now(), recognise_ms))
-                        .is_err()
-                    {
-                        break;
+                for work in work_rx {
+                    busy.store(true, Ordering::Relaxed);
+                    ensure_model(&tm, &model_id, device);
+                    match work {
+                        Work::Partial(index, samples) => {
+                            if index > last_final.load(Ordering::Relaxed) {
+                                if let Ok(text) = tm.transcribe(samples) {
+                                    let text = text.trim().to_string();
+                                    if !text.is_empty()
+                                        && index > last_final.load(Ordering::Relaxed)
+                                    {
+                                        sink(Event::Partial {
+                                            index,
+                                            source: text,
+                                        });
+                                    }
+                                }
+                            }
+                        }
+                        Work::Final(index, segment) => {
+                            last_final.store(index, Ordering::Relaxed);
+                            let started = Instant::now();
+                            let text = tm
+                                .transcribe(segment.samples.clone())
+                                .unwrap_or_default()
+                                .trim()
+                                .to_string();
+                            let recognise_ms = started.elapsed().as_millis() as u64;
+                            sink(Event::Line {
+                                index,
+                                source: text.clone(),
+                                audio_ms: (segment.samples.len() as u64 * 1000) / 16_000,
+                                capped: segment.capped,
+                                recognise_ms,
+                                source_delay_ms: segment.speech_end.elapsed().as_millis() as u64,
+                            });
+                            if !text.is_empty() && line_tx.send((index, segment, text)).is_err() {
+                                break;
+                            }
+                        }
                     }
+                    busy.store(false, Ordering::Relaxed);
                 }
             })
         };
 
         let translator = {
-            let source = source.clone();
-            let target = target.clone();
-            std::thread::spawn(move || {
-                let mut context = SpeechContext {
-                    playing,
-                    ..SpeechContext::default()
-                };
-                let mut joiner = SentenceJoiner::default();
-                let mut recent: Vec<String> = Vec::new();
-                let mut lines_since_topic = 0usize;
-                let mut topic_due = 6usize;
-                for (index, segment, text, text_at, recognise_ms) in text_rx {
-                    let text = text.trim().to_string();
-                    let audio_ms = (segment.samples.len() as u64 * 1000) / 16_000;
-                    let source_delay =
-                        text_at.duration_since(segment.speech_end).as_millis() as u64;
-                    if text.is_empty() {
-                        let _ = done_tx.send(json!({
-                            "kind": "sentence", "index": index, "audio_ms": audio_ms,
-                            "capped": segment.capped, "empty": true,
-                            "recognise_ms": recognise_ms, "source_delay_ms": source_delay,
-                        }));
-                        continue;
-                    }
-                    let instructions = subtitle_instructions(&source, &target, &context);
-                    let started = Instant::now();
-                    let translated = translate_on_device(&instructions, &text);
-                    let translate_ms = started.elapsed().as_millis() as u64;
-                    let target_delay = segment.speech_end.elapsed().as_millis() as u64;
-                    let _ = done_tx.send(json!({
-                        "kind": "sentence", "index": index, "audio_ms": audio_ms,
-                        "capped": segment.capped,
-                        "recognise_ms": recognise_ms, "translate_ms": translate_ms,
-                        "source_delay_ms": source_delay,
-                        "target_delay_ms": translated.as_ref().ok().map(|_| target_delay),
-                        "source": text,
-                        "target": translated.as_ref().ok(),
-                        "error": translated.as_ref().err(),
-                    }));
-
-                    // A half-sentence completed: translate the whole sentence
-                    // once more and let it replace its pieces.
-                    if let Some(rejoin) = joiner.push(index, &text) {
-                        let started = Instant::now();
-                        let whole = translate_on_device(
-                            &subtitle_instructions(&source, &target, &context),
-                            &rejoin.text,
-                        );
-                        let _ = done_tx.send(json!({
-                            "kind": "rejoin", "indexes": rejoin.indexes,
-                            "translate_ms": started.elapsed().as_millis() as u64,
-                            "delay_ms": segment.speech_end.elapsed().as_millis() as u64,
-                            "source": rejoin.text,
-                            "target": whole.as_ref().ok(),
-                            "error": whole.as_ref().err(),
-                        }));
-                    }
-
-                    context.earlier.push(text.clone());
-                    if context.earlier.len() > 2 {
-                        context.earlier.remove(0);
-                    }
-                    recent.push(text);
-                    if recent.len() > 12 {
-                        recent.remove(0);
-                    }
-                    // The AI's own note on topic and names: after the first
-                    // few lines, then now and then.
-                    lines_since_topic += 1;
-                    if lines_since_topic >= topic_due {
-                        lines_since_topic = 0;
-                        topic_due = 20;
-                        let started = Instant::now();
-                        let topic =
-                            translate_on_device(&topic_instructions(&context), &recent.join("\n"));
-                        let _ = done_tx.send(json!({
-                            "kind": "topic",
-                            "ms": started.elapsed().as_millis() as u64,
-                            "topic": topic.as_ref().ok(),
-                            "error": topic.as_ref().err(),
-                        }));
-                        if let Ok(topic) = topic {
-                            context.topic = Some(topic);
-                        }
-                    }
-                }
-            })
+            let sink = sink.clone();
+            let source = config.source.clone();
+            let target = config.target.clone();
+            std::thread::spawn(move || translate_lines(line_rx, sink, source, target, playing))
         };
 
         let mut resampler: Option<(f64, FrameResampler)> = None;
@@ -693,16 +728,11 @@ pub mod probe {
         let mut peak: f32 = 0.0;
         let mut tapped_ms: u64 = 0;
         let mut segments = 0usize;
-        let deadline = run_started + Duration::from_secs(seconds);
-        let mut sentences: Vec<serde_json::Value> = Vec::new();
-        let mut first_chunk_ms: Option<u64> = None;
+        let run_started = Instant::now();
         let mut first_sound_ms: Option<u64> = None;
+        let mut last_partial = Instant::now();
 
-        while Instant::now() < deadline {
-            while let Ok(line) = done_rx.try_recv() {
-                out.write(line.clone());
-                sentences.push(line);
-            }
+        while !stop.load(Ordering::Relaxed) {
             let chunk = match chunks.recv_timeout(Duration::from_millis(200)) {
                 Ok(chunk) => chunk,
                 Err(RecvTimeoutError::Timeout) => continue,
@@ -711,9 +741,6 @@ pub mod probe {
             tapped_ms += (chunk.samples.len() as f64 * 1000.0 / chunk.sample_rate) as u64;
             let had_sound = peak >= SILENT_PEAK;
             peak = chunk.samples.iter().fold(peak, |m, s| m.max(s.abs()));
-            if first_chunk_ms.is_none() {
-                first_chunk_ms = Some(run_started.elapsed().as_millis() as u64);
-            }
             if !had_sound && peak >= SILENT_PEAK {
                 first_sound_ms = Some(run_started.elapsed().as_millis() as u64);
             }
@@ -736,56 +763,617 @@ pub mod probe {
                 let speech = vad.is_voice(&frame).unwrap_or(false);
                 if let Some(segment) = segmenter.push(&frame, speech, chunk.arrived) {
                     segments += 1;
-                    let _ = segment_tx.send((segments, segment));
+                    let _ = work_tx.send(Work::Final(segments, segment));
+                }
+            }
+
+            if config.partials
+                && last_partial.elapsed() >= PARTIAL_EVERY
+                && !busy.load(Ordering::Relaxed)
+                && segmenter.open_ms() >= PARTIAL_MIN_MS
+            {
+                last_partial = Instant::now();
+                if let Some(samples) = segmenter.open_samples() {
+                    let _ = work_tx.send(Work::Partial(segments + 1, samples));
                 }
             }
         }
         if let Some(segment) = segmenter.flush() {
             segments += 1;
-            let _ = segment_tx.send((segments, segment));
+            let _ = work_tx.send(Work::Final(segments, segment));
         }
         drop(tap);
-        drop(segment_tx);
+        drop(work_tx);
         let _ = recogniser.join();
         let _ = translator.join();
-        while let Ok(line) = done_rx.try_recv() {
-            out.write(line.clone());
-            sentences.push(line);
+        sink(Event::Ended {
+            tapped_ms,
+            peak,
+            silent: tapped_ms > 0 && peak < SILENT_PEAK,
+            first_sound_ms,
+            lines: segments,
+        });
+        Ok(())
+    }
+
+    enum Later {
+        Rejoin(super::Rejoin, Instant),
+        Topic,
+    }
+
+    // SE-LIVE-005
+    /// The AI thread: each new line first; a re-join or the topic note only
+    /// when no line is waiting.
+    fn translate_lines(
+        lines: Receiver<(usize, Segment, String)>,
+        sink: Sink,
+        source: String,
+        target: String,
+        playing: Option<String>,
+    ) {
+        let mut context = SpeechContext {
+            playing,
+            ..SpeechContext::default()
+        };
+        let mut joiner = SentenceJoiner::default();
+        let mut recent: Vec<String> = Vec::new();
+        let mut lines_since_topic = 0usize;
+        let mut topic_due = 6usize;
+        let mut later: VecDeque<Later> = VecDeque::new();
+
+        loop {
+            let next = if later.is_empty() {
+                match lines.recv() {
+                    Ok(line) => Some(line),
+                    Err(_) => break,
+                }
+            } else {
+                match lines.try_recv() {
+                    Ok(line) => Some(line),
+                    Err(TryRecvError::Empty) => None,
+                    // Stopped: drop what was left for later.
+                    Err(TryRecvError::Disconnected) => break,
+                }
+            };
+
+            let Some((index, segment, text)) = next else {
+                match later.pop_front() {
+                    Some(Later::Rejoin(rejoin, speech_end)) => {
+                        let started = Instant::now();
+                        let whole = translate_on_device(
+                            &subtitle_instructions(&source, &target, &context),
+                            &rejoin.text,
+                        );
+                        sink(Event::Rejoin {
+                            indexes: rejoin.indexes,
+                            source: rejoin.text,
+                            target: whole.as_ref().ok().cloned(),
+                            error: whole.err(),
+                            translate_ms: started.elapsed().as_millis() as u64,
+                            delay_ms: speech_end.elapsed().as_millis() as u64,
+                        });
+                    }
+                    Some(Later::Topic) => {
+                        let started = Instant::now();
+                        let topic =
+                            translate_on_device(&topic_instructions(&context), &recent.join("\n"));
+                        sink(Event::Topic {
+                            topic: topic.as_ref().ok().cloned(),
+                            error: topic.as_ref().err().cloned(),
+                            ms: started.elapsed().as_millis() as u64,
+                        });
+                        if let Ok(topic) = topic {
+                            context.topic = Some(topic);
+                        }
+                    }
+                    None => {}
+                }
+                continue;
+            };
+
+            let started = Instant::now();
+            let translated =
+                translate_on_device(&subtitle_instructions(&source, &target, &context), &text);
+            sink(Event::Translation {
+                index,
+                target: translated.as_ref().ok().cloned(),
+                error: translated.err(),
+                translate_ms: started.elapsed().as_millis() as u64,
+                delay_ms: segment.speech_end.elapsed().as_millis() as u64,
+            });
+
+            if let Some(rejoin) = joiner.push(index, &text) {
+                later.push_back(Later::Rejoin(rejoin, segment.speech_end));
+            }
+            context.earlier.push(text.clone());
+            if context.earlier.len() > 2 {
+                context.earlier.remove(0);
+            }
+            recent.push(text);
+            if recent.len() > 12 {
+                recent.remove(0);
+            }
+            lines_since_topic += 1;
+            if lines_since_topic >= topic_due {
+                lines_since_topic = 0;
+                topic_due = 20;
+                later.push_back(Later::Topic);
+            }
+        }
+    }
+}
+
+pub mod session {
+    //! The app's subtitle session: one at a time, started and stopped from
+    //! the window, the tray or the shortcut. Events go to the subtitle bar;
+    //! the whole session is saved to History when it ends (owner, 16/10).
+
+    use super::pipeline::{self, Config, Event};
+    use crate::managers::history::HistoryManager;
+    use serde::Serialize;
+    use specta::Type;
+    use std::collections::BTreeMap;
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::{Arc, Mutex};
+    use tauri::{AppHandle, Emitter, Manager};
+
+    struct Running {
+        stop: Arc<AtomicBool>,
+        bundle_id: String,
+    }
+
+    static RUNNING: Mutex<Option<Running>> = Mutex::new(None);
+
+    /// What the window and the tray show about subtitles.
+    #[derive(Debug, Clone, Serialize, Type)]
+    pub struct SubtitleState {
+        pub running: bool,
+        pub bundle_id: Option<String>,
+        /// Why the last session stopped early (a code before ":").
+        pub error: Option<String>,
+    }
+
+    pub fn state() -> SubtitleState {
+        let running = RUNNING.lock().ok();
+        let bundle_id = running
+            .as_ref()
+            .and_then(|r| r.as_ref().map(|r| r.bundle_id.clone()));
+        SubtitleState {
+            running: bundle_id.is_some(),
+            bundle_id,
+            error: None,
+        }
+    }
+
+    pub fn is_running() -> bool {
+        state().running
+    }
+
+    fn announce(app: &AppHandle, state: SubtitleState) {
+        let _ = app.emit("live-subtitles-state", state);
+        crate::tray::update_tray_menu(app);
+    }
+
+    /// The heard lines and their translations, in order, for History.
+    #[derive(Default)]
+    struct Transcript {
+        title: Option<String>,
+        lines: BTreeMap<usize, (String, Option<String>)>,
+    }
+
+    impl Transcript {
+        fn record(&mut self, event: &Event) {
+            match event {
+                Event::Context {
+                    app_name, playing, ..
+                } => {
+                    self.title = Some(title_from(playing.as_deref(), app_name));
+                }
+                Event::Line { index, source, .. } if !source.is_empty() => {
+                    self.lines.insert(*index, (source.clone(), None));
+                }
+                Event::Translation {
+                    index,
+                    target: Some(target),
+                    ..
+                } => {
+                    if let Some(line) = self.lines.get_mut(index) {
+                        line.1 = Some(target.clone());
+                    }
+                }
+                Event::Rejoin {
+                    indexes,
+                    target: Some(target),
+                    ..
+                } => {
+                    for (n, index) in indexes.iter().enumerate() {
+                        if let Some(line) = self.lines.get_mut(index) {
+                            line.1 = Some(if n == 0 {
+                                target.clone()
+                            } else {
+                                String::new()
+                            });
+                        }
+                    }
+                }
+                _ => {}
+            }
         }
 
-        let delays = |key: &str| -> Vec<u64> {
-            sentences
-                .iter()
-                .filter_map(|line| line.get(key).and_then(|v| v.as_u64()))
-                .collect()
+        fn heard(&self) -> String {
+            self.lines
+                .values()
+                .map(|(s, _)| s.as_str())
+                .collect::<Vec<_>>()
+                .join(" ")
+        }
+
+        fn translated(&self) -> Option<String> {
+            let parts: Vec<&str> = self
+                .lines
+                .values()
+                .filter_map(|(_, t)| t.as_deref())
+                .filter(|t| !t.is_empty())
+                .collect();
+            (!parts.is_empty()).then(|| parts.join(" "))
+        }
+    }
+
+    /// "the YouTube video "X"" → X; otherwise the app's name.
+    fn title_from(playing: Option<&str>, app_name: &str) -> String {
+        if let Some(note) = playing {
+            if let (Some(a), Some(b)) = (note.find('"'), note.rfind('"')) {
+                if b > a + 1 {
+                    return note[a + 1..b].to_string();
+                }
+            }
+        }
+        app_name.to_string()
+    }
+
+    /// Starts subtitles for `bundle_id`; remembers the choice for the tray
+    /// and the shortcut.
+    pub fn start(
+        app: &AppHandle,
+        bundle_id: String,
+        source: String,
+        target: String,
+    ) -> Result<(), String> {
+        if !crate::system_audio_tap::available() {
+            return Err("unsupported: live subtitles need macOS 14.2".to_string());
+        }
+        let stop = Arc::new(AtomicBool::new(false));
+        {
+            let mut running = RUNNING.lock().map_err(|e| e.to_string())?;
+            if running.is_some() {
+                return Err("running: subtitles are already on".to_string());
+            }
+            *running = Some(Running {
+                stop: stop.clone(),
+                bundle_id: bundle_id.clone(),
+            });
+        }
+        let mut settings = crate::settings::get_settings(app);
+        settings.live_subtitle_app = Some(bundle_id.clone());
+        settings.live_subtitle_source = Some(source.clone());
+        settings.live_subtitle_target = Some(target.clone());
+        crate::settings::write_settings(app, settings);
+
+        crate::subtitle_window::show(app);
+        announce(app, state());
+
+        let app = app.clone();
+        std::thread::spawn(move || {
+            let transcript = Arc::new(Mutex::new(Transcript::default()));
+            let early_error: Arc<Mutex<Option<String>>> = Arc::new(Mutex::new(None));
+            let sink: pipeline::Sink = {
+                let app = app.clone();
+                let transcript = transcript.clone();
+                let early_error = early_error.clone();
+                Arc::new(move |event: Event| {
+                    if let Event::Error { error } = &event {
+                        log::warn!("Live subtitles: {error}");
+                        if let Ok(mut slot) = early_error.lock() {
+                            *slot = Some(error.clone());
+                        }
+                    }
+                    if let Ok(mut t) = transcript.lock() {
+                        t.record(&event);
+                    }
+                    let _ = app.emit_to(crate::subtitle_window::LABEL, "live-subtitle", &event);
+                })
+            };
+            let config = Config {
+                bundle_id: bundle_id.clone(),
+                source: source.clone(),
+                target: target.clone(),
+                mute: false,
+                model: None,
+                device_index: None,
+                partials: true,
+            };
+            let _ = pipeline::run(&app, config, stop, sink);
+
+            crate::subtitle_window::hide(&app);
+            if let Ok(t) = transcript.lock() {
+                let heard = t.heard();
+                if !heard.trim().is_empty() {
+                    let title = t.title.clone().unwrap_or_else(|| bundle_id.clone());
+                    let label = format!("Live subtitles → {target}");
+                    let history = app.state::<Arc<HistoryManager>>();
+                    if let Err(e) = history.save_subtitle_entry(title, heard, t.translated(), label)
+                    {
+                        log::error!("Live subtitles: cannot save to History: {e}");
+                    }
+                }
+            }
+            if let Ok(mut running) = RUNNING.lock() {
+                *running = None;
+            }
+            let error = early_error.lock().ok().and_then(|e| e.clone());
+            announce(
+                &app,
+                SubtitleState {
+                    running: false,
+                    bundle_id: None,
+                    error,
+                },
+            );
+        });
+        Ok(())
+    }
+
+    /// Stops the session; the last lines still finish and are saved.
+    pub fn stop() {
+        if let Ok(running) = RUNNING.lock() {
+            if let Some(running) = running.as_ref() {
+                running.stop.store(true, Ordering::Relaxed);
+            }
+        }
+    }
+
+    // SE-LIVE-010
+    /// Starts with the remembered app and languages, or stops. Returns false
+    /// when nothing is remembered yet (the window has to ask).
+    pub fn toggle(app: &AppHandle) -> bool {
+        if is_running() {
+            stop();
+            return true;
+        }
+        let settings = crate::settings::get_settings(app);
+        let Some(bundle_id) = settings.live_subtitle_app.clone() else {
+            return false;
         };
-        let source_delays = delays("source_delay_ms");
-        let target_delays = delays("target_delay_ms");
-        let translated = target_delays.len();
-        let silent = tapped_ms > 0 && peak < SILENT_PEAK;
-        out.write(json!({
+        let source = settings
+            .live_subtitle_source
+            .clone()
+            .unwrap_or_else(|| "English".to_string());
+        let target = settings
+            .live_subtitle_target
+            .clone()
+            .unwrap_or_else(|| default_target(&settings, &source));
+        if let Err(e) = start(app, bundle_id, source, target) {
+            log::warn!("Live subtitles: {e}");
+        }
+        true
+    }
+
+    /// The shared translate language, or Vietnamese when that would be the
+    /// language already spoken.
+    pub fn default_target(settings: &crate::settings::AppSettings, source: &str) -> String {
+        let language = settings.translate_language();
+        if language.eq_ignore_ascii_case(source) {
+            if source.eq_ignore_ascii_case("Vietnamese") {
+                "English".to_string()
+            } else {
+                "Vietnamese".to_string()
+            }
+        } else {
+            language
+        }
+    }
+
+    #[cfg(test)]
+    mod tests {
+        use super::*;
+
+        // SE-LIVE-009
+        #[test]
+        fn history_keeps_one_translation_per_rejoined_sentence() {
+            let mut t = Transcript::default();
+            t.record(&Event::Context {
+                app_name: "Google Chrome".into(),
+                window_title: String::new(),
+                document: String::new(),
+                ax_trusted: "yes".into(),
+                playing: Some("the YouTube video \"PUBG Asia Stars\"".into()),
+            });
+            for (index, source) in [(1, "Vietnam was their target, and"), (2, "they lost it.")] {
+                t.record(&Event::Line {
+                    index,
+                    source: source.into(),
+                    audio_ms: 0,
+                    capped: false,
+                    recognise_ms: 0,
+                    source_delay_ms: 0,
+                });
+                t.record(&Event::Translation {
+                    index,
+                    target: Some(format!("piece {index}")),
+                    error: None,
+                    translate_ms: 0,
+                    delay_ms: 0,
+                });
+            }
+            t.record(&Event::Rejoin {
+                indexes: vec![1, 2],
+                source: String::new(),
+                target: Some("whole".into()),
+                error: None,
+                translate_ms: 0,
+                delay_ms: 0,
+            });
+            assert_eq!(t.title.as_deref(), Some("PUBG Asia Stars"));
+            assert_eq!(t.heard(), "Vietnam was their target, and they lost it.");
+            assert_eq!(t.translated().as_deref(), Some("whole"));
+        }
+
+        #[test]
+        fn the_target_is_never_the_spoken_language() {
+            let settings = crate::settings::get_default_settings();
+            assert_eq!(default_target(&settings, "English"), "Vietnamese");
+            assert_eq!(default_target(&settings, "Japanese"), "English");
+        }
+    }
+}
+
+pub mod probe {
+    //! `--live-subtitle-probe <bundle-id>`: the measurement behind the plan's
+    //! delay gates, run as a headless instance launched through Launch
+    //! Services so macOS asks SpeakEase (not a terminal) for the
+    //! audio-capture permission. Writes one JSON line per event.
+
+    use super::percentile;
+    use super::pipeline::{self, Config, Event};
+    use crate::cli::CliArgs;
+    use serde_json::json;
+    use std::fs::File;
+    use std::io::Write;
+    use std::path::PathBuf;
+    use std::sync::atomic::{AtomicBool, Ordering};
+    use std::sync::{Arc, Mutex};
+    use std::time::Duration;
+    use tauri::AppHandle;
+
+    pub fn run(app: &AppHandle, args: &CliArgs, bundle_id: &str) -> i32 {
+        let out_path = args
+            .probe_out
+            .clone()
+            .unwrap_or_else(|| PathBuf::from("live-subtitle-probe.jsonl"));
+        let file = match File::create(&out_path) {
+            Ok(file) => Arc::new(Mutex::new(file)),
+            Err(e) => {
+                eprintln!("error: cannot write {}: {}", out_path.display(), e);
+                return 2;
+            }
+        };
+        let write = {
+            let file = file.clone();
+            move |value: serde_json::Value| {
+                if let Ok(mut file) = file.lock() {
+                    let _ = writeln!(file, "{}", value);
+                    let _ = file.flush();
+                }
+            }
+        };
+        let seconds = args.probe_seconds.unwrap_or(120);
+        let config = Config {
+            bundle_id: bundle_id.to_string(),
+            source: args
+                .subtitle_from
+                .clone()
+                .unwrap_or_else(|| "English".to_string()),
+            target: args
+                .subtitle_to
+                .clone()
+                .unwrap_or_else(|| "Vietnamese".to_string()),
+            mute: args.probe_mute,
+            model: args.model.clone(),
+            device_index: args.device_index,
+            partials: false,
+        };
+        let processes = crate::system_audio_tap::list_processes();
+        write(json!({
+            "kind": "start",
+            "bundle_id": bundle_id,
+            "seconds": seconds,
+            "source": config.source,
+            "target": config.target,
+            "processes": processes.iter().map(|p| json!({
+                "pid": p.pid, "bundle_id": p.bundle_id,
+                "app_bundle_id": p.app_bundle_id, "playing": p.playing
+            })).collect::<Vec<_>>(),
+        }));
+
+        let events: Arc<Mutex<Vec<Event>>> = Arc::new(Mutex::new(Vec::new()));
+        let sink: pipeline::Sink = {
+            let events = events.clone();
+            let write = write.clone();
+            Arc::new(move |event: Event| {
+                write(serde_json::to_value(&event).unwrap_or_default());
+                if let Ok(mut events) = events.lock() {
+                    events.push(event);
+                }
+            })
+        };
+        let stop = Arc::new(AtomicBool::new(false));
+        {
+            let stop = stop.clone();
+            std::thread::spawn(move || {
+                // The clock starts when tapping does; a little slack covers
+                // model load and the warm-up call.
+                std::thread::sleep(Duration::from_secs(seconds + 5));
+                stop.store(true, Ordering::Relaxed);
+            });
+        }
+        let result = pipeline::run(app, config, stop, sink);
+
+        let events = events.lock().map(|e| e.clone()).unwrap_or_default();
+        let mut source_delays = Vec::new();
+        let mut target_delays = Vec::new();
+        let (mut refused, mut rejoins, mut ai_calls) = (0usize, 0usize, 0usize);
+        let mut silent = false;
+        let mut tapped = 0u64;
+        for event in &events {
+            match event {
+                Event::Line {
+                    source_delay_ms,
+                    source,
+                    ..
+                } if !source.is_empty() => source_delays.push(*source_delay_ms),
+                Event::Translation {
+                    target, delay_ms, ..
+                } => {
+                    ai_calls += 1;
+                    match target {
+                        Some(_) => target_delays.push(*delay_ms),
+                        None => refused += 1,
+                    }
+                }
+                Event::Rejoin { .. } => {
+                    ai_calls += 1;
+                    rejoins += 1
+                }
+                Event::Topic { .. } => ai_calls += 1,
+                Event::Ended {
+                    silent: s,
+                    tapped_ms,
+                    ..
+                } => {
+                    silent = *s;
+                    tapped = *tapped_ms;
+                }
+                _ => {}
+            }
+        }
+        write(json!({
             "kind": "summary",
-            "tapped_ms": tapped_ms,
-            "peak": peak,
-            "silent": silent,
-            "silent_hint": if tapped_ms == 0 {
+            "lines": source_delays.len(),
+            "translated": target_delays.len(),
+            "refused": refused,
+            "rejoins": rejoins,
+            "ai_calls": ai_calls,
+            "silent_hint": if tapped == 0 {
                 Some("no audio arrived: the tap did not start delivering")
             } else if silent {
                 Some("all-zero audio while tapping: audio-capture permission missing or NSAudioCaptureUsageDescription absent from Info.plist")
             } else { None },
-            "first_chunk_ms": first_chunk_ms,
-            "first_sound_ms": first_sound_ms,
-            "segments": segments,
-            "translated": translated,
-            "ai_calls": sentences.iter().filter(|l| l.get("translate_ms").is_some() || l.get("ms").is_some()).count(),
-            "rejoins": sentences.iter().filter(|l| l.get("kind").and_then(|k| k.as_str()) == Some("rejoin")).count(),
-            "refused": sentences.iter().filter(|l| l.get("kind").and_then(|k| k.as_str()) == Some("sentence") && l.get("error").is_some_and(|e| !e.is_null())).count(),
             "source_delay_p50_ms": percentile(&source_delays, 50.0),
             "source_delay_p95_ms": percentile(&source_delays, 95.0),
             "target_delay_p50_ms": percentile(&target_delays, 50.0),
             "target_delay_p95_ms": percentile(&target_delays, 95.0),
         }));
-        if silent || tapped_ms == 0 {
+        if result.is_err() || silent || tapped == 0 {
             1
         } else {
             0
@@ -815,6 +1403,7 @@ mod tests {
         out
     }
 
+    // SE-LIVE-003
     #[test]
     fn a_pause_closes_a_sentence_and_keeps_the_preroll() {
         let mut s = Segmenter::new();
@@ -907,6 +1496,7 @@ mod tests {
         assert_eq!(closed.expect("closes on the pause").speech_end, last_voiced);
     }
 
+    // SE-LIVE-007
     #[test]
     fn the_prompt_fences_everything_from_the_app() {
         let context = SpeechContext {
@@ -986,6 +1576,7 @@ mod tests {
         assert!(!ends_sentence(""));
     }
 
+    // SE-LIVE-006
     #[test]
     fn the_joiner_fixes_a_sentence_once_it_completes() {
         let mut joiner = SentenceJoiner::default();

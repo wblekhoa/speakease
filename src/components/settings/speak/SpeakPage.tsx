@@ -19,6 +19,7 @@ import {
 } from "@/lib/translateTargets";
 import type { SidebarSection } from "../../Sidebar";
 import { copyToClipboard } from "../history/clipboard";
+import { LiveSubtitlesCard } from "./LiveSubtitlesCard";
 import {
   CheckIcon,
   CopyIcon,
@@ -372,6 +373,13 @@ export const SpeakPage: React.FC = () => {
           </div>
         )}
       </div>
+
+      {/* Live subtitles (beta) sit behind App › Experimental. */}
+      {settings?.experimental_enabled && (
+        <div className="w-full flex justify-center mb-3">
+          <LiveSubtitlesCard />
+        </div>
+      )}
 
       {/* The bar of quick settings, each opening its menu above it. */}
       <div

@@ -15,7 +15,7 @@
     "format:frontend": "prettier --write .",
     "format:backend": "cd src-tauri && cargo fmt",
     "test:keyboard": "bun src/lib/utils/keyboard.test.ts",
-    "test:unit": "bun src/lib/utils/keyboard.test.ts && bun src/lib/utils/modelPicks.test.ts && bun src/lib/utils/sidebarWidth.test.ts && bun src/lib/utils/progressEstimate.test.ts && bun src/lib/fileQueue.test.ts",
+    "test:unit": "bun src/lib/utils/keyboard.test.ts && bun src/lib/utils/modelPicks.test.ts && bun src/lib/utils/sidebarWidth.test.ts && bun src/lib/utils/progressEstimate.test.ts && bun src/lib/fileQueue.test.ts && bun src/lib/liveSubtitles.test.ts",
     "test:playwright": "playwright test",
     "test:playwright:ui": "playwright test --ui",
     "check:translations": "bun scripts/check-translations.ts",

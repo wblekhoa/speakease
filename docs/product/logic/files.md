@@ -4,7 +4,7 @@ type: logic
 product: speakease
 title: "SpeakEase — Files (logic)"
 status: active
-updated: 2026-10-15
+updated: 2026-10-20
 summary: "Rules for Files & links: decode only the sound to 16 kHz, transcribe into a History entry, AI on long text in pieces, links via download or yt-dlp, live progress (SE-FILE)."
 tags: [area/audio, area/data-import, area/ai, stack/rust]
 reqPrefix: SE-FILE
@@ -63,6 +63,7 @@ or code named in Evidence.
 
 ## Change log
 
+- 2026-10-20: reviewed after lib.rs registered the live-subtitles commands and tray item; SE-FILE rules unchanged.
 - 2026-10-15: MKV/WebM and Opus (owner): the decoder now calls Symphonia directly with libopus registered; voice messages (.ogg/.opus) read too.
 - 2026-10-15: yt-dlp stays optional (owner); the page shows the install command as soon as a page link is pasted.
 - 2026-10-15: SE-FILE-003 keeps refused pieces (a guardrail refusal no longer throws away a long job); SE-FILE-006 drop on any page and a line of files.

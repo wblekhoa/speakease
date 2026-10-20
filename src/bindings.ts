@@ -985,6 +985,32 @@ async cancelFileJob() : Promise<void> {
     await TAURI_INVOKE("cancel_file_job");
 },
 /**
+ * Whether this Mac can hear another app (macOS 14.2+ on Apple silicon).
+ */
+async liveSubtitlesSupported() : Promise<boolean> {
+    return await TAURI_INVOKE("live_subtitles_supported");
+},
+/**
+ * Running apps for the picker, those playing sound first.
+ */
+async liveSubtitleApps() : Promise<RunningApp[]> {
+    return await TAURI_INVOKE("live_subtitle_apps");
+},
+async liveSubtitlesState() : Promise<SubtitleState> {
+    return await TAURI_INVOKE("live_subtitles_state");
+},
+async startLiveSubtitles(bundleId: string, source: string, target: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("start_live_subtitles", { bundleId, source, target }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async stopLiveSubtitles() : Promise<void> {
+    await TAURI_INVOKE("stop_live_subtitles");
+},
+/**
  * Writes text to a file the person picked in a Save dialog.
  */
 async writeTextFile(path: string, contents: string) : Promise<Result<null, string>> {
@@ -1113,7 +1139,12 @@ speakease_translate_language?: string | null;
  * choose it - the model cannot detect it and the intent is "auto"
  * (transcription.rs languages_to_try). Tried first next time.
  */
-speakease_last_spoken_language?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
+speakease_last_spoken_language?: string | null; 
+/**
+ * Live subtitles (beta): the app last listened to (bundle id), and the
+ * languages chosen for it. None until a session is started.
+ */
+live_subtitle_app?: string | null; live_subtitle_source?: string | null; live_subtitle_target?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
 /**
  * Debug-gated ("beta") receipt-sequenced paste: restore the clipboard only
  * after the target app actually reads the transcript, instead of after a
@@ -1248,6 +1279,14 @@ export type PasteMethod = "ctrl_v" | "direct" | "none" | "shift_insert" | "ctrl_
 export type PermissionAccess = "allowed" | "denied" | "unknown"
 export type PostProcessProvider = { id: string; label: string; base_url: string; allow_base_url_edit?: boolean; models_endpoint?: string | null; supports_structured_output?: boolean }
 export type RecordingRetentionPeriod = "never" | "preserve_limit" | "days_3" | "weeks_2" | "months_3"
+/**
+ * A running app the user can pick for subtitles.
+ */
+export type RunningApp = { bundle_id: string; name: string; 
+/**
+ * Playing sound right now.
+ */
+playing: boolean }
 export type SecretMap = Partial<{ [key in string]: string }>
 export type SecureInputStatus = { 
 /**
@@ -1333,6 +1372,14 @@ export type StreamTextEvent = { committed: string; tentative: string }
  * Semantic kind of "working" phase, used to localize the spinner label.
  */
 export type StreamWorkKind = "transcribing" | "polishing"
+/**
+ * What the window and the tray show about subtitles.
+ */
+export type SubtitleState = { running: boolean; bundle_id: string | null; 
+/**
+ * Why the last session stopped early (a code before ":").
+ */
+error: string | null }
 /**
  * UI appearance mode. `System` follows the OS `prefers-color-scheme`; `Light`
  * and `Dark` force one of the two palettes Handy already ships.

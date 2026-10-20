@@ -152,6 +152,83 @@ if (new URLSearchParams(location.search).has("onboarding")) {
   for (const model of models) model.is_downloaded = false;
 }
 
+// `?subtitles` previews live subtitles (behind Experimental).
+if (new URLSearchParams(location.search).has("subtitles")) {
+  settings.experimental_enabled = true;
+}
+let subtitlesRunning: string | null = null;
+const SUBTITLE_APPS = [
+  { bundle_id: "com.google.Chrome", name: "Google Chrome", playing: true },
+  {
+    bundle_id: "com.apple.QuickTimePlayerX",
+    name: "QuickTime Player",
+    playing: false,
+  },
+  { bundle_id: "us.zoom.xos", name: "zoom.us", playing: false },
+];
+
+// The subtitle bar's own page plays a short scripted session.
+if (location.pathname.includes("/src/subtitles/")) {
+  const script: [number, Json][] = [
+    [300, { kind: "context", app_name: "Google Chrome", playing: null }],
+    [600, { kind: "tapping", model: "demo" }],
+    [
+      1400,
+      {
+        kind: "partial",
+        index: 1,
+        source: "During a PUBG tournament that had",
+      },
+    ],
+    [
+      2400,
+      {
+        kind: "line",
+        index: 1,
+        source:
+          "During a PUBG tournament that had a seventy-thousand-dollar prize pool,",
+      },
+    ],
+    [
+      3600,
+      {
+        kind: "translation",
+        index: 1,
+        target: "Trong một giải đấu PUBG có tổng giải thưởng 70.000 đô la,",
+      },
+    ],
+    [
+      4200,
+      {
+        kind: "line",
+        index: 2,
+        source: "Team Korea accused Team Vietnam of cheating.",
+      },
+    ],
+    [
+      5400,
+      {
+        kind: "translation",
+        index: 2,
+        target: "Đội Hàn Quốc cáo buộc Đội Việt Nam gian lận.",
+      },
+    ],
+    [
+      6400,
+      {
+        kind: "rejoin",
+        indexes: [1, 2],
+        source: "…",
+        target:
+          "Trong một giải đấu PUBG có tổng giải thưởng 70.000 đô la, Đội Hàn Quốc đã cáo buộc Đội Việt Nam gian lận.",
+      },
+    ],
+  ];
+  for (const [at, payload] of script) {
+    setTimeout(() => emit("live-subtitle", payload), at);
+  }
+}
+
 /** `change_foo_bar_setting` → `foo_bar`, with the few names that differ. */
 const SETTING_ALIASES: Record<string, string> = {
   audio_feedback_volume: "audio_feedback_volume",
@@ -206,6 +283,35 @@ function handle(cmd: string, args: Json): unknown {
       fileCancelled = true;
       return null;
     case "write_text_file":
+      return null;
+    case "live_subtitles_supported":
+      return true;
+    case "live_subtitle_apps":
+      return SUBTITLE_APPS;
+    case "live_subtitles_state":
+      return {
+        running: subtitlesRunning !== null,
+        bundle_id: subtitlesRunning,
+        error: null,
+      };
+    case "start_live_subtitles":
+      subtitlesRunning = args.bundleId as string;
+      settings.live_subtitle_app = args.bundleId;
+      settings.live_subtitle_source = args.source;
+      settings.live_subtitle_target = args.target;
+      emit("live-subtitles-state", {
+        running: true,
+        bundle_id: subtitlesRunning,
+        error: null,
+      });
+      return null;
+    case "stop_live_subtitles":
+      subtitlesRunning = null;
+      emit("live-subtitles-state", {
+        running: false,
+        bundle_id: null,
+        error: null,
+      });
       return null;
     case "ytdlp_available":
       // The preview plays a Mac without yt-dlp, to show the guide.

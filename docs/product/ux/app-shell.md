@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — App shell (UX)"
 status: active
-updated: 2026-10-14
+updated: 2026-10-20
 summary: "The window around the features: the side column (sections, fold and resize by drag, language menu), the App page, tray and app-menu entries, updates and first launch."
 tags: [area/layout, area/updater, area/i18n, surface/macos]
 relations:
@@ -59,7 +59,8 @@ relations:
   **Experimental** (extra switches appear when it is on), and **About** (version, automatic update checks, app data
   and log folders, and a **Built on Handy** credit linking to its source). Descriptions sit behind an info icon.
 - **Tray menu**: **Open SpeakEase** (window on Speak), **History** (window on History) and **Check for Updates…**
-  (it works whether or not automatic checks are on), besides the dictation and AI items.
+  (it works whether or not automatic checks are on), besides the dictation and AI items. With Experimental on, a
+  **Live subtitles** item turns subtitles on or off (`ux/live-subtitles.md`).
 - **App menu**: **SpeakEase › Check for Updates…** under About.
 - **Updates**: checked once at launch when the **Check for Updates** switch in App is on; a check by hand (footer,
   menu or tray) works either way; an available update shows in the window's footer, downloads with a
@@ -103,6 +104,7 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-20: the tray gains a Live subtitles item while Experimental is on.
 - 2026-10-14: interface language menu at the foot of the side column.
 - 2026-10-14: Files joins Speak and History at the top of the side column.
 - 2026-10-13: Check for Updates… by hand now works with automatic checks off.

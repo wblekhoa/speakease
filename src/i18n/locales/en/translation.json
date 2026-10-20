@@ -14,7 +14,8 @@
     "aiCleanup": "AI cleanup",
     "translateTo": "Translate to",
     "off": "Off",
-    "openApp": "Open SpeakEase"
+    "openApp": "Open SpeakEase",
+    "liveSubtitles": "Live subtitles"
   },
   "sidebar": {
     "general": "General",
@@ -202,6 +203,10 @@
           "transcribe_translate": {
             "name": "Translate",
             "description": "Pastes a translation, in the language set in AI & Translate."
+          },
+          "live_subtitles": {
+            "name": "Live subtitles",
+            "description": "Turns subtitles on or off for the app chosen on the Speak page."
           }
         },
         "errors": {
@@ -930,6 +935,19 @@
       "title": "You just said",
       "copy": "Copy",
       "copied": "Copied"
+    },
+    "subtitles": {
+      "title": "Live subtitles",
+      "beta": "Beta",
+      "app": "Listen to",
+      "pickApp": "Choose an app",
+      "playing": "playing",
+      "from": "Spoken language",
+      "to": "Translate into",
+      "start": "Turn on subtitles",
+      "stop": "Turn off subtitles",
+      "on": "Subtitling {{app}}. Translations appear in the bar at the bottom of the screen.",
+      "hint": "Translated on this Mac with Apple Intelligence. When you stop, the whole session is saved to History."
     }
   },
   "modelDescription": {
@@ -994,6 +1012,22 @@
       "body": "SpeakEase uses yt-dlp to take only the sound from a video page. Install it once with the command below in Terminal, then press Get the words again.",
       "recheck": "Installed, check again",
       "noBrew": "No Homebrew yet? Install it from"
+    }
+  },
+  "subtitles": {
+    "label": "Live subtitles",
+    "stop": "Turn off subtitles",
+    "starting": "Getting subtitles ready…",
+    "listening": "Listening to {{app}}…",
+    "theApp": "the chosen app",
+    "errors": {
+      "unsupported": "Live subtitles need macOS 14.2 or later.",
+      "no-model": "No recognition model yet. Download one in Recognition, then try again.",
+      "no-process": "{{app}} played no sound for 30 seconds. Start what you want to watch, then turn subtitles on again.",
+      "tap": "Couldn’t hear {{app}}. Allow SpeakEase to record system audio in System Settings › Privacy & Security, then try again.",
+      "vad": "The speech detector didn’t start. Reopen SpeakEase and try again.",
+      "running": "Subtitles are already on.",
+      "other": "Subtitles stopped on an error. Try turning them on again."
     }
   }
 }

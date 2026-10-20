@@ -496,8 +496,8 @@ fn register_all_shortcuts_for_implementation(
             continue;
         }
 
-        // Skip post-processing shortcut when the feature is disabled
-        if crate::settings::is_post_process_binding(id) && !current_settings.post_process_enabled {
+        // Skip shortcuts whose feature is off (AI, live subtitles)
+        if crate::settings::binding_switched_off(id, &current_settings) {
             continue;
         }
 
@@ -1138,7 +1138,23 @@ pub fn set_post_process_enabled(app: &AppHandle, enabled: bool) {
 pub fn change_experimental_enabled_setting(app: AppHandle, enabled: bool) -> Result<(), String> {
     let mut settings = settings::get_settings(&app);
     settings.experimental_enabled = enabled;
-    settings::write_settings(&app, settings);
+    settings::write_settings(&app, settings.clone());
+
+    // Live subtitles (beta) live behind Experimental: their shortcut and
+    // tray item follow it, and turning it off ends a running session.
+    if let Some(binding) = settings
+        .bindings
+        .get(settings::LIVE_SUBTITLES_BINDING_ID)
+        .cloned()
+    {
+        if settings::binding_switched_off(settings::LIVE_SUBTITLES_BINDING_ID, &settings) {
+            let _ = unregister_shortcut(&app, binding);
+            crate::live_subtitles::session::stop();
+        } else {
+            let _ = register_shortcut(&app, binding);
+        }
+    }
+    tray::update_tray_menu(&app);
     Ok(())
 }
 

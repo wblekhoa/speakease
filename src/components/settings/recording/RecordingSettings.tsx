@@ -23,6 +23,7 @@ export const RecordingSettings: React.FC = () => {
   const { getSetting, audioFeedbackEnabled } = useSettings();
   const isLinux = type() === "linux";
   const aiEnabled = getSetting("post_process_enabled") ?? false;
+  const experimental = getSetting("experimental_enabled") ?? false;
 
   return (
     <div className="max-w-3xl w-full mx-auto space-y-6">
@@ -42,6 +43,14 @@ export const RecordingSettings: React.FC = () => {
         {aiEnabled && (
           <ShortcutInput
             shortcutId="transcribe_with_post_process"
+            descriptionMode="inline"
+            grouped
+          />
+        )}
+        {/* Live subtitles (beta) register only with Experimental on. */}
+        {experimental && !isLinux && (
+          <ShortcutInput
+            shortcutId="live_subtitles"
             descriptionMode="inline"
             grouped
           />
