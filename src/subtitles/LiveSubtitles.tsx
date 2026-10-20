@@ -25,6 +25,8 @@ import "./LiveSubtitles.css";
 
 /** Where the user last dragged the panel (this Mac only). */
 const POSITION_KEY = "speakease.liveSubtitles.position";
+/** Whether what was heard shows under each translation (this Mac only). */
+const SOURCE_KEY = "speakease.liveSubtitles.showSource";
 /** Space around the content inside the window (LiveSubtitles.css .ls-frame). */
 const FRAME_PADDING = 10;
 /** The panel grows with its lines up to this height, then scrolls. */
@@ -40,6 +42,22 @@ const readPosition = (): { x: number; y: number } | null => {
     return raw ? JSON.parse(raw) : null;
   } catch {
     return null;
+  }
+};
+
+const readShowSource = () => {
+  try {
+    return localStorage.getItem(SOURCE_KEY) !== "false";
+  } catch {
+    return true;
+  }
+};
+
+const saveShowSource = (on: boolean) => {
+  try {
+    localStorage.setItem(SOURCE_KEY, String(on));
+  } catch {
+    // Storage unavailable: the choice lasts until the panel reloads.
   }
 };
 
@@ -68,6 +86,12 @@ const LiveSubtitles: React.FC = () => {
   );
   const [now, setNow] = useState(Date.now());
   const [following, setFollowing] = useState(true);
+  // SE-LIVE-011
+  // The panel's two switches (owner, 20/10): translate on/off, which stops
+  // the AI calls, and the heard text under each translation shown/hidden.
+  const [translateOn, setTranslateOn] = useState(true);
+  const [showSource, setShowSource] = useState(readShowSource);
+  const wasRunning = useRef(false);
   const contentRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const view = subtitleView(state);
@@ -78,15 +102,29 @@ const LiveSubtitles: React.FC = () => {
     if (saved) {
       window.setPosition(new LogicalPosition(saved.x, saved.y)).catch(() => {});
     }
+    commands
+      .liveSubtitlesState()
+      .then((current) => {
+        setTranslateOn(current.translate);
+        wasRunning.current = current.running;
+      })
+      .catch(() => {});
     const subscriptions = [
       listen<SubtitleEvent>("live-subtitle", (event) => apply(event.payload)),
       // A new session starts clean.
-      listen<{ running: boolean }>("live-subtitles-state", (event) => {
-        if (event.payload.running) {
-          apply("reset");
-          setFollowing(true);
-        }
-      }),
+      // A new session starts clean: only on the switch from off to on, as
+      // the Translate switch announces the state too.
+      listen<{ running: boolean; translate: boolean }>(
+        "live-subtitles-state",
+        (event) => {
+          setTranslateOn(event.payload.translate);
+          if (event.payload.running && !wasRunning.current) {
+            apply("reset");
+            setFollowing(true);
+          }
+          wasRunning.current = event.payload.running;
+        },
+      ),
       window.onMoved(async ({ payload }) => {
         const scale = await window.scaleFactor();
         savePosition(payload.x / scale, payload.y / scale);
@@ -181,6 +219,34 @@ const LiveSubtitles: React.FC = () => {
             className={`ls-dot${view.listening && !view.error ? " ls-live" : ""}`}
           />
           <span className="ls-app">{app}</span>
+          <span className="ls-switches">
+            <button
+              type="button"
+              className="ls-switch"
+              aria-pressed={translateOn}
+              title={t("subtitles.switchTranslate")}
+              onClick={() => {
+                const next = !translateOn;
+                setTranslateOn(next);
+                commands.setLiveSubtitlesTranslate(next);
+              }}
+            >
+              {t("subtitles.translateShort")}
+            </button>
+            <button
+              type="button"
+              className="ls-switch"
+              aria-pressed={showSource}
+              disabled={!translateOn}
+              title={t("subtitles.switchSource")}
+              onClick={() => {
+                setShowSource(!showSource);
+                saveShowSource(!showSource);
+              }}
+            >
+              {t("subtitles.sourceShort")}
+            </button>
+          </span>
           <button
             type="button"
             className="ls-close"
@@ -208,27 +274,39 @@ const LiveSubtitles: React.FC = () => {
               {status}
             </p>
           ) : (
-            view.items.map((item) => (
-              <article key={item.index} className="ls-bubble">
-                {item.target ? (
-                  <p className="ls-target" dir="auto">
-                    {item.target}
-                  </p>
-                ) : (
-                  <p
-                    className="ls-target ls-pending"
-                    aria-label={t("subtitles.translating")}
-                  >
-                    <span />
-                    <span />
-                    <span />
-                  </p>
-                )}
-                <p className="ls-source" dir="auto">
-                  {item.source}
-                </p>
-              </article>
-            ))
+            view.items.map((item) => {
+              // Translation off (or never arrived while off): the heard
+              // text is the bubble's main line.
+              const translated = item.target !== null;
+              const asHeard = !translated && !translateOn;
+              return (
+                <article key={item.index} className="ls-bubble">
+                  {asHeard ? (
+                    <p className="ls-target" dir="auto">
+                      {item.source}
+                    </p>
+                  ) : translated ? (
+                    <p className="ls-target" dir="auto">
+                      {item.target}
+                    </p>
+                  ) : (
+                    <p
+                      className="ls-target ls-pending"
+                      aria-label={t("subtitles.translating")}
+                    >
+                      <span />
+                      <span />
+                      <span />
+                    </p>
+                  )}
+                  {!asHeard && (showSource || !translateOn) && (
+                    <p className="ls-source" dir="auto">
+                      {item.source}
+                    </p>
+                  )}
+                </article>
+              );
+            })
           )}
         </div>
       </div>

@@ -1042,6 +1042,10 @@
       "other": "Phụ đề dừng do lỗi. Thử bật lại."
     },
     "translating": "Đang dịch…",
-    "newest": "Về câu mới nhất"
+    "newest": "Về câu mới nhất",
+    "translateShort": "Dịch",
+    "sourceShort": "Bản gốc",
+    "switchTranslate": "Bật/tắt dịch. Tắt thì chỉ hiện lời gốc, không gọi AI.",
+    "switchSource": "Hiện/ẩn lời gốc dưới câu dịch"
   }
 }

@@ -157,6 +157,7 @@ if (new URLSearchParams(location.search).has("subtitles")) {
   settings.experimental_enabled = true;
 }
 let subtitlesRunning: string | null = null;
+let subtitlesTranslate = true;
 const SUBTITLE_APPS = [
   { bundle_id: "com.google.Chrome", name: "Google Chrome", playing: true },
   {
@@ -312,6 +313,7 @@ function handle(cmd: string, args: Json): unknown {
         running: subtitlesRunning !== null,
         bundle_id: subtitlesRunning,
         error: null,
+        translate: subtitlesTranslate,
       };
     case "start_live_subtitles":
       subtitlesRunning = args.bundleId as string;
@@ -322,6 +324,16 @@ function handle(cmd: string, args: Json): unknown {
         running: true,
         bundle_id: subtitlesRunning,
         error: null,
+        translate: subtitlesTranslate,
+      });
+      return null;
+    case "set_live_subtitles_translate":
+      subtitlesTranslate = args.on as boolean;
+      emit("live-subtitles-state", {
+        running: subtitlesRunning !== null,
+        bundle_id: subtitlesRunning,
+        error: null,
+        translate: subtitlesTranslate,
       });
       return null;
     case "stop_live_subtitles":
@@ -330,6 +342,7 @@ function handle(cmd: string, args: Json): unknown {
         running: false,
         bundle_id: null,
         error: null,
+        translate: subtitlesTranslate,
       });
       return null;
     case "ytdlp_available":

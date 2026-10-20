@@ -871,6 +871,7 @@ pub fn run(cli_args: CliArgs) {
             commands::live_subtitles::live_subtitles_state,
             commands::live_subtitles::start_live_subtitles,
             commands::live_subtitles::stop_live_subtitles,
+            commands::live_subtitles::set_live_subtitles_translate,
             commands::files::write_text_file,
             commands::files::ytdlp_available,
             commands::history::update_history_limit,

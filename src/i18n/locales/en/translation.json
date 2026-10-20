@@ -1042,6 +1042,10 @@
       "other": "Subtitles stopped on an error. Try turning them on again."
     },
     "translating": "Translating…",
-    "newest": "Back to the newest line"
+    "newest": "Back to the newest line",
+    "translateShort": "Translate",
+    "sourceShort": "Original",
+    "switchTranslate": "Turn translation on or off. Off shows only what is said, with no AI.",
+    "switchSource": "Show or hide what was said under each translation"
   }
 }

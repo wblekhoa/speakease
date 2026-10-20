@@ -520,6 +520,9 @@ pub struct AppSettings {
     pub live_subtitle_source: Option<String>,
     #[serde(default)]
     pub live_subtitle_target: Option<String>,
+    /// The subtitle panel's Translate switch (None = on).
+    #[serde(default)]
+    pub live_subtitle_translate: Option<bool>,
     #[serde(default)]
     pub mute_while_recording: bool,
     #[serde(default)]
@@ -1163,6 +1166,7 @@ pub fn get_default_settings() -> AppSettings {
         live_subtitle_app: None,
         live_subtitle_source: None,
         live_subtitle_target: None,
+        live_subtitle_translate: None,
         speakease_last_spoken_language: None,
         mute_while_recording: false,
         append_trailing_space: false,

@@ -1011,6 +1011,12 @@ async stopLiveSubtitles() : Promise<void> {
     await TAURI_INVOKE("stop_live_subtitles");
 },
 /**
+ * The subtitle panel's Translate switch.
+ */
+async setLiveSubtitlesTranslate(on: boolean) : Promise<void> {
+    await TAURI_INVOKE("set_live_subtitles_translate", { on });
+},
+/**
  * Writes text to a file the person picked in a Save dialog.
  */
 async writeTextFile(path: string, contents: string) : Promise<Result<null, string>> {
@@ -1144,7 +1150,11 @@ speakease_last_spoken_language?: string | null;
  * Live subtitles (beta): the app last listened to (bundle id), and the
  * languages chosen for it. None until a session is started.
  */
-live_subtitle_app?: string | null; live_subtitle_source?: string | null; live_subtitle_target?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
+live_subtitle_app?: string | null; live_subtitle_source?: string | null; live_subtitle_target?: string | null; 
+/**
+ * The subtitle panel's Translate switch (None = on).
+ */
+live_subtitle_translate?: boolean | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
 /**
  * Debug-gated ("beta") receipt-sequenced paste: restore the clipboard only
  * after the target app actually reads the transcript, instead of after a
@@ -1379,7 +1389,11 @@ export type SubtitleState = { running: boolean; bundle_id: string | null;
 /**
  * Why the last session stopped early (a code before ":").
  */
-error: string | null }
+error: string | null; 
+/**
+ * Lines are being translated (the panel's Translate switch).
+ */
+translate: boolean }
 /**
  * UI appearance mode. `System` follows the OS `prefers-color-scheme`; `Light`
  * and `Dark` force one of the two palettes Handy already ships.

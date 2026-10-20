@@ -87,6 +87,47 @@ body {
   text-overflow: ellipsis;
 }
 
+/* The two switches: translate, and the heard text under it. */
+.ls-switches {
+  display: flex;
+  gap: 2px;
+  margin-left: 4px;
+  padding-left: 6px;
+  border-left: 1px solid var(--ls-border);
+}
+
+.ls-switch {
+  height: 22px;
+  padding: 0 9px;
+  border: none;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--ls-muted);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ls-switch:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-mid-gray) 20%, transparent);
+}
+
+.ls-switch[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--color-logo-primary) 22%, transparent);
+  color: var(--color-text);
+}
+
+.ls-switch:disabled {
+  opacity: 0.4;
+  cursor: default;
+}
+
+.ls-switch:focus-visible {
+  outline: 2px solid var(--color-logo-primary);
+  outline-offset: 1px;
+}
+
 .ls-close {
   flex: none;
   width: 22px;

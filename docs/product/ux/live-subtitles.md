@@ -49,8 +49,9 @@ relations:
   as a list to pick from, those playing sound first with a "playing" mark; then **Languages** - the spoken language
   → the one to read (the shared translate language unless that is the spoken one); four short notes (on-device, reads the title for context, saved to History, the one-time permission) sit behind an info icon beside the title, and the list's hint behind one beside **Listen to**. The choices lock while subtitles run.
 - **Panel**: a floating column in the bottom-right corner of the screen with the pointer, 440 px wide, that never
-  takes focus from the app being watched. At its top a small pill shows a breathing dot, the app's name and **×**
-  (turn subtitles off); drag the pill or the bubbles to move it, and it opens there next time. Each line is its own
+  takes focus from the app being watched. At its top a small pill shows a breathing dot, the app's name, two switches -
+  **Translate** (off: no AI, lines show as heard) and **Original** (show or hide what was said under each
+  translation) - and **×** (turn subtitles off); drag the pill or the bubbles to move it, and it opens there next time. Each line is its own
   rounded bubble, like a chat: the translation in larger text, what was said under it in small grey text, or three
   soft dots while it is being translated. The newest bubble is at the bottom; when a sentence spans two lines, one
   bubble with the whole sentence takes their place. The panel grows upward with its bubbles up to 560 px, then
@@ -98,6 +99,7 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-20: Translate and Original switches in the panel's pill (owner).
 - 2026-10-20: the bar became a chat-like panel of bubbles in the bottom-right corner (owner's reference UI).
 - 2026-10-20: the bar rolls through the last three lines (owner: one line went by before it could be read).
 - 2026-10-20: the page's descriptions moved behind info icons (owner).

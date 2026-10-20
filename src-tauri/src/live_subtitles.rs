@@ -481,6 +481,9 @@ pub mod pipeline {
         pub device_index: Option<usize>,
         /// Send the open line's text about once a second.
         pub partials: bool,
+        /// Translate lines; read before each one, so it can change mid-session
+        /// (the panel's Translate switch). Off, no AI call is made at all.
+        pub translate: &'static AtomicBool,
     }
 
     #[derive(Debug, Clone, Serialize)]
@@ -719,7 +722,10 @@ pub mod pipeline {
             let sink = sink.clone();
             let source = config.source.clone();
             let target = config.target.clone();
-            std::thread::spawn(move || translate_lines(line_rx, sink, source, target, playing))
+            let translate = config.translate;
+            std::thread::spawn(move || {
+                translate_lines(line_rx, sink, source, target, playing, translate)
+            })
         };
 
         let mut resampler: Option<(f64, FrameResampler)> = None;
@@ -810,6 +816,7 @@ pub mod pipeline {
         source: String,
         target: String,
         playing: Option<String>,
+        translate: &'static AtomicBool,
     ) {
         let mut context = SpeechContext {
             playing,
@@ -837,6 +844,10 @@ pub mod pipeline {
             };
 
             let Some((index, segment, text)) = next else {
+                if !translate.load(Ordering::Relaxed) {
+                    later.clear();
+                    continue;
+                }
                 match later.pop_front() {
                     Some(Later::Rejoin(rejoin, speech_end)) => {
                         let started = Instant::now();
@@ -870,6 +881,17 @@ pub mod pipeline {
                 }
                 continue;
             };
+
+            // Translation switched off: the line stays as heard, and nothing
+            // waits to be re-joined.
+            if !translate.load(Ordering::Relaxed) {
+                joiner = SentenceJoiner::default();
+                context.earlier.push(text);
+                if context.earlier.len() > 2 {
+                    context.earlier.remove(0);
+                }
+                continue;
+            }
 
             let started = Instant::now();
             let translated =
@@ -923,6 +945,8 @@ pub mod session {
     }
 
     static RUNNING: Mutex<Option<Running>> = Mutex::new(None);
+    /// The panel's Translate switch, for the running session and the next.
+    static TRANSLATE: AtomicBool = AtomicBool::new(true);
 
     /// What the window and the tray show about subtitles.
     #[derive(Debug, Clone, Serialize, Type)]
@@ -931,6 +955,8 @@ pub mod session {
         pub bundle_id: Option<String>,
         /// Why the last session stopped early (a code before ":").
         pub error: Option<String>,
+        /// Lines are being translated (the panel's Translate switch).
+        pub translate: bool,
     }
 
     pub fn state() -> SubtitleState {
@@ -942,6 +968,7 @@ pub mod session {
             running: bundle_id.is_some(),
             bundle_id,
             error: None,
+            translate: TRANSLATE.load(Ordering::Relaxed),
         }
     }
 
@@ -1057,6 +1084,10 @@ pub mod session {
         settings.live_subtitle_app = Some(bundle_id.clone());
         settings.live_subtitle_source = Some(source.clone());
         settings.live_subtitle_target = Some(target.clone());
+        TRANSLATE.store(
+            settings.live_subtitle_translate.unwrap_or(true),
+            Ordering::Relaxed,
+        );
         crate::settings::write_settings(app, settings);
 
         crate::subtitle_window::show(app);
@@ -1111,6 +1142,7 @@ pub mod session {
                 model: None,
                 device_index: None,
                 partials: true,
+                translate: &TRANSLATE,
             };
             let _ = pipeline::run(&app, config, stop, sink);
 
@@ -1137,10 +1169,22 @@ pub mod session {
                     running: false,
                     bundle_id: None,
                     error,
+                    translate: TRANSLATE.load(Ordering::Relaxed),
                 },
             );
         });
         Ok(())
+    }
+
+    // SE-LIVE-011
+    /// The panel's Translate switch: takes effect from the next line and is
+    /// remembered for later sessions.
+    pub fn set_translate(app: &AppHandle, on: bool) {
+        TRANSLATE.store(on, Ordering::Relaxed);
+        let mut settings = crate::settings::get_settings(app);
+        settings.live_subtitle_translate = Some(on);
+        crate::settings::write_settings(app, settings);
+        announce(app, state());
     }
 
     /// Stops the session; the last lines still finish and are saved.
@@ -1265,6 +1309,8 @@ pub mod probe {
     use std::time::Duration;
     use tauri::AppHandle;
 
+    static PROBE_TRANSLATES: AtomicBool = AtomicBool::new(true);
+
     pub fn run(app: &AppHandle, args: &CliArgs, bundle_id: &str) -> i32 {
         let out_path = args
             .probe_out
@@ -1301,6 +1347,7 @@ pub mod probe {
             model: args.model.clone(),
             device_index: args.device_index,
             partials: false,
+            translate: &PROBE_TRANSLATES,
         };
         let processes = crate::system_audio_tap::list_processes();
         write(json!({
