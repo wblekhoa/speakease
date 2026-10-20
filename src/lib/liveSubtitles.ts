@@ -1,9 +1,11 @@
 /**
  * Live subtitles (beta): what the subtitle bar shows, from the events the
- * session sends (src-tauri/src/live_subtitles.rs `pipeline::Event`). The
- * source line follows the speech as it is heard; the translation line keeps
- * the latest translation, so it never goes blank while the next line is
- * being translated. A re-joined sentence replaces the pieces it covers.
+ * session sends (src-tauri/src/live_subtitles.rs `pipeline::Event`). The bar
+ * rolls: the last few lines stay on screen, each with its translation under
+ * it, so a line can still be read after the next one starts (owner, 20/10:
+ * one line was replaced before it could be read). The line being heard sits
+ * at the bottom until its translation arrives. A re-joined sentence takes
+ * the place of the pieces it covers.
  */
 
 export type SubtitleEvent =
@@ -26,16 +28,26 @@ export type SubtitleEvent =
 interface Line {
   source: string;
   final: boolean;
-  /** undefined: not translated yet; "": covered by a re-joined sentence. */
+  /** undefined: not translated yet. */
   target?: string;
 }
+
+/** One line on the bar: what was heard and its translation, if any yet. */
+export interface SubtitleItem {
+  index: number;
+  source: string;
+  target: string | null;
+}
+
+/** How many lines the bar keeps on screen. */
+export const VISIBLE_LINES = 3;
 
 export interface SubtitleView {
   appName: string | null;
   listening: boolean;
   error: string | null;
-  source: string;
-  target: string;
+  /** Oldest first; the last is the newest. */
+  items: SubtitleItem[];
   /** When the last line or translation arrived (ms since epoch). */
   updatedAt: number;
 }
@@ -105,15 +117,16 @@ export const applySubtitleEvent = (
     }
     case "rejoin": {
       if (event.target === null) return state;
-      event.indexes.forEach((index, n) => {
-        const line = lines.get(index);
-        if (line) {
-          lines.set(index, {
-            ...line,
-            target: n === 0 ? event.target! : "",
-          });
-        }
+      // The first piece becomes the whole sentence; the others leave.
+      const [first, ...rest] = event.indexes;
+      const line = lines.get(first);
+      if (!line) return state;
+      lines.set(first, {
+        source: event.source,
+        final: true,
+        target: event.target,
       });
+      rest.forEach((index) => lines.delete(index));
       break;
     }
     default:
@@ -131,22 +144,16 @@ export const applySubtitleEvent = (
 };
 
 export const subtitleView = (state: SubtitleState): SubtitleView => {
-  const indexes = [...state.lines.keys()].sort((a, b) => b - a);
-  const latest = indexes.length ? state.lines.get(indexes[0]) : undefined;
-  let target = "";
-  for (const index of indexes) {
-    const line = state.lines.get(index);
-    if (line?.target) {
-      target = line.target;
-      break;
-    }
-  }
+  const indexes = [...state.lines.keys()].sort((a, b) => a - b);
+  const items = indexes.slice(-VISIBLE_LINES).map((index) => {
+    const line = state.lines.get(index)!;
+    return { index, source: line.source, target: line.target ?? null };
+  });
   return {
     appName: state.appName,
     listening: state.listening,
     error: state.error,
-    source: latest?.source ?? "",
-    target,
+    items,
     updatedAt: state.updatedAt,
   };
 };

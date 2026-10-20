@@ -14,7 +14,7 @@ const run = (events: SubtitleEvent[]) =>
   );
 
 // SE-LIVE-008
-// The source follows the speech; the translation keeps the last one.
+// The bar rolls: earlier lines stay readable under the newest.
 let view = subtitleView(
   run([
     { kind: "context", app_name: "Google Chrome", playing: null },
@@ -26,8 +26,24 @@ let view = subtitleView(
 );
 assert.equal(view.appName, "Google Chrome");
 assert.ok(view.listening);
-assert.equal(view.source, "And then");
-assert.equal(view.target, "Xin chào.");
+assert.deepEqual(view.items, [
+  { index: 1, source: "Hello there.", target: "Xin chào." },
+  { index: 2, source: "And then", target: null },
+]);
+
+// Only the last few lines stay.
+let rolled = emptySubtitles();
+for (let i = 1; i <= 5; i++) {
+  rolled = applySubtitleEvent(
+    rolled,
+    { kind: "line", index: i, source: `l${i}` },
+    i,
+  );
+}
+assert.deepEqual(
+  subtitleView(rolled).items.map((item) => item.index),
+  [3, 4, 5],
+);
 
 // A late partial never overwrites the final line.
 view = subtitleView(
@@ -36,19 +52,30 @@ view = subtitleView(
     { kind: "partial", index: 2, source: "And then" },
   ]),
 );
-assert.equal(view.source, "And then we left.");
+assert.equal(view.items[0].source, "And then we left.");
 
-// A re-joined sentence replaces its pieces.
+// A re-joined sentence takes the place of its pieces.
 view = subtitleView(
   run([
     { kind: "line", index: 1, source: "Vietnam was their target, and" },
     { kind: "translation", index: 1, target: "mảnh 1" },
     { kind: "line", index: 2, source: "they lost it." },
     { kind: "translation", index: 2, target: "mảnh 2" },
-    { kind: "rejoin", indexes: [1, 2], source: "…", target: "cả câu" },
+    {
+      kind: "rejoin",
+      indexes: [1, 2],
+      source: "Vietnam was their target, and they lost it.",
+      target: "cả câu",
+    },
   ]),
 );
-assert.equal(view.target, "cả câu");
+assert.deepEqual(view.items, [
+  {
+    index: 1,
+    source: "Vietnam was their target, and they lost it.",
+    target: "cả câu",
+  },
+]);
 
 // An empty recognition is dropped; old lines are forgotten.
 let state = run([{ kind: "line", index: 1, source: "" }]);

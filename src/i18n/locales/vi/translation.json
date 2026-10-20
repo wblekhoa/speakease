@@ -1040,6 +1040,7 @@
       "vad": "Không khởi động được bộ phát hiện giọng nói. Mở lại SpeakEase rồi thử lại.",
       "running": "Phụ đề đang bật.",
       "other": "Phụ đề dừng do lỗi. Thử bật lại."
-    }
+    },
+    "translating": "Đang dịch…"
   }
 }

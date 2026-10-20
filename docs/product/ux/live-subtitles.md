@@ -49,10 +49,12 @@ relations:
   as a list to pick from, those playing sound first with a "playing" mark; then **Languages** - the spoken language
   → the one to read (the shared translate language unless that is the spoken one); four short notes (on-device, reads the title for context, saved to History, the one-time permission) sit behind an info icon beside the title, and the list's hint behind one beside **Listen to**. The choices lock while subtitles run.
 - **Bar**: a rounded panel at the bottom centre of the screen with the pointer, above the Dock. It never takes focus
-  from the app being watched. The top line is what is being said, small and grey, updating about once a second
-  (newest words stay in view); the line under it, larger, is the latest translation, two lines at most. When a
-  sentence spans two lines the translation is replaced by one for the whole sentence. After 6 s of silence the bar
-  fades to half strength. Drag it anywhere; it opens there next time. **×** turns subtitles off.
+  from the app being watched. It rolls through the **last three lines**, oldest at the top: each shows what was said,
+  small and grey, with its translation under it, larger (two lines at most), or three soft dots while it is being
+  translated. The newest translated line is at full strength; older ones fade, so a line can still be read after the
+  next one starts. When a sentence spans two lines, one translation of the whole sentence takes their place. The
+  panel grows upward as lines arrive and never leaves empty glass over the video. After 6 s of silence it fades to
+  half strength. Drag it anywhere; it opens there next time. **×** turns subtitles off.
 - **Before the first line**: "Getting subtitles ready…", then "Listening to <app>…".
 - **Ending**: from the card, the bar's ×, the tray or the shortcut. What was heard is saved to History as one entry,
   titled with what was playing (a YouTube video's title, a file's name) or the app's name, with the translation as
@@ -95,6 +97,7 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-20: the bar rolls through the last three lines (owner: one line went by before it could be read).
 - 2026-10-20: the page's descriptions moved behind info icons (owner).
 - 2026-10-20: moved from a card on Speak to its own page in the side column (owner: its UX differs from dictation).
 - 2026-10-20: created - the card, the bar, tray item and shortcut, History entry (beta, behind Experimental).

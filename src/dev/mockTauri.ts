@@ -173,18 +173,26 @@ if (location.pathname.includes("/src/subtitles/")) {
     [300, { kind: "context", app_name: "Google Chrome", playing: null }],
     [600, { kind: "tapping", model: "demo" }],
     [
-      1400,
-      {
-        kind: "partial",
-        index: 1,
-        source: "During a PUBG tournament that had",
-      },
-    ],
-    [
-      2400,
+      1200,
       {
         kind: "line",
         index: 1,
+        source: "That's exactly what happened to Krafton.",
+      },
+    ],
+    [
+      2200,
+      {
+        kind: "translation",
+        index: 1,
+        target: "Đó chính là điều đã xảy ra với Krafton.",
+      },
+    ],
+    [
+      2600,
+      {
+        kind: "line",
+        index: 2,
         source:
           "During a PUBG tournament that had a seventy-thousand-dollar prize pool,",
       },
@@ -193,23 +201,24 @@ if (location.pathname.includes("/src/subtitles/")) {
       3600,
       {
         kind: "translation",
-        index: 1,
+        index: 2,
         target: "Trong một giải đấu PUBG có tổng giải thưởng 70.000 đô la,",
       },
     ],
+    [4000, { kind: "partial", index: 3, source: "Team Korea accused" }],
     [
-      4200,
+      4800,
       {
         kind: "line",
-        index: 2,
+        index: 3,
         source: "Team Korea accused Team Vietnam of cheating.",
       },
     ],
     [
-      5400,
+      5800,
       {
         kind: "translation",
-        index: 2,
+        index: 3,
         target: "Đội Hàn Quốc cáo buộc Đội Việt Nam gian lận.",
       },
     ],
@@ -217,13 +226,23 @@ if (location.pathname.includes("/src/subtitles/")) {
       6400,
       {
         kind: "rejoin",
-        indexes: [1, 2],
-        source: "…",
+        indexes: [2, 3],
+        source:
+          "During a PUBG tournament that had a seventy-thousand-dollar prize pool, Team Korea accused Team Vietnam of cheating.",
         target:
           "Trong một giải đấu PUBG có tổng giải thưởng 70.000 đô la, Đội Hàn Quốc đã cáo buộc Đội Việt Nam gian lận.",
       },
     ],
+    [
+      7000,
+      {
+        kind: "partial",
+        index: 4,
+        source: "And this became a massive controversy",
+      },
+    ],
   ];
+
   for (const [at, payload] of script) {
     setTimeout(() => emit("live-subtitle", payload), at);
   }

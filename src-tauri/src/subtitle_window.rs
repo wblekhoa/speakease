@@ -7,6 +7,8 @@ use tauri::AppHandle;
 
 pub const LABEL: &str = "live_subtitles";
 const WIDTH: f64 = 760.0;
+/// The opening height; the bar's page then fits the window to its card,
+/// keeping the bottom edge, so no empty glass blocks the video above it.
 const HEIGHT: f64 = 150.0;
 /// Above the Dock / the bottom of the visible area.
 const BOTTOM_GAP: f64 = 72.0;

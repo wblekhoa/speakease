@@ -1040,6 +1040,7 @@
       "vad": "The speech detector didn’t start. Reopen SpeakEase and try again.",
       "running": "Subtitles are already on.",
       "other": "Subtitles stopped on an error. Try turning them on again."
-    }
+    },
+    "translating": "Translating…"
   }
 }

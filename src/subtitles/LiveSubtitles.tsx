@@ -1,8 +1,12 @@
-import React, { useEffect, useReducer, useState } from "react";
+import React, { useEffect, useReducer, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import { LogicalPosition } from "@tauri-apps/api/dpi";
+import {
+  LogicalPosition,
+  LogicalSize,
+  PhysicalPosition,
+} from "@tauri-apps/api/dpi";
 import { commands } from "@/bindings";
 import {
   applySubtitleEvent,
@@ -15,6 +19,8 @@ import "./LiveSubtitles.css";
 
 /** Where the user last dragged the bar (this Mac only). */
 const POSITION_KEY = "speakease.liveSubtitles.position";
+/** Space around the card inside the window (LiveSubtitles.css .ls-frame). */
+const FRAME_PADDING = 8;
 /** The bar dims after this long without speech. */
 const QUIET_MS = 6000;
 
@@ -50,6 +56,7 @@ const LiveSubtitles: React.FC = () => {
     emptySubtitles,
   );
   const [now, setNow] = useState(Date.now());
+  const cardRef = useRef<HTMLDivElement>(null);
   const view = subtitleView(state);
 
   useEffect(() => {
@@ -76,6 +83,35 @@ const LiveSubtitles: React.FC = () => {
     };
   }, []);
 
+  // The window follows the card's height and keeps its bottom edge, so the
+  // bar grows upward as lines arrive and no empty glass sits over the video.
+  useEffect(() => {
+    const card = cardRef.current;
+    if (!card) return;
+    const window = getCurrentWindow();
+    let last = 0;
+    const fit = async () => {
+      const height = Math.ceil(card.offsetHeight) + FRAME_PADDING * 2;
+      if (Math.abs(height - last) < 2) return;
+      last = height;
+      try {
+        const scale = await window.scaleFactor();
+        const position = await window.outerPosition();
+        const size = await window.outerSize();
+        const bottom = position.y + size.height;
+        await window.setSize(new LogicalSize(size.width / scale, height));
+        await window.setPosition(
+          new PhysicalPosition(position.x, Math.round(bottom - height * scale)),
+        );
+      } catch {
+        // Outside the app (browser preview): nothing to fit.
+      }
+    };
+    const observer = new ResizeObserver(() => void fit());
+    observer.observe(card);
+    return () => observer.disconnect();
+  }, []);
+
   const startDrag = (event: React.MouseEvent) => {
     if (event.button !== 0) return;
     if ((event.target as HTMLElement).closest("button")) return;
@@ -93,7 +129,7 @@ const LiveSubtitles: React.FC = () => {
         {t(`subtitles.errors.${subtitleErrorKey(view.error)}`, { app })}
       </p>
     );
-  } else if (!view.source) {
+  } else if (view.items.length === 0) {
     body = (
       <p className="ls-status">
         {view.listening
@@ -102,21 +138,50 @@ const LiveSubtitles: React.FC = () => {
       </p>
     );
   } else {
+    // Oldest at the top, fading. The newest translated line stays at full
+    // strength while the line after it is still being translated - it is
+    // the one being read.
+    const lastTranslated = view.items.reduce(
+      (last, item, n) => (item.target ? n : last),
+      -1,
+    );
+    const ageOf = (n: number) => Math.max(0, lastTranslated - n);
     body = (
-      <>
-        <p className="ls-source">
-          <span dir="auto">{view.source}</span>
-        </p>
-        <p className="ls-target" dir="auto">
-          {view.target || " "}
-        </p>
-      </>
+      <ol className="ls-lines">
+        {view.items.map((item, n) => (
+          <li
+            key={item.index}
+            className="ls-line"
+            data-age={ageOf(n)}
+            aria-current={n === view.items.length - 1 ? "true" : undefined}
+          >
+            <p className="ls-source" dir="auto">
+              {item.source}
+            </p>
+            {item.target ? (
+              <p className="ls-target" dir="auto">
+                {item.target}
+              </p>
+            ) : (
+              <p
+                className="ls-target ls-pending"
+                aria-label={t("subtitles.translating")}
+              >
+                <span />
+                <span />
+                <span />
+              </p>
+            )}
+          </li>
+        ))}
+      </ol>
     );
   }
 
   return (
     <div className="ls-frame">
       <div
+        ref={cardRef}
         className={`ls-card${quiet ? " ls-quiet" : ""}`}
         onMouseDown={startDrag}
         role="region"
