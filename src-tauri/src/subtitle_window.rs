@@ -21,7 +21,9 @@ const SIDE_GAP: f64 = 8.0;
 mod imp {
     use super::{BOTTOM_GAP, HEIGHT, LABEL, RADIUS, SIDE_GAP, WIDTH};
     use tauri::{AppHandle, Manager, WebviewUrl};
-    use tauri_nspanel::{tauri_panel, CollectionBehavior, PanelBuilder, PanelLevel, StyleMask};
+    use tauri_nspanel::{
+        tauri_panel, CollectionBehavior, ManagerExt, PanelBuilder, PanelLevel, StyleMask,
+    };
 
     tauri_panel! {
         panel!(SubtitlePanel {
@@ -41,13 +43,16 @@ mod imp {
         Some((x, y))
     }
 
-    /// Shows the panel, creating it on first use. A panel the user dragged
-    /// stays where they left it (its page remembers and restores the spot).
+    /// Shows the panel above every other window, creating it on first use
+    /// (owner, 20/10: subtitles come to the front when they start). A panel
+    /// the user dragged stays where they left it (its page remembers the
+    /// spot).
     pub fn show(app: &AppHandle) {
         let handle = app.clone();
         let _ = app.run_on_main_thread(move || {
-            if let Some(window) = handle.get_webview_window(LABEL) {
-                let _ = window.show();
+            if let Ok(panel) = handle.get_webview_panel(LABEL) {
+                panel.set_level(PanelLevel::Status.value());
+                panel.order_front_regardless();
                 return;
             }
             let Some((x, y)) = bottom_right(&handle) else {
@@ -66,6 +71,8 @@ mod imp {
                 .has_shadow(false)
                 .transparent(true)
                 .no_activate(true)
+                .hides_on_deactivate(false)
+                .becomes_key_only_if_needed(true)
                 .corner_radius(0.0)
                 .style_mask(StyleMask::empty().borderless().nonactivating_panel())
                 .with_window(|w| w.decorations(false).transparent(true).focusable(false))
@@ -77,12 +84,43 @@ mod imp {
                 .build()
             {
                 Ok(panel) => {
+                    prevent_activation(&handle);
                     frost(&handle);
-                    panel.show();
+                    panel.order_front_regardless();
                 }
                 Err(e) => log::error!("Live subtitles: cannot create the subtitle panel: {e}"),
             }
         });
+    }
+
+    /// A click on the panel (a switch, ×, a drag) must not activate
+    /// SpeakEase and raise its main window over the video (owner, 20/10).
+    /// The nonactivating style alone does not stop it on a window made
+    /// before it became a panel; AppKit's `_setPreventsActivation:` does.
+    /// Checked first, so a macOS without it only loses this nicety.
+    fn prevent_activation(app: &AppHandle) {
+        use objc2::runtime::{AnyObject, Bool};
+        use objc2::{msg_send, sel};
+        let Some(window) = app.get_webview_window(LABEL) else {
+            return;
+        };
+        let Ok(pointer) = window.ns_window() else {
+            return;
+        };
+        // SAFETY: `ns_window` is the live NSWindow of this panel, used on the
+        // main thread (`show` runs here through run_on_main_thread).
+        unsafe {
+            let ns_window = &*(pointer as *const AnyObject);
+            let selector = sel!(_setPreventsActivation:);
+            let responds: Bool = msg_send![ns_window, respondsToSelector: selector];
+            if responds.as_bool() {
+                let _: () = msg_send![ns_window, _setPreventsActivation: Bool::YES];
+            } else {
+                log::warn!(
+                    "Live subtitles: this macOS cannot keep the panel from activating the app"
+                );
+            }
+        }
     }
 
     /// A strong native blur behind the whole panel (owner, 20/10: easier to

@@ -49,7 +49,8 @@ relations:
   as a list to pick from, those playing sound first with a "playing" mark; then **Languages** - the spoken language
   → the one to read (the shared translate language unless that is the spoken one); four short notes (on-device, reads the title for context, saved to History, the one-time permission) sit behind an info icon beside the title, and the list's hint behind one beside **Listen to**. The choices lock while subtitles run.
 - **Panel**: a floating column in the bottom-right corner of the screen with the pointer, 472 px wide (bubbles 440 px, room for their shadows), with a strong native blur behind it so text reads over a busy video, that never
-  takes focus from the app being watched. At its top a small pill shows a breathing dot, the app's name, two switches -
+  takes focus from the app being watched: clicking it (a switch, ×, a drag) does not bring SpeakEase's window
+  forward, and it comes to the front of every window when subtitles start. At its top a small pill shows a breathing dot, the app's name, two switches -
   **Translate** (off: no AI, lines show as heard) and **Original** (show or hide what was said under each
   translation) - and **×** (turn subtitles off); drag the pill or the bubbles to move it, and it opens there next time. Each line is its own
   rounded bubble, like a chat: the translation in larger text, what was said under it in small grey text, or three
@@ -99,6 +100,7 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-20: clicking the panel no longer raises SpeakEase's window; the panel comes to the front when subtitles start (owner).
 - 2026-10-20: a strong native blur behind the panel and softer bubble shadows (owner).
 - 2026-10-20: bubble shadows no longer cut at the panel's edges (owner).
 - 2026-10-20: at most four bubbles show, with faded edges (owner).
