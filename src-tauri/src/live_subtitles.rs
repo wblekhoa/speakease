@@ -286,7 +286,7 @@ pub fn playing_note(app_name: &str, window_title: &str, document: &str) -> Optio
         }
     }
     // Browsers add their name, then sometimes the profile ("… - Google
-    // Chrome - Khoa"): keep what comes before the browser's name.
+    // Chrome - Work"): keep what comes before the browser's name.
     for browser in [
         " - Google Chrome",
         " – Google Chrome",
@@ -1070,7 +1070,27 @@ pub mod session {
                 let app = app.clone();
                 let transcript = transcript.clone();
                 let early_error = early_error.clone();
+                let context: Mutex<Option<Event>> = Mutex::new(None);
                 Arc::new(move |event: Event| {
+                    // The bar's page may still be loading when the context
+                    // arrives; send it again once tapping starts.
+                    match &event {
+                        Event::Context { .. } => {
+                            if let Ok(mut slot) = context.lock() {
+                                *slot = Some(event.clone());
+                            }
+                        }
+                        Event::Tapping { .. } => {
+                            if let Some(again) = context.lock().ok().and_then(|c| c.clone()) {
+                                let _ = app.emit_to(
+                                    crate::subtitle_window::LABEL,
+                                    "live-subtitle",
+                                    &again,
+                                );
+                            }
+                        }
+                        _ => {}
+                    }
                     if let Event::Error { error } = &event {
                         log::warn!("Live subtitles: {error}");
                         if let Ok(mut slot) = early_error.lock() {
@@ -1544,15 +1564,15 @@ mod tests {
         assert_eq!(
             playing_note(
                 "Google Chrome",
-                "(6)Khoa | TikTok - Google Chrome - Khoa",
+                "(6)Weekly news | Example - Google Chrome - Work",
                 ""
             ),
-            Some("\"Khoa | TikTok\" in Google Chrome".into())
+            Some("\"Weekly news | Example\" in Google Chrome".into())
         );
         assert_eq!(
             playing_note(
                 "Google Chrome",
-                "How an E-Sports Tournament Ended - YouTube - Google Chrome - Khoa",
+                "How an E-Sports Tournament Ended - YouTube - Google Chrome - Work",
                 ""
             ),
             Some("the YouTube video \"How an E-Sports Tournament Ended\"".into())

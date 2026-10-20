@@ -1550,6 +1550,14 @@ pub fn get_recording_retention_period(app: &AppHandle) -> RecordingRetentionPeri
 
 #[cfg(test)]
 mod tests {
+
+    #[test]
+    fn the_live_subtitles_shortcut_parses_for_both_keyboard_backends() {
+        let binding = &get_default_settings().bindings[LIVE_SUBTITLES_BINDING_ID];
+        assert!(crate::shortcut::handy_keys::validate_shortcut(&binding.current_binding).is_ok());
+        assert!(crate::shortcut::tauri_impl::validate_shortcut(&binding.current_binding).is_ok());
+    }
+
     use super::*;
 
     /// A store written by Handy, before SpeakEase's prompts existed.
