@@ -12,6 +12,7 @@ mod commands;
 pub mod engine_supervisor;
 mod helpers;
 mod input;
+mod live_subtitles;
 mod llm_client;
 mod managers;
 mod memory;
@@ -22,6 +23,7 @@ mod secure_input;
 mod settings;
 mod shortcut;
 mod signal_handle;
+mod system_audio_tap;
 mod transcription_coordinator;
 mod tray;
 mod tray_i18n;
@@ -476,6 +478,11 @@ mod headless_guard_tests {
 fn run_headless_transcription(app: &AppHandle, args: &CliArgs) -> i32 {
     use std::time::Instant;
 
+    // SpeakEase: Phase 0 of live subtitles taps one app instead of a file.
+    if let Some(bundle_id) = args.live_subtitle_probe.as_deref() {
+        return live_subtitles::probe::run(app, args, bundle_id);
+    }
+
     // --list-devices: print registered compute devices (with indices) and exit.
     // Useful on multi-GPU machines to discover the index for --device-index.
     if args.list_devices {
@@ -874,8 +881,10 @@ pub fn run(cli_args: CliArgs) {
 
     // The headless path must run as its own instance (see the single-instance
     // note below), not forward to an already-running app.
-    let headless_mode =
-        cli_args.transcribe_file.is_some() || cli_args.list_devices || cli_args.list_models;
+    let headless_mode = cli_args.transcribe_file.is_some()
+        || cli_args.list_devices
+        || cli_args.list_models
+        || cli_args.live_subtitle_probe.is_some();
 
     #[allow(unused_mut)]
     let mut builder = tauri::Builder::default()

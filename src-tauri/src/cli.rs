@@ -61,4 +61,30 @@ pub struct CliArgs {
     /// Emit --transcribe-file results as JSON.
     #[arg(long)]
     pub json: bool,
+
+    /// SpeakEase live subtitles, Phase 0: tap this app's sound (bundle id),
+    /// recognise and translate each sentence headlessly, and write one JSON
+    /// line per sentence to --probe-out. Needs macOS 14.2+.
+    #[arg(long, value_name = "BUNDLE_ID", hide = true)]
+    pub live_subtitle_probe: Option<String>,
+
+    /// How long --live-subtitle-probe listens (default 120 s).
+    #[arg(long, value_name = "SECONDS", hide = true)]
+    pub probe_seconds: Option<u64>,
+
+    /// Where --live-subtitle-probe writes its JSON lines.
+    #[arg(long, value_name = "FILE", hide = true)]
+    pub probe_out: Option<PathBuf>,
+
+    /// Silence the tapped app on the speakers during --live-subtitle-probe.
+    #[arg(long, hide = true)]
+    pub probe_mute: bool,
+
+    /// Language the tapped app speaks (default English).
+    #[arg(long, value_name = "LANGUAGE", hide = true)]
+    pub subtitle_from: Option<String>,
+
+    /// Language the subtitles are written in (default Vietnamese).
+    #[arg(long, value_name = "LANGUAGE", hide = true)]
+    pub subtitle_to: Option<String>,
 }

@@ -1,6 +1,8 @@
 fn main() {
     #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
     build_apple_intelligence_bridge();
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+    build_system_audio_tap();
 
     generate_tray_translations();
 
@@ -553,6 +555,87 @@ fn build_apple_intelligence_bridge() {
     }
 
     println!("cargo:rustc-link-arg=-Wl,-rpath,/usr/lib/swift");
+}
+
+/// SpeakEase: the Core Audio process tap that live subtitles listen through
+/// (`swift/system_audio_tap.swift`). Built like the Apple Intelligence bridge
+/// above; the Swift runtime search paths it adds cover this library too.
+#[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+fn build_system_audio_tap() {
+    use std::env;
+    use std::path::PathBuf;
+    use std::process::Command;
+
+    const SWIFT_FILE: &str = "swift/system_audio_tap.swift";
+    println!("cargo:rerun-if-changed={SWIFT_FILE}");
+
+    let out_dir = PathBuf::from(env::var("OUT_DIR").expect("OUT_DIR not set"));
+    let object_path = out_dir.join("system_audio_tap.o");
+    let static_lib_path = out_dir.join("libsystem_audio_tap.a");
+
+    let sdk_path = env::var("SDKROOT").unwrap_or_else(|_| {
+        String::from_utf8(
+            Command::new("xcrun")
+                .args(["--sdk", "macosx", "--show-sdk-path"])
+                .output()
+                .expect("Failed to locate macOS SDK")
+                .stdout,
+        )
+        .expect("SDK path is not valid UTF-8")
+        .trim()
+        .to_string()
+    });
+    let swiftc_path = env::var("SWIFTC").unwrap_or_else(|_| {
+        String::from_utf8(
+            Command::new("xcrun")
+                .args(["--find", "swiftc"])
+                .output()
+                .expect("Failed to locate swiftc")
+                .stdout,
+        )
+        .expect("swiftc path is not valid UTF-8")
+        .trim()
+        .to_string()
+    });
+
+    // macOS 11 target like the bridge above; the Swift code checks
+    // `#available(macOS 14.2, *)` before touching process taps.
+    let status = Command::new(&swiftc_path)
+        .args([
+            "-parse-as-library",
+            "-target",
+            "arm64-apple-macosx11.0",
+            "-sdk",
+            &sdk_path,
+            "-O",
+            "-c",
+            SWIFT_FILE,
+            "-o",
+            object_path.to_str().expect("object path is not UTF-8"),
+        ])
+        .status()
+        .expect("Failed to invoke swiftc for the system audio tap");
+    if !status.success() {
+        panic!("swiftc failed to compile {SWIFT_FILE}");
+    }
+
+    let status = Command::new("libtool")
+        .args([
+            "-static",
+            "-o",
+            static_lib_path.to_str().expect("library path is not UTF-8"),
+            object_path.to_str().expect("object path is not UTF-8"),
+        ])
+        .status()
+        .expect("Failed to create the system audio tap library");
+    if !status.success() {
+        panic!("libtool failed for the system audio tap");
+    }
+
+    println!("cargo:rustc-link-search=native={}", out_dir.display());
+    println!("cargo:rustc-link-lib=static=system_audio_tap");
+    println!("cargo:rustc-link-lib=framework=CoreAudio");
+    println!("cargo:rustc-link-lib=framework=AudioToolbox");
 }
 
 /// Returns true when the active developer directory is the standalone Command

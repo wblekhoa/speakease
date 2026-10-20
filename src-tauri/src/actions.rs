@@ -172,28 +172,6 @@ pub(crate) async fn post_process_transcription(
         return None;
     }
 
-    let provider = match settings.active_post_process_provider().cloned() {
-        Some(provider) => provider,
-        None => {
-            debug!("Post-processing enabled but no provider is selected");
-            return None;
-        }
-    };
-
-    let model = settings
-        .post_process_models
-        .get(&provider.id)
-        .cloned()
-        .unwrap_or_default();
-
-    if model.trim().is_empty() {
-        debug!(
-            "Post-processing skipped because provider '{}' has no model configured",
-            provider.id
-        );
-        return None;
-    }
-
     let selected_prompt_id = match prompt_override
         .map(str::to_string)
         .or_else(|| settings.post_process_selected_prompt_id.clone())
@@ -215,6 +193,44 @@ pub(crate) async fn post_process_transcription(
             return None;
         }
     };
+
+    post_process_with_prompt(settings, transcription, &prompt).await
+}
+
+/// SpeakEase: runs `prompt` (a template with `${output}`) on the active AI
+/// provider. Live subtitles build their prompt per sentence instead of
+/// picking a stored one.
+pub(crate) async fn post_process_with_prompt(
+    settings: &AppSettings,
+    transcription: &str,
+    prompt: &str,
+) -> Option<String> {
+    if is_blank_transcription(transcription) {
+        debug!("Post-processing skipped because the transcription is empty");
+        return None;
+    }
+
+    let provider = match settings.active_post_process_provider().cloned() {
+        Some(provider) => provider,
+        None => {
+            debug!("Post-processing enabled but no provider is selected");
+            return None;
+        }
+    };
+
+    let model = settings
+        .post_process_models
+        .get(&provider.id)
+        .cloned()
+        .unwrap_or_default();
+
+    if model.trim().is_empty() {
+        debug!(
+            "Post-processing skipped because provider '{}' has no model configured",
+            provider.id
+        );
+        return None;
+    }
 
     if prompt.trim().is_empty() {
         debug!("Post-processing skipped because the selected prompt is empty");
@@ -240,8 +256,8 @@ pub(crate) async fn post_process_transcription(
     if provider.supports_structured_output {
         debug!("Using structured outputs for provider '{}'", provider.id);
 
-        let system_prompt = build_system_prompt(&prompt);
-        let user_content = wrap_for_prompt(&prompt, transcription);
+        let system_prompt = build_system_prompt(prompt);
+        let user_content = wrap_for_prompt(prompt, transcription);
 
         // Handle Apple Intelligence separately since it uses native Swift APIs
         if provider.id == APPLE_INTELLIGENCE_PROVIDER_ID {
