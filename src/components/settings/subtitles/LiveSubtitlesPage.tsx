@@ -142,11 +142,23 @@ export const LiveSubtitlesPage: React.FC = () => {
               {t("speak.subtitles.beta")}
             </span>
             <InfoTip>
-              <ul className="space-y-1.5 list-disc ps-4">
-                <li>{t("speak.subtitles.noteDevice")}</li>
-                <li>{t("speak.subtitles.noteContext")}</li>
-                <li>{t("speak.subtitles.noteHistory")}</li>
-                <li>{t("speak.subtitles.notePermission")}</li>
+              <ul className="space-y-2.5">
+                {(
+                  [
+                    "noteDevice",
+                    "noteContext",
+                    "noteHistory",
+                    "notePermission",
+                  ] as const
+                ).map((key) => (
+                  <li key={key} className="flex gap-2">
+                    <span
+                      aria-hidden
+                      className="mt-[7px] size-1 shrink-0 rounded-full bg-logo-primary"
+                    />
+                    <span>{t(`speak.subtitles.${key}`)}</span>
+                  </li>
+                ))}
               </ul>
             </InfoTip>
           </div>

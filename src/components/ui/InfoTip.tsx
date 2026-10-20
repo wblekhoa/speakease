@@ -41,8 +41,8 @@ export const InfoTip: React.FC<{ children: React.ReactNode }> = ({
         />
       </svg>
       {open && (
-        <Tooltip targetRef={ref} position="top">
-          <div className="text-sm text-start leading-relaxed normal-case tracking-normal font-normal">
+        <Tooltip targetRef={ref} position="top" width={320}>
+          <div className="py-1 text-[13px] leading-snug text-start text-text normal-case tracking-normal font-normal">
             {children}
           </div>
         </Tooltip>

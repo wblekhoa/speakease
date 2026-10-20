@@ -13,6 +13,8 @@ interface TooltipCoords {
 interface TooltipProps {
   targetRef: React.RefObject<HTMLElement>;
   position?: TooltipPosition;
+  /** Width in px; long text (several notes) reads better wider. */
+  width?: number;
   children: React.ReactNode;
 }
 
@@ -25,6 +27,7 @@ const DEFAULT_HEIGHT = 60;
 export const Tooltip: React.FC<TooltipProps> = ({
   targetRef,
   position = "top",
+  width = TOOLTIP_WIDTH,
   children,
 }) => {
   const [coords, setCoords] = useState<TooltipCoords | null>(null);
@@ -59,21 +62,21 @@ export const Tooltip: React.FC<TooltipProps> = ({
     }
 
     const targetCenter = targetRect.left + targetRect.width / 2;
-    let left = targetCenter - TOOLTIP_WIDTH / 2;
+    let left = targetCenter - width / 2;
 
     if (left < VIEWPORT_PADDING) {
       left = VIEWPORT_PADDING;
-    } else if (left + TOOLTIP_WIDTH > window.innerWidth - VIEWPORT_PADDING) {
-      left = window.innerWidth - TOOLTIP_WIDTH - VIEWPORT_PADDING;
+    } else if (left + width > window.innerWidth - VIEWPORT_PADDING) {
+      left = window.innerWidth - width - VIEWPORT_PADDING;
     }
 
     const arrowLeft = Math.min(
       Math.max(targetCenter - left, ARROW_MARGIN),
-      TOOLTIP_WIDTH - ARROW_MARGIN,
+      width - ARROW_MARGIN,
     );
 
     setCoords({ top, left, arrowLeft, actualPosition });
-  }, [targetRef, position]);
+  }, [targetRef, position, width]);
 
   useEffect(() => {
     updatePosition();
@@ -97,7 +100,7 @@ export const Tooltip: React.FC<TooltipProps> = ({
         position: "fixed",
         top: coords?.top ?? -9999,
         left: coords?.left ?? -9999,
-        width: TOOLTIP_WIDTH,
+        width,
         zIndex: 9999,
         opacity: coords ? 1 : 0,
       }}
