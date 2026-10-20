@@ -636,6 +636,7 @@ fn build_system_audio_tap() {
     println!("cargo:rustc-link-lib=static=system_audio_tap");
     println!("cargo:rustc-link-lib=framework=CoreAudio");
     println!("cargo:rustc-link-lib=framework=AudioToolbox");
+    println!("cargo:rustc-link-lib=framework=AppKit");
 }
 
 /// Returns true when the active developer directory is the standalone Command

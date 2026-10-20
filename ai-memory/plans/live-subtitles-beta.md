@@ -1,5 +1,5 @@
 ---
-status: proposed
+status: executing
 owner: Lê Khoa
 started: 2026-10-16
 current-phase: 0
@@ -114,6 +114,32 @@ the languages offered in the pickers, the shortcut's default key.
    interval or switch to a smaller English model (Moonshine V2, 31 MB) if needed.
 7. **macOS version**: taps exist from 14.2 (some sources say 14.4); confirm against Apple's docs in Phase 0 and gate
    on the confirmed version.
+
+## Phase 0 results (20/10/2026)
+
+Quiet test (Stage A): `afplay` reading a 51 s English text with known words, muted on the speakers while tapped,
+probe built and signed with the Developer ID, launched with `open -n -a <bundle> --args --live-subtitle-probe <pid>
+--probe-mute`. Raw lines: scratchpad `stageA1.jsonl` (not kept in the repo).
+
+- Tap: works, audio non-silent (peak 0.79), no permission prompt shown for this run; 10/10 sentences in order.
+- Source line: p50 0.78 s, p95 1.12 s after the end of speech (gate ≤ 1.5 s: **pass**).
+- Translation: p50 1.84 s; p95 5.71 s only because the first AI call took 4.76 s (connection set-up); the other nine
+  were 1.29-3.25 s. Gate p95 ≤ 3 s: **pass once the first call is paid before the first sentence** - the probe now
+  sends a warm-up call before tapping (1.76 s in the next run).
+- Recognition words: near-perfect ("organisers" → "organizer").
+- Translation quality: natural, but "Friday" became "thứ Năm" (Thursday) and "players" became "cầu thủ" (football)
+  where esports needs "tuyển thủ". Prompt now says to keep days, dates and numbers exactly; the second needs the
+  topic as context - for round 2 / Phase 1.
+- First ~4.5 s of the clip were missed (the first sentence came out as its last words). The probe now logs when the
+  first chunk and the first sound arrive to tell tap start-up time from the clip starting before the tap.
+
+Finding for risk 1: WebKit apps (Safari, apps with a web view) play through a shared `com.apple.WebKit.GPU` process
+whose bundle id does not name the app, and Chromium apps through `*.helper`. The tap now also takes every process the
+chosen app is **responsible for** (`responsibility_get_pid_responsible_for_pid`); checked: two `WebKit.GPU`
+processes resolved to SpeakEase and Google Drive, Chrome's helpers to Chrome. SpeakEase's own processes are excluded.
+
+Stage B (a real browser playing YouTube) has not run: the built-in browser navigation was declined. It needs the owner
+to play a video in Chrome (or allow the built-in browser) while the probe runs.
 
 ## Next safe step
 

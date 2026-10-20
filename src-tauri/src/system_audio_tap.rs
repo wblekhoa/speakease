@@ -11,6 +11,9 @@ use std::time::Instant;
 pub struct AudioProcess {
     pub pid: i32,
     pub bundle_id: String,
+    /// The app responsible for the process (a helper's host app).
+    #[serde(default)]
+    pub app_bundle_id: String,
     /// Sending sound to an output right now.
     pub playing: bool,
 }

@@ -11,6 +11,7 @@
 //   se_tap_stop(handle)
 //   se_tap_free_string(ptr)                  frees strings returned above
 
+import AppKit
 import AudioToolbox
 import CoreAudio
 import Foundation
@@ -67,25 +68,48 @@ private struct TapProcess {
     let object: AudioObjectID
     let pid: pid_t
     let bundleID: String?
+    /// The app responsible for the process: a browser's or a WebKit app's
+    /// sound plays in helpers (`com.google.Chrome.helper`,
+    /// `com.apple.WebKit.GPU`) whose own bundle id may not name the app.
+    let responsiblePID: pid_t
+    let appBundleID: String?
     let playing: Bool
 }
 
+/// `responsibility_get_pid_responsible_for_pid` (libSystem, not in the SDK
+/// headers): the process macOS holds responsible for `pid` — the host app of
+/// an XPC helper. Missing, it answers `pid` itself.
+private let responsibleFor: (pid_t) -> pid_t = {
+    typealias Lookup = @convention(c) (pid_t) -> pid_t
+    guard let symbol = dlsym(UnsafeMutableRawPointer(bitPattern: -2), "responsibility_get_pid_responsible_for_pid")
+    else { return { $0 } }
+    let lookup = unsafeBitCast(symbol, to: Lookup.self)
+    return { pid in
+        let responsible = lookup(pid)
+        return responsible > 0 ? responsible : pid
+    }
+}()
+
 private func tapProcesses() -> [TapProcess] {
     processObjects().map { object in
-        TapProcess(
+        let pid = readProperty(object, kAudioProcessPropertyPID, pid_t(-1)) ?? -1
+        let responsible = pid > 0 ? responsibleFor(pid) : pid
+        return TapProcess(
             object: object,
-            pid: readProperty(object, kAudioProcessPropertyPID, pid_t(-1)) ?? -1,
+            pid: pid,
             bundleID: readString(object, kAudioProcessPropertyBundleID),
+            responsiblePID: responsible,
+            appBundleID: NSRunningApplication(processIdentifier: responsible)?.bundleIdentifier,
             playing: (readProperty(object, kAudioProcessPropertyIsRunningOutput, UInt32(0)) ?? 0)
                 != 0)
     }
 }
 
-/// An app plays sound from helper processes too (a browser's audio runs in a
-/// helper whose bundle id extends the app's), so the tap takes every process
-/// whose bundle id is the app's or starts with it.
-private func belongsToApp(_ bundleID: String?, _ app: String) -> Bool {
-    guard let bundleID else { return false }
+/// Every process that plays for `app`: its own, helpers whose bundle id
+/// extends it, and helpers it is responsible for.
+private func belongsToApp(_ process: TapProcess, _ app: String) -> Bool {
+    if process.appBundleID == app { return true }
+    guard let bundleID = process.bundleID else { return false }
     return bundleID == app || bundleID.hasPrefix(app + ".")
 }
 
@@ -132,9 +156,14 @@ public func se_tap_free_string(_ pointer: UnsafeMutablePointer<CChar>?) {
 @_cdecl("se_tap_list_processes")
 public func se_tap_list_processes() -> UnsafeMutablePointer<CChar>? {
     let own = ProcessInfo.processInfo.processIdentifier
-    let rows: [[String: Any]] = tapProcesses().filter { $0.pid != own }.map {
-        ["pid": Int($0.pid), "bundle_id": $0.bundleID ?? "", "playing": $0.playing]
-    }
+    let rows: [[String: Any]] = tapProcesses()
+        .filter { $0.pid != own && $0.responsiblePID != own }
+        .map {
+            [
+                "pid": Int($0.pid), "bundle_id": $0.bundleID ?? "",
+                "app_bundle_id": $0.appBundleID ?? "", "playing": $0.playing,
+            ]
+        }
     guard let data = try? JSONSerialization.data(withJSONObject: rows),
         let json = String(data: data, encoding: .utf8)
     else { return cString("[]") }
@@ -160,9 +189,9 @@ public func se_tap_start(
     let pid = pid_t(app)
     let objects = tapProcesses()
         .filter { process in
-            guard process.pid != own else { return false }
+            guard process.pid != own, process.responsiblePID != own else { return false }
             if let pid { return process.pid == pid }
-            return belongsToApp(process.bundleID, app)
+            return belongsToApp(process, app)
         }
         .map(\.object)
     if objects.isEmpty { return fail("no-process: \(app) has no audio process") }
