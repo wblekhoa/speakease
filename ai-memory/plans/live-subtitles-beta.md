@@ -160,6 +160,27 @@ muted, 120 s each; translator = Apple Intelligence on the Mac, the AI set up in 
   recognition slips pass straight through ("prize pool" → "price pull" → "Tổng giá trị kéo", "Krafton" → "Crafton",
   "9/11/2026" → a wrong date).
 
+### Round 2 applied (20/10)
+
+Owner decisions are in `decisions.md` (2026-10-20). Built into the probe:
+
+- Translation through Apple Intelligence with the content-transformation guardrails (`transform_text_apple` in
+  `swift/apple_intelligence.swift`), plain text, no cloud provider.
+- `SentenceJoiner`: a line that ends mid-sentence (no final punctuation, or a final function word such as "and.") is
+  kept; the line that completes it triggers one more translation of the whole sentence, which replaces the pieces
+  (at most 3 lines / 45 words).
+- Context: the tapped app's titled window and open document (Accessibility; the instance that plays wins when an app
+  runs twice - this Mac runs two Chrome profiles), cleaned into a "what is playing" note; plus a topic-and-names note
+  the AI writes from the last 12 lines after 6 lines, then every 20.
+
+| Run | Lines | AI gave nothing | Translation p50/p95 | Re-joined | Notes |
+| --- | --- | --- | --- | --- | --- |
+| B3 (Chrome, 120 s) | 27 | **0** (was 3/30) | 2.08 / 3.41 s | 1 | topic note named Soupy, Oa, Hiyama, Tanvu; window title came back empty (wrong Chrome instance - fixed after) |
+
+Open after B3: p95 3.4 s is above the 3 s gate because a re-join or topic call holds up the next line (the on-device
+model answers one at a time); "stream snipe" was translated as "bắn xuyên màn hình" (should stay a term); the joiner
+rarely fires because the recogniser ends most half-sentences with a full stop.
+
 ## Next safe step
 
 Phase 0 probe on a branch: write the Swift tap and the probe flag, then run it once on the secondary screen against an

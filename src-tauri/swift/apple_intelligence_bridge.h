@@ -19,6 +19,10 @@ int is_apple_intelligence_available(void);
 // Process text using Apple's on-device LLM with separate system prompt and user content
 AppleLLMResponse* process_text_with_system_prompt_apple(const char* system_prompt, const char* user_content, int max_tokens);
 
+// SpeakEase: rewrite text the user did not write (live subtitles) with the
+// content-transformation guardrails; plain text output
+AppleLLMResponse* transform_text_apple(const char* instructions, const char* text);
+
 // Free memory allocated by the Apple LLM response
 void free_apple_llm_response(AppleLLMResponse* response);
 

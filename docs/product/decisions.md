@@ -4,7 +4,7 @@ type: decision
 product: speakease
 title: "SpeakEase — Decisions"
 status: active
-updated: 2026-10-16
+updated: 2026-10-20
 summary: "Append-only record of SpeakEase's product and engineering decisions, newest first, each with its context, evidence and how to reverse it."
 tags: [area/docs]
 ---
@@ -13,6 +13,30 @@ tags: [area/docs]
 
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
+
+## 2026-10-20 · Live subtitles beta: on-device translation, whole-sentence fixes, playing-media context (round 2)
+
+- **Context**: Phase 0 ran on a real YouTube narration in Chrome (plan `ai-memory/plans/live-subtitles-beta.md`):
+  after cutting lines at breaths, the translation p50 was 1.8 s, but Apple Intelligence refused 3 of 30 ordinary lines
+  ("safety guardrails were triggered"), short lines were often half-sentences, and recognition slips ("prize pool" →
+  "price pull") were translated literally. Round 1's "the AI already set up in the app" turned out to be Apple
+  Intelligence on this Mac, not a paid provider.
+- **Owner's answers** (near-verbatim, 20/10): use Apple Intelligence or a local AI model; it may fix the whole sentence
+  once it has enough meaning ("smart and economical"); actively read basic context of what is playing so the topic is
+  known (a YouTube video: read the title; a video on the Mac: read the file…), and when nothing can be read, guess the
+  context while translating.
+- **Decisions**: subtitles translate on the Mac only - Apple Intelligence, asked through its content-transformation
+  guardrails (`SystemLanguageModel(guardrails: .permissiveContentTransformations)`, plain text output); no cloud
+  provider for subtitles. A local model is the fallback direction if refusals or Macs without Apple Intelligence need
+  it (a new dependency, to be proposed with numbers). A line that ends mid-sentence is shown at once and re-translated
+  together with the line that completes it, replacing both; complete lines are translated once. Context = the tapped
+  app's window title and open document (read through the Accessibility permission SpeakEase already has), plus a
+  short topic-and-names note the AI writes from recent lines, refreshed now and then.
+- **Not chosen**: a cloud AI for subtitles; translating only whole sentences (slower); re-translating every line.
+- **Risks raised by the AI and accepted**: window titles can name the wrong tab or say nothing useful; on-device
+  quality is below large cloud models; Macs without Apple Intelligence (or with it off) show the source line only
+  until a local model exists.
+- **Reversal**: a new entry here.
 
 ## 2026-10-16 · Live subtitles beta: translated captions from one app's sound (round 1)
 

@@ -9,9 +9,11 @@
 //   se_tap_start(bundle, mute, cb, ctx, &err) handle > 0, or 0 with *err set;
 //                                            mute silences the app while tapped
 //   se_tap_stop(handle)
+//   se_app_context(bundle)                   JSON: the app's window title + document
 //   se_tap_free_string(ptr)                  frees strings returned above
 
 import AppKit
+import ApplicationServices
 import AudioToolbox
 import CoreAudio
 import Foundation
@@ -310,4 +312,67 @@ public func se_tap_stop(_ handle: Int64) {
     let active = taps.removeValue(forKey: handle)
     tapsLock.unlock()
     active?.stop()
+}
+
+private func axString(_ element: AXUIElement, _ attribute: String) -> String? {
+    var value: CFTypeRef?
+    guard AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success
+    else { return nil }
+    if let url = value as? URL { return url.path }
+    if let string = value as? String, !string.isEmpty { return string }
+    return nil
+}
+
+private func axElement(_ element: AXUIElement, _ attribute: String) -> AXUIElement? {
+    var value: CFTypeRef?
+    guard AXUIElementCopyAttributeValue(element, attribute as CFString, &value) == .success,
+        let value, CFGetTypeID(value) == AXUIElementGetTypeID()
+    else { return nil }
+    return (value as! AXUIElement)
+}
+
+/// What the app shows about what it is playing, for the subtitle prompt: the
+/// main window's title (a browser tab's page title, a player's file name)
+/// and the document it has open. Read through the Accessibility permission
+/// SpeakEase already holds for pasting; empty when it is missing.
+@_cdecl("se_app_context")
+public func se_app_context(_ bundle: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>? {
+    var row: [String: String] = [:]
+    if let bundle {
+        let bundleID = String(cString: bundle)
+        // An app can run more than once (Chrome with two profiles): prefer
+        // the instance responsible for the sound, then any with a window.
+        let playingFor = Set(
+            tapProcesses().filter { $0.playing && belongsToApp($0, bundleID) }.map(\.responsiblePID))
+        let instances = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+            .sorted { playingFor.contains($0.processIdentifier) && !playingFor.contains($1.processIdentifier) }
+        row["ax_trusted"] = AXIsProcessTrusted() ? "yes" : "no"
+        search: for app in instances {
+            row["app_name"] = app.localizedName ?? ""
+            let element = AXUIElementCreateApplication(app.processIdentifier)
+            var windows: [AXUIElement] = []
+            for attribute in [kAXMainWindowAttribute, kAXFocusedWindowAttribute] {
+                if let window = axElement(element, attribute) { windows.append(window) }
+            }
+            var list: CFTypeRef?
+            if AXUIElementCopyAttributeValue(element, kAXWindowsAttribute as CFString, &list)
+                == .success, let all = list as? [AXUIElement]
+            {
+                windows.append(contentsOf: all)
+            }
+            // The first window with a title: the main one when the app has
+            // one, else any (a browser playing in a background window).
+            for window in windows {
+                if let title = axString(window, kAXTitleAttribute) {
+                    row["window_title"] = title
+                    row["document"] = axString(window, kAXDocumentAttribute) ?? ""
+                    break search
+                }
+            }
+        }
+    }
+    guard let data = try? JSONSerialization.data(withJSONObject: row),
+        let json = String(data: data, encoding: .utf8)
+    else { return cString("{}") }
+    return cString(json)
 }

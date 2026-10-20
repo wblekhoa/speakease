@@ -18,6 +18,17 @@ pub struct AudioProcess {
     pub playing: bool,
 }
 
+/// What an app shows about what it plays (window title, open document).
+#[derive(Debug, Clone, Default, Deserialize)]
+#[serde(default)]
+pub struct AppContext {
+    pub app_name: String,
+    pub window_title: String,
+    pub document: String,
+    /// "yes" when SpeakEase holds the Accessibility permission.
+    pub ax_trusted: String,
+}
+
 /// Mono samples at the tap's own rate, stamped when they arrived.
 pub struct TapChunk {
     pub samples: Vec<f32>,
@@ -27,7 +38,7 @@ pub struct TapChunk {
 
 #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
 mod imp {
-    use super::{AudioProcess, TapChunk};
+    use super::{AppContext, AudioProcess, TapChunk};
     use std::ffi::{c_char, c_void, CStr, CString};
     use std::sync::mpsc::{channel, Receiver, Sender};
     use std::time::Instant;
@@ -46,6 +57,15 @@ mod imp {
         ) -> i64;
         fn se_tap_stop(handle: i64);
         fn se_tap_free_string(pointer: *mut c_char);
+        fn se_app_context(bundle: *const c_char) -> *mut c_char;
+    }
+
+    pub fn app_context(bundle_id: &str) -> AppContext {
+        let Ok(bundle) = CString::new(bundle_id) else {
+            return AppContext::default();
+        };
+        let json = take_string(unsafe { se_app_context(bundle.as_ptr()) });
+        serde_json::from_str(&json).unwrap_or_default()
     }
 
     fn take_string(pointer: *mut c_char) -> String {
@@ -123,10 +143,14 @@ mod imp {
 
 #[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
 mod imp {
-    use super::{AudioProcess, TapChunk};
+    use super::{AppContext, AudioProcess, TapChunk};
     use std::sync::mpsc::Receiver;
 
     pub struct AppTap;
+
+    pub fn app_context(_bundle_id: &str) -> AppContext {
+        AppContext::default()
+    }
 
     pub fn available() -> bool {
         false
@@ -158,4 +182,10 @@ pub fn list_processes() -> Vec<AudioProcess> {
 /// returned tap is dropped.
 pub fn start(bundle_id: &str, mute: bool) -> Result<(AppTap, Receiver<TapChunk>), String> {
     imp::start(bundle_id, mute)
+}
+
+/// The tapped app's window title and open document, for the subtitle prompt
+/// (empty without the Accessibility permission).
+pub fn app_context(bundle_id: &str) -> AppContext {
+    imp::app_context(bundle_id)
 }

@@ -128,6 +128,64 @@ public func processTextWithSystemPrompt(
     return responsePtr
 }
 
+// SpeakEase live subtitles: translate one line with the content-
+// transformation guardrails, which are meant for rewriting text the user did
+// not write (the default ones refused ordinary narration such as "three
+// disastrous days", 20/10). They apply to plain text output only, so no
+// guided generation here.
+@_cdecl("transform_text_apple")
+public func transformTextApple(
+    _ instructions: UnsafePointer<CChar>,
+    _ text: UnsafePointer<CChar>
+) -> UnsafeMutablePointer<AppleLLMResponse> {
+    let swiftInstructions = String(cString: instructions)
+    let swiftText = String(cString: text)
+    let responsePtr = ResponsePointer.allocate(capacity: 1)
+    responsePtr.initialize(to: AppleLLMResponse(response: nil, success: 0, error_message: nil))
+
+    guard #available(macOS 26.0, *) else {
+        responsePtr.pointee.error_message = duplicateCString(
+            "Apple Intelligence requires macOS 26 or newer."
+        )
+        return responsePtr
+    }
+
+    let model = SystemLanguageModel(
+        useCase: .general, guardrails: .permissiveContentTransformations)
+    guard model.availability == .available else {
+        responsePtr.pointee.error_message = duplicateCString(
+            "Apple Intelligence is not currently available on this device."
+        )
+        return responsePtr
+    }
+
+    let semaphore = DispatchSemaphore(value: 0)
+    final class ResultBox: @unchecked Sendable {
+        var response: String?
+        var error: String?
+    }
+    let box = ResultBox()
+
+    Task.detached(priority: .userInitiated) {
+        defer { semaphore.signal() }
+        do {
+            let session = LanguageModelSession(model: model, instructions: swiftInstructions)
+            box.response = try await session.respond(to: swiftText).content
+        } catch {
+            box.error = error.localizedDescription
+        }
+    }
+    semaphore.wait()
+
+    if let response = box.response {
+        responsePtr.pointee.response = duplicateCString(response)
+        responsePtr.pointee.success = 1
+    } else {
+        responsePtr.pointee.error_message = duplicateCString(box.error ?? "Unknown error")
+    }
+    return responsePtr
+}
+
 @_cdecl("free_apple_llm_response")
 public func freeAppleLLMResponse(_ response: UnsafeMutablePointer<AppleLLMResponse>?) {
     guard let response = response else { return }

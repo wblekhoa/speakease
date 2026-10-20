@@ -41,7 +41,27 @@ pub fn process_text_with_system_prompt(
     let response_ptr = unsafe {
         process_text_with_system_prompt_apple(system_cstr.as_ptr(), user_cstr.as_ptr(), max_tokens)
     };
+    take_response(response_ptr)
+}
 
+extern "C" {
+    fn transform_text_apple(
+        instructions: *const c_char,
+        text: *const c_char,
+    ) -> *mut AppleLLMResponse;
+}
+
+/// SpeakEase live subtitles: rewrites `text` (one subtitle line) following
+/// `instructions`, with the guardrails Apple provides for transforming text
+/// the user did not write.
+pub fn transform_text(instructions: &str, text: &str) -> Result<String, String> {
+    let instructions = CString::new(instructions).map_err(|e| e.to_string())?;
+    let text = CString::new(text).map_err(|e| e.to_string())?;
+    take_response(unsafe { transform_text_apple(instructions.as_ptr(), text.as_ptr()) })
+}
+
+/// Reads and frees a response from the Swift bridge.
+fn take_response(response_ptr: *mut AppleLLMResponse) -> Result<String, String> {
     if response_ptr.is_null() {
         return Err("Null response from Apple LLM".to_string());
     }
