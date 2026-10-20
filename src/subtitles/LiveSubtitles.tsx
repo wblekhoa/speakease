@@ -8,11 +8,7 @@ import React, {
 import { useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
-import {
-  LogicalPosition,
-  LogicalSize,
-  PhysicalPosition,
-} from "@tauri-apps/api/dpi";
+import { LogicalPosition } from "@tauri-apps/api/dpi";
 import { commands } from "@/bindings";
 import {
   applySubtitleEvent,
@@ -98,6 +94,10 @@ const LiveSubtitles: React.FC = () => {
   const [translateOn, setTranslateOn] = useState(true);
   const [showSource, setShowSource] = useState(readShowSource);
   const wasRunning = useRef(false);
+  /** The tallest the panel has been this session; it does not shrink back
+   * (see the fit below). Zeroed when a session starts or a switch changes
+   * what a bubble holds. */
+  const peak = useRef(0);
   const headRef = useRef<HTMLElement>(null);
   const listRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -126,6 +126,7 @@ const LiveSubtitles: React.FC = () => {
         (event) => {
           setTranslateOn(event.payload.translate);
           if (event.payload.running && !wasRunning.current) {
+            peak.current = 0;
             apply("reset");
             setFollowing(true);
           }
@@ -146,7 +147,9 @@ const LiveSubtitles: React.FC = () => {
 
   // The window follows its content's height (up to MAX_HEIGHT) and keeps
   // its bottom edge, so it grows upward and leaves no empty glass over the
-  // video beneath.
+  // video beneath. It only grows within a session: shrinking whenever a
+  // short line replaced a long one moved the whole panel on every line
+  // (owner, 21/10: the panel jumped); older lines fill any extra room.
   // Measured from the list's natural height, not the scroller's: the
   // scroller is clamped to the window, so measuring it would keep the window
   // at its opening height for ever (20/10, the panel stuck at one line).
@@ -154,9 +157,8 @@ const LiveSubtitles: React.FC = () => {
     const head = headRef.current;
     const list = listRef.current;
     if (!head || !list) return;
-    const window = getCurrentWindow();
     let last = 0;
-    const fit = async () => {
+    const fit = () => {
       // The newest MAX_BUBBLES bubbles at their own heights.
       const bubbles = Array.from(list.children).slice(
         -MAX_BUBBLES,
@@ -169,23 +171,19 @@ const LiveSubtitles: React.FC = () => {
         CONTENT_GAP +
         Math.min(list.offsetHeight, shown) +
         FRAME_PADDING * 2;
-      const height = Math.min(MAX_HEIGHT, Math.ceil(natural));
+      const height = Math.max(
+        peak.current,
+        Math.min(MAX_HEIGHT, Math.ceil(natural)),
+      );
+      peak.current = height;
       if (Math.abs(height - last) < 2) return;
       last = height;
-      try {
-        const scale = await window.scaleFactor();
-        const position = await window.outerPosition();
-        const size = await window.outerSize();
-        const bottom = position.y + size.height;
-        await window.setSize(new LogicalSize(size.width / scale, height));
-        await window.setPosition(
-          new PhysicalPosition(position.x, Math.round(bottom - height * scale)),
-        );
-      } catch {
+      // One native step, bottom edge kept (subtitle_window.rs fit_height).
+      commands.fitLiveSubtitlesPanel(height).catch(() => {
         // Outside the app (browser preview): nothing to fit.
-      }
+      });
     };
-    const observer = new ResizeObserver(() => void fit());
+    const observer = new ResizeObserver(fit);
     observer.observe(head);
     observer.observe(list);
     return () => observer.disconnect();
@@ -251,6 +249,7 @@ const LiveSubtitles: React.FC = () => {
               title={t("subtitles.switchTranslate")}
               onClick={() => {
                 const next = !translateOn;
+                peak.current = 0;
                 setTranslateOn(next);
                 commands.setLiveSubtitlesTranslate(next);
               }}
@@ -264,6 +263,7 @@ const LiveSubtitles: React.FC = () => {
               disabled={!translateOn}
               title={t("subtitles.switchSource")}
               onClick={() => {
+                peak.current = 0;
                 setShowSource(!showSource);
                 saveShowSource(!showSource);
               }}

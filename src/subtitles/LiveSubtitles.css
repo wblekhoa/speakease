@@ -207,6 +207,7 @@ body {
 
 .ls-bubble {
   flex: none;
+  animation: ls-enter 220ms ease-out;
   margin: 0;
   padding: 11px 15px 12px;
   border-radius: 20px;
@@ -248,12 +249,21 @@ body {
   color: var(--color-text);
 }
 
-/* Being translated: three soft dots where the translation will go. */
+/* A new bubble eases in instead of popping up. */
+@keyframes ls-enter {
+  from {
+    opacity: 0;
+    transform: translateY(6px);
+  }
+}
+
+/* Being translated: three soft dots where the translation will go, one
+   translated line tall, so the bubble barely moves when the text lands. */
 .ls-pending {
   display: flex;
   gap: 5px;
   align-items: center;
-  height: 23px;
+  height: 1.38em;
 }
 
 .ls-pending span {
@@ -311,7 +321,8 @@ body {
     transition: none;
   }
   .ls-live,
-  .ls-pending span {
+  .ls-pending span,
+  .ls-bubble {
     animation: none;
   }
   .ls-pending span {

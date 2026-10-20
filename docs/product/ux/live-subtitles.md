@@ -101,6 +101,7 @@ flowchart LR
 ## Change log
 
 - 2026-10-20: clicking the panel no longer raises SpeakEase's window; the panel comes to the front when subtitles start (owner).
+- 2026-10-21: the panel no longer jumps: it resizes in one step, only grows within a session, new bubbles ease in; language menus open upward when there is no room below (owner).
 - 2026-10-21: Start in the window brings the chosen app to the front (owner).
 - 2026-10-21: tried no box (solid bubbles) and a gradient blur fading toward the top; the owner kept the blurred box (harder to read, lower quality).
 - 2026-10-20: a strong native blur behind the panel and softer bubble shadows (owner).

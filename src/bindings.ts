@@ -1017,6 +1017,12 @@ async setLiveSubtitlesTranslate(on: boolean) : Promise<void> {
     await TAURI_INVOKE("set_live_subtitles_translate", { on });
 },
 /**
+ * The subtitle page fits its window to the bubbles it shows.
+ */
+async fitLiveSubtitlesPanel(height: number) : Promise<void> {
+    await TAURI_INVOKE("fit_live_subtitles_panel", { height });
+},
+/**
  * Writes text to a file the person picked in a Save dialog.
  */
 async writeTextFile(path: string, contents: string) : Promise<Result<null, string>> {

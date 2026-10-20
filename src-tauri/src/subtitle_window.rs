@@ -143,6 +143,34 @@ mod imp {
         }
     }
 
+    /// Sets the panel's height in one step, its bottom edge kept (AppKit's
+    /// origin is the bottom-left corner). Resizing then moving from the page
+    /// showed a frame between the two, so the bubbles jumped (owner, 21/10).
+    pub fn fit_height(app: &AppHandle, height: f64) {
+        let handle = app.clone();
+        let _ = app.run_on_main_thread(move || {
+            use objc2::msg_send;
+            use objc2::runtime::{AnyObject, Bool};
+            use objc2_foundation::NSRect;
+            let Some(window) = handle.get_webview_window(LABEL) else {
+                return;
+            };
+            let Ok(pointer) = window.ns_window() else {
+                return;
+            };
+            // SAFETY: the live NSWindow of this panel, on the main thread.
+            unsafe {
+                let ns_window = &*(pointer as *const AnyObject);
+                let mut frame: NSRect = msg_send![ns_window, frame];
+                if (frame.size.height - height).abs() < 1.0 {
+                    return;
+                }
+                frame.size.height = height;
+                let _: () = msg_send![ns_window, setFrame: frame, display: Bool::YES];
+            }
+        });
+    }
+
     pub fn hide(app: &AppHandle) {
         let handle = app.clone();
         let _ = app.run_on_main_thread(move || {
@@ -158,6 +186,7 @@ mod imp {
     use tauri::AppHandle;
     pub fn show(_app: &AppHandle) {}
     pub fn hide(_app: &AppHandle) {}
+    pub fn fit_height(_app: &AppHandle, _height: f64) {}
 }
 
 pub fn show(app: &AppHandle) {
@@ -166,4 +195,9 @@ pub fn show(app: &AppHandle) {
 
 pub fn hide(app: &AppHandle) {
     imp::hide(app)
+}
+
+/// The panel's height in points, its bottom edge kept.
+pub fn fit_height(app: &AppHandle, height: f64) {
+    imp::fit_height(app, height)
 }

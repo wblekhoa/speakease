@@ -11,8 +11,10 @@ export const selectTriggerEnabled = "cursor-pointer hover:border-hairline";
 
 export const selectTriggerDisabled = "opacity-50 cursor-not-allowed";
 
-export const selectMenu =
-  "absolute top-full mt-1.5 p-1 bg-surface border border-hairline rounded-xl shadow-xl z-50";
+export const selectMenuSurface =
+  "p-1 bg-surface border border-hairline rounded-xl shadow-xl";
+
+export const selectMenu = `absolute top-full mt-1.5 ${selectMenuSurface} z-50`;
 
 export const selectOption =
   "w-full px-2.5 py-1.5 rounded-lg text-sm text-start transition-colors duration-150 hover:bg-row";
