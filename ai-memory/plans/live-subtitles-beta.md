@@ -209,6 +209,24 @@ rarely fires because the recogniser ends most half-sentences with a full stop.
 - Docs: `docs/product/ux/live-subtitles.md`, `docs/product/logic/live-subtitles.md` (SE-LIVE-001…010).
 - Not yet measured in the app: the delay with the priority fix, Zoom and a podcast app (Phase 5).
 
+### In-app iteration with the owner (20/10)
+
+Owner feedback rounds after the first in-app run, all shipped to main: own side-column page; descriptions behind
+info icons; a chat-like panel of bubbles (reference UI) with at most 4 visible and faded edges; Translate and Original
+switches (SE-LIVE-011); native blur; softer shadows; clicks on the panel no longer raise SpeakEase
+(`_setPreventsActivation:`); the panel comes to the front when subtitles start. Lessons in `ai-memory/lessons/`.
+
+Load and delay with the priority fix (quiet test, 51 s TTS clip, 15 lines, signed bundle):
+
+| Run                 | CPU of the subtitle process (avg / max) | Partials | Translation p50 / p95 | Source p95 |
+| ------------------- | --------------------------------------- | -------- | --------------------- | ---------- |
+| no partials         | 2 % / 3 %                               | 0        | 1.29 / 1.47 s         | 0.80 s     |
+| partials every ~1 s | 2 % / 5 %                               | 36       | 1.21 / 1.88 s         | 0.78 s     |
+
+Recognition runs on the GPU and Apple Intelligence in a system process, so CPU says little; GPU use could not be
+isolated - it sat at 83-92 % before the runs from other work on this Mac and at 91 % during them. Partials now pause
+while the user dictates.
+
 ## Next safe step
 
 Phase 0 probe on a branch: write the Swift tap and the probe flag, then run it once on the secondary screen against an

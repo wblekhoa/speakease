@@ -76,6 +76,11 @@ pub struct CliArgs {
     #[arg(long, value_name = "FILE", hide = true)]
     pub probe_out: Option<PathBuf>,
 
+    /// Also run the once-a-second partial recognitions the app runs, to
+    /// measure their load during --live-subtitle-probe.
+    #[arg(long, hide = true)]
+    pub probe_partials: bool,
+
     /// Silence the tapped app on the speakers during --live-subtitle-probe.
     #[arg(long, hide = true)]
     pub probe_mute: bool,
