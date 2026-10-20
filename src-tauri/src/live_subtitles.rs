@@ -624,17 +624,23 @@ pub mod pipeline {
             playing: playing.clone(),
         });
 
-        // The first call loads the on-device model; pay it before the first line.
-        let warm_started = Instant::now();
-        let warm = translate_on_device(
-            &subtitle_instructions(&config.source, &config.target, &SpeechContext::default()),
-            "Hello.",
-        );
-        sink(Event::WarmUp {
-            ms: warm_started.elapsed().as_millis() as u64,
-            ok: warm.is_ok(),
-            error: warm.err(),
-        });
+        if stop.load(Ordering::Relaxed) {
+            return Ok(());
+        }
+        // The first call loads the on-device model; pay it before the first
+        // line - only when translating, as Translate off makes no AI call.
+        if config.translate.load(Ordering::Relaxed) {
+            let warm_started = Instant::now();
+            let warm = translate_on_device(
+                &subtitle_instructions(&config.source, &config.target, &SpeechContext::default()),
+                "Hello.",
+            );
+            sink(Event::WarmUp {
+                ms: warm_started.elapsed().as_millis() as u64,
+                ok: warm.is_ok(),
+                error: warm.err(),
+            });
+        }
 
         // The app may not be playing yet: wait up to 30 s for its audio
         // process to appear.
@@ -891,6 +897,15 @@ pub mod pipeline {
             // Translation switched off: the line stays as heard, and nothing
             // waits to be re-joined.
             if !translate.load(Ordering::Relaxed) {
+                // The panel shows it as heard for good, even if Translate
+                // comes back on later.
+                sink(Event::Translation {
+                    index,
+                    target: None,
+                    error: Some("off".to_string()),
+                    translate_ms: 0,
+                    delay_ms: segment.speech_end.elapsed().as_millis() as u64,
+                });
                 joiner = SentenceJoiner::default();
                 context.earlier.push(text);
                 if context.earlier.len() > 2 {
@@ -943,6 +958,7 @@ pub mod session {
     use std::collections::BTreeMap;
     use std::sync::atomic::{AtomicBool, Ordering};
     use std::sync::{Arc, Mutex};
+    use std::time::Duration;
     use tauri::{AppHandle, Emitter, Manager};
 
     struct Running {
@@ -1150,25 +1166,49 @@ pub mod session {
                 partials: true,
                 translate: &TRANSLATE,
             };
-            let _ = pipeline::run(&app, config, stop, sink);
-
-            crate::subtitle_window::hide(&app);
-            if let Ok(t) = transcript.lock() {
-                let heard = t.heard();
-                if !heard.trim().is_empty() {
-                    let title = t.title.clone().unwrap_or_else(|| bundle_id.clone());
-                    let label = format!("Live subtitles → {target}");
-                    let history = app.state::<Arc<HistoryManager>>();
-                    if let Err(e) = history.save_subtitle_entry(title, heard, t.translated(), label)
-                    {
-                        log::error!("Live subtitles: cannot save to History: {e}");
+            // A panic anywhere in the session must still end it, or every
+            // later start would answer "already on" until relaunch.
+            let finished = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                let _ = pipeline::run(&app, config, stop, sink);
+                if let Ok(t) = transcript.lock() {
+                    let heard = t.heard();
+                    if !heard.trim().is_empty() {
+                        let title = t.title.clone().unwrap_or_else(|| bundle_id.clone());
+                        let label = format!("Live subtitles → {target}");
+                        let history = app.state::<Arc<HistoryManager>>();
+                        if let Err(e) =
+                            history.save_subtitle_entry(title, heard, t.translated(), label)
+                        {
+                            log::error!("Live subtitles: cannot save to History: {e}");
+                        }
                     }
                 }
+            }));
+            if finished.is_err() {
+                log::error!("Live subtitles: the session stopped on a panic");
             }
             if let Ok(mut running) = RUNNING.lock() {
                 *running = None;
             }
-            let error = early_error.lock().ok().and_then(|e| e.clone());
+            let error = early_error
+                .lock()
+                .ok()
+                .and_then(|e| e.clone())
+                .or_else(|| finished.is_err().then(|| "failed: unexpected".to_string()));
+            // An error stays on the panel a while, so a start from the tray or
+            // the shortcut does not fail without a word; otherwise the panel
+            // went away when the user stopped (stop hides it at once).
+            if error.is_some() {
+                let app = app.clone();
+                std::thread::spawn(move || {
+                    std::thread::sleep(ERROR_SHOWN_FOR);
+                    if !is_running() {
+                        crate::subtitle_window::hide(&app);
+                    }
+                });
+            } else {
+                crate::subtitle_window::hide(&app);
+            }
             announce(
                 &app,
                 SubtitleState {
@@ -1193,13 +1233,19 @@ pub mod session {
         announce(app, state());
     }
 
-    /// Stops the session; the last lines still finish and are saved.
-    pub fn stop() {
+    /// How long an error that ended a session stays on the panel.
+    const ERROR_SHOWN_FOR: Duration = Duration::from_secs(8);
+
+    /// Stops the session and hides the panel at once; the last lines still
+    /// finish in the background and are saved. With no session (an error
+    /// left on the panel), it only hides the panel.
+    pub fn stop(app: &AppHandle) {
         if let Ok(running) = RUNNING.lock() {
             if let Some(running) = running.as_ref() {
                 running.stop.store(true, Ordering::Relaxed);
             }
         }
+        crate::subtitle_window::hide(app);
     }
 
     // SE-LIVE-010
@@ -1207,7 +1253,7 @@ pub mod session {
     /// when nothing is remembered yet (the window has to ask).
     pub fn toggle(app: &AppHandle) -> bool {
         if is_running() {
-            stop();
+            stop(app);
             return true;
         }
         let settings = crate::settings::get_settings(app);

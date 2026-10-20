@@ -92,6 +92,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
   const [isOpen, setIsOpen] = useState(false);
   const [place, setPlace] = useState<MenuPlace | null>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const triggerRef = useRef<HTMLButtonElement>(null);
   const menuRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
@@ -126,8 +127,30 @@ export const Dropdown: React.FC<DropdownProps> = ({
       return;
     }
     updatePlace();
+    // The menu sits at the end of the page (a portal), so Tab would not
+    // reach it: focus goes into it, arrows move, Escape returns (audit).
+    const choices = () =>
+      Array.from(
+        menuRef.current?.querySelectorAll<HTMLButtonElement>(
+          "button:not(:disabled)",
+        ) ?? [],
+      );
     const onKey = (event: KeyboardEvent) => {
-      if (event.key === "Escape") setIsOpen(false);
+      if (event.key === "Escape") {
+        event.preventDefault();
+        setIsOpen(false);
+        triggerRef.current?.focus();
+      } else if (event.key === "Tab") {
+        setIsOpen(false);
+        triggerRef.current?.focus();
+      } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
+        const list = choices();
+        if (list.length === 0) return;
+        event.preventDefault();
+        const at = list.indexOf(document.activeElement as HTMLButtonElement);
+        const step = event.key === "ArrowDown" ? 1 : -1;
+        list[(at + step + list.length) % list.length].focus();
+      }
     };
     window.addEventListener("scroll", updatePlace, true);
     window.addEventListener("resize", updatePlace);
@@ -143,9 +166,22 @@ export const Dropdown: React.FC<DropdownProps> = ({
     (option) => option.value === selectedValue,
   );
 
+  // Into the menu once it is placed (a hidden element cannot take focus).
+  const placed = place !== null;
+  useEffect(() => {
+    if (!isOpen || !placed) return;
+    const menu = menuRef.current;
+    (
+      menu?.querySelector<HTMLButtonElement>(
+        '[aria-selected="true"]:not(:disabled)',
+      ) ?? menu?.querySelector<HTMLButtonElement>("button:not(:disabled)")
+    )?.focus({ preventScroll: true });
+  }, [isOpen, placed]);
+
   const handleSelect = (value: string) => {
     onSelect(value);
     setIsOpen(false);
+    triggerRef.current?.focus();
   };
 
   const handleToggle = () => {
@@ -157,7 +193,10 @@ export const Dropdown: React.FC<DropdownProps> = ({
   return (
     <div className={`relative ${className}`} ref={dropdownRef}>
       <button
+        ref={triggerRef}
         type="button"
+        aria-haspopup="listbox"
+        aria-expanded={isOpen}
         className={`${selectTrigger} w-full ${
           disabled ? selectTriggerDisabled : selectTriggerEnabled
         }`}
@@ -184,6 +223,7 @@ export const Dropdown: React.FC<DropdownProps> = ({
         createPortal(
           <div
             ref={menuRef}
+            role="listbox"
             className={`${selectMenuSurface} overflow-y-auto ${
               menuClassName ?? ""
             }`}
@@ -208,6 +248,8 @@ export const Dropdown: React.FC<DropdownProps> = ({
                 <button
                   key={option.value}
                   type="button"
+                  role="option"
+                  aria-selected={selectedValue === option.value}
                   className={`${selectOption} ${
                     selectedValue === option.value ? selectOptionChosen : ""
                   } ${option.disabled ? "opacity-50 cursor-not-allowed" : ""}`}

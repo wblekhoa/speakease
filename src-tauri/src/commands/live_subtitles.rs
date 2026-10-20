@@ -44,8 +44,8 @@ pub fn start_live_subtitles(
 
 #[tauri::command]
 #[specta::specta]
-pub fn stop_live_subtitles() {
-    session::stop();
+pub fn stop_live_subtitles(app: AppHandle) {
+    session::stop(&app);
 }
 
 /// The subtitle panel's Translate switch.

@@ -30,6 +30,9 @@ interface Line {
   final: boolean;
   /** undefined: not translated yet. */
   target?: string;
+  /** No translation will come (Translate was off, or the AI failed): the
+   * line shows as heard for good. */
+  heardOnly?: boolean;
 }
 
 /** One line on the bar: what was heard and its translation, if any yet. */
@@ -37,6 +40,10 @@ export interface SubtitleItem {
   index: number;
   source: string;
   target: string | null;
+  /** No translation will come; show what was heard. */
+  heardOnly: boolean;
+  /** Still being heard (its text may change). */
+  final: boolean;
 }
 
 export interface SubtitleView {
@@ -108,8 +115,13 @@ export const applySubtitleEvent = (
       break;
     case "translation": {
       const line = lines.get(event.index);
-      if (!line || event.target === null) return state;
-      lines.set(event.index, { ...line, target: event.target });
+      if (!line) return state;
+      lines.set(
+        event.index,
+        event.target === null
+          ? { ...line, heardOnly: true }
+          : { ...line, target: event.target, heardOnly: false },
+      );
       break;
     }
     case "rejoin": {
@@ -144,7 +156,13 @@ export const subtitleView = (state: SubtitleState): SubtitleView => {
   const indexes = [...state.lines.keys()].sort((a, b) => a - b);
   const items = indexes.map((index) => {
     const line = state.lines.get(index)!;
-    return { index, source: line.source, target: line.target ?? null };
+    return {
+      index,
+      source: line.source,
+      target: line.target ?? null,
+      heardOnly: line.heardOnly ?? false,
+      final: line.final,
+    };
   });
   return {
     appName: state.appName,

@@ -132,6 +132,10 @@ private final class ActiveTap {
         if aggregateID != kAudioObjectUnknown {
             AudioDeviceStop(aggregateID, procID)
             if let procID { AudioDeviceDestroyIOProcID(aggregateID, procID) }
+            // Let a callback already running on the queue finish before the
+            // caller frees what it writes to (se_tap_stop, then the Rust
+            // side drops its sender).
+            queue.sync {}
             AudioHardwareDestroyAggregateDevice(aggregateID)
             aggregateID = AudioObjectID(kAudioObjectUnknown)
             procID = nil

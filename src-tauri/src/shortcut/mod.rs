@@ -1149,7 +1149,7 @@ pub fn change_experimental_enabled_setting(app: AppHandle, enabled: bool) -> Res
     {
         if settings::binding_switched_off(settings::LIVE_SUBTITLES_BINDING_ID, &settings) {
             let _ = unregister_shortcut(&app, binding);
-            crate::live_subtitles::session::stop();
+            crate::live_subtitles::session::stop(&app);
         } else {
             let _ = register_shortcut(&app, binding);
         }

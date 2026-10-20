@@ -28,9 +28,32 @@ let view = subtitleView(
 assert.equal(view.appName, "Google Chrome");
 assert.ok(view.listening);
 assert.deepEqual(view.items, [
-  { index: 1, source: "Hello there.", target: "Xin chào." },
-  { index: 2, source: "And then", target: null },
+  {
+    index: 1,
+    source: "Hello there.",
+    target: "Xin chào.",
+    heardOnly: false,
+    final: true,
+  },
+  {
+    index: 2,
+    source: "And then",
+    target: null,
+    heardOnly: false,
+    final: false,
+  },
 ]);
+
+// A line that gets no translation (Translate off, or the AI failed) shows
+// as heard for good, not as "translating" dots.
+view = subtitleView(
+  run([
+    { kind: "line", index: 1, source: "Off the record." },
+    { kind: "translation", index: 1, target: null },
+  ]),
+);
+assert.equal(view.items[0].heardOnly, true);
+assert.equal(view.items[0].target, null);
 
 // The panel keeps the last KEEP_LINES lines to scroll back through.
 let rolled = emptySubtitles();
@@ -74,6 +97,8 @@ assert.deepEqual(view.items, [
     index: 1,
     source: "Vietnam was their target, and they lost it.",
     target: "cả câu",
+    heardOnly: false,
+    final: true,
   },
 ]);
 

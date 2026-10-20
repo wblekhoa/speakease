@@ -57,12 +57,12 @@ or code named in Evidence.
 
 ## States and transitions
 
-| State         | Trigger                                               | Next state    | Edge case                                           |
-| ------------- | ----------------------------------------------------- | ------------- | --------------------------------------------------- |
-| off           | start (card, tray, shortcut)                          | getting ready | nothing remembered (tray/shortcut) → Speak opens    |
-| getting ready | model loaded, warm-up done, app's audio process found | listening     | the app plays nothing for 30 s → error `no-process` |
-| listening     | speech                                                | lines         | all-zero audio → permission or Info.plist problem   |
-| any running   | stop (card, ×, tray, shortcut, Experimental off)      | off           | last lines finish; History entry saved              |
+| State         | Trigger                                                                        | Next state    | Edge case                                                                                                               |
+| ------------- | ------------------------------------------------------------------------------ | ------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| off           | start (card, tray, shortcut)                                                   | getting ready | nothing remembered (tray/shortcut) → Speak opens                                                                        |
+| getting ready | model loaded, warm-up done (only with Translate on), app's audio process found | listening     | the app plays nothing for 30 s → error `no-process`, shown on the panel for 8 s                                         |
+| listening     | speech                                                                         | lines         | all-zero audio → permission or Info.plist problem                                                                       |
+| any running   | stop (card, ×, tray, shortcut, Experimental off)                               | off           | the panel hides at once; last lines finish in the background; History entry saved; a crash in the session still ends it |
 
 ## Fixed vs flexible
 
@@ -78,6 +78,7 @@ or code named in Evidence.
 
 - 2026-10-20: partials pause while the user dictates; the prompt keeps English terms of art (SE-LIVE-007, -008).
 - 2026-10-20: SE-LIVE-008 - the panel shows at most 4 bubbles with faded edges (owner); it had been stuck at its opening height.
+- 2026-10-21: audit fixes - a line with no translation (Translate off, AI failure) shows as heard instead of endless dots; no warm-up AI call with Translate off; stop hides the panel at once; an error that ends a session stays on the panel 8 s; the panel keeps its bottom-left corner across launches and opens in its default corner if that spot is off-screen.
 - 2026-10-21: SE-LIVE-012 - Start in the window brings the subtitled app to the front (owner).
 - 2026-10-20: SE-LIVE-011 - Translate and Original switches on the panel (owner).
 - 2026-10-20: SE-LIVE-008 changed again - a chat-like panel of bubbles that scrolls back through the session (owner's reference UI).

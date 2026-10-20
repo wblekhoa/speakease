@@ -31,7 +31,10 @@ export const LiveSubtitlesPage: React.FC = () => {
   const [apps, setApps] = useState<RunningApp[]>([]);
   const [state, setState] = useState<SubtitleState | null>(null);
   const [app, setApp] = useState<string | null>(null);
-  const [source, setSource] = useState("English");
+  // null until settings arrive, so a later settings refresh cannot undo
+  // the user's pick (audit, 21/10).
+  const [pickedSource, setSource] = useState<string | null>(null);
+  const source = pickedSource ?? "English";
   const [target, setTarget] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
 
@@ -62,7 +65,7 @@ export const LiveSubtitlesPage: React.FC = () => {
   useEffect(() => {
     if (!settings) return;
     setApp((current) => current ?? settings.live_subtitle_app ?? null);
-    setSource((current) => settings.live_subtitle_source ?? current);
+    setSource((current) => current ?? settings.live_subtitle_source ?? null);
     setTarget((current) => current ?? settings.live_subtitle_target ?? null);
   }, [settings]);
 

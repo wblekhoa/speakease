@@ -7,7 +7,7 @@ import React, {
 } from "react";
 import { useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
-import { getCurrentWindow } from "@tauri-apps/api/window";
+import { availableMonitors, getCurrentWindow } from "@tauri-apps/api/window";
 import { LogicalPosition } from "@tauri-apps/api/dpi";
 import { commands } from "@/bindings";
 import {
@@ -36,7 +36,16 @@ const STICK_PX = 40;
 /** The panel dims after this long without speech. */
 const QUIET_MS = 8000;
 
-const readPosition = (): { x: number; y: number } | null => {
+/** The panel's bottom-left corner in logical points. The bottom, not the
+ * top: the panel grows upward, so a saved top crept higher on every launch
+ * (audit, 21/10). Older saves hold the top ("y") and are read as they are. */
+interface SavedPosition {
+  x: number;
+  y?: number;
+  bottom?: number;
+}
+
+const readPosition = (): SavedPosition | null => {
   try {
     const raw = localStorage.getItem(POSITION_KEY);
     return raw ? JSON.parse(raw) : null;
@@ -61,11 +70,40 @@ const saveShowSource = (on: boolean) => {
   }
 };
 
-const savePosition = (x: number, y: number) => {
+const savePosition = (x: number, bottom: number) => {
   try {
-    localStorage.setItem(POSITION_KEY, JSON.stringify({ x, y }));
+    localStorage.setItem(POSITION_KEY, JSON.stringify({ x, bottom }));
   } catch {
     // Storage unavailable: the panel just opens in its default corner.
+  }
+};
+
+/** Puts the panel back where the user left it, if that spot is still on a
+ * screen (a display may have been unplugged); else it stays in its default
+ * corner. */
+const restorePosition = async (window: ReturnType<typeof getCurrentWindow>) => {
+  const saved = readPosition();
+  if (!saved) return;
+  try {
+    const scale = await window.scaleFactor();
+    const height = (await window.outerSize()).height / scale;
+    const width = (await window.outerSize()).width / scale;
+    const y = saved.bottom !== undefined ? saved.bottom - height : saved.y;
+    if (y === undefined) return;
+    const onScreen = (await availableMonitors()).some((monitor) => {
+      const s = monitor.scaleFactor;
+      const left = monitor.position.x / s;
+      const top = monitor.position.y / s;
+      return (
+        saved.x + width / 2 >= left &&
+        saved.x + width / 2 <= left + monitor.size.width / s &&
+        y + height / 2 >= top &&
+        y + height / 2 <= top + monitor.size.height / s
+      );
+    });
+    if (onScreen) await window.setPosition(new LogicalPosition(saved.x, y));
+  } catch {
+    // Outside the app (browser preview): nothing to restore.
   }
 };
 
@@ -105,10 +143,7 @@ const LiveSubtitles: React.FC = () => {
 
   useEffect(() => {
     const window = getCurrentWindow();
-    const saved = readPosition();
-    if (saved) {
-      window.setPosition(new LogicalPosition(saved.x, saved.y)).catch(() => {});
-    }
+    void restorePosition(window);
     commands
       .liveSubtitlesState()
       .then((current) => {
@@ -121,11 +156,18 @@ const LiveSubtitles: React.FC = () => {
       // A new session starts clean.
       // A new session starts clean: only on the switch from off to on, as
       // the Translate switch announces the state too.
-      listen<{ running: boolean; translate: boolean }>(
+      listen<{ running: boolean; translate: boolean; error: string | null }>(
         "live-subtitles-state",
         (event) => {
           setTranslateOn(event.payload.translate);
-          if (event.payload.running && !wasRunning.current) {
+          // Ended without an error: clear the hidden panel now, so the next
+          // session does not open on these bubbles at their old height.
+          // An error stays shown until then.
+          const endedCleanly =
+            !event.payload.running &&
+            wasRunning.current &&
+            !event.payload.error;
+          if (endedCleanly || (event.payload.running && !wasRunning.current)) {
             peak.current = 0;
             apply("reset");
             setFollowing(true);
@@ -135,7 +177,8 @@ const LiveSubtitles: React.FC = () => {
       ),
       window.onMoved(async ({ payload }) => {
         const scale = await window.scaleFactor();
-        savePosition(payload.x / scale, payload.y / scale);
+        const size = await window.outerSize();
+        savePosition(payload.x / scale, (payload.y + size.height) / scale);
       }),
     ];
     const clock = setInterval(() => setNow(Date.now()), 1000);
@@ -302,12 +345,18 @@ const LiveSubtitles: React.FC = () => {
               </p>
             ) : (
               view.items.map((item) => {
-                // Translation off (or never arrived while off): the heard
-                // text is the bubble's main line.
+                // No translation coming (Translate off, or the AI failed):
+                // the heard text is the bubble's main line.
                 const translated = item.target !== null;
-                const asHeard = !translated && !translateOn;
+                const asHeard = !translated && (item.heardOnly || !translateOn);
                 return (
-                  <article key={item.index} className="ls-bubble">
+                  <article
+                    key={item.index}
+                    className="ls-bubble"
+                    // A line still being heard is rewritten about once a
+                    // second; screen readers get it once it is final.
+                    aria-hidden={item.final ? undefined : true}
+                  >
                     {asHeard ? (
                       <p className="ls-target" dir="auto">
                         {item.source}
@@ -317,13 +366,13 @@ const LiveSubtitles: React.FC = () => {
                         {item.target}
                       </p>
                     ) : (
-                      <p
-                        className="ls-target ls-pending"
-                        aria-label={t("subtitles.translating")}
-                      >
-                        <span />
-                        <span />
-                        <span />
+                      <p className="ls-target ls-pending">
+                        <span aria-hidden />
+                        <span aria-hidden />
+                        <span aria-hidden />
+                        <span className="ls-sr-only">
+                          {t("subtitles.translating")}
+                        </span>
                       </p>
                     )}
                     {!asHeard && (showSource || !translateOn) && (

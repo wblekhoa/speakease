@@ -266,7 +266,7 @@ body {
   height: 1.38em;
 }
 
-.ls-pending span {
+.ls-pending span:not(.ls-sr-only) {
   width: 6px;
   height: 6px;
   border-radius: 3px;
@@ -325,7 +325,17 @@ body {
   .ls-bubble {
     animation: none;
   }
-  .ls-pending span {
+  .ls-pending span:not(.ls-sr-only) {
     opacity: 0.6;
   }
+}
+
+/* Read by screen readers, not shown. */
+.ls-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
 }
