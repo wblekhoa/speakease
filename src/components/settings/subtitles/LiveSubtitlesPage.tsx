@@ -7,6 +7,7 @@ import { useOsType } from "@/hooks/useOsType";
 import { Dropdown } from "../../ui/Dropdown";
 import { Keycaps } from "../../ui/Keycaps";
 import { SettingsGroup } from "../../ui/SettingsGroup";
+import { InfoTip } from "../../ui/InfoTip";
 import { TRANSLATE_TARGETS, translateTargetName } from "@/lib/translateTargets";
 import { subtitleErrorKey } from "@/lib/liveSubtitles";
 import { CheckIcon, TranslateIcon } from "../../icons/bulk";
@@ -140,6 +141,14 @@ export const LiveSubtitlesPage: React.FC = () => {
             <span className="px-1.5 py-0.5 rounded-md text-[10px] font-semibold uppercase tracking-wide bg-logo-primary/15 text-logo-primary">
               {t("speak.subtitles.beta")}
             </span>
+            <InfoTip>
+              <ul className="space-y-1.5 list-disc ps-4">
+                <li>{t("speak.subtitles.noteDevice")}</li>
+                <li>{t("speak.subtitles.noteContext")}</li>
+                <li>{t("speak.subtitles.noteHistory")}</li>
+                <li>{t("speak.subtitles.notePermission")}</li>
+              </ul>
+            </InfoTip>
           </div>
           <p className="text-sm text-mid-gray" role="status">
             {error
@@ -176,7 +185,7 @@ export const LiveSubtitlesPage: React.FC = () => {
       {/* Which app to listen to: running apps, those playing first. */}
       <SettingsGroup
         title={t("speak.subtitles.app")}
-        description={t("speak.subtitles.appHint")}
+        info={t("speak.subtitles.appHint")}
       >
         {rows.length === 0 ? (
           <p className="px-4 py-3 text-sm text-mid-gray">
@@ -246,13 +255,6 @@ export const LiveSubtitlesPage: React.FC = () => {
           </label>
         </div>
       </SettingsGroup>
-
-      <ul className="px-4 space-y-1 text-xs text-mid-gray list-disc list-inside">
-        <li>{t("speak.subtitles.noteDevice")}</li>
-        <li>{t("speak.subtitles.noteContext")}</li>
-        <li>{t("speak.subtitles.noteHistory")}</li>
-        <li>{t("speak.subtitles.notePermission")}</li>
-      </ul>
     </div>
   );
 };

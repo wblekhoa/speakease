@@ -790,7 +790,8 @@
     "copy": "Sao chép",
     "clear": "Xóa hết",
     "noOptionsFound": "Không tìm thấy tùy chọn",
-    "resetToDefault": "Đặt lại mặc định"
+    "resetToDefault": "Đặt lại mặc định",
+    "moreInfo": "Thêm thông tin"
   },
   "accessibility": {
     "permissionsDescription": "SpeakEase cần quyền Trợ năng để dán chữ vừa chép vào ứng dụng.",

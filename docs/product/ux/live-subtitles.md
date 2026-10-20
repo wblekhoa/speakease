@@ -47,8 +47,7 @@ relations:
 - **Page**: a top block with the state ("Ready to subtitle Google Chrome", "Subtitling Google Chrome", or an error in
   plain words), the shortcut, and **Turn on subtitles** / **Turn off subtitles**; then **Listen to** - running apps
   as a list to pick from, those playing sound first with a "playing" mark; then **Languages** - the spoken language
-  → the one to read (the shared translate language unless that is the spoken one); then four short notes (on-device,
-  reads the title for context, saved to History, the one-time permission). The choices lock while subtitles run.
+  → the one to read (the shared translate language unless that is the spoken one); four short notes (on-device, reads the title for context, saved to History, the one-time permission) sit behind an info icon beside the title, and the list's hint behind one beside **Listen to**. The choices lock while subtitles run.
 - **Bar**: a rounded panel at the bottom centre of the screen with the pointer, above the Dock. It never takes focus
   from the app being watched. The top line is what is being said, small and grey, updating about once a second
   (newest words stay in view); the line under it, larger, is the latest translation, two lines at most. When a
@@ -96,5 +95,6 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-20: the page's descriptions moved behind info icons (owner).
 - 2026-10-20: moved from a card on Speak to its own page in the side column (owner: its UX differs from dictation).
 - 2026-10-20: created - the card, the bar, tray item and shortcut, History entry (beta, behind Experimental).

@@ -793,7 +793,8 @@
     "copy": "Copy",
     "clear": "Clear",
     "noOptionsFound": "No options found",
-    "resetToDefault": "Reset to default"
+    "resetToDefault": "Reset to default",
+    "moreInfo": "More information"
   },
   "accessibility": {
     "permissionsDescription": "SpeakEase needs accessibility permissions to type transcribed text.",
