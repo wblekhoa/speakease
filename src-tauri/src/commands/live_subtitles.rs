@@ -33,7 +33,13 @@ pub fn start_live_subtitles(
     source: String,
     target: String,
 ) -> Result<(), String> {
-    session::start(&app, bundle_id, source, target)
+    session::start(&app, bundle_id.clone(), source, target)?;
+    // Started from SpeakEase's window: go back to what is playing, so its
+    // subtitles show over it at once (SE-LIVE-012).
+    if !crate::system_audio_tap::activate_app(&bundle_id) {
+        log::warn!("Live subtitles: could not bring {bundle_id} to the front");
+    }
+    Ok(())
 }
 
 #[tauri::command]

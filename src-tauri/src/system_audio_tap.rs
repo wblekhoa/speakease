@@ -68,6 +68,14 @@ mod imp {
         fn se_tap_free_string(pointer: *mut c_char);
         fn se_app_context(bundle: *const c_char) -> *mut c_char;
         fn se_list_apps() -> *mut c_char;
+        fn se_activate_app(bundle: *const c_char) -> i32;
+    }
+
+    pub fn activate_app(bundle_id: &str) -> bool {
+        let Ok(bundle) = CString::new(bundle_id) else {
+            return false;
+        };
+        unsafe { se_activate_app(bundle.as_ptr()) == 1 }
     }
 
     pub fn list_apps() -> Vec<RunningApp> {
@@ -167,6 +175,10 @@ mod imp {
         Vec::new()
     }
 
+    pub fn activate_app(_bundle_id: &str) -> bool {
+        false
+    }
+
     pub fn app_context(_bundle_id: &str) -> AppContext {
         AppContext::default()
     }
@@ -201,6 +213,11 @@ pub fn list_processes() -> Vec<AudioProcess> {
 /// returned tap is dropped.
 pub fn start(bundle_id: &str, mute: bool) -> Result<(AppTap, Receiver<TapChunk>), String> {
     imp::start(bundle_id, mute)
+}
+
+/// Brings the app to the front; false when it is not running.
+pub fn activate_app(bundle_id: &str) -> bool {
+    imp::activate_app(bundle_id)
 }
 
 /// The tapped app's window title and open document, for the subtitle prompt

@@ -11,6 +11,7 @@
 //   se_tap_stop(handle)
 //   se_app_context(bundle)                   JSON: the app's window title + document
 //   se_list_apps()                           JSON: running apps, which are playing
+//   se_activate_app(bundle)                  1 when the app was brought to the front
 //   se_tap_free_string(ptr)                  frees strings returned above
 
 import AppKit
@@ -337,6 +338,25 @@ private func axElement(_ element: AXUIElement, _ attribute: String) -> AXUIEleme
 /// main window's title (a browser tab's page title, a player's file name)
 /// and the document it has open. Read through the Accessibility permission
 /// SpeakEase already holds for pasting; empty when it is missing.
+/// Brings the subtitled app to the front (owner, 21/10: starting subtitles
+/// from SpeakEase's window should land on the video with its subtitles, not
+/// leave SpeakEase over it). The instance playing the sound wins, as in
+/// se_app_context; a number is a process id.
+@_cdecl("se_activate_app")
+public func se_activate_app(_ bundle: UnsafePointer<CChar>?) -> Int32 {
+    guard let bundle else { return 0 }
+    let bundleID = String(cString: bundle)
+    if let pid = Int32(bundleID) {
+        return NSRunningApplication(processIdentifier: pid)?.activate(options: []) == true ? 1 : 0
+    }
+    let playingFor = Set(
+        tapProcesses().filter { $0.playing && belongsToApp($0, bundleID) }.map(\.responsiblePID))
+    let instances = NSRunningApplication.runningApplications(withBundleIdentifier: bundleID)
+        .sorted { playingFor.contains($0.processIdentifier) && !playingFor.contains($1.processIdentifier) }
+    guard let app = instances.first else { return 0 }
+    return app.activate(options: []) ? 1 : 0
+}
+
 @_cdecl("se_app_context")
 public func se_app_context(_ bundle: UnsafePointer<CChar>?) -> UnsafeMutablePointer<CChar>? {
     var row: [String: String] = [:]
