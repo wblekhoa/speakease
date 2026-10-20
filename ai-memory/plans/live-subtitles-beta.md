@@ -2,7 +2,7 @@
 status: executing
 owner: Lê Khoa
 started: 2026-10-16
-current-phase: 0
+current-phase: 0 (Stage A passed; Stage B waiting for the owner)
 summary: "Beta of live translated subtitles: capture one app's sound, recognise it on the Mac, translate each sentence with the app's AI, show a bilingual floating bar, behind the Experimental switch."
 tags: [area/audio, area/capture, area/translation, area/ai, area/permissions, stack/swift, stack/rust, stack/tauri, surface/macos]
 ---
@@ -137,6 +137,11 @@ Finding for risk 1: WebKit apps (Safari, apps with a web view) play through a sh
 whose bundle id does not name the app, and Chromium apps through `*.helper`. The tap now also takes every process the
 chosen app is **responsible for** (`responsibility_get_pid_responsible_for_pid`); checked: two `WebKit.GPU`
 processes resolved to SpeakEase and Google Drive, Chrome's helpers to Chrome. SpeakEase's own processes are excluded.
+
+Second quiet run (Stage A2, same clip, new build): 10/10 sentences **including the first** (the 4.5 s gap was a
+first-run effect: audio now arrives 19 ms after the tap starts); warm-up call 1.21 s; source line p50 0.70 s / p95
+0.93 s; translation p50 1.66 s / **p95 2.74 s** - both gates pass. "Friday" → "thứ Sáu" (correct now); "players" →
+"cầu thủ" remains.
 
 Stage B (a real browser playing YouTube) has not run: the built-in browser navigation was declined. It needs the owner
 to play a video in Chrome (or allow the built-in browser) while the probe runs.
