@@ -31,7 +31,9 @@ const SOURCE_KEY = "speakease.liveSubtitles.showSource";
 const FRAME_PADDING = 10;
 /** Gap between the pill and the bubbles (LiveSubtitles.css .ls-content). */
 const CONTENT_GAP = 8;
-/** The panel grows with its lines up to this height, then scrolls. */
+/** The panel grows to show at most this many bubbles, then scrolls (owner). */
+const MAX_BUBBLES = 4;
+/** A hard ceiling, for very long bubbles. */
 const MAX_HEIGHT = 560;
 /** Within this distance of the bottom counts as "reading the newest". */
 const STICK_PX = 40;
@@ -88,6 +90,8 @@ const LiveSubtitles: React.FC = () => {
   );
   const [now, setNow] = useState(Date.now());
   const [following, setFollowing] = useState(true);
+  /** More lines above than the panel shows: fade its top edge. */
+  const [moreAbove, setMoreAbove] = useState(false);
   // SE-LIVE-011
   // The panel's two switches (owner, 20/10): translate on/off, which stops
   // the AI calls, and the heard text under each translation shown/hidden.
@@ -153,8 +157,18 @@ const LiveSubtitles: React.FC = () => {
     const window = getCurrentWindow();
     let last = 0;
     const fit = async () => {
+      // The newest MAX_BUBBLES bubbles at their own heights.
+      const bubbles = Array.from(list.children).slice(
+        -MAX_BUBBLES,
+      ) as HTMLElement[];
+      const shown =
+        bubbles.reduce((sum, bubble) => sum + bubble.offsetHeight, 0) +
+        CONTENT_GAP * Math.max(0, bubbles.length - 1);
       const natural =
-        head.offsetHeight + CONTENT_GAP + list.offsetHeight + FRAME_PADDING * 2;
+        head.offsetHeight +
+        CONTENT_GAP +
+        Math.min(list.offsetHeight, shown) +
+        FRAME_PADDING * 2;
       const height = Math.min(MAX_HEIGHT, Math.ceil(natural));
       if (Math.abs(height - last) < 2) return;
       last = height;
@@ -180,7 +194,9 @@ const LiveSubtitles: React.FC = () => {
   // Keep the newest line in view unless the user scrolled up to read.
   useLayoutEffect(() => {
     const scroller = scrollRef.current;
-    if (scroller && following) scroller.scrollTop = scroller.scrollHeight;
+    if (!scroller) return;
+    if (following) scroller.scrollTop = scroller.scrollHeight;
+    setMoreAbove(scroller.scrollTop > 1);
   }, [state, following]);
 
   const onScroll = () => {
@@ -189,6 +205,7 @@ const LiveSubtitles: React.FC = () => {
     const fromBottom =
       scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
     setFollowing(fromBottom < STICK_PX);
+    setMoreAbove(scroller.scrollTop > 1);
   };
 
   const jumpToNewest = () => {
@@ -266,7 +283,9 @@ const LiveSubtitles: React.FC = () => {
         </header>
 
         <div
-          className="ls-scroll"
+          className={`ls-scroll${moreAbove ? " ls-more-above" : ""}${
+            following ? "" : " ls-more-below"
+          }`}
           ref={scrollRef}
           onScroll={onScroll}
           onMouseDown={startDrag}

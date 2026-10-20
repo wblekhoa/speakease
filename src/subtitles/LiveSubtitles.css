@@ -155,6 +155,35 @@ body {
   user-select: none;
 }
 
+/* Lines beyond the four shown fade out at the edge they continue past:
+   the top while older lines are above, the bottom while scrolled back. */
+.ls-scroll {
+  --ls-fade-top: 0px;
+  --ls-fade-bottom: 0px;
+  -webkit-mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black var(--ls-fade-top),
+    black calc(100% - var(--ls-fade-bottom)),
+    transparent 100%
+  );
+  mask-image: linear-gradient(
+    to bottom,
+    transparent 0,
+    black var(--ls-fade-top),
+    black calc(100% - var(--ls-fade-bottom)),
+    transparent 100%
+  );
+}
+
+.ls-more-above {
+  --ls-fade-top: 48px;
+}
+
+.ls-more-below {
+  --ls-fade-bottom: 48px;
+}
+
 /* The bubbles at their natural height, which the window is fitted to. */
 .ls-list {
   display: flex;

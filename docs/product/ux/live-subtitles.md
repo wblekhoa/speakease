@@ -54,8 +54,8 @@ relations:
   translation) - and **×** (turn subtitles off); drag the pill or the bubbles to move it, and it opens there next time. Each line is its own
   rounded bubble, like a chat: the translation in larger text, what was said under it in small grey text, or three
   soft dots while it is being translated. The newest bubble is at the bottom; when a sentence spans two lines, one
-  bubble with the whole sentence takes their place. The panel grows upward with its bubbles up to 560 px, then
-  scrolls; it follows the newest line unless the user scrolls up to read, and a round **↓** button brings it back.
+  bubble with the whole sentence takes their place. The panel grows upward to show at most four bubbles, then scrolls, the
+  older lines fading out at its top edge (and at the bottom while you read back); it follows the newest line unless the user scrolls up to read, and a round **↓** button brings it back.
   The last 60 lines stay to scroll through. After 8 s of silence it fades a little.
 - **Before the first line**: a bubble says "Getting subtitles ready…", then "Listening to <app>…".
 - **Ending**: from the card, the bar's ×, the tray or the shortcut. What was heard is saved to History as one entry,
@@ -99,6 +99,7 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-20: at most four bubbles show, with faded edges (owner).
 - 2026-10-20: Translate and Original switches in the panel's pill (owner).
 - 2026-10-20: the bar became a chat-like panel of bubbles in the bottom-right corner (owner's reference UI).
 - 2026-10-20: the bar rolls through the last three lines (owner: one line went by before it could be read).
