@@ -11,13 +11,15 @@ const WIDTH: f64 = 472.0;
 /// The opening height; the bar's page then fits the window to its card,
 /// keeping the bottom edge, so no empty glass blocks the video above it.
 const HEIGHT: f64 = 150.0;
+/// The blurred panel's corners (LiveSubtitles.css --ls-panel-radius).
+const RADIUS: f64 = 26.0;
 /// From the bottom-right corner of the visible area.
 const BOTTOM_GAP: f64 = 8.0;
 const SIDE_GAP: f64 = 8.0;
 
 #[cfg(target_os = "macos")]
 mod imp {
-    use super::{BOTTOM_GAP, HEIGHT, LABEL, SIDE_GAP, WIDTH};
+    use super::{BOTTOM_GAP, HEIGHT, LABEL, RADIUS, SIDE_GAP, WIDTH};
     use tauri::{AppHandle, Manager, WebviewUrl};
     use tauri_nspanel::{tauri_panel, CollectionBehavior, PanelBuilder, PanelLevel, StyleMask};
 
@@ -74,10 +76,33 @@ mod imp {
                 )
                 .build()
             {
-                Ok(panel) => panel.show(),
+                Ok(panel) => {
+                    frost(&handle);
+                    panel.show();
+                }
                 Err(e) => log::error!("Live subtitles: cannot create the subtitle panel: {e}"),
             }
         });
+    }
+
+    /// A strong native blur behind the whole panel (owner, 20/10: easier to
+    /// read over a busy video). macOS draws it from the window behind, which
+    /// web content cannot reach; it stays on although the panel never takes
+    /// focus, and follows light or dark.
+    fn frost(app: &AppHandle) {
+        use tauri::utils::config::WindowEffectsConfig;
+        use tauri::window::{Effect, EffectState};
+        if let Some(window) = app.get_webview_window(LABEL) {
+            let frosted = window.set_effects(WindowEffectsConfig {
+                effects: vec![Effect::Popover],
+                state: Some(EffectState::Active),
+                radius: Some(RADIUS),
+                color: None,
+            });
+            if let Err(e) = frosted {
+                log::warn!("Live subtitles: no blur behind the panel: {e}");
+            }
+        }
     }
 
     pub fn hide(app: &AppHandle) {

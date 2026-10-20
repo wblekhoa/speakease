@@ -5,14 +5,16 @@
    (subtitle_window.rs); its height follows the content (LiveSubtitles.tsx). */
 :root {
   --ls-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --ls-bubble: color-mix(in srgb, var(--color-background) 90%, transparent);
-  --ls-head: color-mix(in srgb, var(--color-background) 82%, transparent);
+  /* Over the native blur (subtitle_window.rs frost): light enough to let
+     it through, solid enough to keep text crisp. */
+  --ls-bubble: color-mix(in srgb, var(--color-background) 62%, transparent);
+  --ls-head: color-mix(in srgb, var(--color-background) 50%, transparent);
   --ls-border: color-mix(in srgb, var(--color-mid-gray) 26%, transparent);
   --ls-muted: color-mix(in srgb, var(--color-text) 60%, transparent);
-  /* Soft and short, so it fits inside the frame's padding (16px). */
+  /* Soft and faint, kept inside the frame's padding (16px). */
   --ls-shadow:
-    0 3px 10px color-mix(in srgb, black 16%, transparent),
-    0 1px 2px color-mix(in srgb, black 10%, transparent);
+    0 4px 12px color-mix(in srgb, black 8%, transparent),
+    0 1px 3px color-mix(in srgb, black 6%, transparent);
 }
 
 html,
