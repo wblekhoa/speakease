@@ -1,4 +1,10 @@
-import React, { useEffect, useReducer, useRef, useState } from "react";
+import React, {
+  useEffect,
+  useLayoutEffect,
+  useReducer,
+  useRef,
+  useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
 import { getCurrentWindow } from "@tauri-apps/api/window";
@@ -17,12 +23,16 @@ import {
 } from "@/lib/liveSubtitles";
 import "./LiveSubtitles.css";
 
-/** Where the user last dragged the bar (this Mac only). */
+/** Where the user last dragged the panel (this Mac only). */
 const POSITION_KEY = "speakease.liveSubtitles.position";
-/** Space around the card inside the window (LiveSubtitles.css .ls-frame). */
-const FRAME_PADDING = 8;
-/** The bar dims after this long without speech. */
-const QUIET_MS = 6000;
+/** Space around the content inside the window (LiveSubtitles.css .ls-frame). */
+const FRAME_PADDING = 10;
+/** The panel grows with its lines up to this height, then scrolls. */
+const MAX_HEIGHT = 560;
+/** Within this distance of the bottom counts as "reading the newest". */
+const STICK_PX = 40;
+/** The panel dims after this long without speech. */
+const QUIET_MS = 8000;
 
 const readPosition = (): { x: number; y: number } | null => {
   try {
@@ -37,11 +47,12 @@ const savePosition = (x: number, y: number) => {
   try {
     localStorage.setItem(POSITION_KEY, JSON.stringify({ x, y }));
   } catch {
-    // Storage unavailable: the bar just opens at the bottom centre.
+    // Storage unavailable: the panel just opens in its default corner.
   }
 };
 
-/** The floating bilingual bar (SE-LIVE). */
+/** The floating subtitle panel (SE-LIVE-008): one bubble per line, newest
+ * at the bottom, like a chat (owner's reference, 20/10). */
 const LiveSubtitles: React.FC = () => {
   const { t } = useTranslation();
   const [state, apply] = useReducer(
@@ -56,7 +67,9 @@ const LiveSubtitles: React.FC = () => {
     emptySubtitles,
   );
   const [now, setNow] = useState(Date.now());
-  const cardRef = useRef<HTMLDivElement>(null);
+  const [following, setFollowing] = useState(true);
+  const contentRef = useRef<HTMLDivElement>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
   const view = subtitleView(state);
 
   useEffect(() => {
@@ -69,7 +82,10 @@ const LiveSubtitles: React.FC = () => {
       listen<SubtitleEvent>("live-subtitle", (event) => apply(event.payload)),
       // A new session starts clean.
       listen<{ running: boolean }>("live-subtitles-state", (event) => {
-        if (event.payload.running) apply("reset");
+        if (event.payload.running) {
+          apply("reset");
+          setFollowing(true);
+        }
       }),
       window.onMoved(async ({ payload }) => {
         const scale = await window.scaleFactor();
@@ -83,15 +99,19 @@ const LiveSubtitles: React.FC = () => {
     };
   }, []);
 
-  // The window follows the card's height and keeps its bottom edge, so the
-  // bar grows upward as lines arrive and no empty glass sits over the video.
+  // The window follows its content's height (up to MAX_HEIGHT) and keeps
+  // its bottom edge, so it grows upward and leaves no empty glass over the
+  // video beneath.
   useEffect(() => {
-    const card = cardRef.current;
-    if (!card) return;
+    const content = contentRef.current;
+    if (!content) return;
     const window = getCurrentWindow();
     let last = 0;
     const fit = async () => {
-      const height = Math.ceil(card.offsetHeight) + FRAME_PADDING * 2;
+      const height = Math.min(
+        MAX_HEIGHT,
+        Math.ceil(content.scrollHeight) + FRAME_PADDING * 2,
+      );
       if (Math.abs(height - last) < 2) return;
       last = height;
       try {
@@ -108,9 +128,30 @@ const LiveSubtitles: React.FC = () => {
       }
     };
     const observer = new ResizeObserver(() => void fit());
-    observer.observe(card);
+    observer.observe(content);
     return () => observer.disconnect();
   }, []);
+
+  // Keep the newest line in view unless the user scrolled up to read.
+  useLayoutEffect(() => {
+    const scroller = scrollRef.current;
+    if (scroller && following) scroller.scrollTop = scroller.scrollHeight;
+  }, [state, following]);
+
+  const onScroll = () => {
+    const scroller = scrollRef.current;
+    if (!scroller) return;
+    const fromBottom =
+      scroller.scrollHeight - scroller.scrollTop - scroller.clientHeight;
+    setFollowing(fromBottom < STICK_PX);
+  };
+
+  const jumpToNewest = () => {
+    setFollowing(true);
+    const scroller = scrollRef.current;
+    if (scroller)
+      scroller.scrollTo({ top: scroller.scrollHeight, behavior: "smooth" });
+  };
 
   const startDrag = (event: React.MouseEvent) => {
     if (event.button !== 0) return;
@@ -122,83 +163,87 @@ const LiveSubtitles: React.FC = () => {
 
   const quiet = view.updatedAt > 0 && now - view.updatedAt > QUIET_MS;
   const app = view.appName ?? t("subtitles.theApp");
-  let body: React.ReactNode;
-  if (view.error) {
-    body = (
-      <p className="ls-status ls-error">
-        {t(`subtitles.errors.${subtitleErrorKey(view.error)}`, { app })}
-      </p>
-    );
-  } else if (view.items.length === 0) {
-    body = (
-      <p className="ls-status">
-        {view.listening
-          ? t("subtitles.listening", { app })
-          : t("subtitles.starting")}
-      </p>
-    );
-  } else {
-    // Oldest at the top, fading. The newest translated line stays at full
-    // strength while the line after it is still being translated - it is
-    // the one being read.
-    const lastTranslated = view.items.reduce(
-      (last, item, n) => (item.target ? n : last),
-      -1,
-    );
-    const ageOf = (n: number) => Math.max(0, lastTranslated - n);
-    body = (
-      <ol className="ls-lines">
-        {view.items.map((item, n) => (
-          <li
-            key={item.index}
-            className="ls-line"
-            data-age={ageOf(n)}
-            aria-current={n === view.items.length - 1 ? "true" : undefined}
-          >
-            <p className="ls-source" dir="auto">
-              {item.source}
-            </p>
-            {item.target ? (
-              <p className="ls-target" dir="auto">
-                {item.target}
-              </p>
-            ) : (
-              <p
-                className="ls-target ls-pending"
-                aria-label={t("subtitles.translating")}
-              >
-                <span />
-                <span />
-                <span />
-              </p>
-            )}
-          </li>
-        ))}
-      </ol>
-    );
-  }
+  const status = view.error
+    ? t(`subtitles.errors.${subtitleErrorKey(view.error)}`, { app })
+    : view.items.length === 0
+      ? view.listening
+        ? t("subtitles.listening", { app })
+        : t("subtitles.starting")
+      : null;
 
   return (
-    <div className="ls-frame">
-      <div
-        ref={cardRef}
-        className={`ls-card${quiet ? " ls-quiet" : ""}`}
-        onMouseDown={startDrag}
-        role="region"
-        aria-live="polite"
-        aria-label={t("subtitles.label")}
-      >
+    <div className={`ls-frame${quiet ? " ls-quiet" : ""}`}>
+      <div className="ls-content" ref={contentRef}>
+        {/* The handle: what is being subtitled, and how to stop. */}
+        <header className="ls-head" onMouseDown={startDrag}>
+          <span
+            aria-hidden
+            className={`ls-dot${view.listening && !view.error ? " ls-live" : ""}`}
+          />
+          <span className="ls-app">{app}</span>
+          <button
+            type="button"
+            className="ls-close"
+            onClick={() => commands.stopLiveSubtitles()}
+            aria-label={t("subtitles.stop")}
+            title={t("subtitles.stop")}
+          >
+            ×
+          </button>
+        </header>
+
+        <div
+          className="ls-scroll"
+          ref={scrollRef}
+          onScroll={onScroll}
+          onMouseDown={startDrag}
+          role="log"
+          aria-live="polite"
+          aria-label={t("subtitles.label")}
+        >
+          {status ? (
+            <p
+              className={`ls-bubble ls-status${view.error ? " ls-error" : ""}`}
+            >
+              {status}
+            </p>
+          ) : (
+            view.items.map((item) => (
+              <article key={item.index} className="ls-bubble">
+                {item.target ? (
+                  <p className="ls-target" dir="auto">
+                    {item.target}
+                  </p>
+                ) : (
+                  <p
+                    className="ls-target ls-pending"
+                    aria-label={t("subtitles.translating")}
+                  >
+                    <span />
+                    <span />
+                    <span />
+                  </p>
+                )}
+                <p className="ls-source" dir="auto">
+                  {item.source}
+                </p>
+              </article>
+            ))
+          )}
+        </div>
+      </div>
+
+      {!following && (
         <button
           type="button"
-          className="ls-close"
-          onClick={() => commands.stopLiveSubtitles()}
-          aria-label={t("subtitles.stop")}
-          title={t("subtitles.stop")}
+          className="ls-newest"
+          onClick={jumpToNewest}
+          aria-label={t("subtitles.newest")}
+          title={t("subtitles.newest")}
         >
-          ×
+          ↓
         </button>
-        {body}
-      </div>
+      )}
     </div>
   );
 };

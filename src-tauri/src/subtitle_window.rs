@@ -1,21 +1,22 @@
-//! SpeakEase live subtitles: the floating bilingual bar (owner, 16/10: a bar
-//! at the bottom of the screen, draggable). A non-activating panel like the
-//! recording pill, so the app being watched keeps focus; it takes clicks only
-//! for dragging and its close button.
+//! SpeakEase live subtitles: the floating panel of subtitle bubbles (owner,
+//! 20/10: a chat-like column instead of one bar line). A non-activating panel
+//! like the recording pill, so the app being watched keeps focus; it opens in
+//! the bottom-right corner and can be dragged.
 
 use tauri::AppHandle;
 
 pub const LABEL: &str = "live_subtitles";
-const WIDTH: f64 = 760.0;
+const WIDTH: f64 = 440.0;
 /// The opening height; the bar's page then fits the window to its card,
 /// keeping the bottom edge, so no empty glass blocks the video above it.
 const HEIGHT: f64 = 150.0;
-/// Above the Dock / the bottom of the visible area.
-const BOTTOM_GAP: f64 = 72.0;
+/// From the bottom-right corner of the visible area.
+const BOTTOM_GAP: f64 = 24.0;
+const SIDE_GAP: f64 = 24.0;
 
 #[cfg(target_os = "macos")]
 mod imp {
-    use super::{BOTTOM_GAP, HEIGHT, LABEL, WIDTH};
+    use super::{BOTTOM_GAP, HEIGHT, LABEL, SIDE_GAP, WIDTH};
     use tauri::{AppHandle, Manager, WebviewUrl};
     use tauri_nspanel::{tauri_panel, CollectionBehavior, PanelBuilder, PanelLevel, StyleMask};
 
@@ -28,17 +29,17 @@ mod imp {
         })
     }
 
-    fn bottom_centre(app: &AppHandle) -> Option<(f64, f64)> {
+    fn bottom_right(app: &AppHandle) -> Option<(f64, f64)> {
         let monitor = crate::overlay::get_monitor_with_cursor(app)?;
         let scale = monitor.scale_factor();
         let area = monitor.work_area();
-        let x = area.position.x as f64 / scale + (area.size.width as f64 / scale - WIDTH) / 2.0;
+        let x = (area.position.x as f64 + area.size.width as f64) / scale - WIDTH - SIDE_GAP;
         let y = (area.position.y as f64 + area.size.height as f64) / scale - HEIGHT - BOTTOM_GAP;
         Some((x, y))
     }
 
-    /// Shows the bar, creating it on first use. A bar the user dragged stays
-    /// where they left it (its page remembers and restores the spot).
+    /// Shows the panel, creating it on first use. A panel the user dragged
+    /// stays where they left it (its page remembers and restores the spot).
     pub fn show(app: &AppHandle) {
         let handle = app.clone();
         let _ = app.run_on_main_thread(move || {
@@ -46,8 +47,8 @@ mod imp {
                 let _ = window.show();
                 return;
             }
-            let Some((x, y)) = bottom_centre(&handle) else {
-                log::warn!("Live subtitles: no monitor for the subtitle bar");
+            let Some((x, y)) = bottom_right(&handle) else {
+                log::warn!("Live subtitles: no monitor for the subtitle panel");
                 return;
             };
             match PanelBuilder::<_, SubtitlePanel>::new(&handle, LABEL)
@@ -73,7 +74,7 @@ mod imp {
                 .build()
             {
                 Ok(panel) => panel.show(),
-                Err(e) => log::error!("Live subtitles: cannot create the subtitle bar: {e}"),
+                Err(e) => log::error!("Live subtitles: cannot create the subtitle panel: {e}"),
             }
         });
     }

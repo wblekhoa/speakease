@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import {
   applySubtitleEvent,
   emptySubtitles,
+  KEEP_LINES,
   subtitleErrorKey,
   subtitleView,
   type SubtitleEvent,
@@ -14,7 +15,7 @@ const run = (events: SubtitleEvent[]) =>
   );
 
 // SE-LIVE-008
-// The bar rolls: earlier lines stay readable under the newest.
+// Each line keeps its translation; earlier lines stay above the newest.
 let view = subtitleView(
   run([
     { kind: "context", app_name: "Google Chrome", playing: null },
@@ -31,19 +32,18 @@ assert.deepEqual(view.items, [
   { index: 2, source: "And then", target: null },
 ]);
 
-// Only the last few lines stay.
+// The panel keeps the last KEEP_LINES lines to scroll back through.
 let rolled = emptySubtitles();
-for (let i = 1; i <= 5; i++) {
+for (let i = 1; i <= KEEP_LINES + 5; i++) {
   rolled = applySubtitleEvent(
     rolled,
     { kind: "line", index: i, source: `l${i}` },
     i,
   );
 }
-assert.deepEqual(
-  subtitleView(rolled).items.map((item) => item.index),
-  [3, 4, 5],
-);
+const kept = subtitleView(rolled).items.map((item) => item.index);
+assert.equal(kept.length, KEEP_LINES);
+assert.equal(kept[0], 6);
 
 // A late partial never overwrites the final line.
 view = subtitleView(
@@ -80,14 +80,14 @@ assert.deepEqual(view.items, [
 // An empty recognition is dropped; old lines are forgotten.
 let state = run([{ kind: "line", index: 1, source: "" }]);
 assert.equal(state.lines.size, 0);
-for (let i = 1; i <= 20; i++) {
+for (let i = 1; i <= 100; i++) {
   state = applySubtitleEvent(
     state,
     { kind: "line", index: i, source: `l${i}` },
     i,
   );
 }
-assert.equal(state.lines.size, 8);
+assert.equal(state.lines.size, KEEP_LINES);
 
 assert.equal(
   subtitleErrorKey("no-process: com.x has no audio process"),

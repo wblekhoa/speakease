@@ -948,7 +948,7 @@
       "to": "Dịch sang",
       "start": "Bật phụ đề",
       "stop": "Tắt phụ đề",
-      "on": "Câu dịch hiện ở thanh dưới màn hình. Bấm × trên thanh hoặc Tắt phụ đề để dừng.",
+      "on": "Câu dịch hiện trong khung nổi ở góc màn hình. Bấm × trên khung hoặc Tắt phụ đề để dừng.",
       "onTitle": "Đang phụ đề {{app}}",
       "ready": "Sẵn sàng phụ đề {{app}}.",
       "pickFirst": "Chọn một ứng dụng bên dưới để bắt đầu.",
@@ -1041,6 +1041,7 @@
       "running": "Phụ đề đang bật.",
       "other": "Phụ đề dừng do lỗi. Thử bật lại."
     },
-    "translating": "Đang dịch…"
+    "translating": "Đang dịch…",
+    "newest": "Về câu mới nhất"
   }
 }

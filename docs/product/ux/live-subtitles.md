@@ -48,14 +48,15 @@ relations:
   plain words), the shortcut, and **Turn on subtitles** / **Turn off subtitles**; then **Listen to** - running apps
   as a list to pick from, those playing sound first with a "playing" mark; then **Languages** - the spoken language
   → the one to read (the shared translate language unless that is the spoken one); four short notes (on-device, reads the title for context, saved to History, the one-time permission) sit behind an info icon beside the title, and the list's hint behind one beside **Listen to**. The choices lock while subtitles run.
-- **Bar**: a rounded panel at the bottom centre of the screen with the pointer, above the Dock. It never takes focus
-  from the app being watched. It rolls through the **last three lines**, oldest at the top: each shows what was said,
-  small and grey, with its translation under it, larger (two lines at most), or three soft dots while it is being
-  translated. The newest translated line is at full strength; older ones fade, so a line can still be read after the
-  next one starts. When a sentence spans two lines, one translation of the whole sentence takes their place. The
-  panel grows upward as lines arrive and never leaves empty glass over the video. After 6 s of silence it fades to
-  half strength. Drag it anywhere; it opens there next time. **×** turns subtitles off.
-- **Before the first line**: "Getting subtitles ready…", then "Listening to <app>…".
+- **Panel**: a floating column in the bottom-right corner of the screen with the pointer, 440 px wide, that never
+  takes focus from the app being watched. At its top a small pill shows a breathing dot, the app's name and **×**
+  (turn subtitles off); drag the pill or the bubbles to move it, and it opens there next time. Each line is its own
+  rounded bubble, like a chat: the translation in larger text, what was said under it in small grey text, or three
+  soft dots while it is being translated. The newest bubble is at the bottom; when a sentence spans two lines, one
+  bubble with the whole sentence takes their place. The panel grows upward with its bubbles up to 560 px, then
+  scrolls; it follows the newest line unless the user scrolls up to read, and a round **↓** button brings it back.
+  The last 60 lines stay to scroll through. After 8 s of silence it fades a little.
+- **Before the first line**: a bubble says "Getting subtitles ready…", then "Listening to <app>…".
 - **Ending**: from the card, the bar's ×, the tray or the shortcut. What was heard is saved to History as one entry,
   titled with what was playing (a YouTube video's title, a file's name) or the app's name, with the translation as
   its AI version.
@@ -67,11 +68,11 @@ relations:
 
 ## Screens and states
 
-| Screen              | States                                                     | Entry                                                                | Exit / next                                             |
-| ------------------- | ---------------------------------------------------------- | -------------------------------------------------------------------- | ------------------------------------------------------- |
-| Live subtitles page | unsupported · no app chosen · ready · running · error      | side column (Experimental on), tray/shortcut with nothing remembered | bar                                                     |
-| Bar                 | getting ready · listening · lines · quiet (dimmed) · error | start from card, tray, shortcut                                      | ×, card, tray, shortcut → History entry                 |
-| Tray item           | hidden · off · on (ticked)                                 | tray menu                                                            | starts or stops; opens Speak when nothing is remembered |
+| Screen              | States                                                                               | Entry                                                                | Exit / next                                             |
+| ------------------- | ------------------------------------------------------------------------------------ | -------------------------------------------------------------------- | ------------------------------------------------------- |
+| Live subtitles page | unsupported · no app chosen · ready · running · error                                | side column (Experimental on), tray/shortcut with nothing remembered | bar                                                     |
+| Panel               | getting ready · listening · lines · scrolled back (↓ shown) · quiet (dimmed) · error | start from the page, tray, shortcut                                  | ×, page, tray, shortcut → History entry                 |
+| Tray item           | hidden · off · on (ticked)                                                           | tray menu                                                            | starts or stops; opens Speak when nothing is remembered |
 
 ## Flow
 
@@ -79,7 +80,7 @@ relations:
 flowchart LR
   A[Experimental on] --> B[Live subtitles page: pick app + languages]
   B --> C[Turn on subtitles]
-  C --> D[Bar: listening]
+  C --> D[Panel: listening]
   D --> E[Lines + translations]
   E --> F{Stopped?}
   F -- card, x, tray, shortcut --> G[History entry]
@@ -97,6 +98,7 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-20: the bar became a chat-like panel of bubbles in the bottom-right corner (owner's reference UI).
 - 2026-10-20: the bar rolls through the last three lines (owner: one line went by before it could be read).
 - 2026-10-20: the page's descriptions moved behind info icons (owner).
 - 2026-10-20: moved from a card on Speak to its own page in the side column (owner: its UX differs from dictation).

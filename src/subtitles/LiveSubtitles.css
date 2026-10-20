@@ -1,13 +1,15 @@
 @import "../styles/theme.css";
 
-/* The subtitle bar: the app's own surface and text tokens (theme.css), so
-   it follows light and dark like the recording pill. The panel window is
-   760 wide (subtitle_window.rs); its height follows the card (LiveSubtitles.tsx). */
+/* The subtitle panel: chat-like bubbles in the app's own surface and text
+   tokens (theme.css), so it follows light and dark. The window is 440 wide
+   (subtitle_window.rs); its height follows the content (LiveSubtitles.tsx). */
 :root {
   --ls-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  --ls-surface: color-mix(in srgb, var(--color-background) 94%, transparent);
-  --ls-border: color-mix(in srgb, var(--color-mid-gray) 24%, transparent);
-  --ls-muted: color-mix(in srgb, var(--color-text) 62%, transparent);
+  --ls-bubble: color-mix(in srgb, var(--color-background) 90%, transparent);
+  --ls-head: color-mix(in srgb, var(--color-background) 82%, transparent);
+  --ls-border: color-mix(in srgb, var(--color-mid-gray) 26%, transparent);
+  --ls-muted: color-mix(in srgb, var(--color-text) 60%, transparent);
+  --ls-shadow: 0 6px 20px color-mix(in srgb, black 22%, transparent);
 }
 
 html,
@@ -16,95 +18,150 @@ body {
 }
 
 .ls-frame {
-  box-sizing: border-box;
-  width: 100%;
-  height: 100%;
-  display: flex;
-  align-items: flex-end;
-  justify-content: center;
-  padding: 8px;
-  font-family: var(--ls-font);
-}
-
-.ls-card {
   position: relative;
   box-sizing: border-box;
   width: 100%;
-  flex: none;
-  padding: 12px 44px 14px 20px;
-  border-radius: 16px;
-  border: 1px solid var(--ls-border);
-  background: var(--ls-surface);
-  color: var(--color-text);
+  height: 100%;
+  padding: 10px;
   display: flex;
   flex-direction: column;
-  gap: 4px;
-  cursor: grab;
-  user-select: none;
+  justify-content: flex-end;
+  font-family: var(--ls-font);
+  color: var(--color-text);
   transition: opacity 400ms ease;
-}
-
-.ls-card:active {
-  cursor: grabbing;
 }
 
 /* Quiet for a while: step back, but stay readable. */
 .ls-quiet {
-  opacity: 0.55;
-}
-
-.ls-source,
-.ls-target,
-.ls-status {
-  margin: 0;
-}
-
-/* The last lines, oldest first. Older lines step back so the eye lands on
-   the newest, but stay readable for whoever is a line behind. */
-.ls-lines {
-  list-style: none;
-  margin: 0;
-  padding: 0;
-  display: flex;
-  flex-direction: column;
-  gap: 10px;
-}
-
-.ls-line {
-  display: flex;
-  flex-direction: column;
-  gap: 1px;
-  transition: opacity 300ms ease;
-}
-
-.ls-line[data-age="1"] {
   opacity: 0.6;
 }
 
-.ls-line[data-age="2"] {
-  opacity: 0.35;
+.ls-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  max-height: 100%;
+  min-height: 0;
 }
 
-/* What was heard: small and muted, one line. */
+/* The handle: drag it, read what is being subtitled, close it. */
+.ls-head {
+  flex: none;
+  align-self: flex-start;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  max-width: 100%;
+  padding: 5px 6px 5px 12px;
+  border-radius: 999px;
+  border: 1px solid var(--ls-border);
+  background: var(--ls-head);
+  font-size: 12px;
+  color: var(--ls-muted);
+  cursor: grab;
+  user-select: none;
+}
+
+.ls-dot {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--ls-muted);
+  flex: none;
+}
+
+.ls-live {
+  background: var(--color-logo-primary);
+  animation: ls-breathe 2s ease-in-out infinite;
+}
+
+@keyframes ls-breathe {
+  50% {
+    opacity: 0.4;
+  }
+}
+
+.ls-app {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.ls-close {
+  flex: none;
+  width: 22px;
+  height: 22px;
+  border: none;
+  border-radius: 11px;
+  background: transparent;
+  color: var(--ls-muted);
+  font-size: 16px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.ls-close:hover {
+  background: color-mix(in srgb, var(--color-mid-gray) 20%, transparent);
+  color: var(--color-text);
+}
+
+/* The lines: a column of bubbles that scrolls once the panel is full. */
+.ls-scroll {
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  scrollbar-width: none;
+  cursor: grab;
+  user-select: none;
+}
+
+.ls-scroll::-webkit-scrollbar {
+  display: none;
+}
+
+.ls-bubble {
+  flex: none;
+  margin: 0;
+  padding: 11px 15px 12px;
+  border-radius: 20px;
+  border: 1px solid var(--ls-border);
+  background: var(--ls-bubble);
+  box-shadow: var(--ls-shadow);
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.ls-target,
+.ls-source {
+  margin: 0;
+  text-wrap: pretty;
+}
+
+/* The translation: the line people read. */
+.ls-target {
+  font-size: 17px;
+  line-height: 1.38;
+  font-weight: 500;
+}
+
+/* What was heard, under it. */
 .ls-source {
   font-size: 13px;
   line-height: 1.35;
   color: var(--ls-muted);
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-/* Its translation: the line people read, two lines at most. */
-.ls-target {
-  font-size: 19px;
-  line-height: 1.3;
-  font-weight: 500;
-  text-wrap: pretty;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-  overflow: hidden;
+.ls-status {
+  font-size: 14px;
+  line-height: 1.4;
+  color: var(--ls-muted);
+}
+
+.ls-error {
+  color: var(--color-text);
 }
 
 /* Being translated: three soft dots where the translation will go. */
@@ -112,7 +169,7 @@ body {
   display: flex;
   gap: 5px;
   align-items: center;
-  height: 25px;
+  height: 23px;
 }
 
 .ls-pending span {
@@ -142,48 +199,38 @@ body {
   }
 }
 
-.ls-status {
-  font-size: 15px;
-  line-height: 1.4;
-  color: var(--ls-muted);
-}
-
-.ls-error {
-  color: var(--color-text);
-}
-
-.ls-close {
+/* Scrolled up to read: one tap back to the newest line. */
+.ls-newest {
   position: absolute;
-  top: 8px;
-  right: 10px;
-  width: 26px;
-  height: 26px;
-  border: none;
-  border-radius: 13px;
-  background: transparent;
-  color: var(--ls-muted);
-  font-size: 18px;
-  line-height: 1;
+  bottom: 20px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 34px;
+  height: 34px;
+  border-radius: 17px;
+  border: 1px solid var(--ls-border);
+  background: var(--ls-head);
+  color: var(--color-text);
+  box-shadow: var(--ls-shadow);
+  font-size: 16px;
   cursor: pointer;
 }
 
-.ls-close:hover {
-  background: color-mix(in srgb, var(--color-mid-gray) 18%, transparent);
-  color: var(--color-text);
-}
-
-.ls-close:focus-visible {
+.ls-close:focus-visible,
+.ls-newest:focus-visible {
   outline: 2px solid var(--color-logo-primary);
   outline-offset: 1px;
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .ls-card,
-  .ls-line {
+  .ls-frame {
     transition: none;
   }
+  .ls-live,
   .ls-pending span {
     animation: none;
+  }
+  .ls-pending span {
     opacity: 0.6;
   }
 }

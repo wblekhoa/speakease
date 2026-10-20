@@ -1,11 +1,11 @@
 /**
  * Live subtitles (beta): what the subtitle bar shows, from the events the
- * session sends (src-tauri/src/live_subtitles.rs `pipeline::Event`). The bar
- * rolls: the last few lines stay on screen, each with its translation under
- * it, so a line can still be read after the next one starts (owner, 20/10:
- * one line was replaced before it could be read). The line being heard sits
- * at the bottom until its translation arrives. A re-joined sentence takes
- * the place of the pieces it covers.
+ * session sends (src-tauri/src/live_subtitles.rs `pipeline::Event`). The
+ * panel reads like a chat: each line is its own bubble with its translation,
+ * newest at the bottom, and the session so far can be scrolled back (owner,
+ * 20/10: one line was replaced before it could be read). The line being
+ * heard sits at the bottom until its translation arrives. A re-joined
+ * sentence takes the place of the pieces it covers.
  */
 
 export type SubtitleEvent =
@@ -39,9 +39,6 @@ export interface SubtitleItem {
   target: string | null;
 }
 
-/** How many lines the bar keeps on screen. */
-export const VISIBLE_LINES = 3;
-
 export interface SubtitleView {
   appName: string | null;
   listening: boolean;
@@ -68,8 +65,8 @@ export const emptySubtitles = (): SubtitleState => ({
   updatedAt: 0,
 });
 
-/** Lines older than the last few are dropped: the bar shows one pair. */
-const KEEP_LINES = 8;
+/** How far back the panel can be scrolled (History keeps the whole session). */
+export const KEEP_LINES = 60;
 
 export const applySubtitleEvent = (
   state: SubtitleState,
@@ -145,7 +142,7 @@ export const applySubtitleEvent = (
 
 export const subtitleView = (state: SubtitleState): SubtitleView => {
   const indexes = [...state.lines.keys()].sort((a, b) => a - b);
-  const items = indexes.slice(-VISIBLE_LINES).map((index) => {
+  const items = indexes.map((index) => {
     const line = state.lines.get(index)!;
     return { index, source: line.source, target: line.target ?? null };
   });

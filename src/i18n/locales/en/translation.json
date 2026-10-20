@@ -948,7 +948,7 @@
       "to": "Translate into",
       "start": "Turn on subtitles",
       "stop": "Turn off subtitles",
-      "on": "Translations appear in the bar at the bottom of the screen. Press × on the bar or Turn off subtitles to stop.",
+      "on": "Translations appear in the floating panel in the corner of the screen. Press × on it or Turn off subtitles to stop.",
       "onTitle": "Subtitling {{app}}",
       "ready": "Ready to subtitle {{app}}.",
       "pickFirst": "Choose an app below to start.",
@@ -1041,6 +1041,7 @@
       "running": "Subtitles are already on.",
       "other": "Subtitles stopped on an error. Try turning them on again."
     },
-    "translating": "Translating…"
+    "translating": "Translating…",
+    "newest": "Back to the newest line"
   }
 }
