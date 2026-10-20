@@ -10,11 +10,17 @@ use std::time::Instant;
 pub const FRAME_SAMPLES: usize = 480;
 const FRAME_MS: u64 = 30;
 
-/// A sentence closes after this much silence…
+/// A line closes after this much silence…
 pub const PAUSE_MS: u64 = 400;
-/// …or when it reaches this length, so a speaker who never pauses still gets
-/// subtitles.
-pub const MAX_SEGMENT_MS: u64 = 12_000;
+/// …or, once it is this long, at a shorter breath between phrases…
+pub const SOFT_MS: u64 = 2_500;
+const PHRASE_PAUSE_MS: u64 = 150;
+/// …or, at this length, at the quietest moment of its last 1.5 s, so a
+/// speaker who never pauses still gets short lines cut between words. Real
+/// speech (a YouTube narrator, 20/10) filled 7 of 15 lines to a 12 s cap and
+/// put the first word on screen 14 s late; short lines are the fix.
+pub const MAX_SEGMENT_MS: u64 = 6_000;
+const QUIET_SEARCH_MS: u64 = 1_500;
 /// Speech kept from just before the detector fired, so first syllables are
 /// not clipped.
 const PREROLL_MS: u64 = 300;
@@ -27,21 +33,44 @@ pub struct Segment {
     pub samples: Vec<f32>,
     /// When the last voiced frame arrived: what the delay is measured from.
     pub speech_end: Instant,
-    /// Closed by the length cap rather than a pause.
+    /// Cut at the length limit rather than at a pause.
     pub capped: bool,
 }
 
-/// Cuts a stream of 30 ms frames into sentences at pauses.
+/// How a [`Segmenter`] cuts lines (milliseconds).
+#[derive(Debug, Clone, Copy)]
+pub struct Cuts {
+    pub pause_ms: u64,
+    pub soft_ms: u64,
+    pub max_ms: u64,
+}
+
+impl Default for Cuts {
+    fn default() -> Self {
+        Self {
+            pause_ms: PAUSE_MS,
+            soft_ms: SOFT_MS,
+            max_ms: MAX_SEGMENT_MS,
+        }
+    }
+}
+
+/// Cuts a stream of 30 ms frames into subtitle lines at pauses.
 pub struct Segmenter {
+    cuts: Cuts,
     preroll: Vec<Vec<f32>>,
-    current: Vec<f32>,
-    voiced_frames: usize,
+    /// The open line, one entry per frame: samples, arrival, loudness, voiced.
+    frames: Vec<(Vec<f32>, Instant, f32, bool)>,
     silent_run: usize,
     last_voiced: Option<Instant>,
 }
 
 const fn frames(ms: u64) -> usize {
     ms.div_ceil(FRAME_MS) as usize
+}
+
+fn loudness(frame: &[f32]) -> f32 {
+    frame.iter().map(|s| s * s).sum::<f32>() / frame.len().max(1) as f32
 }
 
 impl Default for Segmenter {
@@ -52,10 +81,14 @@ impl Default for Segmenter {
 
 impl Segmenter {
     pub fn new() -> Self {
+        Self::with_cuts(Cuts::default())
+    }
+
+    pub fn with_cuts(cuts: Cuts) -> Self {
         Self {
+            cuts,
             preroll: Vec::new(),
-            current: Vec::new(),
-            voiced_frames: 0,
+            frames: Vec::new(),
             silent_run: 0,
             last_voiced: None,
         }
@@ -76,24 +109,29 @@ impl Segmenter {
                 return None;
             }
             for earlier in self.preroll.drain(..) {
-                self.current.extend_from_slice(&earlier);
+                let level = loudness(&earlier);
+                self.frames.push((earlier, at, level, false));
             }
         }
 
-        self.current.extend_from_slice(frame);
+        self.frames
+            .push((frame.to_vec(), at, loudness(frame), is_speech));
         if is_speech {
-            self.voiced_frames += 1;
             self.silent_run = 0;
             self.last_voiced = Some(at);
         } else {
             self.silent_run += 1;
         }
 
-        if self.silent_run >= frames(PAUSE_MS) {
-            return self.close(false);
+        let len = self.frames.len();
+        if self.silent_run >= frames(self.cuts.pause_ms) {
+            return self.close_all(false);
         }
-        if self.current.len() >= frames(MAX_SEGMENT_MS) * FRAME_SAMPLES {
-            return self.close(true);
+        if len >= frames(self.cuts.soft_ms) && self.silent_run >= frames(PHRASE_PAUSE_MS) {
+            return self.close_all(false);
+        }
+        if len >= frames(self.cuts.max_ms) {
+            return self.cut_at_quietest();
         }
         None
     }
@@ -101,20 +139,51 @@ impl Segmenter {
     /// Closes whatever is open (end of stream).
     pub fn flush(&mut self) -> Option<Segment> {
         if self.in_speech() {
-            self.close(false)
+            self.close_all(false)
         } else {
             None
         }
     }
 
-    fn close(&mut self, capped: bool) -> Option<Segment> {
+    fn close_all(&mut self, capped: bool) -> Option<Segment> {
         let speech_end = self.last_voiced.take()?;
-        let samples = std::mem::take(&mut self.current);
-        let voiced = std::mem::replace(&mut self.voiced_frames, 0);
+        let taken = std::mem::take(&mut self.frames);
         self.silent_run = 0;
-        if voiced < frames(MIN_SPEECH_MS) {
+        Self::segment(taken, speech_end, capped)
+    }
+
+    /// Speech goes on past the limit: end the line at the quietest frame of
+    /// its last stretch and keep the rest as the start of the next line.
+    fn cut_at_quietest(&mut self) -> Option<Segment> {
+        let len = self.frames.len();
+        let from = len.saturating_sub(frames(QUIET_SEARCH_MS)).max(1);
+        let split = (from..len)
+            .min_by(|&a, &b| self.frames[a].2.total_cmp(&self.frames[b].2))
+            .unwrap_or(len);
+        let tail = self.frames.split_off(split);
+        let head = std::mem::replace(&mut self.frames, tail);
+        let speech_end = head
+            .iter()
+            .rev()
+            .find(|f| f.3)
+            .map(|f| f.1)
+            .or(self.last_voiced)?;
+        if !self.frames.iter().any(|f| f.3) {
+            self.last_voiced = None;
+            self.frames.clear();
+        }
+        Self::segment(head, speech_end, true)
+    }
+
+    fn segment(
+        taken: Vec<(Vec<f32>, Instant, f32, bool)>,
+        speech_end: Instant,
+        capped: bool,
+    ) -> Option<Segment> {
+        if taken.iter().filter(|f| f.3).count() < frames(MIN_SPEECH_MS) {
             return None;
         }
+        let samples = taken.into_iter().flat_map(|f| f.0).collect();
         Some(Segment {
             samples,
             speech_end,
@@ -510,6 +579,44 @@ mod tests {
         assert_eq!(out.len(), 2);
         assert!(out.iter().all(|seg| seg.capped));
         assert!(s.flush().is_some());
+    }
+
+    #[test]
+    fn a_long_line_ends_at_a_short_breath() {
+        let mut s = Segmenter::new();
+        let soft = frames(SOFT_MS);
+        let breath = frames(PHRASE_PAUSE_MS);
+        // A breath before the soft length does not cut; one after it does.
+        let out = feed(
+            &mut s,
+            &[(true, 20), (false, breath), (true, soft), (false, breath)],
+        );
+        assert_eq!(out.len(), 1);
+        assert!(!out[0].capped);
+    }
+
+    #[test]
+    fn the_cap_cuts_at_the_quietest_frame_and_keeps_the_rest() {
+        let mut s = Segmenter::new();
+        let cap = frames(MAX_SEGMENT_MS);
+        let start = Instant::now();
+        let mut out = Vec::new();
+        for i in 0..cap {
+            // One quiet (but still voiced) frame 10 frames before the cap.
+            let level = if i == cap - 10 { 0.01 } else { 0.5 };
+            let frame = vec![level; FRAME_SAMPLES];
+            if let Some(seg) = s.push(
+                &frame,
+                true,
+                start + Duration::from_millis(i as u64 * FRAME_MS),
+            ) {
+                out.push(seg);
+            }
+        }
+        assert_eq!(out.len(), 1);
+        assert_eq!(out[0].samples.len(), (cap - 10) * FRAME_SAMPLES);
+        let rest = s.flush().expect("the words after the cut carry on");
+        assert_eq!(rest.samples.len(), 10 * FRAME_SAMPLES);
     }
 
     #[test]

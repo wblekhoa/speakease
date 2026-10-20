@@ -2,7 +2,7 @@
 status: executing
 owner: Lê Khoa
 started: 2026-10-16
-current-phase: 0 (Stage A passed; Stage B waiting for the owner)
+current-phase: 0 (Stage B run; decisions for the owner before Phase 1)
 summary: "Beta of live translated subtitles: capture one app's sound, recognise it on the Mac, translate each sentence with the app's AI, show a bilingual floating bar, behind the Experimental switch."
 tags: [area/audio, area/capture, area/translation, area/ai, area/permissions, stack/swift, stack/rust, stack/tauri, surface/macos]
 ---
@@ -143,8 +143,22 @@ first-run effect: audio now arrives 19 ms after the tap starts); warm-up call 1.
 0.93 s; translation p50 1.66 s / **p95 2.74 s** - both gates pass. "Friday" → "thứ Sáu" (correct now); "players" →
 "cầu thủ" remains.
 
-Stage B (a real browser playing YouTube) has not run: the built-in browser navigation was declined. It needs the owner
-to play a video in Chrome (or allow the built-in browser) while the probe runs.
+Stage B (20/10, the owner played an English YouTube narration in Chrome; tapped `com.google.Chrome.helper`, not
+muted, 120 s each; translator = Apple Intelligence on the Mac, the AI set up in the app):
+
+| Run | Lines | Cut at the limit | Source p50/p95 | Translation p50/p95 | First word → Vietnamese (median / max) | AI gave nothing |
+| --- | --- | --- | --- | --- | --- | --- |
+| B1: 400 ms pause, 12 s limit | 15 | 7 | 0.84 / 2.24 s | 4.10 / 7.25 s | 14.2 / 19.3 s | 2 |
+| B2: + cut at a 150 ms breath after 2.5 s, 6 s limit at the quietest frame | 30 | 3 | 0.51 / 1.52 s | 1.81 / 3.93 s | 5.5 / 9.2 s | 3 |
+
+- B1 failed: the narrator hardly pauses, so lines filled the 12 s limit and words were cut mid-word ("che…").
+- B2 is close: translation p95 3.9 s against the 3 s gate - the three slow lines are the ones cut at the limit.
+- Apple Intelligence refused 3 of 30 ordinary lines with "safety guardrails were triggered" ("an undefended wallet on
+  the street", "three disastrous days") - 10 % of lines lost. Product needs a fallback (show the source line) and the
+  owner may prefer a cloud provider for subtitles.
+- Short lines are often half-sentences ("By many, driving growth, spending, and of course."), which hurts meaning;
+  recognition slips pass straight through ("prize pool" → "price pull" → "Tổng giá trị kéo", "Krafton" → "Crafton",
+  "9/11/2026" → a wrong date).
 
 ## Next safe step
 
