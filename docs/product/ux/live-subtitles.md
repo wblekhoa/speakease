@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — Live subtitles (UX)"
 status: active
-updated: 2026-10-20
+updated: 2026-10-21
 summary: "Beta behind Experimental: pick one app, the language it speaks and the one to read, and a floating bilingual bar subtitles it live, translated on the Mac; the session lands in History."
 tags: [area/audio, area/capture, area/translation, surface/macos, stack/react]
 relations:
