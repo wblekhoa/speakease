@@ -9,7 +9,10 @@
   --ls-head: color-mix(in srgb, var(--color-background) 82%, transparent);
   --ls-border: color-mix(in srgb, var(--color-mid-gray) 26%, transparent);
   --ls-muted: color-mix(in srgb, var(--color-text) 60%, transparent);
-  --ls-shadow: 0 6px 20px color-mix(in srgb, black 22%, transparent);
+  /* Soft and short, so it fits inside the frame's padding (16px). */
+  --ls-shadow:
+    0 3px 10px color-mix(in srgb, black 16%, transparent),
+    0 1px 2px color-mix(in srgb, black 10%, transparent);
 }
 
 html,
@@ -22,7 +25,7 @@ body {
   box-sizing: border-box;
   width: 100%;
   height: 100%;
-  padding: 10px;
+  padding: 16px;
   display: flex;
   flex-direction: column;
   justify-content: flex-end;
@@ -151,6 +154,11 @@ body {
   min-height: 0;
   overflow-y: auto;
   scrollbar-width: none;
+  /* Reach into the frame's padding, so the bubbles' shadows are drawn
+     inside the scroller instead of cut at its edges; the bubbles stay
+     where they were. */
+  margin: -6px -16px -16px;
+  padding: 6px 16px 16px;
   cursor: grab;
   user-select: none;
 }
@@ -177,11 +185,11 @@ body {
 }
 
 .ls-more-above {
-  --ls-fade-top: 48px;
+  --ls-fade-top: 56px;
 }
 
 .ls-more-below {
-  --ls-fade-bottom: 48px;
+  --ls-fade-bottom: 64px;
 }
 
 /* The bubbles at their natural height, which the window is fitted to. */

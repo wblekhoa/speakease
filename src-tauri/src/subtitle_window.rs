@@ -6,13 +6,14 @@
 use tauri::AppHandle;
 
 pub const LABEL: &str = "live_subtitles";
-const WIDTH: f64 = 440.0;
+/// 440 of bubbles plus 16 each side for their shadows.
+const WIDTH: f64 = 472.0;
 /// The opening height; the bar's page then fits the window to its card,
 /// keeping the bottom edge, so no empty glass blocks the video above it.
 const HEIGHT: f64 = 150.0;
 /// From the bottom-right corner of the visible area.
-const BOTTOM_GAP: f64 = 24.0;
-const SIDE_GAP: f64 = 24.0;
+const BOTTOM_GAP: f64 = 8.0;
+const SIDE_GAP: f64 = 8.0;
 
 #[cfg(target_os = "macos")]
 mod imp {

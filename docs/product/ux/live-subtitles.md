@@ -48,7 +48,7 @@ relations:
   plain words), the shortcut, and **Turn on subtitles** / **Turn off subtitles**; then **Listen to** - running apps
   as a list to pick from, those playing sound first with a "playing" mark; then **Languages** - the spoken language
   → the one to read (the shared translate language unless that is the spoken one); four short notes (on-device, reads the title for context, saved to History, the one-time permission) sit behind an info icon beside the title, and the list's hint behind one beside **Listen to**. The choices lock while subtitles run.
-- **Panel**: a floating column in the bottom-right corner of the screen with the pointer, 440 px wide, that never
+- **Panel**: a floating column in the bottom-right corner of the screen with the pointer, 472 px wide (bubbles 440 px, room for their shadows), that never
   takes focus from the app being watched. At its top a small pill shows a breathing dot, the app's name, two switches -
   **Translate** (off: no AI, lines show as heard) and **Original** (show or hide what was said under each
   translation) - and **×** (turn subtitles off); drag the pill or the bubbles to move it, and it opens there next time. Each line is its own
@@ -99,6 +99,7 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-20: bubble shadows no longer cut at the panel's edges (owner).
 - 2026-10-20: at most four bubbles show, with faded edges (owner).
 - 2026-10-20: Translate and Original switches in the panel's pill (owner).
 - 2026-10-20: the bar became a chat-like panel of bubbles in the bottom-right corner (owner's reference UI).

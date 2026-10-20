@@ -28,7 +28,7 @@ const POSITION_KEY = "speakease.liveSubtitles.position";
 /** Whether what was heard shows under each translation (this Mac only). */
 const SOURCE_KEY = "speakease.liveSubtitles.showSource";
 /** Space around the content inside the window (LiveSubtitles.css .ls-frame). */
-const FRAME_PADDING = 10;
+const FRAME_PADDING = 16;
 /** Gap between the pill and the bubbles (LiveSubtitles.css .ls-content). */
 const CONTENT_GAP = 8;
 /** The panel grows to show at most this many bubbles, then scrolls (owner). */
