@@ -83,6 +83,7 @@ mod imp {
             {
                 Ok(panel) => {
                     prevent_activation(&handle);
+                    frost(&handle);
                     panel.order_front_regardless();
                 }
                 Err(e) => log::error!("Live subtitles: cannot create the subtitle panel: {e}"),
@@ -118,6 +119,132 @@ mod imp {
                 );
             }
         }
+    }
+
+    /// A native blur behind the bubbles (owner, 20/10: easier to read over a
+    /// busy video), shaped as a gradient: full behind the newest lines,
+    /// fading out toward the top and at the sides, so no box edge shows
+    /// (owner, 20/10: no box around the list). macOS draws it from the
+    /// window behind, which web content cannot reach; it stays on although
+    /// the panel never takes focus, and follows light or dark.
+    fn frost(app: &AppHandle) {
+        use tauri::utils::config::WindowEffectsConfig;
+        use tauri::window::{Effect, EffectState};
+        let Some(window) = app.get_webview_window(LABEL) else {
+            return;
+        };
+        let frosted = window.set_effects(WindowEffectsConfig {
+            effects: vec![Effect::Popover],
+            state: Some(EffectState::Active),
+            radius: None,
+            color: None,
+        });
+        if let Err(e) = frosted {
+            log::warn!("Live subtitles: no blur behind the panel: {e}");
+            return;
+        }
+        if let Ok(pointer) = window.ns_window() {
+            // SAFETY: the live NSWindow of this panel, on the main thread.
+            unsafe { fade_blur_edges(pointer) };
+        }
+    }
+
+    /// The blur's fade, in points: from the top, from the bottom, at each side.
+    const FADE_TOP: usize = 72;
+    const FADE_BOTTOM: usize = 14;
+    const FADE_SIDE: usize = 14;
+    /// The tag window-vibrancy gives the blur view it adds.
+    const BLUR_VIEW_TAG: isize = 91_376_254;
+
+    /// Masks the blur view with a gradient image. Its cap insets cover the
+    /// fades and the one-point middle stretches, so the mask fits whatever
+    /// height the panel takes as lines come and go.
+    unsafe fn fade_blur_edges(ns_window: *mut std::ffi::c_void) {
+        use objc2::runtime::{AnyObject, Bool};
+        use objc2::{class, msg_send};
+        use objc2_foundation::{NSEdgeInsets, NSSize, NSString};
+
+        let ns_window = &*(ns_window as *const AnyObject);
+        let content: *mut AnyObject = msg_send![ns_window, contentView];
+        if content.is_null() {
+            return;
+        }
+        let blur: *mut AnyObject = msg_send![content, viewWithTag: BLUR_VIEW_TAG];
+        if blur.is_null() {
+            log::warn!("Live subtitles: blur view not found, its edges stay hard");
+            return;
+        }
+
+        let alpha = blur_mask_alpha();
+        let (width, height) = (FADE_SIDE * 2 + 1, FADE_TOP + FADE_BOTTOM + 1);
+        let rep: *mut AnyObject = msg_send![class!(NSBitmapImageRep), alloc];
+        let color_space = NSString::from_str("NSDeviceRGBColorSpace");
+        let rep: *mut AnyObject = msg_send![rep,
+            initWithBitmapDataPlanes: std::ptr::null_mut::<*mut u8>(),
+            pixelsWide: width as isize,
+            pixelsHigh: height as isize,
+            bitsPerSample: 8isize,
+            samplesPerPixel: 4isize,
+            hasAlpha: Bool::YES,
+            isPlanar: Bool::NO,
+            colorSpaceName: &*color_space,
+            bytesPerRow: (width * 4) as isize,
+            bitsPerPixel: 32isize];
+        if rep.is_null() {
+            return;
+        }
+        let pixels: *mut u8 = msg_send![rep, bitmapData];
+        if !pixels.is_null() {
+            // Premultiplied black: only the alpha matters to a mask.
+            for (i, a) in alpha.iter().enumerate() {
+                let px = pixels.add(i * 4);
+                *px = 0;
+                *px.add(1) = 0;
+                *px.add(2) = 0;
+                *px.add(3) = *a;
+            }
+        }
+        let size = NSSize::new(width as f64, height as f64);
+        let image: *mut AnyObject = msg_send![class!(NSImage), alloc];
+        let image: *mut AnyObject = msg_send![image, initWithSize: size];
+        if image.is_null() {
+            let _: () = msg_send![rep, release];
+            return;
+        }
+        let _: () = msg_send![image, addRepresentation: rep];
+        let _: () = msg_send![rep, release];
+        let insets = NSEdgeInsets {
+            top: FADE_TOP as f64,
+            left: FADE_SIDE as f64,
+            bottom: FADE_BOTTOM as f64,
+            right: FADE_SIDE as f64,
+        };
+        let _: () = msg_send![image, setCapInsets: insets];
+        // NSImageResizingModeStretch
+        let _: () = msg_send![image, setResizingMode: 1isize];
+        let _: () = msg_send![blur, setMaskImage: image];
+        let _: () = msg_send![image, release];
+    }
+
+    /// The mask's alpha, rows from the top: an eased fade in from each edge.
+    fn blur_mask_alpha() -> Vec<u8> {
+        let (width, height) = (FADE_SIDE * 2 + 1, FADE_TOP + FADE_BOTTOM + 1);
+        let ease = |distance: f64, span: usize| {
+            let t = (distance / span as f64).clamp(0.0, 1.0);
+            t * t * (3.0 - 2.0 * t)
+        };
+        let mut alpha = Vec::with_capacity(width * height);
+        for y in 0..height {
+            let from_top = y as f64 + 0.5;
+            let from_bottom = (height - y) as f64 - 0.5;
+            let vertical = ease(from_top, FADE_TOP).min(ease(from_bottom, FADE_BOTTOM));
+            for x in 0..width {
+                let from_side = (x as f64 + 0.5).min((width - x) as f64 - 0.5);
+                let a = vertical * ease(from_side, FADE_SIDE);
+                alpha.push((a * 255.0).round() as u8);
+            }
+        }
+        alpha
     }
 
     pub fn hide(app: &AppHandle) {

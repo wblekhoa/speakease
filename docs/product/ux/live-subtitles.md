@@ -48,7 +48,7 @@ relations:
   plain words), the shortcut, and **Turn on subtitles** / **Turn off subtitles**; then **Listen to** - running apps
   as a list to pick from, those playing sound first with a "playing" mark; then **Languages** - the spoken language
   → the one to read (the shared translate language unless that is the spoken one); four short notes (on-device, reads the title for context, saved to History, the one-time permission) sit behind an info icon beside the title, and the list's hint behind one beside **Listen to**. The choices lock while subtitles run.
-- **Panel**: a floating column in the bottom-right corner of the screen with the pointer, 472 px wide (bubbles 440 px, room for their shadows), with no box behind it: each bubble floats on its own, nearly solid so text reads over a busy video, that never
+- **Panel**: a floating column in the bottom-right corner of the screen with the pointer, 472 px wide (bubbles 440 px, room for their shadows), with a native blur behind the bubbles that fades out toward the top and at the sides (a gradient blur, no box edge) so text reads over a busy video, that never
   takes focus from the app being watched: clicking it (a switch, ×, a drag) does not bring SpeakEase's window
   forward, and it comes to the front of every window when subtitles start. At its top a small pill shows a breathing dot, the app's name, two switches -
   **Translate** (off: no AI, lines show as heard) and **Original** (show or hide what was said under each
@@ -101,7 +101,7 @@ flowchart LR
 ## Change log
 
 - 2026-10-20: clicking the panel no longer raises SpeakEase's window; the panel comes to the front when subtitles start (owner).
-- 2026-10-20: no box around the bubbles; each bubble floats on its own, nearly solid (owner).
+- 2026-10-20: the blur behind the list fades out toward the top and sides instead of a box; bubbles translucent over it (owner).
 - 2026-10-20: a strong native blur behind the panel and softer bubble shadows (owner).
 - 2026-10-20: bubble shadows no longer cut at the panel's edges (owner).
 - 2026-10-20: at most four bubbles show, with faded edges (owner).
