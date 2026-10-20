@@ -150,12 +150,16 @@ body {
 .ls-scroll {
   min-height: 0;
   overflow-y: auto;
-  display: flex;
-  flex-direction: column;
-  gap: 8px;
   scrollbar-width: none;
   cursor: grab;
   user-select: none;
+}
+
+/* The bubbles at their natural height, which the window is fitted to. */
+.ls-list {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
 }
 
 .ls-scroll::-webkit-scrollbar {

@@ -29,6 +29,8 @@ const POSITION_KEY = "speakease.liveSubtitles.position";
 const SOURCE_KEY = "speakease.liveSubtitles.showSource";
 /** Space around the content inside the window (LiveSubtitles.css .ls-frame). */
 const FRAME_PADDING = 10;
+/** Gap between the pill and the bubbles (LiveSubtitles.css .ls-content). */
+const CONTENT_GAP = 8;
 /** The panel grows with its lines up to this height, then scrolls. */
 const MAX_HEIGHT = 560;
 /** Within this distance of the bottom counts as "reading the newest". */
@@ -92,7 +94,8 @@ const LiveSubtitles: React.FC = () => {
   const [translateOn, setTranslateOn] = useState(true);
   const [showSource, setShowSource] = useState(readShowSource);
   const wasRunning = useRef(false);
-  const contentRef = useRef<HTMLDivElement>(null);
+  const headRef = useRef<HTMLElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
   const scrollRef = useRef<HTMLDivElement>(null);
   const view = subtitleView(state);
 
@@ -140,16 +143,19 @@ const LiveSubtitles: React.FC = () => {
   // The window follows its content's height (up to MAX_HEIGHT) and keeps
   // its bottom edge, so it grows upward and leaves no empty glass over the
   // video beneath.
+  // Measured from the list's natural height, not the scroller's: the
+  // scroller is clamped to the window, so measuring it would keep the window
+  // at its opening height for ever (20/10, the panel stuck at one line).
   useEffect(() => {
-    const content = contentRef.current;
-    if (!content) return;
+    const head = headRef.current;
+    const list = listRef.current;
+    if (!head || !list) return;
     const window = getCurrentWindow();
     let last = 0;
     const fit = async () => {
-      const height = Math.min(
-        MAX_HEIGHT,
-        Math.ceil(content.scrollHeight) + FRAME_PADDING * 2,
-      );
+      const natural =
+        head.offsetHeight + CONTENT_GAP + list.offsetHeight + FRAME_PADDING * 2;
+      const height = Math.min(MAX_HEIGHT, Math.ceil(natural));
       if (Math.abs(height - last) < 2) return;
       last = height;
       try {
@@ -166,7 +172,8 @@ const LiveSubtitles: React.FC = () => {
       }
     };
     const observer = new ResizeObserver(() => void fit());
-    observer.observe(content);
+    observer.observe(head);
+    observer.observe(list);
     return () => observer.disconnect();
   }, []);
 
@@ -211,9 +218,9 @@ const LiveSubtitles: React.FC = () => {
 
   return (
     <div className={`ls-frame${quiet ? " ls-quiet" : ""}`}>
-      <div className="ls-content" ref={contentRef}>
+      <div className="ls-content">
         {/* The handle: what is being subtitled, and how to stop. */}
-        <header className="ls-head" onMouseDown={startDrag}>
+        <header className="ls-head" ref={headRef} onMouseDown={startDrag}>
           <span
             aria-hidden
             className={`ls-dot${view.listening && !view.error ? " ls-live" : ""}`}
@@ -267,47 +274,49 @@ const LiveSubtitles: React.FC = () => {
           aria-live="polite"
           aria-label={t("subtitles.label")}
         >
-          {status ? (
-            <p
-              className={`ls-bubble ls-status${view.error ? " ls-error" : ""}`}
-            >
-              {status}
-            </p>
-          ) : (
-            view.items.map((item) => {
-              // Translation off (or never arrived while off): the heard
-              // text is the bubble's main line.
-              const translated = item.target !== null;
-              const asHeard = !translated && !translateOn;
-              return (
-                <article key={item.index} className="ls-bubble">
-                  {asHeard ? (
-                    <p className="ls-target" dir="auto">
-                      {item.source}
-                    </p>
-                  ) : translated ? (
-                    <p className="ls-target" dir="auto">
-                      {item.target}
-                    </p>
-                  ) : (
-                    <p
-                      className="ls-target ls-pending"
-                      aria-label={t("subtitles.translating")}
-                    >
-                      <span />
-                      <span />
-                      <span />
-                    </p>
-                  )}
-                  {!asHeard && (showSource || !translateOn) && (
-                    <p className="ls-source" dir="auto">
-                      {item.source}
-                    </p>
-                  )}
-                </article>
-              );
-            })
-          )}
+          <div className="ls-list" ref={listRef}>
+            {status ? (
+              <p
+                className={`ls-bubble ls-status${view.error ? " ls-error" : ""}`}
+              >
+                {status}
+              </p>
+            ) : (
+              view.items.map((item) => {
+                // Translation off (or never arrived while off): the heard
+                // text is the bubble's main line.
+                const translated = item.target !== null;
+                const asHeard = !translated && !translateOn;
+                return (
+                  <article key={item.index} className="ls-bubble">
+                    {asHeard ? (
+                      <p className="ls-target" dir="auto">
+                        {item.source}
+                      </p>
+                    ) : translated ? (
+                      <p className="ls-target" dir="auto">
+                        {item.target}
+                      </p>
+                    ) : (
+                      <p
+                        className="ls-target ls-pending"
+                        aria-label={t("subtitles.translating")}
+                      >
+                        <span />
+                        <span />
+                        <span />
+                      </p>
+                    )}
+                    {!asHeard && (showSource || !translateOn) && (
+                      <p className="ls-source" dir="auto">
+                        {item.source}
+                      </p>
+                    )}
+                  </article>
+                );
+              })
+            )}
+          </div>
         </div>
       </div>
 
