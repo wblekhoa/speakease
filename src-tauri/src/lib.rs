@@ -14,6 +14,7 @@ mod helpers;
 mod input;
 mod live_subtitles;
 mod llm_client;
+mod local_ai;
 mod managers;
 mod memory;
 mod overlay;
@@ -233,6 +234,9 @@ fn install_app_menu(app: &AppHandle) {
 fn initialize_core_logic(app_handle: &AppHandle) {
     #[cfg(target_os = "macos")]
     install_app_menu(app_handle);
+
+    // On-device AI models: remember the app, stop a server a crash left.
+    local_ai::init(app_handle);
 
     // Note: Enigo (keyboard/mouse simulation) is NOT initialized here.
     // The frontend is responsible for calling the `initialize_enigo` command
@@ -489,7 +493,10 @@ fn run_headless_transcription(app: &AppHandle, args: &CliArgs) -> i32 {
 
     // SpeakEase: Phase 0 of live subtitles taps one app instead of a file.
     if let Some(bundle_id) = args.live_subtitle_probe.as_deref() {
-        return live_subtitles::probe::run(app, args, bundle_id);
+        let code = live_subtitles::probe::run(app, args, bundle_id);
+        // A probe that translated on-device leaves no server behind.
+        local_ai::stop_server();
+        return code;
     }
 
     // --list-devices: print registered compute devices (with indices) and exit.
@@ -874,6 +881,13 @@ pub fn run(cli_args: CliArgs) {
             commands::live_subtitles::set_live_subtitles_translate,
             commands::live_subtitles::fit_live_subtitles_panel,
             commands::live_subtitles::live_subtitles_play_pause,
+            commands::ai_models::ai_models_supported,
+            commands::ai_models::list_ai_models,
+            commands::ai_models::download_ai_model,
+            commands::ai_models::cancel_ai_model_download,
+            commands::ai_models::delete_ai_model,
+            commands::ai_models::set_active_ai_model,
+            commands::ai_models::mac_memory_gb,
             commands::files::write_text_file,
             commands::files::ytdlp_available,
             commands::history::update_history_limit,
@@ -1259,6 +1273,9 @@ pub fn run(cli_args: CliArgs) {
         // worker process, which exits by itself as soon as this process's end
         // of its stdin closes, even if it is hung. Waiting on an unload here
         // could block quitting behind a hung model load.
+        // The on-device AI server is a plain child process: stop it, or its
+        // model would stay in memory after SpeakEase quits.
+        tauri::RunEvent::Exit => local_ai::stop_server(),
         _ => {}
     });
 }

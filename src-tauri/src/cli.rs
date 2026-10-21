@@ -81,6 +81,12 @@ pub struct CliArgs {
     #[arg(long, hide = true)]
     pub probe_partials: bool,
 
+    /// Translate with "apple" (Apple Intelligence, default), "local" (the
+    /// on-device model in use) or "local=<model.gguf>" during
+    /// --live-subtitle-probe.
+    #[arg(long, value_name = "TRANSLATOR", hide = true)]
+    pub probe_translator: Option<String>,
+
     /// Silence the tapped app on the speakers during --live-subtitle-probe.
     #[arg(long, hide = true)]
     pub probe_mute: bool,

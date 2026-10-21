@@ -210,7 +210,7 @@ pub(crate) async fn post_process_with_prompt(
         return None;
     }
 
-    let provider = match settings.active_post_process_provider().cloned() {
+    let mut provider = match settings.active_post_process_provider().cloned() {
         Some(provider) => provider,
         None => {
             debug!("Post-processing enabled but no provider is selected");
@@ -251,7 +251,22 @@ pub(crate) async fn post_process_with_prompt(
     // Ask these providers to skip reasoning/thinking — post-processing rarely
     // benefits from it and it adds seconds of latency. llm_client picks the
     // field the endpoint understands and retries without it if rejected.
-    let disable_reasoning = matches!(provider.id.as_str(), "custom" | "openrouter");
+    let disable_reasoning = matches!(
+        provider.id.as_str(),
+        "custom" | "openrouter" | crate::settings::LOCAL_AI_PROVIDER_ID
+    );
+
+    // The on-device model: start the bundled server (or keep it) and point
+    // the OpenAI-compatible client at its port.
+    if provider.id == crate::settings::LOCAL_AI_PROVIDER_ID {
+        match crate::local_ai::base_url().await {
+            Ok(url) => provider.base_url = url,
+            Err(e) => {
+                error!("On-device AI model unavailable: {e}");
+                return None;
+            }
+        }
+    }
 
     if provider.supports_structured_output {
         debug!("Using structured outputs for provider '{}'", provider.id);

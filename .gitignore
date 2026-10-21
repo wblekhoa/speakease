@@ -48,3 +48,6 @@ __pycache__/
 
 # scripts/release-mac.sh output
 /release
+
+# On-device AI model server, built by scripts/build-llama-server.sh
+src-tauri/binaries/

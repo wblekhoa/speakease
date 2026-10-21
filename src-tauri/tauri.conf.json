@@ -42,7 +42,9 @@
         "Resources/legal/LICENSE.txt": "../LICENSE",
         "Resources/legal/LICENSE-MIT-HANDY.txt": "../LICENSE-MIT-HANDY",
         "Resources/legal/NOTICE.md": "../NOTICE.md",
-        "Resources/legal/libopus-COPYING.txt": "../licenses/libopus-COPYING.txt"
+        "Resources/legal/libopus-COPYING.txt": "../licenses/libopus-COPYING.txt",
+        "Resources/legal/llama.cpp-LICENSE.txt": "../licenses/llama.cpp-LICENSE.txt",
+        "MacOS/llama-server": "binaries/llama-server"
       },
       "hardenedRuntime": true,
       "minimumSystemVersion": "10.15",

@@ -428,6 +428,33 @@ pub fn translate_on_device(instructions: &str, text: &str) -> Result<String, Str
     }
 }
 
+/// Which AI translates the subtitles (owner, 21/10): Apple Intelligence, or
+/// the on-device model through the bundled server (local_ai.rs), for Macs
+/// without Apple Intelligence.
+#[derive(Clone)]
+pub enum Translator {
+    Apple,
+    Local(tauri::AppHandle),
+}
+
+impl Translator {
+    pub fn translate(&self, instructions: &str, text: &str) -> Result<String, String> {
+        match self {
+            Translator::Apple => translate_on_device(instructions, text),
+            Translator::Local(app) => {
+                crate::local_ai::chat_blocking(app, instructions, &fence(text))
+            }
+        }
+    }
+
+    pub fn name(&self) -> &'static str {
+        match self {
+            Translator::Apple => "apple",
+            Translator::Local(_) => "local",
+        }
+    }
+}
+
 /// Nearest-rank percentile of `values` (0 when empty).
 pub fn percentile(values: &[u64], pct: f64) -> u64 {
     if values.is_empty() {
@@ -449,8 +476,8 @@ pub mod pipeline {
     //! 3 s).
 
     use super::{
-        playing_note, subtitle_instructions, topic_instructions, translate_on_device, Segment,
-        Segmenter, SentenceJoiner, SpeechContext, FRAME_SAMPLES,
+        playing_note, subtitle_instructions, topic_instructions, Segment, Segmenter,
+        SentenceJoiner, SpeechContext, Translator, FRAME_SAMPLES,
     };
     use crate::audio_toolkit::audio::FrameResampler;
     use crate::audio_toolkit::vad::{SileroVad, VoiceActivityDetector};
@@ -484,6 +511,8 @@ pub mod pipeline {
         /// Translate lines; read before each one, so it can change mid-session
         /// (the panel's Translate switch). Off, no AI call is made at all.
         pub translate: &'static AtomicBool,
+        /// Apple Intelligence or the on-device model.
+        pub translator: Translator,
     }
 
     #[derive(Debug, Clone, Serialize)]
@@ -631,7 +660,7 @@ pub mod pipeline {
         // line - only when translating, as Translate off makes no AI call.
         if config.translate.load(Ordering::Relaxed) {
             let warm_started = Instant::now();
-            let warm = translate_on_device(
+            let warm = config.translator.translate(
                 &subtitle_instructions(&config.source, &config.target, &SpeechContext::default()),
                 "Hello.",
             );
@@ -729,8 +758,11 @@ pub mod pipeline {
             let source = config.source.clone();
             let target = config.target.clone();
             let translate = config.translate;
+            let translator = config.translator.clone();
             std::thread::spawn(move || {
-                translate_lines(line_rx, sink, source, target, playing, translate)
+                translate_lines(
+                    line_rx, sink, source, target, playing, translate, translator,
+                )
             })
         };
 
@@ -829,6 +861,7 @@ pub mod pipeline {
         target: String,
         playing: Option<String>,
         translate: &'static AtomicBool,
+        translator: Translator,
     ) {
         let mut context = SpeechContext {
             playing,
@@ -863,7 +896,7 @@ pub mod pipeline {
                 match later.pop_front() {
                     Some(Later::Rejoin(rejoin, speech_end)) => {
                         let started = Instant::now();
-                        let whole = translate_on_device(
+                        let whole = translator.translate(
                             &subtitle_instructions(&source, &target, &context),
                             &rejoin.text,
                         );
@@ -879,7 +912,7 @@ pub mod pipeline {
                     Some(Later::Topic) => {
                         let started = Instant::now();
                         let topic =
-                            translate_on_device(&topic_instructions(&context), &recent.join("\n"));
+                            translator.translate(&topic_instructions(&context), &recent.join("\n"));
                         sink(Event::Topic {
                             topic: topic.as_ref().ok().cloned(),
                             error: topic.as_ref().err().cloned(),
@@ -916,7 +949,7 @@ pub mod pipeline {
 
             let started = Instant::now();
             let translated =
-                translate_on_device(&subtitle_instructions(&source, &target, &context), &text);
+                translator.translate(&subtitle_instructions(&source, &target, &context), &text);
             sink(Event::Translation {
                 index,
                 target: translated.as_ref().ok().cloned(),
@@ -1110,6 +1143,8 @@ pub mod session {
             settings.live_subtitle_translate.unwrap_or(true),
             Ordering::Relaxed,
         );
+        let translator = choose_translator(app, &settings);
+        log::info!("Live subtitles: translating with {}", translator.name());
         crate::settings::write_settings(app, settings);
 
         crate::subtitle_window::show(app);
@@ -1165,6 +1200,7 @@ pub mod session {
                 device_index: None,
                 partials: true,
                 translate: &TRANSLATE,
+                translator,
             };
             // A panic anywhere in the session must still end it, or every
             // later start would answer "already on" until relaunch.
@@ -1220,6 +1256,36 @@ pub mod session {
             );
         });
         Ok(())
+    }
+
+    // SE-LIVE-015
+    /// The AI that translates (owner, 21/10): the user's choice, or Auto -
+    /// Apple Intelligence when this Mac has it, else the on-device model when
+    /// one is downloaded. With neither, Apple's path fails per line and the
+    /// panel shows what was heard.
+    pub fn choose_translator(
+        app: &AppHandle,
+        settings: &crate::settings::AppSettings,
+    ) -> super::Translator {
+        let local = crate::local_ai::active_model(app).is_some();
+        match settings.live_subtitle_translator.as_deref() {
+            Some("local") => super::Translator::Local(app.clone()),
+            Some("apple") => super::Translator::Apple,
+            _ if apple_intelligence_available() => super::Translator::Apple,
+            _ if local => super::Translator::Local(app.clone()),
+            _ => super::Translator::Apple,
+        }
+    }
+
+    fn apple_intelligence_available() -> bool {
+        #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+        {
+            crate::apple_intelligence::check_apple_intelligence_availability()
+        }
+        #[cfg(not(all(target_os = "macos", target_arch = "aarch64")))]
+        {
+            false
+        }
     }
 
     // SE-LIVE-011
@@ -1400,6 +1466,16 @@ pub mod probe {
             device_index: args.device_index,
             partials: args.probe_partials,
             translate: &PROBE_TRANSLATES,
+            // "local" uses the model in settings; "local=<file>" a model file.
+            translator: match args.probe_translator.as_deref() {
+                Some(choice) if choice.starts_with("local") => {
+                    if let Some(file) = choice.strip_prefix("local=") {
+                        crate::local_ai::use_model_file(PathBuf::from(file));
+                    }
+                    super::Translator::Local(app.clone())
+                }
+                _ => super::Translator::Apple,
+            },
         };
         let processes = crate::system_audio_tap::list_processes();
         write(json!({

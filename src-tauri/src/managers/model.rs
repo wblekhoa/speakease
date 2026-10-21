@@ -20,8 +20,10 @@ use tar::Archive;
 use tauri::{AppHandle, Emitter, Manager};
 
 mod download;
+pub(crate) use download::HttpDownloadEvent;
 
-use download::{HttpDownloadOutcome, DOWNLOAD_STALL_TIMEOUT};
+pub(crate) use download::HttpDownloadOutcome;
+use download::DOWNLOAD_STALL_TIMEOUT;
 
 #[derive(Debug, Clone, Serialize, Deserialize, Type)]
 pub enum EngineType {

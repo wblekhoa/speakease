@@ -8,6 +8,11 @@ use tauri::AppHandle;
 use tauri_plugin_store::StoreExt;
 
 pub const APPLE_INTELLIGENCE_PROVIDER_ID: &str = "apple_intelligence";
+/// The on-device AI model run by the bundled llama.cpp server (local_ai.rs);
+/// its base URL's port is filled in when the server starts.
+pub const LOCAL_AI_PROVIDER_ID: &str = "local_ai";
+/// The model name sent to the local server, which serves one model.
+pub const LOCAL_AI_MODEL_NAME: &str = "on-device";
 pub const APPLE_INTELLIGENCE_DEFAULT_MODEL_ID: &str = "Apple Intelligence";
 
 // SpeakEase: a third shortcut that always translates, and the prompts the
@@ -523,6 +528,16 @@ pub struct AppSettings {
     /// The subtitle panel's Translate switch (None = on).
     #[serde(default)]
     pub live_subtitle_translate: Option<bool>,
+    /// The on-device AI model in use (an id from catalog/ai_models.json),
+    /// for the on-device provider and live subtitles. None until one is
+    /// picked.
+    #[serde(default)]
+    pub local_ai_model: Option<String>,
+    /// Which AI translates live subtitles: "auto" (Apple Intelligence when
+    /// this Mac has it, else the on-device model), "apple" or "local".
+    /// None = auto.
+    #[serde(default)]
+    pub live_subtitle_translator: Option<String>,
     #[serde(default)]
     pub mute_while_recording: bool,
     #[serde(default)]
@@ -815,6 +830,18 @@ fn default_post_process_providers() -> Vec<PostProcessProvider> {
         });
     }
 
+    // On-device AI models through the bundled llama.cpp server (Apple
+    // silicon); the port is set when the server starts (local_ai.rs).
+    #[cfg(all(target_os = "macos", target_arch = "aarch64"))]
+    providers.push(PostProcessProvider {
+        id: LOCAL_AI_PROVIDER_ID.to_string(),
+        label: "On-device model".to_string(),
+        base_url: "http://127.0.0.1/v1".to_string(),
+        allow_base_url_edit: false,
+        models_endpoint: None,
+        supports_structured_output: false,
+    });
+
     // AWS Bedrock via Mantle (OpenAI-compatible endpoint)
     providers.push(PostProcessProvider {
         id: "bedrock_mantle".to_string(),
@@ -849,6 +876,9 @@ fn default_post_process_api_keys() -> SecretMap {
 fn default_model_for_provider(provider_id: &str) -> String {
     if provider_id == APPLE_INTELLIGENCE_PROVIDER_ID {
         return APPLE_INTELLIGENCE_DEFAULT_MODEL_ID.to_string();
+    }
+    if provider_id == LOCAL_AI_PROVIDER_ID {
+        return LOCAL_AI_MODEL_NAME.to_string();
     }
     String::new()
 }
@@ -1167,6 +1197,8 @@ pub fn get_default_settings() -> AppSettings {
         live_subtitle_source: None,
         live_subtitle_target: None,
         live_subtitle_translate: None,
+        local_ai_model: None,
+        live_subtitle_translator: None,
         speakease_last_spoken_language: None,
         mute_while_recording: false,
         append_trailing_space: false,

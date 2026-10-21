@@ -1,3 +1,4 @@
+pub mod ai_models;
 pub mod audio;
 pub mod files;
 pub mod history;
