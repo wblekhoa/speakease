@@ -1089,9 +1089,9 @@
   },
   "aiModels": {
     "title": "On-device AI models",
-    "description": "Runs on this Mac, with no network or API key. Used for AI clean-up, translation while dictating and live subtitles.",
+    "description": "Runs on this Mac, with no network or API key.",
     "picksTitle": "Suggested for this Mac",
-    "thisMac": "This Mac has {{size}} GB of memory",
+    "thisMac": "{{size}} GB memory",
     "tooHeavy": "May be heavy for this Mac",
     "ram": "Needs about {{size}} of memory.",
     "downloadFailed": "Download failed: {{error}}",

@@ -1089,9 +1089,9 @@
   },
   "aiModels": {
     "title": "Mô hình AI trên máy",
-    "description": "Chạy ngay trên máy này, không cần mạng hay API key. Dùng cho AI dọn câu, dịch khi đọc chép và phụ đề trực tiếp.",
+    "description": "Chạy ngay trên máy, không cần mạng hay API key.",
     "picksTitle": "Đề xuất cho máy này",
-    "thisMac": "Máy này có {{size}} GB RAM",
+    "thisMac": "RAM {{size}} GB",
     "tooHeavy": "Có thể nặng với máy này",
     "ram": "Cần khoảng {{size}} RAM.",
     "downloadFailed": "Không tải được: {{error}}",

@@ -206,14 +206,14 @@ export const AiModels: React.FC = () => {
   );
 
   return (
-    <div className="space-y-5 px-4 pb-4">
-      <section className="space-y-2">
-        <div className="flex items-baseline justify-between gap-3 px-1">
+    <div className="space-y-6 p-4">
+      <section className="space-y-3">
+        <div className="flex items-baseline justify-between gap-3">
           <h3 className="text-sm font-semibold text-text">
             {t("aiModels.picksTitle")}
           </h3>
           {memoryGb > 0 && (
-            <span className="text-xs text-mid-gray text-end tabular-nums">
+            <span className="shrink-0 rounded-full bg-row px-2.5 py-1 text-xs text-mid-gray tabular-nums">
               {t("aiModels.thisMac", { size: memoryGb })}
             </span>
           )}
@@ -255,8 +255,8 @@ export const AiModels: React.FC = () => {
       )}
 
       {downloaded.length > 0 && (
-        <section className="space-y-2">
-          <h3 className="px-1 text-sm font-semibold text-text">
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold text-text">
             {t("settings.models.yourModels")}
           </h3>
           <div className="space-y-2">{downloaded.map(card)}</div>
@@ -264,8 +264,8 @@ export const AiModels: React.FC = () => {
       )}
 
       {available.length > 0 && (
-        <section className="space-y-2">
-          <h3 className="px-1 text-sm font-semibold text-text">
+        <section className="space-y-3">
+          <h3 className="text-sm font-semibold text-text">
             {t("settings.models.availableModels")}
           </h3>
           <div className="space-y-2">{available.map(card)}</div>
