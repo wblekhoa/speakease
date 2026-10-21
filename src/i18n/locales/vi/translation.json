@@ -1070,12 +1070,16 @@
     "translator": {
       "label": "Bộ dịch",
       "auto": "Tự động",
-      "autoHint": "Apple Intelligence nếu máy có, không thì mô hình AI trên máy",
       "apple": "Apple Intelligence",
-      "local": "Mô hình AI trên máy",
-      "noLocalModel": "Chưa có mô hình AI trên máy.",
-      "openModels": "Tải mô hình"
-    }
+      "openModels": "Tải mô hình AI",
+      "localShort": "Trên máy",
+      "uses": {
+        "apple": "Máy này dịch bằng Apple Intelligence.",
+        "local": "Máy này dịch bằng mô hình AI trên máy.",
+        "none": "Máy này chưa có AI để dịch, phụ đề chỉ hiện lời gốc."
+      }
+    },
+    "swapLanguages": "Đổi chiều ngôn ngữ"
   },
   "aiModels": {
     "title": "Mô hình AI trên máy",

@@ -107,6 +107,7 @@ flowchart LR
 - 2026-10-21: a ⚙ button on the pill opens a small sheet on the panel: text size (Small to Extra large), background strength (20-100 %), lines shown (1-6); the box's left and right edges drag to change its width; all kept on this Mac (owner).
 - 2026-10-21: the panel shows at once when subtitles start (no Dock click); any empty spot of the box drags it, with a grab cursor (owner).
 - 2026-10-21: the panel no longer jumps: it resizes in one step, only grows within a session, new bubbles ease in; language menus open upward when there is no room below (owner).
+- 2026-10-21: the language block: a swap button between the two languages; the Translator as a three-way switch with a line saying which AI this Mac will use (owner).
 - 2026-10-21: Start in the window brings the chosen app to the front (owner).
 - 2026-10-21: tried no box (solid bubbles) and a gradient blur fading toward the top; the owner kept the blurred box (harder to read, lower quality).
 - 2026-10-20: a strong native blur behind the panel and softer bubble shadows (owner).

@@ -1070,12 +1070,16 @@
     "translator": {
       "label": "Translator",
       "auto": "Automatic",
-      "autoHint": "Apple Intelligence when this Mac has it, else the on-device model",
       "apple": "Apple Intelligence",
-      "local": "On-device AI model",
-      "noLocalModel": "No on-device AI model yet.",
-      "openModels": "Download a model"
-    }
+      "openModels": "Download an AI model",
+      "localShort": "On-device",
+      "uses": {
+        "apple": "This Mac translates with Apple Intelligence.",
+        "local": "This Mac translates with the on-device AI model.",
+        "none": "This Mac has no AI to translate yet; subtitles show what was said."
+      }
+    },
+    "swapLanguages": "Swap languages"
   },
   "aiModels": {
     "title": "On-device AI models",

@@ -29,6 +29,7 @@ export const LiveSubtitlesPage: React.FC = () => {
   const osType = useOsType();
   const { settings, getSetting, updateSetting } = useSettings();
   const [hasLocalModel, setHasLocalModel] = useState(false);
+  const [appleAvailable, setAppleAvailable] = useState(false);
   const [supported, setSupported] = useState<boolean | null>(null);
   const [apps, setApps] = useState<RunningApp[]>([]);
   const [state, setState] = useState<SubtitleState | null>(null);
@@ -53,6 +54,10 @@ export const LiveSubtitlesPage: React.FC = () => {
         .then(setHasLocalModel)
         .catch(() => {});
     checkModel();
+    commands
+      .checkAppleIntelligenceAvailable()
+      .then(setAppleAvailable)
+      .catch(() => {});
     const stop = listen<SubtitleState>("live-subtitles-state", (event) => {
       setState(event.payload);
       if (event.payload.error) setError(event.payload.error);
@@ -93,15 +98,20 @@ export const LiveSubtitlesPage: React.FC = () => {
   const languageLabel = (value: string) =>
     translateTargetName(value, i18n.language);
   const translator = getSetting("live_subtitle_translator") ?? "auto";
-  const translatorOptions = [
-    {
-      value: "auto",
-      label: t("subtitles.translator.auto"),
-      description: t("subtitles.translator.autoHint"),
-    },
+  const translatorChoices = [
+    { value: "auto", label: t("subtitles.translator.auto") },
     { value: "apple", label: t("subtitles.translator.apple") },
-    { value: "local", label: t("subtitles.translator.local") },
+    { value: "local", label: t("subtitles.translator.localShort") },
   ];
+  // What this Mac will actually use, so the choice reads as a result.
+  const translatorUses =
+    translator === "local" || (translator === "auto" && !appleAvailable)
+      ? hasLocalModel
+        ? "local"
+        : "none"
+      : appleAvailable
+        ? "apple"
+        : "none";
 
   const languages = TRANSLATE_TARGETS.map((item) => ({
     value: item.value,
@@ -261,10 +271,10 @@ export const LiveSubtitlesPage: React.FC = () => {
         )}
       </SettingsGroup>
 
-      {/* The language spoken and the one to read. */}
+      {/* The language spoken, the one to read, and which AI translates. */}
       <SettingsGroup title={t("speak.subtitles.languages")}>
-        <div className="px-4 py-3 grid grid-cols-1 sm:grid-cols-[1fr_auto_1fr] items-end gap-3">
-          <label className="space-y-1">
+        <div className="px-4 py-3.5 grid grid-cols-[1fr_auto_1fr] items-end gap-2">
+          <label className="min-w-0 space-y-1.5">
             <span className="block text-xs text-mid-gray">
               {t("speak.subtitles.from")}
             </span>
@@ -275,10 +285,30 @@ export const LiveSubtitlesPage: React.FC = () => {
               disabled={running}
             />
           </label>
-          <span aria-hidden className="hidden sm:block pb-2 text-mid-gray">
-            →
-          </span>
-          <label className="space-y-1">
+          <button
+            type="button"
+            onClick={() => {
+              const spoken = source;
+              setSource(chosenTarget);
+              setTarget(spoken);
+            }}
+            disabled={running}
+            aria-label={t("subtitles.swapLanguages")}
+            title={t("subtitles.swapLanguages")}
+            className="mb-0.5 grid h-8 w-8 place-items-center rounded-full text-mid-gray transition-colors hover:bg-row hover:text-text disabled:opacity-40 disabled:hover:bg-transparent cursor-pointer disabled:cursor-default focus-visible:outline-2 focus-visible:outline-logo-primary"
+          >
+            <svg viewBox="0 0 16 16" width="16" height="16" aria-hidden>
+              <path
+                d="M2.5 5.5h10m0 0L10 3m2.5 2.5L10 8M13.5 10.5h-10m0 0L6 8m-2.5 2.5L6 13"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1.5"
+                strokeLinecap="round"
+                strokeLinejoin="round"
+              />
+            </svg>
+          </button>
+          <label className="min-w-0 space-y-1.5">
             <span className="block text-xs text-mid-gray">
               {t("speak.subtitles.to")}
             </span>
@@ -290,31 +320,57 @@ export const LiveSubtitlesPage: React.FC = () => {
             />
           </label>
         </div>
-        {/* SE-LIVE-015: which AI translates. */}
-        <div className="px-4 pb-3 space-y-1">
-          <span className="block text-xs text-mid-gray">
-            {t("subtitles.translator.label")}
-          </span>
-          <Dropdown
-            options={translatorOptions}
-            selectedValue={translator}
-            onSelect={(value) =>
-              updateSetting("live_subtitle_translator", value)
-            }
-            disabled={running}
-          />
-          {translator === "local" && !hasLocalModel && (
-            <p className="text-xs text-mid-gray">
-              {t("subtitles.translator.noLocalModel")}{" "}
-              <button
-                type="button"
-                onClick={() => openSection("postprocessing")}
-                className="text-logo-primary hover:underline cursor-pointer"
-              >
-                {t("subtitles.translator.openModels")}
-              </button>
+
+        {/* SE-LIVE-015: which AI translates, and what that means here. */}
+        <div className="px-4 py-3.5 flex flex-wrap items-center justify-between gap-x-4 gap-y-2.5">
+          <div className="min-w-0">
+            <h3 className="text-sm font-medium">
+              {t("subtitles.translator.label")}
+            </h3>
+            <p className="mt-0.5 text-[13px] leading-snug text-mid-gray">
+              {t(`subtitles.translator.uses.${translatorUses}`)}
+              {translatorUses === "none" && (
+                <>
+                  {" "}
+                  <button
+                    type="button"
+                    onClick={() => openSection("postprocessing")}
+                    className="text-logo-primary hover:underline cursor-pointer"
+                  >
+                    {t("subtitles.translator.openModels")}
+                  </button>
+                </>
+              )}
             </p>
-          )}
+          </div>
+          <div
+            role="radiogroup"
+            aria-label={t("subtitles.translator.label")}
+            className="flex shrink-0 gap-0.5 rounded-xl bg-row p-0.5"
+          >
+            {translatorChoices.map((choice) => {
+              const chosen = translator === choice.value;
+              return (
+                <button
+                  key={choice.value}
+                  type="button"
+                  role="radio"
+                  aria-checked={chosen}
+                  disabled={running}
+                  onClick={() =>
+                    updateSetting("live_subtitle_translator", choice.value)
+                  }
+                  className={`h-8 rounded-[10px] px-3 text-sm font-medium transition-colors cursor-pointer disabled:cursor-default disabled:opacity-50 focus-visible:outline-2 focus-visible:outline-logo-primary ${
+                    chosen
+                      ? "bg-surface text-text shadow-sm"
+                      : "text-mid-gray hover:text-text"
+                  }`}
+                >
+                  {choice.label}
+                </button>
+              );
+            })}
+          </div>
         </div>
       </SettingsGroup>
     </div>
