@@ -2,7 +2,7 @@
 status: active
 owner: Lê Khoa
 started: 2026-10-21
-current-phase: 1
+current-phase: 4
 summary: "Downloadable on-device AI models (small GGUF LLMs run by a bundled llama.cpp server) for subtitle translation and the other AI features, picked from a Models-style page like the speech models."
 tags: [area/translation, area/ai, stack/rust]
 ---
@@ -54,6 +54,19 @@ Gemma 4 Apache 2.0 (model card), not gated. Script and outputs: session scratchp
   - Qwen3.5 4B: `unsloth/Qwen3.5-4B-GGUF` @ e87f1764, `Qwen3.5-4B-Q4_K_M.gguf`, 2.74 GB, sha256 00fe7986….
   - Listed, not recommended (> 5 GB or heavy): Gemma 4 E4B, Qwen3.5 9B.
 - Apple silicon only (macOS 14+); Intel Macs keep the cloud providers.
+
+## Phase 3 gate (21/10, signed release bundle, server in Contents/MacOS)
+
+Subtitle probe, 51 s TTS clip (15 lines), partials every second, recogniser Qwen3-ASR 1.7B on Metal at the same time:
+
+| Translator          | Translation after the end of speech p50 / p95 | Source p50 / p95 | CPU avg / max | First load |
+| ------------------- | --------------------------------------------- | ---------------- | ------------- | ---------- |
+| Apple Intelligence  | 1.21 / 1.88 s (20/10)                         | 0.78 s p95       | 2 / 5 %       | -          |
+| Qwen3.5 2B (local)  | 0.62 / 0.81 s                                 | 0.36 / 0.58 s    | 1.8 / 3 %     | 4.9 s      |
+| Gemma 4 E2B (local) | 0.68 / 0.87 s                                 | 0.34 / 0.57 s    | 2.0 / 3 %     | 3.1 s      |
+
+0 refused, 15/15 translated; no server left after the probe. `codesign --verify --deep --strict` passes with the
+helper inside. Not yet: a notarize-only run of `scripts/release-mac.sh` and `spctl --assess` on the helper.
 
 ## Phases (each with a verify command)
 
