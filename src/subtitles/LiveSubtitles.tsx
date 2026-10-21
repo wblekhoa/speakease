@@ -400,6 +400,7 @@ const LiveSubtitles: React.FC = () => {
         {
           "--ls-scale": TEXT_SIZES[look.textSize],
           "--ls-alpha": `${look.background}%`,
+          "--ls-width": `${look.width}px`,
         } as React.CSSProperties
       }
     >
@@ -417,12 +418,16 @@ const LiveSubtitles: React.FC = () => {
         <div className="ls-top" ref={headRef}>
           {/* The handle: what is being subtitled, and how to stop. */}
           <header className="ls-head">
-            <span
-              aria-hidden
-              className={`ls-dot${view.listening && !view.error ? " ls-live" : ""}`}
-            />
-            <span className="ls-app">{app}</span>
-            <span className="ls-switches">
+            {/* Three groups (owner, 21/10): what is subtitled, the text
+                switches, the actions. */}
+            <span className="ls-group ls-group-app">
+              <span
+                aria-hidden
+                className={`ls-dot${view.listening && !view.error ? " ls-live" : ""}`}
+              />
+              <span className="ls-app">{app}</span>
+            </span>
+            <span className="ls-group ls-switches">
               <button
                 type="button"
                 className="ls-switch"
@@ -452,60 +457,62 @@ const LiveSubtitles: React.FC = () => {
                 {t("subtitles.sourceShort")}
               </button>
             </span>
-            <button
-              type="button"
-              className="ls-close ls-gear"
-              aria-pressed={lookOpen}
-              aria-expanded={lookOpen}
-              aria-label={t("subtitles.look.open")}
-              title={t("subtitles.look.open")}
-              onClick={() => {
-                peak.current = 0;
-                setLookOpen(!lookOpen);
-              }}
-            >
-              <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden>
-                <path
-                  d="M2 4h7M13 4h1M2 12h1M7 12h7M2 8h3M9 8h5"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                  strokeLinecap="round"
-                />
-                <circle
-                  cx="11"
-                  cy="4"
-                  r="1.75"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-                <circle
-                  cx="5"
-                  cy="12"
-                  r="1.75"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-                <circle
-                  cx="7"
-                  cy="8"
-                  r="1.75"
-                  fill="none"
-                  stroke="currentColor"
-                  strokeWidth="1.5"
-                />
-              </svg>
-            </button>
-            <button
-              type="button"
-              className="ls-close"
-              onClick={() => commands.stopLiveSubtitles()}
-              aria-label={t("subtitles.stop")}
-              title={t("subtitles.stop")}
-            >
-              ×
-            </button>
+            <span className="ls-group ls-actions">
+              <button
+                type="button"
+                className="ls-close ls-gear"
+                aria-pressed={lookOpen}
+                aria-expanded={lookOpen}
+                aria-label={t("subtitles.look.open")}
+                title={t("subtitles.look.open")}
+                onClick={() => {
+                  peak.current = 0;
+                  setLookOpen(!lookOpen);
+                }}
+              >
+                <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden>
+                  <path
+                    d="M2 4h7M13 4h1M2 12h1M7 12h7M2 8h3M9 8h5"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                    strokeLinecap="round"
+                  />
+                  <circle
+                    cx="11"
+                    cy="4"
+                    r="1.75"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <circle
+                    cx="5"
+                    cy="12"
+                    r="1.75"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                  <circle
+                    cx="7"
+                    cy="8"
+                    r="1.75"
+                    fill="none"
+                    stroke="currentColor"
+                    strokeWidth="1.5"
+                  />
+                </svg>
+              </button>
+              <button
+                type="button"
+                className="ls-close"
+                onClick={() => commands.stopLiveSubtitles()}
+                aria-label={t("subtitles.stop")}
+                title={t("subtitles.stop")}
+              >
+                ×
+              </button>
+            </span>
           </header>
 
           {lookOpen && (

@@ -101,6 +101,7 @@ flowchart LR
 ## Change log
 
 - 2026-10-20: clicking the panel no longer raises SpeakEase's window; the panel comes to the front when subtitles start (owner).
+- 2026-10-21: the top row splits into three pills - the app, the Translate/Original switches, the ⚙ and × actions at the right; the browser preview draws the blurred box too (owner).
 - 2026-10-21: a ⚙ button on the pill opens a small sheet on the panel: text size (Small to Extra large), background strength (20-100 %), lines shown (1-6); the box's left and right edges drag to change its width; all kept on this Mac (owner).
 - 2026-10-21: the panel shows at once when subtitles start (no Dock click); any empty spot of the box drags it, with a grab cursor (owner).
 - 2026-10-21: the panel no longer jumps: it resizes in one step, only grows within a session, new bubbles ease in; language menus open upward when there is no room below (owner).
