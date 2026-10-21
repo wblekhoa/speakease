@@ -543,7 +543,7 @@ export const PostProcessingSettings: React.FC = () => {
           {onDevice && (
             <SettingsGroup
               title={t("aiModels.title")}
-              description={t("aiModels.description")}
+              info={t("aiModels.description")}
             >
               <AiModels />
             </SettingsGroup>
