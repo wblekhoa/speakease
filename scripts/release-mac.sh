@@ -47,6 +47,9 @@ if [[ "$publish" == "1" ]] && gh release view "$tag" -R "$repo" >/dev/null 2>&1;
   exit 1
 fi
 
+echo "==> building the on-device AI server"
+scripts/build-llama-server.sh
+
 echo "==> building"
 bun run tauri build --bundles app
 

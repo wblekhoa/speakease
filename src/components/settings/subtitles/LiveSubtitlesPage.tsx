@@ -10,6 +10,7 @@ import { SettingsGroup } from "../../ui/SettingsGroup";
 import { InfoTip } from "../../ui/InfoTip";
 import { TRANSLATE_TARGETS, translateTargetName } from "@/lib/translateTargets";
 import { subtitleErrorKey } from "@/lib/liveSubtitles";
+import { openSection } from "@/lib/navigation";
 import { CheckIcon, TranslateIcon } from "../../icons/bulk";
 
 /** How often the app list is refreshed while the page is open, so an app
@@ -26,7 +27,8 @@ const APPS_REFRESH_MS = 5000;
 export const LiveSubtitlesPage: React.FC = () => {
   const { t, i18n } = useTranslation();
   const osType = useOsType();
-  const { settings, getSetting } = useSettings();
+  const { settings, getSetting, updateSetting } = useSettings();
+  const [hasLocalModel, setHasLocalModel] = useState(false);
   const [supported, setSupported] = useState<boolean | null>(null);
   const [apps, setApps] = useState<RunningApp[]>([]);
   const [state, setState] = useState<SubtitleState | null>(null);
@@ -45,12 +47,20 @@ export const LiveSubtitlesPage: React.FC = () => {
   useEffect(() => {
     commands.liveSubtitlesSupported().then(setSupported);
     commands.liveSubtitlesState().then(setState);
+    const checkModel = () =>
+      commands
+        .hasLocalAiModel()
+        .then(setHasLocalModel)
+        .catch(() => {});
+    checkModel();
     const stop = listen<SubtitleState>("live-subtitles-state", (event) => {
       setState(event.payload);
       if (event.payload.error) setError(event.payload.error);
     });
+    const stopModels = listen("ai-models-updated", checkModel);
     return () => {
       stop.then((unlisten) => unlisten());
+      stopModels.then((unlisten) => unlisten());
     };
   }, []);
 
@@ -82,6 +92,17 @@ export const LiveSubtitlesPage: React.FC = () => {
 
   const languageLabel = (value: string) =>
     translateTargetName(value, i18n.language);
+  const translator = getSetting("live_subtitle_translator") ?? "auto";
+  const translatorOptions = [
+    {
+      value: "auto",
+      label: t("subtitles.translator.auto"),
+      description: t("subtitles.translator.autoHint"),
+    },
+    { value: "apple", label: t("subtitles.translator.apple") },
+    { value: "local", label: t("subtitles.translator.local") },
+  ];
+
   const languages = TRANSLATE_TARGETS.map((item) => ({
     value: item.value,
     label: `${languageLabel(item.value)} — ${item.code}`,
@@ -268,6 +289,32 @@ export const LiveSubtitlesPage: React.FC = () => {
               disabled={running}
             />
           </label>
+        </div>
+        {/* SE-LIVE-015: which AI translates. */}
+        <div className="px-4 pb-3 space-y-1">
+          <span className="block text-xs text-mid-gray">
+            {t("subtitles.translator.label")}
+          </span>
+          <Dropdown
+            options={translatorOptions}
+            selectedValue={translator}
+            onSelect={(value) =>
+              updateSetting("live_subtitle_translator", value)
+            }
+            disabled={running}
+          />
+          {translator === "local" && !hasLocalModel && (
+            <p className="text-xs text-mid-gray">
+              {t("subtitles.translator.noLocalModel")}{" "}
+              <button
+                type="button"
+                onClick={() => openSection("postprocessing")}
+                className="text-logo-primary hover:underline cursor-pointer"
+              >
+                {t("subtitles.translator.openModels")}
+              </button>
+            </p>
+          )}
         </div>
       </SettingsGroup>
     </div>

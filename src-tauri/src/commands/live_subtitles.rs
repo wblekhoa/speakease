@@ -84,3 +84,29 @@ pub fn live_subtitles_play_pause() -> bool {
     }
     sent
 }
+
+// SE-LIVE-015
+/// The subtitle page's Translator choice: "auto", "apple" or "local"; used
+/// from the next session.
+#[tauri::command]
+#[specta::specta]
+pub fn change_live_subtitle_translator_setting(
+    app: AppHandle,
+    value: String,
+) -> Result<(), String> {
+    if !matches!(value.as_str(), "auto" | "apple" | "local") {
+        return Err(format!("unknown translator: {value}"));
+    }
+    let mut settings = crate::settings::get_settings(&app);
+    settings.live_subtitle_translator = Some(value);
+    crate::settings::write_settings(&app, settings);
+    Ok(())
+}
+
+/// Whether an on-device AI model is downloaded and chosen (the page warns
+/// when the on-device translator has none).
+#[tauri::command]
+#[specta::specta]
+pub fn has_local_ai_model(app: AppHandle) -> bool {
+    crate::local_ai::active_model(&app).is_some()
+}

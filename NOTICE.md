@@ -8,10 +8,10 @@ SpeakEase is built on [Handy](https://github.com/cjpais/Handy), an open-source
 speech-to-text app by CJ Pais. The repository therefore holds work under two
 licences, and which one applies depends on who wrote the part:
 
-| Part | Licence | Where |
-| --- | --- | --- |
-| Handy, as published upstream: every commit up to and including `f6b3f82`, and any later Handy commit merged in from upstream | MIT | `LICENSE-MIT-HANDY` |
-| SpeakEase's own changes and additions: the commits made on top of Handy in this repository | PolyForm Noncommercial 1.0.0 | `LICENSE` |
+| Part                                                                                                                         | Licence                      | Where               |
+| ---------------------------------------------------------------------------------------------------------------------------- | ---------------------------- | ------------------- |
+| Handy, as published upstream: every commit up to and including `f6b3f82`, and any later Handy commit merged in from upstream | MIT                          | `LICENSE-MIT-HANDY` |
+| SpeakEase's own changes and additions: the commits made on top of Handy in this repository                                   | PolyForm Noncommercial 1.0.0 | `LICENSE`           |
 
 So you may use SpeakEase as a whole only for noncommercial purposes, while the
 Handy code inside it stays available to you under MIT exactly as upstream
@@ -26,8 +26,11 @@ your request from their publishers and are not part of this repository.
 Native code compiled into the app keeps its own licence too. One library asks
 for its notice to travel with the app:
 
-| Library | Licence | Notice |
-| --- | --- | --- |
-| libopus (Opus audio decoding, built from source by `opusic-sys`) | BSD-3-Clause | `licenses/libopus-COPYING.txt`, also inside the app at `Contents/Resources/legal/` |
+| Library                                                                                              | Licence      | Notice                                                                               |
+| ---------------------------------------------------------------------------------------------------- | ------------ | ------------------------------------------------------------------------------------ |
+| libopus (Opus audio decoding, built from source by `opusic-sys`)                                     | BSD-3-Clause | `licenses/libopus-COPYING.txt`, also inside the app at `Contents/Resources/legal/`   |
+| llama.cpp `llama-server` (on-device AI models, built from source by `scripts/build-llama-server.sh`) | MIT          | `licenses/llama.cpp-LICENSE.txt`, also inside the app at `Contents/Resources/legal/` |
+
+The on-device AI models are not shipped with the app: each is downloaded on request from its publisher's Hugging Face repository (Qwen3.5 and Gemma 4, Apache-2.0).
 
 The root `LICENSE` controls if this summary differs from the licence text.

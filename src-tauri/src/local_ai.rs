@@ -572,6 +572,7 @@ pub fn chat_blocking(app: &AppHandle, system: &str, user: &str) -> Result<String
 mod tests {
     use super::*;
 
+    // SE-AI-012
     #[test]
     fn catalog_parses_with_pins_and_picks() {
         assert!(CATALOG.len() >= 3);

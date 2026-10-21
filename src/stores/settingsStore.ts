@@ -142,6 +142,8 @@ const settingUpdaters: {
     commands.changeTranslateToEnglishSetting(value as boolean),
   speakease_enhance_prompt_id: (value) =>
     commands.changeSpeakeaseEnhancePromptIdSetting((value as string) || null),
+  live_subtitle_translator: (value) =>
+    commands.changeLiveSubtitleTranslatorSetting((value as string) || "auto"),
   speakease_translate_target: (value) =>
     commands.changeSpeakeaseTranslateTargetSetting((value as string) || null),
   speakease_translate_language: (value) =>

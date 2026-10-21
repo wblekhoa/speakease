@@ -500,6 +500,9 @@
           "placeholderWithOptions": "Search or select a model",
           "placeholderNoOptions": "Type a model name",
           "refreshModels": "Refresh models"
+        },
+        "localAi": {
+          "label": "On-device model"
         }
       },
       "prompts": {
@@ -1063,6 +1066,45 @@
     "media": {
       "play": "Play",
       "pause": "Pause"
+    },
+    "translator": {
+      "label": "Translator",
+      "auto": "Automatic",
+      "autoHint": "Apple Intelligence when this Mac has it, else the on-device model",
+      "apple": "Apple Intelligence",
+      "local": "On-device AI model",
+      "noLocalModel": "No on-device AI model yet.",
+      "openModels": "Download a model"
+    }
+  },
+  "aiModels": {
+    "title": "On-device AI models",
+    "description": "Runs on this Mac, with no network or API key. Used for AI clean-up, translation while dictating and live subtitles.",
+    "picksTitle": "Suggested for this Mac",
+    "thisMac": "This Mac has {{size}} GB of memory",
+    "tooHeavy": "May be heavy for this Mac",
+    "ram": "Needs about {{size}} of memory.",
+    "downloadFailed": "Download failed: {{error}}",
+    "picks": {
+      "balanced": {
+        "label": "Balanced",
+        "why": "The most natural of the light ones"
+      },
+      "best": {
+        "label": "Most accurate",
+        "why": "Closest to the meaning, needs a stronger Mac"
+      },
+      "light": {
+        "label": "Lightest",
+        "why": "Fastest, fits an 8 GB Mac"
+      }
+    },
+    "models": {
+      "qwen3.5-2b": "Lightest and fastest; sometimes shortens a sentence.",
+      "gemma-4-e2b": "Google's official build; natural translations.",
+      "qwen3.5-4b": "Close to the meaning; keeps terms of art.",
+      "gemma-4-e4b": "Heavy (over 5 GB); for Macs with plenty of memory.",
+      "qwen3.5-9b": "Heaviest (almost 6 GB) and slower; for powerful Macs."
     }
   }
 }

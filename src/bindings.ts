@@ -1031,6 +1031,67 @@ async liveSubtitlesPlayPause() : Promise<boolean> {
     return await TAURI_INVOKE("live_subtitles_play_pause");
 },
 /**
+ * Whether this Mac can run on-device models (Apple silicon).
+ */
+async aiModelsSupported() : Promise<boolean> {
+    return await TAURI_INVOKE("ai_models_supported");
+},
+async listAiModels() : Promise<AiModelInfo[]> {
+    return await TAURI_INVOKE("list_ai_models");
+},
+async downloadAiModel(id: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("download_ai_model", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async cancelAiModelDownload(id: string) : Promise<void> {
+    await TAURI_INVOKE("cancel_ai_model_download", { id });
+},
+async deleteAiModel(id: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("delete_ai_model", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async setActiveAiModel(id: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("set_active_ai_model", { id }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * This Mac's memory in GB, for the "fits this Mac" hint.
+ */
+async macMemoryGb() : Promise<number> {
+    return await TAURI_INVOKE("mac_memory_gb");
+},
+/**
+ * The subtitle page's Translator choice: "auto", "apple" or "local"; used
+ * from the next session.
+ */
+async changeLiveSubtitleTranslatorSetting(value: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("change_live_subtitle_translator_setting", { value }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * Whether an on-device AI model is downloaded and chosen (the page warns
+ * when the on-device translator has none).
+ */
+async hasLocalAiModel() : Promise<boolean> {
+    return await TAURI_INVOKE("has_local_ai_model");
+},
+/**
  * Writes text to a file the person picked in a Save dialog.
  */
 async writeTextFile(path: string, contents: string) : Promise<Result<null, string>> {
@@ -1101,6 +1162,18 @@ streamTextEvent: "stream-text-event"
 /** user-defined types **/
 
 /**
+ * One on-device AI model as the AI page shows it.
+ */
+export type AiModelInfo = { id: string; name: string; family: string; parameters: string; size_mb: number; ram_mb: number; license: string; speed_score: number; accuracy_score: number; 
+/**
+ * "light", "balanced" or "best": its recommended slot.
+ */
+pick: string | null; 
+/**
+ * Over 5 GB: listed for download, never recommended (owner, 21/10).
+ */
+heavy: boolean; is_downloaded: boolean; is_downloading: boolean; partial_mb: number; is_active: boolean }
+/**
  * The container-level `serde(default)` (backed by the `Default` impl below)
  * guarantees every field — including ones added in the future — falls back to
  * its `get_default_settings()` value when missing from a stored settings
@@ -1168,7 +1241,19 @@ live_subtitle_app?: string | null; live_subtitle_source?: string | null; live_su
 /**
  * The subtitle panel's Translate switch (None = on).
  */
-live_subtitle_translate?: boolean | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
+live_subtitle_translate?: boolean | null; 
+/**
+ * The on-device AI model in use (an id from catalog/ai_models.json),
+ * for the on-device provider and live subtitles. None until one is
+ * picked.
+ */
+local_ai_model?: string | null; 
+/**
+ * Which AI translates live subtitles: "auto" (Apple Intelligence when
+ * this Mac has it, else the on-device model), "apple" or "local".
+ * None = auto.
+ */
+live_subtitle_translator?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
 /**
  * Debug-gated ("beta") receipt-sequenced paste: restore the clipboard only
  * after the target app actually reads the transcript, instead of after a

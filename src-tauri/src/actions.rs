@@ -256,6 +256,7 @@ pub(crate) async fn post_process_with_prompt(
         "custom" | "openrouter" | crate::settings::LOCAL_AI_PROVIDER_ID
     );
 
+    // SE-AI-012
     // The on-device model: start the bundled server (or keep it) and point
     // the OpenAI-compatible client at its port.
     if provider.id == crate::settings::LOCAL_AI_PROVIDER_ID {

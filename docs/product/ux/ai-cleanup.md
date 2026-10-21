@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — AI cleanup and translation (UX)"
 status: active
-updated: 2026-10-15
+updated: 2026-10-21
 summary: "How AI cleanup and translation look to the user: prompts, the translate language, quick choices on the Speak page, the tray and the recording pill."
 tags: [area/ai, area/translation, stack/react]
 relations:
@@ -99,6 +99,7 @@ flowchart LR
 
 ## Change log
 
+- 2026-10-21: an "On-device model" provider; the AI page lists on-device models like the speech models (owner).
 - 2026-10-15: output choices inside the recording pill.
 - 2026-10-15: output chips on the recording pill.
 - 2026-10-11: created (doc-engine rollout).

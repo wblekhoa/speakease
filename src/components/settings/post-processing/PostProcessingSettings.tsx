@@ -23,6 +23,7 @@ import { useSettings } from "../../../hooks/useSettings";
 import { ToggleSwitch } from "../../ui/ToggleSwitch";
 import { PostProcessingToggle } from "../PostProcessingToggle";
 import { openSection } from "@/lib/navigation";
+import { AiModels } from "./AiModels";
 import {
   TRANSLATE_PROMPT_ID,
   TRANSLATE_TARGETS,
@@ -51,7 +52,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
         </div>
       </SettingContainer>
 
-      {state.isAppleProvider ? (
+      {state.isLocalProvider ? null : state.isAppleProvider ? (
         state.appleIntelligenceUnavailable ? (
           <Alert variant="error" contained>
             {t("settings.postProcessing.api.appleIntelligence.unavailable")}
@@ -103,7 +104,7 @@ const PostProcessingSettingsApiComponent: React.FC = () => {
         </>
       )}
 
-      {!state.isAppleProvider && (
+      {!state.isAppleProvider && !state.isLocalProvider && (
         <SettingContainer
           title={t("settings.postProcessing.api.model.title")}
           description={
@@ -515,6 +516,7 @@ export const PostProcessingSettings: React.FC = () => {
   const { t } = useTranslation();
   const { getSetting } = useSettings();
   const enabled = getSetting("post_process_enabled") || false;
+  const onDevice = getSetting("post_process_provider_id") === "local_ai";
 
   return (
     <div className="max-w-3xl w-full mx-auto space-y-6">
@@ -536,6 +538,16 @@ export const PostProcessingSettings: React.FC = () => {
           <SettingsGroup title={t("settings.postProcessing.api.title")}>
             <PostProcessingSettingsApi />
           </SettingsGroup>
+
+          {/* The on-device models, laid out like the speech models. */}
+          {onDevice && (
+            <SettingsGroup
+              title={t("aiModels.title")}
+              description={t("aiModels.description")}
+            >
+              <AiModels />
+            </SettingsGroup>
+          )}
 
           <SettingsGroup
             title={t("settings.postProcessing.prompts.title")}

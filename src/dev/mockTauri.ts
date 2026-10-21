@@ -145,6 +145,43 @@ const settings: Json = structuredClone(settingsFixture) as Json;
 let dictating = false;
 const models = structuredClone(modelsFixture) as Json[];
 
+// On-device AI models (local_ai.rs): one downloaded and in use, the rest to
+// download, so the AI page shows every state.
+const aiModels: Json[] = [
+  ["qwen3.5-2b", "Qwen3.5 2B", 1221, 1700, 95, 70, "light", false],
+  ["gemma-4-e2b", "Gemma 4 E2B", 3194, 3500, 88, 82, "balanced", false],
+  ["qwen3.5-4b", "Qwen3.5 4B", 2614, 3500, 75, 84, "best", false],
+  ["gemma-4-e4b", "Gemma 4 E4B", 4746, 5100, 72, 85, null, true],
+  ["qwen3.5-9b", "Qwen3.5 9B", 5417, 6300, 55, 88, null, true],
+].map(([id, name, size_mb, ram_mb, speed, accuracy, pick, heavy]) => ({
+  id,
+  name,
+  family: "",
+  parameters: "",
+  size_mb,
+  ram_mb,
+  license: "Apache-2.0",
+  speed_score: speed,
+  accuracy_score: accuracy,
+  pick,
+  heavy,
+  is_downloaded: id === "gemma-4-e2b",
+  is_downloading: false,
+  partial_mb: 0,
+  is_active: id === "gemma-4-e2b",
+}));
+const providers = settings.post_process_providers as Json[];
+if (!providers.some((provider) => provider.id === "local_ai")) {
+  providers.push({
+    id: "local_ai",
+    label: "On-device model",
+    base_url: "http://127.0.0.1/v1",
+    allow_base_url_edit: false,
+    models_endpoint: null,
+    supports_structured_output: false,
+  });
+}
+
 // `?onboarding` previews first run: nothing downloaded, onboarding not done.
 if (new URLSearchParams(location.search).has("onboarding")) {
   settings.onboarding_completed = false;
@@ -338,6 +375,27 @@ function handle(cmd: string, args: Json): unknown {
       return null;
     case "live_subtitles_play_pause":
       return true;
+    case "ai_models_supported":
+      return true;
+    case "list_ai_models":
+      return structuredClone(aiModels);
+    case "mac_memory_gb":
+      return 16;
+    case "has_local_ai_model":
+      return aiModels.some((model) => model.is_active);
+    case "set_active_ai_model":
+      aiModels.forEach((model) => {
+        model.is_active = model.id === args.id && Boolean(model.is_downloaded);
+      });
+      emit("ai-models-updated", null);
+      return null;
+    case "download_ai_model":
+    case "delete_ai_model":
+    case "cancel_ai_model_download":
+      return null;
+    case "change_live_subtitle_translator_setting":
+      settings.live_subtitle_translator = args.value;
+      return null;
     case "stop_live_subtitles":
       subtitlesRunning = null;
       emit("live-subtitles-state", {

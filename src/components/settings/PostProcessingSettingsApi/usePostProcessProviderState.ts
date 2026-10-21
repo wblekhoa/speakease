@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useCallback, useMemo, useState } from "react";
 import { useSettings } from "../../../hooks/useSettings";
 import { commands, type PostProcessProvider } from "@/bindings";
@@ -10,6 +11,8 @@ type PostProcessProviderState = {
   selectedProvider: PostProcessProvider | undefined;
   isCustomProvider: boolean;
   isAppleProvider: boolean;
+  /** The on-device model (local_ai.rs): no key, URL or model list. */
+  isLocalProvider: boolean;
   appleIntelligenceUnavailable: boolean;
   baseUrl: string;
   handleBaseUrlChange: (value: string) => void;
@@ -29,8 +32,10 @@ type PostProcessProviderState = {
 };
 
 const APPLE_PROVIDER_ID = "apple_intelligence";
+const LOCAL_PROVIDER_ID = "local_ai";
 
 export const usePostProcessProviderState = (): PostProcessProviderState => {
+  const { t } = useTranslation();
   const {
     settings,
     isUpdating,
@@ -57,6 +62,7 @@ export const usePostProcessProviderState = (): PostProcessProviderState => {
   }, [providers, selectedProviderId]);
 
   const isAppleProvider = selectedProvider?.id === APPLE_PROVIDER_ID;
+  const isLocalProvider = selectedProvider?.id === LOCAL_PROVIDER_ID;
   const [appleIntelligenceUnavailable, setAppleIntelligenceUnavailable] =
     useState(false);
 
@@ -68,9 +74,12 @@ export const usePostProcessProviderState = (): PostProcessProviderState => {
   const providerOptions = useMemo<DropdownOption[]>(() => {
     return providers.map((provider) => ({
       value: provider.id,
-      label: provider.label,
+      label:
+        provider.id === LOCAL_PROVIDER_ID
+          ? t("settings.postProcessing.api.localAi.label")
+          : provider.label,
     }));
-  }, [providers]);
+  }, [providers, t]);
 
   const handleProviderSelect = useCallback(
     async (providerId: string) => {
@@ -164,9 +173,14 @@ export const usePostProcessProviderState = (): PostProcessProviderState => {
   );
 
   const handleRefreshModels = useCallback(() => {
-    if (isAppleProvider) return;
+    if (isAppleProvider || isLocalProvider) return;
     void fetchPostProcessModels(selectedProviderId);
-  }, [fetchPostProcessModels, isAppleProvider, selectedProviderId]);
+  }, [
+    fetchPostProcessModels,
+    isAppleProvider,
+    isLocalProvider,
+    selectedProviderId,
+  ]);
 
   const availableModelsRaw = postProcessModelOptions[selectedProviderId] || [];
 
@@ -215,6 +229,7 @@ export const usePostProcessProviderState = (): PostProcessProviderState => {
     selectedProvider,
     isCustomProvider,
     isAppleProvider,
+    isLocalProvider,
     appleIntelligenceUnavailable,
     baseUrl,
     handleBaseUrlChange,

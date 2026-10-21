@@ -500,6 +500,9 @@
           "placeholderWithOptions": "Tìm hoặc chọn mô hình",
           "placeholderNoOptions": "Nhập tên mô hình",
           "refreshModels": "Tải lại danh sách mô hình"
+        },
+        "localAi": {
+          "label": "Mô hình AI trên máy"
         }
       },
       "prompts": {
@@ -1063,6 +1066,45 @@
     "media": {
       "play": "Phát tiếp",
       "pause": "Tạm dừng"
+    },
+    "translator": {
+      "label": "Bộ dịch",
+      "auto": "Tự động",
+      "autoHint": "Apple Intelligence nếu máy có, không thì mô hình AI trên máy",
+      "apple": "Apple Intelligence",
+      "local": "Mô hình AI trên máy",
+      "noLocalModel": "Chưa có mô hình AI trên máy.",
+      "openModels": "Tải mô hình"
+    }
+  },
+  "aiModels": {
+    "title": "Mô hình AI trên máy",
+    "description": "Chạy ngay trên máy này, không cần mạng hay API key. Dùng cho AI dọn câu, dịch khi đọc chép và phụ đề trực tiếp.",
+    "picksTitle": "Đề xuất cho máy này",
+    "thisMac": "Máy này có {{size}} GB RAM",
+    "tooHeavy": "Có thể nặng với máy này",
+    "ram": "Cần khoảng {{size}} RAM.",
+    "downloadFailed": "Không tải được: {{error}}",
+    "picks": {
+      "balanced": {
+        "label": "Cân bằng",
+        "why": "Dịch tự nhiên nhất trong nhóm nhẹ"
+      },
+      "best": {
+        "label": "Chính xác nhất",
+        "why": "Sát nghĩa nhất, cần máy khá hơn"
+      },
+      "light": {
+        "label": "Nhẹ nhất",
+        "why": "Nhanh nhất, hợp máy 8 GB RAM"
+      }
+    },
+    "models": {
+      "qwen3.5-2b": "Nhẹ và nhanh nhất; đôi khi rút gọn câu.",
+      "gemma-4-e2b": "Bản chính thức của Google, câu dịch tự nhiên.",
+      "qwen3.5-4b": "Dịch sát nghĩa, giữ đúng thuật ngữ.",
+      "gemma-4-e4b": "Nặng (trên 5 GB), chỉ nên dùng khi máy nhiều RAM.",
+      "qwen3.5-9b": "Nặng nhất (gần 6 GB), chậm hơn; cho máy mạnh."
     }
   }
 }
