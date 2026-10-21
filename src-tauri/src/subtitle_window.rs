@@ -50,6 +50,7 @@ mod imp {
     pub fn show(app: &AppHandle) {
         let handle = app.clone();
         let _ = app.run_on_main_thread(move || {
+            unhide_app();
             if let Ok(panel) = handle.get_webview_panel(LABEL) {
                 panel.set_level(PanelLevel::Status.value());
                 panel.order_front_regardless();
@@ -70,12 +71,22 @@ mod imp {
                 }))
                 .has_shadow(false)
                 .transparent(true)
-                .no_activate(true)
+                // Not `.no_activate(true)`: it flips the app to the
+                // Prohibited policy while building, which hides every
+                // SpeakEase window, this panel too, until the Dock icon is
+                // clicked (owner, 21/10). The nonactivating style, an
+                // unfocusable window and `prevent_activation` keep focus away.
                 .hides_on_deactivate(false)
                 .becomes_key_only_if_needed(true)
                 .corner_radius(0.0)
                 .style_mask(StyleMask::empty().borderless().nonactivating_panel())
-                .with_window(|w| w.decorations(false).transparent(true).focusable(false))
+                .with_window(|w| {
+                    w.decorations(false)
+                        .transparent(true)
+                        .focusable(false)
+                        .focused(false)
+                        .visible(false)
+                })
                 .collection_behavior(
                     CollectionBehavior::new()
                         .can_join_all_spaces()
@@ -91,6 +102,25 @@ mod imp {
                 Err(e) => log::error!("Live subtitles: cannot create the subtitle panel: {e}"),
             }
         });
+    }
+
+    /// An app hidden by macOS (Cmd-H, or a policy change) keeps its panels
+    /// hidden whatever their level; bring it back without taking focus
+    /// from the app being watched.
+    fn unhide_app() {
+        use objc2::runtime::{AnyObject, Bool};
+        use objc2::{class, msg_send};
+        // SAFETY: NSApplication's shared instance, on the main thread.
+        unsafe {
+            let ns_app: *mut AnyObject = msg_send![class!(NSApplication), sharedApplication];
+            if ns_app.is_null() {
+                return;
+            }
+            let hidden: Bool = msg_send![ns_app, isHidden];
+            if hidden.as_bool() {
+                let _: () = msg_send![ns_app, unhideWithoutActivation];
+            }
+        }
     }
 
     /// A click on the panel (a switch, ×, a drag) must not activate

@@ -52,7 +52,7 @@ relations:
   takes focus from the app being watched: clicking it (a switch, ×, a drag) does not bring SpeakEase's window
   forward, and it comes to the front of every window when subtitles start; Start in SpeakEase's window also brings the chosen app back to the front, so the video and its subtitles show at once. At its top a small pill shows a breathing dot, the app's name, two switches -
   **Translate** (off: no AI, lines show as heard) and **Original** (show or hide what was said under each
-  translation) - and **×** (turn subtitles off); drag the pill or the bubbles to move it, and it opens there next time. Each line is its own
+  translation) - and **×** (turn subtitles off); drag any empty spot of the box to move it, and it opens there next time. Each line is its own
   rounded bubble, like a chat: the translation in larger text, what was said under it in small grey text, or three
   soft dots while it is being translated. The newest bubble is at the bottom; when a sentence spans two lines, one
   bubble with the whole sentence takes their place. The panel grows upward to show at most four bubbles, then scrolls, the
@@ -101,6 +101,7 @@ flowchart LR
 ## Change log
 
 - 2026-10-20: clicking the panel no longer raises SpeakEase's window; the panel comes to the front when subtitles start (owner).
+- 2026-10-21: the panel shows at once when subtitles start (no Dock click); any empty spot of the box drags it, with a grab cursor (owner).
 - 2026-10-21: the panel no longer jumps: it resizes in one step, only grows within a session, new bubbles ease in; language menus open upward when there is no room below (owner).
 - 2026-10-21: Start in the window brings the chosen app to the front (owner).
 - 2026-10-21: tried no box (solid bubbles) and a gradient blur fading toward the top; the owner kept the blurred box (harder to read, lower quality).

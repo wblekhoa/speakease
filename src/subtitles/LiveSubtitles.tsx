@@ -275,10 +275,15 @@ const LiveSubtitles: React.FC = () => {
       : null;
 
   return (
-    <div className={`ls-frame${quiet ? " ls-quiet" : ""}`}>
+    // Any empty spot of the box drags it (owner, 21/10), not only the pill
+    // and the bubbles; buttons keep their clicks.
+    <div
+      className={`ls-frame${quiet ? " ls-quiet" : ""}`}
+      onMouseDown={startDrag}
+    >
       <div className="ls-content">
         {/* The handle: what is being subtitled, and how to stop. */}
-        <header className="ls-head" ref={headRef} onMouseDown={startDrag}>
+        <header className="ls-head" ref={headRef}>
           <span
             aria-hidden
             className={`ls-dot${view.listening && !view.error ? " ls-live" : ""}`}
@@ -331,7 +336,6 @@ const LiveSubtitles: React.FC = () => {
           }`}
           ref={scrollRef}
           onScroll={onScroll}
-          onMouseDown={startDrag}
           role="log"
           aria-live="polite"
           aria-label={t("subtitles.label")}
