@@ -553,7 +553,9 @@ function App() {
             </h1>
           </header>
           <div ref={settingsScrollRef} className="flex-1 overflow-y-auto">
-            <div className="flex flex-col items-center p-4 gap-4">
+            {/* At least as tall as the scroller, so a page can pin its
+                main action to the bottom (Live subtitles). */}
+            <div className="flex min-h-full flex-col items-center p-4 gap-4">
               <AccessibilityPermissions />
               <SecureInputWarning />
               {renderSettingsContent(currentSection, setOnboardingPreview)}

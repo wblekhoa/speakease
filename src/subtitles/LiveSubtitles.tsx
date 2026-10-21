@@ -41,7 +41,7 @@ type TextSize = keyof typeof TEXT_SIZES;
 
 interface Look {
   textSize: TextSize;
-  /** How solid the bubbles are, in percent (the blur shows through). */
+  /** How solid the box's tint is over the blur, in percent (0 = blur only). */
   background: number;
   /** The panel grows to show at most this many bubbles, then scrolls. */
   lines: number;
@@ -51,7 +51,7 @@ interface Look {
 
 const DEFAULT_LOOK: Look = {
   textSize: "m",
-  background: 62,
+  background: 45,
   lines: 4,
   width: 472,
 };
@@ -65,7 +65,7 @@ const readLook = (): Look => {
         saved.textSize && saved.textSize in TEXT_SIZES
           ? saved.textSize
           : DEFAULT_LOOK.textSize,
-      background: Math.min(100, Math.max(20, saved.background ?? 62)),
+      background: Math.min(100, Math.max(0, saved.background ?? 45)),
       lines: Math.min(6, Math.max(1, saved.lines ?? 4)),
       width: Math.min(MAX_WIDTH, Math.max(MIN_WIDTH, saved.width ?? 472)),
     };
@@ -576,7 +576,7 @@ const LiveSubtitles: React.FC = () => {
                 <input
                   type="range"
                   className="ls-range"
-                  min={20}
+                  min={0}
                   max={100}
                   step={2}
                   value={look.background}

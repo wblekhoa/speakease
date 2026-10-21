@@ -375,6 +375,8 @@ function handle(cmd: string, args: Json): unknown {
       return null;
     case "live_subtitles_play_pause":
       return true;
+    case "show_live_subtitles_panel":
+      return null;
     case "ai_models_supported":
       return true;
     case "list_ai_models":

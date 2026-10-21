@@ -1079,7 +1079,11 @@
         "none": "Máy này chưa có AI để dịch, phụ đề chỉ hiện lời gốc."
       }
     },
-    "swapLanguages": "Đổi chiều ngôn ngữ"
+    "swapLanguages": "Đổi chiều ngôn ngữ",
+    "bar": {
+      "summary": "{{app}} · {{from}} → {{to}}",
+      "showPanel": "Hiện khung"
+    }
   },
   "aiModels": {
     "title": "Mô hình AI trên máy",

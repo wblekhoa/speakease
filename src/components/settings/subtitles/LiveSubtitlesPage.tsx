@@ -150,8 +150,8 @@ export const LiveSubtitlesPage: React.FC = () => {
   };
 
   return (
-    <div className="max-w-3xl w-full mx-auto space-y-6">
-      {/* Start or stop, and what is happening now. */}
+    <div className="max-w-3xl w-full mx-auto flex flex-1 flex-col gap-6">
+      {/* What is happening now. */}
       <section className="rounded-2xl border border-hairline bg-surface px-5 py-4 flex items-center gap-4">
         <span
           aria-hidden
@@ -207,25 +207,7 @@ export const LiveSubtitlesPage: React.FC = () => {
                   ? t("speak.subtitles.ready", { app: appName(app) })
                   : t("speak.subtitles.pickFirst")}
           </p>
-          {binding && (
-            <p className="text-xs text-mid-gray flex items-center gap-1.5 pt-1">
-              {t("speak.subtitles.shortcut")}
-              <Keycaps combination={binding} osType={osType} />
-            </p>
-          )}
         </div>
-        <button
-          type="button"
-          onClick={toggle}
-          disabled={!running && !app}
-          className={`shrink-0 px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-logo-primary ${
-            running
-              ? "border border-hairline hover:bg-row"
-              : "text-white bg-background-ui hover:bg-brand-deep"
-          }`}
-        >
-          {running ? t("speak.subtitles.stop") : t("speak.subtitles.start")}
-        </button>
       </section>
 
       {/* Which app to listen to: running apps, those playing first. */}
@@ -373,6 +355,62 @@ export const LiveSubtitlesPage: React.FC = () => {
           </div>
         </div>
       </SettingsGroup>
+
+      {/* The main action, fixed at the bottom (owner, 21/10): what will be
+          subtitled, the shortcut, and start / stop - plus bringing the
+          panel back while it runs. */}
+      <div className="sticky bottom-0 z-10 mt-auto -mx-2 -mb-2 pt-2">
+        <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5 rounded-2xl border border-hairline bg-surface/90 px-4 py-3 shadow-lg backdrop-blur-xl">
+          <div className="min-w-0 flex-1 space-y-0.5">
+            <p className="flex items-center gap-2 text-sm font-medium truncate">
+              <span
+                aria-hidden
+                className={`size-2 shrink-0 rounded-full ${
+                  running ? "bg-logo-primary animate-pulse" : "bg-mid-gray/50"
+                }`}
+              />
+              <span className="truncate">
+                {app
+                  ? t("subtitles.bar.summary", {
+                      app: appName(running ? state?.bundle_id : app),
+                      from: languageLabel(source),
+                      to: languageLabel(chosenTarget),
+                    })
+                  : t("speak.subtitles.pickFirst")}
+              </span>
+            </p>
+            {binding && (
+              <p className="flex items-center gap-1.5 text-xs text-mid-gray">
+                {t("speak.subtitles.shortcut")}
+                <Keycaps combination={binding} osType={osType} />
+              </p>
+            )}
+          </div>
+          <div className="flex shrink-0 items-center gap-2">
+            {running && (
+              <button
+                type="button"
+                onClick={() => commands.showLiveSubtitlesPanel()}
+                className="px-3.5 py-2 rounded-xl text-sm font-medium text-text hover:bg-row cursor-pointer focus-visible:outline-2 focus-visible:outline-logo-primary"
+              >
+                {t("subtitles.bar.showPanel")}
+              </button>
+            )}
+            <button
+              type="button"
+              onClick={toggle}
+              disabled={!running && !app}
+              className={`px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-logo-primary ${
+                running
+                  ? "border border-hairline hover:bg-row"
+                  : "text-white bg-background-ui hover:bg-brand-deep"
+              }`}
+            >
+              {running ? t("speak.subtitles.stop") : t("speak.subtitles.start")}
+            </button>
+          </div>
+        </div>
+      </div>
     </div>
   );
 };

@@ -1079,7 +1079,11 @@
         "none": "This Mac has no AI to translate yet; subtitles show what was said."
       }
     },
-    "swapLanguages": "Swap languages"
+    "swapLanguages": "Swap languages",
+    "bar": {
+      "summary": "{{app}} · {{from}} → {{to}}",
+      "showPanel": "Show panel"
+    }
   },
   "aiModels": {
     "title": "On-device AI models",

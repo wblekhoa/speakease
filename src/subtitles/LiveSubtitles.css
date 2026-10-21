@@ -5,21 +5,20 @@
    (subtitle_window.rs); its height follows the content (LiveSubtitles.tsx). */
 :root {
   --ls-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  /* Over the native blur (subtitle_window.rs frost): light enough to let
-     it through, solid enough to keep text crisp. */
-  /* --ls-alpha and --ls-scale come from the ⚙ sheet (LiveSubtitles.tsx). */
-  --ls-alpha: 62%;
+  /* --ls-alpha and --ls-scale come from the ⚙ sheet (LiveSubtitles.tsx).
+     The background strength tints the whole box over the native blur
+     (subtitle_window.rs frost), from blur only (0) to solid (100); the
+     bubbles and pills sit on it as a faint lift, with no shadow (owner,
+     21/10). */
+  --ls-alpha: 45%;
   --ls-scale: 1;
-  --ls-bubble: color-mix(
+  --ls-tint: color-mix(
     in srgb,
     var(--color-background) var(--ls-alpha),
     transparent
   );
-  --ls-head: color-mix(
-    in srgb,
-    var(--color-background) calc(var(--ls-alpha) - 12%),
-    transparent
-  );
+  --ls-bubble: color-mix(in srgb, var(--color-text) 7%, transparent);
+  --ls-head: color-mix(in srgb, var(--color-text) 9%, transparent);
   --ls-muted: color-mix(in srgb, var(--color-text) 60%, transparent);
   /* Soft and faint, kept inside the frame's padding (16px). */
   --ls-shadow:
@@ -43,6 +42,9 @@ body {
   justify-content: flex-end;
   font-family: var(--ls-font);
   color: var(--color-text);
+  /* The box's own tint, on the native blur's corners (radius 26). */
+  background: var(--ls-tint);
+  border-radius: 26px;
   transition: opacity 400ms ease;
   /* The whole box is the handle. */
   cursor: grab;
@@ -244,7 +246,6 @@ body {
   padding: 11px 15px 12px;
   border-radius: 20px;
   background: var(--ls-bubble);
-  box-shadow: var(--ls-shadow);
   display: flex;
   flex-direction: column;
   gap: 5px;
@@ -513,7 +514,7 @@ body {
   height: auto;
   max-height: calc(100vh - 16px);
   border-radius: 26px;
-  background: color-mix(in srgb, var(--color-background) 35%, transparent);
+  background: var(--ls-tint);
   -webkit-backdrop-filter: blur(30px) saturate(1.6);
   backdrop-filter: blur(30px) saturate(1.6);
 }

@@ -1092,6 +1092,13 @@ async hasLocalAiModel() : Promise<boolean> {
     return await TAURI_INVOKE("has_local_ai_model");
 },
 /**
+ * The page's "Show panel": bring the subtitle panel back to the front while
+ * subtitles run (it may sit behind a full-screen video or be hidden).
+ */
+async showLiveSubtitlesPanel() : Promise<void> {
+    await TAURI_INVOKE("show_live_subtitles_panel");
+},
+/**
  * Writes text to a file the person picked in a Save dialog.
  */
 async writeTextFile(path: string, contents: string) : Promise<Result<null, string>> {

@@ -110,3 +110,13 @@ pub fn change_live_subtitle_translator_setting(
 pub fn has_local_ai_model(app: AppHandle) -> bool {
     crate::local_ai::active_model(&app).is_some()
 }
+
+/// The page's "Show panel": bring the subtitle panel back to the front while
+/// subtitles run (it may sit behind a full-screen video or be hidden).
+#[tauri::command]
+#[specta::specta]
+pub fn show_live_subtitles_panel(app: AppHandle) {
+    if session::is_running() {
+        crate::subtitle_window::show(&app);
+    }
+}

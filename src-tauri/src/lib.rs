@@ -890,6 +890,7 @@ pub fn run(cli_args: CliArgs) {
             commands::ai_models::mac_memory_gb,
             commands::live_subtitles::change_live_subtitle_translator_setting,
             commands::live_subtitles::has_local_ai_model,
+            commands::live_subtitles::show_live_subtitles_panel,
             commands::files::write_text_file,
             commands::files::ytdlp_available,
             commands::history::update_history_limit,
