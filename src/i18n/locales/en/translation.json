@@ -1082,7 +1082,9 @@
     "swapLanguages": "Swap languages",
     "bar": {
       "summary": "{{app}} · {{from}} → {{to}}",
-      "showPanel": "Show panel"
+      "showPanel": "Show panel",
+      "direction": "{{from}} → {{to}}",
+      "noApp": "No app chosen"
     }
   },
   "aiModels": {

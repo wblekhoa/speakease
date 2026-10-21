@@ -1082,7 +1082,9 @@
     "swapLanguages": "Đổi chiều ngôn ngữ",
     "bar": {
       "summary": "{{app}} · {{from}} → {{to}}",
-      "showPanel": "Hiện khung"
+      "showPanel": "Hiện khung",
+      "direction": "{{from}} → {{to}}",
+      "noApp": "Chưa chọn ứng dụng"
     }
   },
   "aiModels": {

@@ -95,6 +95,8 @@ export const LiveSubtitlesPage: React.FC = () => {
     );
   }
 
+  const languageCode = (value: string) =>
+    TRANSLATE_TARGETS.find((item) => item.value === value)?.code ?? value;
   const languageLabel = (value: string) =>
     translateTargetName(value, i18n.language);
   const translator = getSetting("live_subtitle_translator") ?? "auto";
@@ -359,56 +361,73 @@ export const LiveSubtitlesPage: React.FC = () => {
       {/* The main action, fixed at the bottom (owner, 21/10): what will be
           subtitled, the shortcut, and start / stop - plus bringing the
           panel back while it runs. */}
-      <div className="sticky bottom-0 z-10 mt-auto -mx-2 -mb-2 pt-2">
-        <div className="flex flex-wrap items-center gap-x-4 gap-y-2.5 rounded-2xl border border-hairline bg-surface/90 px-4 py-3 shadow-lg backdrop-blur-xl">
-          <div className="min-w-0 flex-1 space-y-0.5">
-            <p className="flex items-center gap-2 text-sm font-medium truncate">
-              <span
-                aria-hidden
-                className={`size-2 shrink-0 rounded-full ${
-                  running ? "bg-logo-primary animate-pulse" : "bg-mid-gray/50"
-                }`}
-              />
-              <span className="truncate">
-                {app
-                  ? t("subtitles.bar.summary", {
-                      app: appName(running ? state?.bundle_id : app),
-                      from: languageLabel(source),
-                      to: languageLabel(chosenTarget),
-                    })
-                  : t("speak.subtitles.pickFirst")}
+      <div className="sticky bottom-0 z-10 mt-auto -mx-4 -mb-4 flex justify-center bg-gradient-to-t from-background from-40% to-transparent px-4 pb-4 pt-8">
+        {/* One floating bar like the Speak page's: what will be subtitled,
+            the shortcut, and the action. */}
+        <div className="flex max-w-full items-center gap-1 rounded-full border border-hairline bg-surface p-1.5 shadow-sm">
+          <span
+            className="flex h-9 min-w-0 items-center gap-2 rounded-full px-3 text-sm"
+            title={
+              app
+                ? t("subtitles.bar.summary", {
+                    app: appName(running ? state?.bundle_id : app),
+                    from: languageLabel(source),
+                    to: languageLabel(chosenTarget),
+                  })
+                : undefined
+            }
+          >
+            <span
+              aria-hidden
+              className={`size-2 shrink-0 rounded-full ${
+                running
+                  ? "bg-logo-primary animate-pulse motion-reduce:animate-none"
+                  : "bg-mid-gray/50"
+              }`}
+            />
+            <span className="truncate font-medium">
+              {app
+                ? appName(running ? state?.bundle_id : app)
+                : t("subtitles.bar.noApp")}
+            </span>
+            {app && (
+              <span className="shrink-0 text-mid-gray tabular-nums">
+                {t("subtitles.bar.direction", {
+                  from: languageCode(source),
+                  to: languageCode(chosenTarget),
+                })}
               </span>
-            </p>
-            {binding && (
-              <p className="flex items-center gap-1.5 text-xs text-mid-gray">
-                {t("speak.subtitles.shortcut")}
-                <Keycaps combination={binding} osType={osType} />
-              </p>
             )}
-          </div>
-          <div className="flex shrink-0 items-center gap-2">
-            {running && (
-              <button
-                type="button"
-                onClick={() => commands.showLiveSubtitlesPanel()}
-                className="px-3.5 py-2 rounded-xl text-sm font-medium text-text hover:bg-row cursor-pointer focus-visible:outline-2 focus-visible:outline-logo-primary"
-              >
-                {t("subtitles.bar.showPanel")}
-              </button>
-            )}
+          </span>
+          {binding && (
+            <span
+              className="hidden h-9 shrink-0 items-center border-l border-hairline pl-2 pr-1 sm:flex"
+              title={t("speak.subtitles.shortcut")}
+            >
+              <Keycaps combination={binding} osType={osType} />
+            </span>
+          )}
+          {running && (
             <button
               type="button"
-              onClick={toggle}
-              disabled={!running && !app}
-              className={`px-4 py-2 rounded-xl text-sm font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-logo-primary ${
-                running
-                  ? "border border-hairline hover:bg-row"
-                  : "text-white bg-background-ui hover:bg-brand-deep"
-              }`}
+              onClick={() => commands.showLiveSubtitlesPanel()}
+              className="h-9 shrink-0 rounded-full px-3 text-sm font-medium text-text hover:bg-row cursor-pointer focus-visible:outline-2 focus-visible:outline-logo-primary"
             >
-              {running ? t("speak.subtitles.stop") : t("speak.subtitles.start")}
+              {t("subtitles.bar.showPanel")}
             </button>
-          </div>
+          )}
+          <button
+            type="button"
+            onClick={toggle}
+            disabled={!running && !app}
+            className={`h-9 shrink-0 rounded-full px-4 text-sm font-semibold cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed focus-visible:outline-2 focus-visible:outline-logo-primary ${
+              running
+                ? "bg-row text-text hover:bg-mid-gray/25"
+                : "text-white bg-background-ui hover:bg-brand-deep"
+            }`}
+          >
+            {running ? t("speak.subtitles.stop") : t("speak.subtitles.start")}
+          </button>
         </div>
       </div>
     </div>
