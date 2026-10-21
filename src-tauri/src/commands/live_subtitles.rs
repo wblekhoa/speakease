@@ -72,3 +72,15 @@ pub fn fit_live_subtitles_panel(
         keep_right,
     );
 }
+
+/// The panel's play/pause button: the system Play/Pause key, which macOS
+/// sends to the app playing (SE-LIVE-014).
+#[tauri::command]
+#[specta::specta]
+pub fn live_subtitles_play_pause() -> bool {
+    let sent = crate::system_audio_tap::media_play_pause();
+    if !sent {
+        log::warn!("Live subtitles: could not send the Play/Pause key");
+    }
+    sent
+}

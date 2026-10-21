@@ -186,6 +186,10 @@ const LiveSubtitles: React.FC = () => {
   const lookRef = useRef(look);
   lookRef.current = look;
   const [lookOpen, setLookOpen] = useState(false);
+  // SE-LIVE-014
+  // Play/pause sends the system media key; the app cannot tell whether the
+  // media is playing, so the icon follows the last press (playing at start).
+  const [paused, setPaused] = useState(false);
   /** The tallest the panel has been this session; it does not shrink back
    * (see the fit below). Zeroed when a session starts or a switch changes
    * what a bubble holds. */
@@ -231,6 +235,7 @@ const LiveSubtitles: React.FC = () => {
             !event.payload.error;
           if (endedCleanly || (event.payload.running && !wasRunning.current)) {
             peak.current = 0;
+            setPaused(false);
             apply("reset");
             setFollowing(true);
           }
@@ -458,6 +463,35 @@ const LiveSubtitles: React.FC = () => {
               </button>
             </span>
             <span className="ls-group ls-actions">
+              <button
+                type="button"
+                className="ls-close ls-media"
+                aria-label={t(
+                  paused ? "subtitles.media.play" : "subtitles.media.pause",
+                )}
+                title={t(
+                  paused ? "subtitles.media.play" : "subtitles.media.pause",
+                )}
+                onClick={() => {
+                  commands
+                    .liveSubtitlesPlayPause()
+                    .then((sent) => {
+                      if (sent) setPaused(!paused);
+                    })
+                    .catch(() => {});
+                }}
+              >
+                <svg viewBox="0 0 16 16" width="12" height="12" aria-hidden>
+                  {paused ? (
+                    <path d="M4.5 2.8v10.4L13 8z" fill="currentColor" />
+                  ) : (
+                    <path
+                      d="M4 3h2.6v10H4zM9.4 3H12v10H9.4z"
+                      fill="currentColor"
+                    />
+                  )}
+                </svg>
+              </button>
               <button
                 type="button"
                 className="ls-close ls-gear"

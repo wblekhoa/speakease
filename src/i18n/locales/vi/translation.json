@@ -1059,6 +1059,10 @@
       "background": "Độ đậm nền",
       "lines": "Số câu hiện",
       "widthHint": "Kéo mép trái hoặc phải của khung để đổi chiều rộng."
+    },
+    "media": {
+      "play": "Phát tiếp",
+      "pause": "Tạm dừng"
     }
   }
 }

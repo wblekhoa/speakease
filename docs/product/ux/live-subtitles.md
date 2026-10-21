@@ -101,6 +101,7 @@ flowchart LR
 ## Change log
 
 - 2026-10-20: clicking the panel no longer raises SpeakEase's window; the panel comes to the front when subtitles start (owner).
+- 2026-10-21: a play/pause button in the actions pill pauses or resumes what is playing (owner).
 - 2026-10-21: no borders on the bubbles, pills or sheet (owner).
 - 2026-10-21: the top row splits into three pills - the app, the Translate/Original switches, the ⚙ and × actions at the right; the browser preview draws the blurred box too (owner).
 - 2026-10-21: a ⚙ button on the pill opens a small sheet on the panel: text size (Small to Extra large), background strength (20-100 %), lines shown (1-6); the box's left and right edges drag to change its width; all kept on this Mac (owner).

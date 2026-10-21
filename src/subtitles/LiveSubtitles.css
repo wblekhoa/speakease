@@ -379,7 +379,8 @@ body {
   gap: 8px;
 }
 
-.ls-gear {
+.ls-gear,
+.ls-media {
   display: grid;
   place-items: center;
 }

@@ -1059,6 +1059,10 @@
       "background": "Background",
       "lines": "Lines shown",
       "widthHint": "Drag the box's left or right edge to change its width."
+    },
+    "media": {
+      "play": "Play",
+      "pause": "Pause"
     }
   }
 }

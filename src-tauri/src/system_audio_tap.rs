@@ -69,6 +69,11 @@ mod imp {
         fn se_app_context(bundle: *const c_char) -> *mut c_char;
         fn se_list_apps() -> *mut c_char;
         fn se_activate_app(bundle: *const c_char) -> i32;
+        fn se_media_play_pause() -> i32;
+    }
+
+    pub fn media_play_pause() -> bool {
+        unsafe { se_media_play_pause() == 1 }
     }
 
     pub fn activate_app(bundle_id: &str) -> bool {
@@ -179,6 +184,10 @@ mod imp {
         false
     }
 
+    pub fn media_play_pause() -> bool {
+        false
+    }
+
     pub fn app_context(_bundle_id: &str) -> AppContext {
         AppContext::default()
     }
@@ -213,6 +222,11 @@ pub fn list_processes() -> Vec<AudioProcess> {
 /// returned tap is dropped.
 pub fn start(bundle_id: &str, mute: bool) -> Result<(AppTap, Receiver<TapChunk>), String> {
     imp::start(bundle_id, mute)
+}
+
+/// Presses the system Play/Pause media key; false when it could not be sent.
+pub fn media_play_pause() -> bool {
+    imp::media_play_pause()
 }
 
 /// Brings the app to the front; false when it is not running.

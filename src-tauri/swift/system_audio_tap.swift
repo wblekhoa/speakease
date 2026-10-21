@@ -12,6 +12,7 @@
 //   se_app_context(bundle)                   JSON: the app's window title + document
 //   se_list_apps()                           JSON: running apps, which are playing
 //   se_activate_app(bundle)                  1 when the app was brought to the front
+//   se_media_play_pause()                    1 when the Play/Pause key was sent
 //   se_tap_free_string(ptr)                  frees strings returned above
 
 import AppKit
@@ -359,6 +360,30 @@ public func se_activate_app(_ bundle: UnsafePointer<CChar>?) -> Int32 {
         .sorted { playingFor.contains($0.processIdentifier) && !playingFor.contains($1.processIdentifier) }
     guard let app = instances.first else { return 0 }
     return app.activate(options: []) ? 1 : 0
+}
+
+/// Presses the keyboard's Play/Pause media key (owner, 21/10: pause or play
+/// what is being subtitled from the panel). macOS hands it to the app that
+/// is playing (a YouTube tab, Music, Spotify, Podcasts…). Posting it needs
+/// the Accessibility permission SpeakEase already holds for pasting.
+@_cdecl("se_media_play_pause")
+public func se_media_play_pause() -> Int32 {
+    let playKey: Int = 16  // NX_KEYTYPE_PLAY
+    var sent = 0
+    for down in [true, false] {
+        let state = down ? 0xA : 0xB
+        guard
+            let event = NSEvent.otherEvent(
+                with: .systemDefined, location: .zero,
+                modifierFlags: NSEvent.ModifierFlags(rawValue: UInt(state << 8)),
+                timestamp: 0, windowNumber: 0, context: nil, subtype: 8,
+                data1: (playKey << 16) | (state << 8), data2: -1),
+            let cgEvent = event.cgEvent
+        else { continue }
+        cgEvent.post(tap: .cghidEventTap)
+        sent += 1
+    }
+    return sent == 2 ? 1 : 0
 }
 
 @_cdecl("se_app_context")

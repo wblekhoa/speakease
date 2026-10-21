@@ -336,6 +336,8 @@ function handle(cmd: string, args: Json): unknown {
         translate: subtitlesTranslate,
       });
       return null;
+    case "live_subtitles_play_pause":
+      return true;
     case "stop_live_subtitles":
       subtitlesRunning = null;
       emit("live-subtitles-state", {

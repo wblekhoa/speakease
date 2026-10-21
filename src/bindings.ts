@@ -1024,6 +1024,13 @@ async fitLiveSubtitlesPanel(height: number | null, width: number | null, keepRig
     await TAURI_INVOKE("fit_live_subtitles_panel", { height, width, keepRight });
 },
 /**
+ * The panel's play/pause button: the system Play/Pause key, which macOS
+ * sends to the app playing (SE-LIVE-014).
+ */
+async liveSubtitlesPlayPause() : Promise<boolean> {
+    return await TAURI_INVOKE("live_subtitles_play_pause");
+},
+/**
  * Writes text to a file the person picked in a Save dialog.
  */
 async writeTextFile(path: string, contents: string) : Promise<Result<null, string>> {
