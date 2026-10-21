@@ -7,8 +7,19 @@
   --ls-font: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   /* Over the native blur (subtitle_window.rs frost): light enough to let
      it through, solid enough to keep text crisp. */
-  --ls-bubble: color-mix(in srgb, var(--color-background) 62%, transparent);
-  --ls-head: color-mix(in srgb, var(--color-background) 50%, transparent);
+  /* --ls-alpha and --ls-scale come from the ⚙ sheet (LiveSubtitles.tsx). */
+  --ls-alpha: 62%;
+  --ls-scale: 1;
+  --ls-bubble: color-mix(
+    in srgb,
+    var(--color-background) var(--ls-alpha),
+    transparent
+  );
+  --ls-head: color-mix(
+    in srgb,
+    var(--color-background) calc(var(--ls-alpha) - 12%),
+    transparent
+  );
   --ls-border: color-mix(in srgb, var(--color-mid-gray) 26%, transparent);
   --ls-muted: color-mix(in srgb, var(--color-text) 60%, transparent);
   /* Soft and faint, kept inside the frame's padding (16px). */
@@ -234,20 +245,20 @@ body {
 
 /* The translation: the line people read. */
 .ls-target {
-  font-size: 17px;
+  font-size: calc(17px * var(--ls-scale));
   line-height: 1.38;
   font-weight: 500;
 }
 
 /* What was heard, under it. */
 .ls-source {
-  font-size: 13px;
+  font-size: calc(13px * var(--ls-scale));
   line-height: 1.35;
   color: var(--ls-muted);
 }
 
 .ls-status {
-  font-size: 14px;
+  font-size: calc(14px * var(--ls-scale));
   line-height: 1.4;
   color: var(--ls-muted);
 }
@@ -345,4 +356,128 @@ body {
   overflow: hidden;
   clip-path: inset(50%);
   white-space: nowrap;
+}
+
+/* The pill and the ⚙ sheet under it. */
+.ls-top {
+  flex: none;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 8px;
+}
+
+.ls-gear {
+  display: grid;
+  place-items: center;
+}
+
+.ls-gear[aria-pressed="true"] {
+  background: color-mix(in srgb, var(--color-logo-primary) 22%, transparent);
+  color: var(--color-text);
+}
+
+.ls-look {
+  align-self: stretch;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px 14px;
+  border-radius: 18px;
+  border: 1px solid var(--ls-border);
+  background: var(--ls-bubble);
+  box-shadow: var(--ls-shadow);
+  font-size: 12px;
+  cursor: default;
+}
+
+.ls-look-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.ls-look-label {
+  flex: none;
+  width: 92px;
+  color: var(--ls-muted);
+}
+
+.ls-look-value {
+  flex: none;
+  width: 36px;
+  text-align: end;
+  font-variant-numeric: tabular-nums;
+  color: var(--ls-muted);
+}
+
+.ls-segments {
+  display: flex;
+  flex: 1;
+  gap: 2px;
+  padding: 2px;
+  border-radius: 10px;
+  background: color-mix(in srgb, var(--color-mid-gray) 14%, transparent);
+}
+
+.ls-segment {
+  flex: 1;
+  height: 24px;
+  border: none;
+  border-radius: 8px;
+  background: transparent;
+  color: var(--ls-muted);
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.ls-segment:hover {
+  color: var(--color-text);
+}
+
+.ls-segment[aria-pressed="true"] {
+  background: var(--color-background);
+  color: var(--color-text);
+  box-shadow: 0 1px 2px color-mix(in srgb, black 12%, transparent);
+}
+
+.ls-segment-number {
+  font-variant-numeric: tabular-nums;
+}
+
+.ls-segment:focus-visible,
+.ls-range:focus-visible {
+  outline: 2px solid var(--color-logo-primary);
+  outline-offset: 1px;
+}
+
+.ls-range {
+  flex: 1;
+  min-width: 0;
+  accent-color: var(--color-logo-primary);
+  cursor: pointer;
+}
+
+.ls-look-hint {
+  margin: 0;
+  color: var(--ls-muted);
+}
+
+/* The side edges change the width. */
+.ls-edge {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  width: 10px;
+  z-index: 2;
+  cursor: ew-resize;
+}
+
+.ls-edge-left {
+  left: 0;
+}
+
+.ls-edge-right {
+  right: 0;
 }

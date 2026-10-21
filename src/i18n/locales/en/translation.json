@@ -1046,6 +1046,19 @@
     "translateShort": "Translate",
     "sourceShort": "Original",
     "switchTranslate": "Turn translation on or off. Off shows only what is said, with no AI.",
-    "switchSource": "Show or hide what was said under each translation"
+    "switchSource": "Show or hide what was said under each translation",
+    "look": {
+      "open": "Customise the subtitle box",
+      "textSize": "Text size",
+      "sizes": {
+        "s": "Small",
+        "m": "Medium",
+        "l": "Large",
+        "xl": "Extra large"
+      },
+      "background": "Background",
+      "lines": "Lines shown",
+      "widthHint": "Drag the box's left or right edge to change its width."
+    }
   }
 }

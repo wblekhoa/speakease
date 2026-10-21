@@ -1046,6 +1046,19 @@
     "translateShort": "Dịch",
     "sourceShort": "Bản gốc",
     "switchTranslate": "Bật/tắt dịch. Tắt thì chỉ hiện lời gốc, không gọi AI.",
-    "switchSource": "Hiện/ẩn lời gốc dưới câu dịch"
+    "switchSource": "Hiện/ẩn lời gốc dưới câu dịch",
+    "look": {
+      "open": "Tuỳ chỉnh khung phụ đề",
+      "textSize": "Cỡ chữ",
+      "sizes": {
+        "s": "Nhỏ",
+        "m": "Vừa",
+        "l": "Lớn",
+        "xl": "Rất lớn"
+      },
+      "background": "Độ đậm nền",
+      "lines": "Số câu hiện",
+      "widthHint": "Kéo mép trái hoặc phải của khung để đổi chiều rộng."
+    }
   }
 }

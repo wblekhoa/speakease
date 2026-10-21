@@ -55,9 +55,20 @@ pub fn set_live_subtitles_translate(app: AppHandle, on: bool) {
     session::set_translate(&app, on);
 }
 
-/// The subtitle page fits its window to the bubbles it shows.
+/// The subtitle page fits its window to the bubbles it shows (height) and
+/// to the width the user dragged its edge to.
 #[tauri::command]
 #[specta::specta]
-pub fn fit_live_subtitles_panel(app: AppHandle, height: f64) {
-    crate::subtitle_window::fit_height(&app, height.clamp(60.0, 800.0));
+pub fn fit_live_subtitles_panel(
+    app: AppHandle,
+    height: Option<f64>,
+    width: Option<f64>,
+    keep_right: bool,
+) {
+    crate::subtitle_window::fit_frame(
+        &app,
+        height.map(|h| h.clamp(60.0, 900.0)),
+        width.map(|w| w.clamp(320.0, 960.0)),
+        keep_right,
+    );
 }

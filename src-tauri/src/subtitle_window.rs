@@ -173,10 +173,12 @@ mod imp {
         }
     }
 
-    /// Sets the panel's height in one step, its bottom edge kept (AppKit's
-    /// origin is the bottom-left corner). Resizing then moving from the page
-    /// showed a frame between the two, so the bubbles jumped (owner, 21/10).
-    pub fn fit_height(app: &AppHandle, height: f64) {
+    /// Sets the panel's height and/or width in one step (AppKit's origin is
+    /// the bottom-left corner, so the bottom edge stays). Resizing then
+    /// moving from the page showed a frame between the two, so the bubbles
+    /// jumped (owner, 21/10). `keep_right` holds the right edge while the
+    /// left one is dragged.
+    pub fn fit_frame(app: &AppHandle, height: Option<f64>, width: Option<f64>, keep_right: bool) {
         let handle = app.clone();
         let _ = app.run_on_main_thread(move || {
             use objc2::msg_send;
@@ -192,11 +194,21 @@ mod imp {
             unsafe {
                 let ns_window = &*(pointer as *const AnyObject);
                 let mut frame: NSRect = msg_send![ns_window, frame];
-                if (frame.size.height - height).abs() < 1.0 {
-                    return;
+                let before = frame;
+                if let Some(height) = height {
+                    frame.size.height = height;
                 }
-                frame.size.height = height;
-                let _: () = msg_send![ns_window, setFrame: frame, display: Bool::YES];
+                if let Some(width) = width {
+                    if keep_right {
+                        frame.origin.x += frame.size.width - width;
+                    }
+                    frame.size.width = width;
+                }
+                let moved = (frame.size.height - before.size.height).abs() >= 1.0
+                    || (frame.size.width - before.size.width).abs() >= 1.0;
+                if moved {
+                    let _: () = msg_send![ns_window, setFrame: frame, display: Bool::YES];
+                }
             }
         });
     }
@@ -216,7 +228,13 @@ mod imp {
     use tauri::AppHandle;
     pub fn show(_app: &AppHandle) {}
     pub fn hide(_app: &AppHandle) {}
-    pub fn fit_height(_app: &AppHandle, _height: f64) {}
+    pub fn fit_frame(
+        _app: &AppHandle,
+        _height: Option<f64>,
+        _width: Option<f64>,
+        _keep_right: bool,
+    ) {
+    }
 }
 
 pub fn show(app: &AppHandle) {
@@ -227,7 +245,7 @@ pub fn hide(app: &AppHandle) {
     imp::hide(app)
 }
 
-/// The panel's height in points, its bottom edge kept.
-pub fn fit_height(app: &AppHandle, height: f64) {
-    imp::fit_height(app, height)
+/// The panel's height and/or width in points, its bottom edge kept.
+pub fn fit_frame(app: &AppHandle, height: Option<f64>, width: Option<f64>, keep_right: bool) {
+    imp::fit_frame(app, height, width, keep_right)
 }
