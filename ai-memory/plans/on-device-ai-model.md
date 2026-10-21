@@ -2,7 +2,7 @@
 status: active
 owner: Lê Khoa
 started: 2026-10-21
-current-phase: 4
+current-phase: 5
 summary: "Downloadable on-device AI models (small GGUF LLMs run by a bundled llama.cpp server) for subtitle translation and the other AI features, picked from a Models-style page like the speech models."
 tags: [area/translation, area/ai, stack/rust]
 ---
@@ -66,7 +66,12 @@ Subtitle probe, 51 s TTS clip (15 lines), partials every second, recogniser Qwen
 | Gemma 4 E2B (local) | 0.68 / 0.87 s                                 | 0.34 / 0.57 s    | 2.0 / 3 %     | 3.1 s      |
 
 0 refused, 15/15 translated; no server left after the probe. `codesign --verify --deep --strict` passes with the
-helper inside. Not yet: a notarize-only run of `scripts/release-mac.sh` and `spctl --assess` on the helper.
+helper inside.
+
+Notarization check (21/10, df30324 build, nothing published): `notarytool submit` → Accepted, 0 issues; stapled copy
+with a quarantine flag → `spctl` "accepted, source=Notarized Developer ID"; the quarantined helper runs
+(`llama-server --version`, 0.37 s, no Gatekeeper hang). `spctl` calls the bare helper "not an app", as it does any
+command-line tool.
 
 ## Phases (each with a verify command)
 
