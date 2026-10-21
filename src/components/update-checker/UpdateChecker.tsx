@@ -16,9 +16,17 @@ import {
 
 interface UpdateCheckerProps {
   className?: string;
+  /** The sidebar form (owner, 21/10: no footer): shows only when there is
+   * something to do - an update to install or one installing - and answers
+   * a check someone asked for with a toast. It stays mounted, so the check
+   * at launch and the tray's "Check for updates" keep working. */
+  compact?: boolean;
 }
 
-const UpdateChecker: React.FC<UpdateCheckerProps> = ({ className = "" }) => {
+const UpdateChecker: React.FC<UpdateCheckerProps> = ({
+  className = "",
+  compact = false,
+}) => {
   const { t } = useTranslation();
   // Update checking state
   const [isChecking, setIsChecking] = useState(false);
@@ -101,6 +109,7 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({ className = "" }) => {
         setUpdateAvailable(false);
 
         if (isManualCheckRef.current) {
+          if (compact) toast.success(t("footer.upToDate"));
           setShowUpToDate(true);
           if (upToDateTimeoutRef.current) {
             clearTimeout(upToDateTimeoutRef.current);
@@ -252,37 +261,55 @@ const UpdateChecker: React.FC<UpdateCheckerProps> = ({ className = "" }) => {
           </div>
         </div>
       )}
-      <div className={`flex items-center gap-3 ${className}`}>
-        {isUpdateClickable ? (
+      {compact ? (
+        (updateAvailable || isInstalling) && (
           <button
+            type="button"
             onClick={getUpdateStatusAction()}
             disabled={isUpdateDisabled}
-            className={`transition-colors disabled:opacity-50 tabular-nums ${
-              updateAvailable
-                ? "text-logo-primary hover:text-logo-primary/80 font-medium"
-                : "text-text/60 hover:text-text/80"
-            }`}
+            title={getUpdateStatusText()}
+            className={`flex w-full items-center gap-2 rounded-xl bg-logo-primary/12 px-2.5 py-2 text-xs font-medium text-logo-primary transition-colors hover:bg-logo-primary/20 disabled:cursor-default disabled:hover:bg-logo-primary/12 cursor-pointer tabular-nums ${className}`}
           >
-            {getUpdateStatusText()}
+            <span
+              aria-hidden
+              className="size-1.5 shrink-0 rounded-full bg-logo-primary"
+            />
+            <span className="truncate">{getUpdateStatusText()}</span>
           </button>
-        ) : (
-          <span className="text-text/60 tabular-nums">
-            {getUpdateStatusText()}
-          </span>
-        )}
+        )
+      ) : (
+        <div className={`flex items-center gap-3 ${className}`}>
+          {isUpdateClickable ? (
+            <button
+              onClick={getUpdateStatusAction()}
+              disabled={isUpdateDisabled}
+              className={`transition-colors disabled:opacity-50 tabular-nums ${
+                updateAvailable
+                  ? "text-logo-primary hover:text-logo-primary/80 font-medium"
+                  : "text-text/60 hover:text-text/80"
+              }`}
+            >
+              {getUpdateStatusText()}
+            </button>
+          ) : (
+            <span className="text-text/60 tabular-nums">
+              {getUpdateStatusText()}
+            </span>
+          )}
 
-        {isInstalling && downloadProgress > 0 && downloadProgress < 100 && (
-          <ProgressBar
-            progress={[
-              {
-                id: "update",
-                percentage: downloadProgress,
-              },
-            ]}
-            size="large"
-          />
-        )}
-      </div>
+          {isInstalling && downloadProgress > 0 && downloadProgress < 100 && (
+            <ProgressBar
+              progress={[
+                {
+                  id: "update",
+                  percentage: downloadProgress,
+                },
+              ]}
+              size="large"
+            />
+          )}
+        </div>
+      )}
     </>
   );
 };

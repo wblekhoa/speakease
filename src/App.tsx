@@ -18,7 +18,6 @@ import { ModelStateEvent, RecordingErrorEvent } from "./lib/types/events";
 import "./App.css";
 import AccessibilityPermissions from "./components/AccessibilityPermissions";
 import SecureInputWarning from "./components/SecureInputWarning";
-import Footer from "./components/footer";
 import Onboarding, { AccessibilityOnboarding } from "./components/onboarding";
 import {
   DebugSettings,
@@ -561,7 +560,6 @@ function App() {
               {renderSettingsContent(currentSection, setOnboardingPreview)}
             </div>
           </div>
-          <Footer />
         </div>
       </div>
     );

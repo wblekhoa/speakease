@@ -44,7 +44,7 @@ or code named in Evidence.
 | SE-APP-006 | Folded or open is remembered at once, the width when the hand lets go, on this Mac (browser storage), surviving a relaunch; unreadable storage falls back to open at 208 px.                                                                                                                              | live                                | `src/App.tsx` (`foldSidebar`, `resizeSidebar`)                                                                                                           |
 | SE-APP-007 | The tray's "Open SpeakEase" shows the window on Speak; "History" shows it on History.                                                                                                                                                                                                                     | live                                | `src-tauri/src/lib.rs` (`"open_app"`, `"open_history"`)                                                                                                  |
 | SE-APP-008 | Update checks are on by default and read only SpeakEase's own GitHub releases, signed with SpeakEase's key; `HANDY_DISABLE_UPDATER` turns them off for the run without changing the stored choice.                                                                                                        | live                                | `src-tauri/src/settings.rs` (`default_update_checks_enabled`, `update_checks_forced_disabled`), `tauri.conf.json`                                        |
-| SE-APP-009 | The App switch turns off only the automatic check at launch; a check the user asks for (footer, app menu, tray) always runs and says when it fails, while the launch check stays silent. Only `HANDY_DISABLE_UPDATER` removes manual checks.                                                              | live                                | `src/components/update-checker/UpdateChecker.tsx` (`canUpdate`, `isManualCheckRef`), `src-tauri/src/lib.rs` (`"check_updates"`), `src-tauri/src/tray.rs` |
+| SE-APP-009 | The App switch turns off only the automatic check at launch; a check the user asks for (App page, app menu, tray) always runs and says when it fails, while the launch check stays silent. Only `HANDY_DISABLE_UPDATER` removes manual checks.                                                            | live                                | `src/components/update-checker/UpdateChecker.tsx` (`canUpdate`, `isManualCheckRef`), `src-tauri/src/lib.rs` (`"check_updates"`), `src-tauri/src/tray.rs` |
 | SE-APP-010 | First launch asks for Accessibility and Microphone, then for one model; a returning user who lost a permission sees only the permission step, and one with both goes straight to the app.                                                                                                                 | live                                | `src/App.tsx` (`checkOnboardingStatus`, `handleAccessibilityComplete`)                                                                                   |
 | SE-APP-011 | The interface language has its own menu at the foot of the side column (a globe and the language's name; a square key when folded), listing each language in its own name with the current one ticked; choosing one switches the window and the tray at once and is the same setting as App › Appearance. | live                                | `src/components/LanguageMenu.tsx`                                                                                                                        |
 
@@ -58,7 +58,7 @@ or code named in Evidence.
 | column folded | switch, or double-click the edge          | column open     |                                                     |
 | column open   | switch                                    | column folded   |                                                     |
 | launch        | permissions missing                       | permission step | returning users skip the model step afterwards      |
-| launch        | update checks on                          | silent check    | an update shows in the footer; a failure is silent  |
+| launch        | update checks on                          | silent check    | an update shows in the sidebar; a failure is silent |
 | any           | Check for Updates… (menu or tray)         | manual check    | failure shows a toast                               |
 
 ## Fixed vs flexible
@@ -73,6 +73,8 @@ or code named in Evidence.
 - None recorded.
 
 ## Change log
+
+- 2026-10-21: no footer - the update notice moved to the sidebar, the version and the check by hand to App (owner).
 
 - 2026-10-20: reviewed after lib.rs gained the live-subtitles tray item, commands and the hidden `--live-subtitle-probe` flag (rules in `logic/live-subtitles.md`); SE-APP rules unchanged.
 - 2026-10-15: reviewed after App.tsx took file drops (SE-FILE-006), the dead update command went and SE-APP-008's comment moved to `default_update_checks_enabled`; SE-APP rules unchanged.

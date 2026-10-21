@@ -330,6 +330,17 @@ export const useModelStore = create<ModelsStore>()(
           }),
         );
         get().loadModels();
+        // A freshly downloaded model becomes the one in use, unless a
+        // recording is running (this lived in the footer's model picker).
+        setTimeout(async () => {
+          try {
+            if (!(await commands.isRecording())) {
+              await get().selectModel(modelId);
+            }
+          } catch {
+            // Keep the current model.
+          }
+        }, 500);
       });
 
       listen<{ model_id: string; error: string }>(

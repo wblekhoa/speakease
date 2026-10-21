@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getVersion } from "@tauri-apps/api/app";
+import { emit } from "@tauri-apps/api/event";
 import { openUrl } from "@tauri-apps/plugin-opener";
 import { SettingsGroup } from "../../ui/SettingsGroup";
 import { SettingContainer } from "../../ui/SettingContainer";
@@ -81,10 +82,20 @@ export const AppSettings: React.FC = () => {
           description={t("settings.about.version.description")}
           grouped
         >
-          {version && (
-            // eslint-disable-next-line i18next/no-literal-string
-            <span className="text-sm font-mono">v{version}</span>
-          )}
+          <div className="flex items-center gap-3">
+            {version && (
+              // eslint-disable-next-line i18next/no-literal-string
+              <span className="text-sm font-mono">v{version}</span>
+            )}
+            {/* The sidebar's checker answers (the footer is gone). */}
+            <Button
+              variant="secondary"
+              size="md"
+              onClick={() => emit("check-for-updates")}
+            >
+              {t("footer.checkForUpdates")}
+            </Button>
+          </div>
         </SettingContainer>
         <UpdateChecksToggle descriptionMode="tooltip" grouped />
         <AppDataDirectory descriptionMode="tooltip" grouped />

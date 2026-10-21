@@ -15,6 +15,7 @@ import {
 import HandyTextLogo from "./icons/HandyTextLogo";
 import { IconTip } from "./ui/IconTip";
 import { LanguageMenu } from "./LanguageMenu";
+import UpdateChecker from "./update-checker";
 import { useSettings } from "../hooks/useSettings";
 import { SIDEBAR_FOLDED_WIDTH, sidebarDrag } from "../lib/utils/sidebarWidth";
 import {
@@ -341,7 +342,11 @@ export const Sidebar: React.FC<SidebarProps> = ({
         })}
       </div>
       {/* The interface language, always in sight (SE-APP-011). */}
-      <div className="shrink-0 px-2.5 pt-2 pb-3 border-t border-hairline">
+      <div className="shrink-0 px-2.5 pt-2 pb-3 border-t border-hairline space-y-1.5">
+        {/* An update to install, when there is one (was the footer). */}
+        <div className={collapsed ? "hidden" : undefined}>
+          <UpdateChecker compact />
+        </div>
         <LanguageMenu collapsed={collapsed} />
       </div>
     </nav>

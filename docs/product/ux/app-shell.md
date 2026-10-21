@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — App shell (UX)"
 status: active
-updated: 2026-10-20
+updated: 2026-10-21
 summary: "The window around the features: the side column (sections, fold and resize by drag, language menu), the App page, tray and app-menu entries, updates and first launch."
 tags: [area/layout, area/updater, area/i18n, surface/macos]
 relations:
@@ -62,8 +62,8 @@ relations:
   (it works whether or not automatic checks are on), besides the dictation and AI items. With Experimental on, a
   **Live subtitles** item turns subtitles on or off (`ux/live-subtitles.md`).
 - **App menu**: **SpeakEase › Check for Updates…** under About.
-- **Updates**: checked once at launch when the **Check for Updates** switch in App is on; a check by hand (footer,
-  menu or tray) works either way; an available update shows in the window's footer, downloads with a
+- **Updates**: checked once at launch when the **Check for Updates** switch in App is on; a check by hand (App page,
+  menu or tray) works either way; an available update shows at the bottom of the sidebar, downloads with a
   progress figure and relaunches the app. A check the user asked for that fails shows "Couldn't check for updates. Check your connection and try again.";
   the launch check never interrupts.
 - **First launch**: a permissions step (Accessibility to paste, Microphone to listen), then a model to download; the
@@ -75,7 +75,7 @@ relations:
 | --------------------- | ---------------------------------------------------------------------- | ------------------------------- | ---------------------------------- |
 | Side column           | open (180-320 px) · folded rail · dragging · rubber band               | always shown with the window    | a section                          |
 | App page              | experimental off · experimental on (extra rows)                        | sidebar › App                   | another section                    |
-| Footer update control | idle · checking · up to date · update available · downloading · failed | launch check, menu, tray        | relaunch into the new version      |
+| Sidebar update notice | idle · checking · up to date · update available · downloading · failed | launch check, menu, tray        | relaunch into the new version      |
 | Permissions step      | waiting · Accessibility granted · Microphone granted · both granted    | first launch; a permission lost | model step (new) / app (returning) |
 | Model step            | choosing · download started                                            | first launch after permissions  | Speak page                         |
 
@@ -90,7 +90,7 @@ flowchart LR
   F -- yes --> E
   E --> G{Update checks on?}
   G -- yes --> H[Silent check] --> I{Update?}
-  I -- yes --> J[Footer: install] --> K[Relaunch]
+  I -- yes --> J[Sidebar: install] --> K[Relaunch]
 ```
 
 ## Reading order
@@ -103,6 +103,8 @@ flowchart LR
 | `decisions.md`       | why the updater is SpeakEase's own |
 
 ## Change log
+
+- 2026-10-21: the footer is gone: the update notice sits at the bottom of the sidebar only when there is one; the version and "Check for updates" are in App → About; models are switched from the Speak page (owner).
 
 - 2026-10-20: Live subtitles gets its own section in the side column while Experimental is on.
 - 2026-10-20: the tray gains a Live subtitles item while Experimental is on.
