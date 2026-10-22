@@ -30,7 +30,12 @@ repo; each cites its source.
   Gateway - no server or billing of our own; no on-device models or llama.cpp in it; universal binary. The current
   on-device app continues as its own product. Before applying to Setapp, measure Vietnamese accuracy (the same
   FLEURS 60-sentence test as the on-device models) and subtitle delay through OpenAI's Whisper / GPT-4o models.
-- **Evidence**: research sources in the session report; plan to follow in `ai-memory/plans/`.
+- **Evidence**: research sources in the session report. Measurement (22/10, OpenAI API direct, the models the Gateway
+  lists): FLEURS vi_vn test, first 60 sentences (12.7 min) - word error rate gpt-4o-transcribe 3.8 %, gpt-4o-mini-
+  transcribe 7.8 %, whisper-1 10.0 % (on-device: Cohere 6.3 %, Qwen3-ASR 6.8 % on a 60-sentence FLEURS set that may
+  differ); one sentence's transcription p50 1.4-1.5 s. Subtitles, 8 English lines: gpt-4o-mini-transcribe +
+  gpt-4.1-mini translation 2.14 s p50, 2.59 s max after the line ends, terms kept ("stream sniping", "streamer").
+  Not yet measured: through the Setapp Gateway itself, credits per minute.
 - **Reversal**: a new entry here (e.g. if Vietnamese accuracy through the Gateway is too low).
 
 ## 2026-10-20 · Live subtitles beta: on-device translation, whole-sentence fixes, playing-media context (round 2)
