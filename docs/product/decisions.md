@@ -4,7 +4,7 @@ type: decision
 product: speakease
 title: "SpeakEase — Decisions"
 status: active
-updated: 2026-10-20
+updated: 2026-10-22
 summary: "Append-only record of SpeakEase's product and engineering decisions, newest first, each with its context, evidence and how to reverse it."
 tags: [area/docs]
 ---
@@ -13,6 +13,25 @@ tags: [area/docs]
 
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
+
+## 2026-10-22 · A paid cloud edition through Setapp; the offline app stays separate
+
+- **Context**: the owner wants to sell SpeakEase without users downloading GB-sized models or spending their Mac's
+  hardware on AI: "we take on that work and charge for it". Research (22/10): the Mac App Store's sandbox and App
+  Review have rejected dictation apps that paste through Accessibility/CGEvent (guideline 2.4.5); Setapp needs no
+  sandbox (Developer ID + notarization, a universal arm64/x86_64 binary, no in-app purchases) and runs an AI Gateway -
+  an OpenAI-compatible endpoint (`api.macpaw.com/ai`) authenticated with the user's Setapp token, charging the user's
+  AI credits and paying the developer by credits consumed; it lists chat models and Whisper.
+- **Owner's answers** (near-verbatim, 22/10): no free app - charge through Setapp and Setapp's AI credits; the paid
+  edition drops the offline mode entirely, and the current offline version is kept as a separate product; Intel Macs
+  are supported in full through the cloud; measure first before registering with Setapp (owner creates a SpeakEase
+  OpenAI key for the measurement).
+- **Decisions**: a Setapp edition whose AI (recognition, clean-up, translation, subtitles) runs through the Setapp AI
+  Gateway - no server or billing of our own; no on-device models or llama.cpp in it; universal binary. The current
+  on-device app continues as its own product. Before applying to Setapp, measure Vietnamese accuracy (the same
+  FLEURS 60-sentence test as the on-device models) and subtitle delay through OpenAI's Whisper / GPT-4o models.
+- **Evidence**: research sources in the session report; plan to follow in `ai-memory/plans/`.
+- **Reversal**: a new entry here (e.g. if Vietnamese accuracy through the Gateway is too low).
 
 ## 2026-10-20 · Live subtitles beta: on-device translation, whole-sentence fixes, playing-media context (round 2)
 
