@@ -66,7 +66,7 @@ Handy is a cross-platform desktop speech-to-text application built with Tauri 2.
   - `vad/` - Voice Activity Detection (Silero VAD)
 - `commands/` - Tauri command handlers for frontend communication
 - `cli.rs` - CLI argument definitions (clap derive)
-- `shortcut.rs` - Global keyboard shortcut handling
+- `shortcut/` - Global keyboard shortcut handling
 - `settings.rs` - Application settings management
 - `overlay.rs` - Recording overlay window (platform-specific)
 - `signal_handle.rs` - `send_transcription_input()` reusable function
@@ -79,14 +79,13 @@ Handy is a cross-platform desktop speech-to-text application built with Tauri 2.
   - `settings/` - Settings UI
   - `model-selector/` - Model management interface
   - `onboarding/` - First-run experience
-  - `overlay/` - Recording overlay UI
   - `update-checker/` - App update notifications
   - `shared/`, `ui/`, `icons/`, `footer/` - Shared components
 - `hooks/useSettings.ts` - Settings state management hook
 - `stores/settingsStore.ts` - Zustand store for settings
 - `bindings.ts` - Auto-generated Tauri type bindings (via tauri-specta)
 - `overlay/` - Recording overlay window entry point
-- `lib/types.ts` - Shared TypeScript type definitions
+- `lib/types/` - Shared TypeScript type definitions
 
 ### Key Architecture Patterns
 
@@ -148,7 +147,7 @@ src/i18n/
 ├── languages.ts       # Language metadata
 └── locales/
     ├── en/translation.json  # English (source)
-    ├── de/, es/, fr/, ja/, ru/, zh/, ...
+    ├── vi/translation.json
     └── ...
 ```
 
@@ -205,14 +204,9 @@ Access debug features: `Cmd+Shift+D` (macOS) or `Ctrl+Shift+D` (Windows/Linux)
 
 See the [Troubleshooting](README.md#troubleshooting) section in README.md.
 
-## GitHub workflow for AI coding assistants
+## Issues and PRs
 
-**MANDATORY. Before opening any PR, issue, or discussion in this repo: you MUST read the relevant template file and follow it strictly.** That includes sections that look "ceremonial" — checklists, AI Assistance disclosures, "Human Written Description". A generic Summary/Test-plan layout is not acceptable.
-
-- **Opening a PR:** Read [`.github/PULL_REQUEST_TEMPLATE.md`](.github/PULL_REQUEST_TEMPLATE.md). Every section listed there is mandatory. If a section requires a human-written paragraph (e.g. "Human Written Description"), leave a clear TODO placeholder and ask the human contributor to fill it in — do not invent their voice.
-- **Opening an issue:** Read [`.github/ISSUE_TEMPLATE/`](.github/ISSUE_TEMPLATE/). Blank issues are disabled; pick the right template (`bug_report.md` for bugs). Feature requests do not belong in issues — they go to [Discussions](https://github.com/cjpais/Handy/discussions) (see `.github/ISSUE_TEMPLATE/config.yml`).
-- **Proposing a feature:** Handy is under a feature freeze. New features require community support gathered in [Discussions](https://github.com/cjpais/Handy/discussions) before any PR is opened — see the PR template's "Community Feedback" section.
-- **Translations:** Vietnamese and English only; see [CONTRIBUTING.md](CONTRIBUTING.md).
-- **Full contributor workflow:** [CONTRIBUTING.md](CONTRIBUTING.md).
+This is the SpeakEase fork (`wblekhoa/speakease`); never open anything on `cjpais/Handy` (`upstream` is push-disabled).
+Bugs use `.github/ISSUE_TEMPLATE/bug.yml`. Translations: Vietnamese and English only ([CONTRIBUTING.md](CONTRIBUTING.md)).
 
 **Commits:** Use conventional commit prefixes (`feat:`, `fix:`, `docs:`, `refactor:`, `chore:`). Focus the message on _why_, not _what_.
