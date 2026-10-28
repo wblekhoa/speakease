@@ -1,0 +1,99 @@
+---
+id: speakease-spec-2026-10-28-meeting-notes
+type: spec
+product: speakease
+title: "SpeakEase — Meeting notes (spec)"
+status: draft
+updated: 2026-10-28
+summary: "Meeting notes for calls, lectures, interviews and recordings: five live help levels from a recording timer to live suggestions, me/others from two sound tracks, an automatic summary, offline first; owner rounds 1-2 of 28 Oct."
+tags: [area/audio, area/ai, area/capture, surface/macos]
+relations:
+  derivedFrom:
+    [speakease-goal, speakease-decisions, speakease-spec-2026-10-28-competitors]
+  changes: []
+---
+
+# SpeakEase — Meeting notes (spec)
+
+Draft. Directions and details come from the owner's rounds 1 and 2 (`decisions.md`, 2026-10-28); the items marked
+OPEN wait for round 3 or for the build. No rule below is built yet.
+
+## Why
+
+- A Vietnamese speaker spends hours in calls, classes and interviews and comes out with no notes, or with notes from a
+  cloud service that keeps the audio. OpenWhispr and Wispr Flow ship meeting notes (`specs/2026-10-28-competitors.md`);
+  neither is Vietnamese-first, and Wispr Flow is cloud only.
+- SpeakEase already recognises Vietnamese well on the Mac, cleans text up with Apple Intelligence, reads files
+  (Files & links) and keeps a History. Meeting notes reuse all of that plus the sound capture built for live subtitles.
+
+## Owner decisions this spec follows
+
+| Item                                | Status  | Value                                                                                                                                                                 |
+| ----------------------------------- | ------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Sessions                            | DECIDED | Online meetings (Zoom, Meet, Teams), Zalo/Messenger/phone calls, lectures and seminars, interviews, recordings brought in later. Not in-person room meetings          |
+| Edition                             | DECIDED | Offline app first; the cloud edition later with the same core                                                                                                         |
+| Live help                           | DECIDED | Five levels, all in the first version; default in Settings, changed from the pill                                                                                     |
+| Suggestions                         | DECIDED | Next questions, action items as given, unsettled or contradicting points, terms and names, earlier points, suggested answers                                          |
+| Recognition                         | DECIDED | Fast model while live; the accurate model re-runs the whole recording after it ends                                                                                   |
+| After the meeting                   | DECIDED | Summary runs by itself: short summary, decisions apart from proposals, action items with owner and due date, full transcript with speakers                            |
+| Speakers                            | DECIDED | "Me" (microphone) and "Others" (the meeting app's sound) only                                                                                                         |
+| Template                            | DECIDED | One per kind of session, guessed by AI, changeable                                                                                                                    |
+| Language                            | DECIDED | Notes in the language spoken                                                                                                                                          |
+| Where                               | DECIDED | History entry plus a new Meetings page                                                                                                                                |
+| Start                               | DECIDED | Shortcut or menu; ask when a meeting app is in a call; never record without the user's yes                                                                            |
+| Consent                             | DECIDED | One line reminding the user to tell the others, when recording starts                                                                                                 |
+| Q&A                                 | DECIDED | Within one meeting                                                                                                                                                    |
+| Audio kept                          | DECIDED | By the existing History storage setting                                                                                                                               |
+| Export                              | DECIDED | Copy; save choosing .md, .txt or .docx                                                                                                                                |
+| Without Apple Intelligence          | DECIDED | User's API key; a small downloadable on-device model (dependency approved in principle, model and library still to propose with numbers); invite to the cloud edition |
+| With live subtitles                 | DECIDED | Separate feature, shared sound capture                                                                                                                                |
+| Live panel and Meetings page look   | OPEN    | Round 3                                                                                                                                                               |
+| Consent line wording                | OPEN    | Round 3                                                                                                                                                               |
+| First template per kind             | OPEN    | Round 3                                                                                                                                                               |
+| On-device model for cleanup/summary | OPEN    | Proposal with size and Vietnamese results                                                                                                                             |
+
+## Change
+
+New rule file `logic/meetings.md` (prefix `SE-MEET`) and `ux/meetings.md` when building starts. Proposed rules:
+
+| REQ-ID      | Add / edit / deprecate | Rule after the change                                                                                                                                                                                                                                                                                                        | Kind       |
+| ----------- | ---------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ---------- |
+| SE-MEET-001 | add                    | A meeting recording starts and stops from its own shortcut, the tray menu and the pill's menu; it never starts a dictation, and a dictation shortcut during a meeting recording is ignored or queued (OPEN which).                                                                                                           | functional |
+| SE-MEET-002 | add                    | When Zoom, Teams, Zalo, Messenger, FaceTime, Slack or Discord holds the microphone, or a browser's front tab is on Google Meet and the browser holds the microphone, SpeakEase asks once per call whether to take notes; media playback alone never asks; nothing records without a yes.                                     | functional |
+| SE-MEET-003 | add                    | The meeting app's sound is captured with a process tap (macOS 14.2+, shared with live subtitles) and the microphone separately; the tap is rebuilt when the audio route changes, and a track silent for long while the other is not raises a notice. On older macOS the feature is hidden.                                   | functional |
+| SE-MEET-004 | add                    | When recording starts the user sees one line reminding them to tell the others they are recorded.                                                                                                                                                                                                                            | functional |
+| SE-MEET-005 | add                    | Five live levels: 1 recording + timer; 2 live transcript that can be scrolled back; 3 a "what did I miss?" button summarising the last minutes; 4 a summary that updates itself; 5 live suggestions. The default is set in Settings and the pill's buttons change it for the meeting in progress.                            | functional |
+| SE-MEET-006 | add                    | Live text comes from a fast model; when the meeting ends the whole recording is recognised again with the accurate model chosen for Vietnamese (SE-REC-006) and replaces the live transcript; text spoken in the last second before stop is kept.                                                                            | functional |
+| SE-MEET-007 | add                    | Level 5 suggestions are of six kinds: next questions, action items as given, unsettled or contradicting points, terms and names, earlier points, suggested answers; each is shown, never sent or pasted anywhere by itself.                                                                                                  | functional |
+| SE-MEET-008 | add                    | Speakers are "Me" for the microphone track and "Others" for the app track; a recording brought in from a file has no speaker labels.                                                                                                                                                                                         | functional |
+| SE-MEET-009 | add                    | When a meeting ends the summary runs by itself, in the language spoken, with: short summary, decisions, proposals (kept apart from decisions), action items as `- [ ] action — owner, due date` when said, and the full transcript; a recording with nothing substantive gets one line saying so, never an invented summary. | functional |
+| SE-MEET-010 | add                    | The note template is picked per kind of session (meeting, call, lecture, interview, file) by AI from the transcript and app, and the user can switch it, which rewrites the summary from the same transcript.                                                                                                                | functional |
+| SE-MEET-011 | add                    | A transcript longer than the AI's context is summarised in parts and joined; the transcript is fenced as in SE-AI-001 so instructions spoken in the meeting are not obeyed.                                                                                                                                                  | quality    |
+| SE-MEET-012 | add                    | AI steps use Apple Intelligence on the Mac; without it, the user's API key, then the on-device model once approved; with none, the notes are the transcript and the user is told why. In the offline edition audio never leaves the Mac; with a key, only text goes to that service.                                         | contract   |
+| SE-MEET-013 | add                    | Each meeting is a History entry (searchable like dictations) and appears on a Meetings page; its audio follows the History storage setting.                                                                                                                                                                                  | functional |
+| SE-MEET-014 | add                    | A meeting has a chat that answers only from that meeting's transcript and notes and points to the lines it used.                                                                                                                                                                                                             | functional |
+| SE-MEET-015 | add                    | Notes can be copied, or saved choosing .md, .txt or .docx.                                                                                                                                                                                                                                                                   | functional |
+
+## Scope
+
+- Touches: sound capture (live-subtitles process tap and Swift bridge), recognition pipeline and long-audio splitting
+  (SE-REC-008), AI providers and prompts (SE-AI-001…003), History (SE-HIST), Files & links (SE-FILE) for recordings
+  brought in later, the pill and tray (SE-APP), Settings.
+- New dependencies to propose, each needing the owner's approval with numbers: the on-device AI model and its runtime;
+  a .docx writer if none is in the tree.
+- Non-goals: in-person room meetings, numbered or named speakers and voice memory, calendar reading, accounts, sync
+  or sharing, Q&A across meetings, Windows or Linux.
+
+## Acceptance
+
+- Before building (measurements, commands and results recorded in `decisions.md`):
+  - Apple Intelligence summary, in parts, on 2-3 real 30-60 min Vietnamese recordings: names, numbers and dates kept;
+    decisions and proposals apart; every action item traceable to a transcript line.
+  - Live delay and Vietnamese word error rate of the fast model vs the accurate re-run on the same recording.
+  - Mac heat and battery over one hour at levels 2, 4 and 5 (watched numbers, not gates, unless the owner says so).
+- When built: each SE-MEET rule has a test or a measured run cited in `logic/meetings.md`; rules only seen by eye stay
+  `not built`; `doc-index --check --product speakease` 0 errors.
+
+## Change log
+
+- 2026-10-28: created (draft) from owner rounds 1-2.

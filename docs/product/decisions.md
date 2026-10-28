@@ -4,7 +4,7 @@ type: decision
 product: speakease
 title: "SpeakEase — Decisions"
 status: active
-updated: 2026-10-16
+updated: 2026-10-28
 summary: "Append-only record of SpeakEase's product and engineering decisions, newest first, each with its context, evidence and how to reverse it."
 tags: [area/docs]
 ---
@@ -13,6 +13,63 @@ tags: [area/docs]
 
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
+
+## 2026-10-28 · Meeting notes: live levels, models, apps, storage (round 2)
+
+- **Context**: option form round 2 (28/10), the details behind round 1's "from simple to advanced".
+- **Owner's answers** (near-verbatim): the first version has all five levels - (1) recording + timer, (2) live
+  transcript the user can scroll back, (3) a "what did I just miss?" button that summarises the last minutes,
+  (4) a summary that updates itself, (5) live suggestions from the meeting's context; the user picks a default level in
+  Settings and changes it from buttons on the pill; suggestion kinds = questions worth asking next, action items as
+  soon as they are given, points not settled or contradicting, explanations of terms and names, reminders of what was
+  said earlier, and suggested answers for the user; offline recognition = fast while the meeting runs, then the
+  accurate model runs again afterwards; Macs without Apple Intelligence = the user's own API key, a small AI model
+  downloaded to run on the Mac, and an invitation to the cloud edition; apps to detect = Zoom, Google Meet in a
+  browser, Microsoft Teams, Zalo, Messenger, FaceTime, Slack, Discord; one note template per kind of session, guessed by
+  AI and changeable; the summary runs by itself when the meeting ends; questions and answers within one meeting;
+  meeting audio kept by the existing History storage setting; export = copy, save as .md, .txt or .docx, and "let the
+  user choose the format when saving".
+- **Decided** (owner): the items above. Picking the downloadable on-device model approves adding its runtime as a new
+  dependency in principle; the exact model and library come back to the owner with size and Vietnamese measurements
+  (as in the live-subtitles round 2 entry). **Not chosen**: a level chosen at every start; "collapsed = level 1,
+  expanded = everything"; transcript only on Macs without Apple Intelligence; streaming-only or accurate-only
+  recognition; one shared template; user-written templates (for now); a summary only on a button; no Q&A, or Q&A across
+  all meetings; deleting audio once notes exist, keeping it forever, never storing it; opening a ready Mail draft.
+- **Risks raised by the AI and accepted**: levels 4-5 run AI continuously (heat, battery, and per-call cost on a paid
+  key); suggestions can be wrong or distracting; suggested answers in an interview can be unfair to the other side;
+  detecting Google Meet in a browser is harder than detecting an app; .docx export may need a new library.
+- **Open for round 3 or the build**: the look of the live panel and the Meetings page; the exact consent line; which
+  templates ship first per kind (meeting, call, lecture, interview, file); the small on-device model to propose.
+- **Consequences**: draft spec `specs/2026-10-28-meeting-notes.md`.
+- **Reversal**: a new entry here.
+
+## 2026-10-28 · Meeting notes: directions (round 1)
+
+- **Context**: after the competitor comparison (`specs/2026-10-28-competitors.md`) the owner found the meeting notes
+  in OpenWhispr and Wispr Flow valuable and asked for SpeakEase's own. Option form round 1 (28/10). The AI said up
+  front that live subtitles round 1 (2026-10-16) had not chosen "app + microphone for meetings" or "AI summary"; this
+  round reopens both for meetings, while live subtitles keep their own scope.
+- **Owner's answers** (near-verbatim): sessions = online meetings (Zoom, Meet, Teams), Zalo/Messenger/phone calls,
+  lectures/classes/seminars, customer or candidate interviews, and recordings brought in later; edition = both, offline
+  first; during the meeting = "from simple to advanced depending on what the user needs: just knowing it is recording,
+  up to summarising the content and live suggestions - e.g. helping the meeting go better, letting the user look back
+  at what was just said, or AI giving suggestions from the meeting's context"; after the meeting = short summary,
+  decisions kept apart from proposals, action items with owner and due date, the full transcript with speakers;
+  speakers = "me" and "others" only; notes live in the existing History and on a new Meetings page; start = by
+  shortcut or menu, and ask when a meeting app is in a call; consent = a one-line reminder to the user when recording
+  starts; notes language = the language spoken; with live subtitles = a separate feature sharing the sound capture.
+- **Decided** (owner): the items above. **Not chosen**: in-person room meetings (mic only); keeping numbers/names/dates
+  as a separate section, notable quotes, a ready follow-up email, open questions; numbered or named speakers and voice
+  memory; Markdown files, Apple Notes, Obsidian/Notion; reading the Mac's Calendar; recording without asking; a
+  confirmation or a ready-made notice for other participants; always-Vietnamese, always-English or bilingual notes;
+  merging with live subtitles or waiting for them to ship.
+- **Risks raised by the AI and accepted**: the offline summary uses Apple Intelligence or a local model and will be
+  weaker than a cloud model; live suggestions run AI continuously; "me / others" comes from two sound tracks (the
+  meeting app vs the microphone), so it fails when everyone shares one microphone.
+- **Consequences**: draft spec to come (`specs/…-meeting-notes.md`); round 2 asks the details: the levels of live help,
+  which apps are detected, the Meetings page, how long audio is kept, export, and the AI path for Macs without Apple
+  Intelligence.
+- **Reversal**: a new entry here.
 
 ## 2026-10-16 · Live subtitles beta: translated captions from one app's sound (round 1)
 
