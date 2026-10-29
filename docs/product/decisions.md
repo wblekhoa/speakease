@@ -4,7 +4,7 @@ type: decision
 product: speakease
 title: "SpeakEase — Decisions"
 status: active
-updated: 2026-10-28
+updated: 2026-10-29
 summary: "Append-only record of SpeakEase's product and engineering decisions, newest first, each with its context, evidence and how to reverse it."
 tags: [area/docs]
 ---
@@ -13,6 +13,29 @@ tags: [area/docs]
 
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
+
+## 2026-10-29 · Meeting notes: live panel, Meetings page, consent line, templates (round 3)
+
+- **Context**: option form round 3 (29/10), the items round 2 left open, apart from the on-device model.
+- **Owner's answers** (near-verbatim): live panel = the pill opens into a floating panel below it; inside, the
+  transcript is the main part and suggestions slip in as cards; a suggestion first shows as a small card, then folds
+  into the panel; while the screen is shared the panel is hidden from the share and the user still sees it. Meetings
+  page = list on the left, details on the right; the details show the notes in the middle, questions and answers in a
+  side column, and the transcript on its own tab. Consent line = "Đang ghi âm. Nhớ báo cho mọi người biết nhé."
+  Templates - meeting: summary, decisions, proposals not settled, action items; call: 2-3 sentence summary, what was
+  promised or arranged, numbers, addresses, prices and dates mentioned; lecture: outline by topic, concepts and
+  definitions, examples given, review questions; interview: question by question with the answer, notable verbatim
+  quotes, for a candidate strengths and points to ask further, for a customer problems, needs and how they do it
+  today; a file brought in later: AI guesses the kind and uses that kind's template. Free-text box left empty.
+- **Decided** (owner): the items above. **Not chosen**: other panel positions and layouts offered in the form, other
+  wordings of the consent line, other section sets per template.
+- **Risks raised by the AI and accepted**: hiding the panel from screen sharing relies on macOS window-sharing
+  settings, and some capture tools may still show it, so it must be tested with Zoom, Meet and Teams; cards that
+  appear during a meeting can distract; AI may guess a file's kind wrong (the user can switch the template, SE-MEET-010).
+- **Still open**: the small on-device model (size and Vietnamese results to propose); whether a dictation shortcut
+  during a meeting is ignored or queued (SE-MEET-001).
+- **Consequences**: spec `specs/2026-10-28-meeting-notes.md` closes these rows and adds SE-MEET-016…019.
+- **Reversal**: a new entry here.
 
 ## 2026-10-28 · Meeting notes: live levels, models, apps, storage (round 2)
 
