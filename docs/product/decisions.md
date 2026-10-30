@@ -14,6 +14,18 @@ tags: [area/docs]
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
 
+## 2026-10-30 · Meeting notes: reuse Qwen3.5-4B as the on-device model
+
+- **Context**: the real-recording measurement (entry below) showed `main` already ships `llama-server` and Qwen3.5-4B
+  in the on-device AI catalog, and that Qwen3.5-4B and Qwen3-4B 2507 each won on different recordings.
+- **Owner's answer** (verbatim): "Dùng lại Qwen3.5-4B".
+- **Decision**: meeting notes use Qwen3.5-4B from the existing on-device AI catalog, run by the bundled `llama-server`.
+  This replaces round 4's Qwen3-4B Instruct 2507: no second 4B model and no new dependency.
+- **Not chosen**: add Qwen3-4B 2507 as a catalog entry (best lecture notes, but a second 2.5 GB download to keep).
+- **Consequences**: the interview-style name invention and wrong article numbers seen with Qwen3.5-4B stay a known
+  risk; the `--cache-ram` cap is still to do; the owner's test call is still to be measured.
+- **Reversal**: add Qwen3-4B 2507 to the catalog and point meeting notes at it; no data to migrate.
+
 ## 2026-10-30 · Meeting notes: first real-recording measurement (public lectures and interviews)
 
 - **Context**: round 4 asked for a measurement on real recordings before code; the owner said to start with the
