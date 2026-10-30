@@ -14,6 +14,42 @@ tags: [area/docs]
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
 
+## 2026-10-30 · Meeting notes: first real-recording measurement (public lectures and interviews)
+
+- **Context**: round 4 asked for a measurement on real recordings before code; the owner said to start with the
+  public lectures ("Đo bài giảng trước"). The owner's own test call is still to come. Three public Vietnamese YouTube
+  recordings, downloaded for the bench only and not stored anywhere in the repo: a 40-min VTV economics panel, a
+  54-min Vietcetera interview with the rapper Low G, and a 65-min Zoom law lecture on contracts. M4 Max, macOS 27.
+- **Speech to text** (`handy --transcribe-file … --json`): Qwen3-ASR 1.7B took 117 / 143 / 184 s (about 21× faster
+  than real time) for 10,318 / 11,635 / 11,631 words; Qwen3-ASR 0.6B took 82 / 103 / 143 s and differs from 1.7B on 9 /
+  16 / 7 % of words. None of the videos has human captions, so this is not a true error rate. Live delay was not
+  measured.
+- **Summaries**: same pipeline for every engine (700-word parts → notes → merged → lecture or interview template, sized
+  for Apple Intelligence's 4096-token window); Qwen models ran in the `llama-server` bundled in SpeakEase.app with the
+  app's flags. Every number and name was checked against the transcript by hand (the transcript spells most numbers
+  as words):
+
+  | Recording       | Apple Intelligence                                                                     | Qwen3-4B Instruct 2507                                                             | Qwen3.5-4B (already on `main`)                                                               |
+  | --------------- | -------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------------- | -------------------------------------------------------------------------------------------- |
+  | Economics panel | 416 s; figures right; sections repeated, "review questions" are statements             | 558 s; figures right; clear definitions and real review questions                  | 713 s; most figures, all right                                                               |
+  | Interview       | 318 s; one part refused; only 3 questions kept                                         | 642 s; never names the guest; "verbatim quotes" are paraphrases                    | 528 s; widest coverage (11 questions); invents a person "Hebe Tuyến" from a mis-heard word   |
+  | Law lecture     | 327 s; only the second half; "Article 400 point 4" (said 404); a newspaper never named | 219 s; whole lecture, good examples; "Article 380" (said 385); a "Civil Code 2020" | 311 s; Articles 385/398/402/403 right; Articles 444, 144 and a Commercial Law 389 never said |
+
+- **Memory**: after one long request `llama-server` holds 3.3–3.8 GB (model file mapped in). During a full summary it
+  climbed to 8.8–11.3 GB because `llama-server` keeps a prompt cache in RAM of up to 8 GiB by default
+  (`--cache-ram`), and the app's launch arguments on `main` (`src-tauri/src/local_ai.rs`) do not set it.
+- **Findings**: no engine is clean; each makes one to three number or name errors per hour, and law article numbers
+  are the riskiest. Qwen3-4B 2507 wrote the best lecture and panel notes, Qwen3.5-4B the best interview notes; Apple
+  Intelligence was quick but kept the least. An hour of talk takes 4–12 minutes on the Qwen models, so notes are a
+  background job. `main` already ships `llama-server` and Qwen3.5-4B in the on-device AI catalog
+  (`ai-memory/plans/on-device-ai-model.md`), so Qwen3-4B 2507 would be a second 4B entry, not a new runtime.
+- **Empty-recording pre-check (proposal)**: skip AI and write one line when the transcript has fewer than 20 words
+  after common fillers ("alo", "ừ", "à", "dạ", "vâng", "ok", …) are removed. The short real call (meet tomorrow 9:00,
+  room 3, bring the October report) has 36 such words; the broken-mic call has 14. Not yet checked on a real call.
+- **Still open**: the owner's test call; Qwen3-4B 2507 as a new catalog entry or reuse Qwen3.5-4B; cap `--cache-ram`;
+  the screen-share hiding test with Zoom, Meet and Teams; heat and battery over an hour. Code waits for the owner.
+- **Reversal**: measurement only; nothing in the app changed.
+
 ## 2026-10-30 · Meeting notes: on-device model, dictation during a meeting, empty recordings (round 4)
 
 - **Context**: option form round 4 (30/10) on the two items round 3 left open, plus one found while measuring.
