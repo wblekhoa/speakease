@@ -4,7 +4,7 @@ type: decision
 product: speakease
 title: "SpeakEase — Decisions"
 status: active
-updated: 2026-10-29
+updated: 2026-10-30
 summary: "Append-only record of SpeakEase's product and engineering decisions, newest first, each with its context, evidence and how to reverse it."
 tags: [area/docs]
 ---
@@ -13,6 +13,45 @@ tags: [area/docs]
 
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
+
+## 2026-10-30 · Meeting notes: on-device model, dictation during a meeting, empty recordings (round 4)
+
+- **Context**: option form round 4 (30/10) on the two items round 3 left open, plus one found while measuring.
+  Measured before the form (MLX 4-bit on an M4 Max, macOS 27; one ~600-word Vietnamese meeting transcript written by
+  the AI with 11 facts to keep: dates, amounts, prices, a rejected and two unsettled proposals, four action items with
+  owner and due date; temperature 0.2; bench and outputs kept outside the repo in the session notes folder
+  `2026-10-30-meeting-notes-ondevice-bench/`):
+
+  | Model                         | Download       | Peak RAM | Facts kept | Time  | Notes                                     |
+  | ----------------------------- | -------------- | -------- | ---------- | ----- | ----------------------------------------- |
+  | Apple Intelligence (baseline) | built in       | -        | 9/11       | 9.1 s | owners written as "em/chị/anh", not names |
+  | Qwen3-4B Instruct 2507        | 2.28 GB        | 3.1 GB   | 10/11      | 8.2 s | every owner and due date right            |
+  | Qwen3.5-4B                    | 3.06 GB        | 3.6 GB   | 10/11      | 7.2 s | rejected price put under decisions        |
+  | Gemma 4 E4B                   | 5.18 GB        | 4.9 GB   | 9/11       | 6.0 s | dropped the rejected proposal             |
+  | Gemma 4 E2B                   | 3.58 GB        | 3.4 GB   | 8/11       | 3.6 s | due date 7/11 written as 7/10             |
+  | Qwen3-1.7B / Qwen3.5-2B       | 0.98 / 1.75 GB | ~2 GB    | 6/11       | 2-3 s | 2B repeated the action list three times   |
+
+  The one fact every model missed (user count) was not asked for by the template. A four-line call ("alo, the mic is
+  broken, call back later") made every model, Apple Intelligence included, invent decisions and action items.
+
+- **Owner's answers** (near-verbatim): model = Qwen3-4B Instruct 2507; runtime = llama.cpp (GGUF); dictation shortcut
+  during a meeting = runs in parallel, and what is dictated stays in the meeting transcript; empty recording = the app
+  checks before calling AI; measure on real recordings with public Vietnamese lectures and interviews, and one test
+  call the owner records; start writing code after the real-recording measurement. Free-text box left empty.
+- **Decided** (owner): the items above. Picking the model approves downloading it on demand and adding llama.cpp as
+  the runtime dependency. **Not chosen**: Qwen3.5-4B, Gemma 4 E4B/E2B, two sizes (1.7B cleanup + 4B summary), no
+  on-device model; MLX, measuring both runtimes first; ignoring or queueing the shortcut, cutting dictation out of the
+  transcript, pausing the meeting recording, asking each time; a second AI pass that checks the first, summary-only for
+  short recordings, accepting invented items; the owner's own meeting recordings, two AI voices acting a meeting;
+  starting code now, after the screen-share test, or later.
+- **Risks raised by the AI and accepted**: the numbers come from MLX on one short written transcript, so llama.cpp and
+  real 30-60 min recordings must be measured again before code; the pre-check may skip a short call that had a real
+  point; running dictation in parallel shares the microphone stream between two pipelines.
+- **Still open**: the pre-check's threshold (set from the real-recording measurement); the screen-share hiding test
+  with Zoom, Meet and Teams.
+- **Consequences**: spec `specs/2026-10-28-meeting-notes.md` closes the on-device model row, settles SE-MEET-001 and
+  adds the pre-check to SE-MEET-009.
+- **Reversal**: a new entry here.
 
 ## 2026-10-29 · Meeting notes: live panel, Meetings page, consent line, templates (round 3)
 
