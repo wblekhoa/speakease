@@ -4,7 +4,7 @@ type: goal
 product: speakease
 title: "SpeakEase — Product goal"
 status: active
-updated: 2026-10-15
+updated: 2026-10-31
 summary: "Why SpeakEase exists: on-device Vietnamese-first dictation for Mac users who write a lot, its promise, audience, success measures and non-goals."
 tags: [area/audio, area/ai, surface/macos]
 ---
@@ -29,6 +29,18 @@ tags: [area/audio, area/ai, surface/macos]
 - Hold a key, speak Vietnamese, let go: the text lands where the cursor is, in any app - recognised on the Mac, and
   cleaned up or translated on the Mac with Apple Intelligence unless the user chooses their own API key.
 
+## Point of view
+
+Direction: owner, 29/10 round 2: "Trợ lý giọng nói đa năng: chép lời, tóm tắt, dịch, sửa câu". The lines below were
+drafted by the AI from that direction and chosen under the owner's overnight delegation (31/10); the owner may edit them.
+- To the user: a voice helper on the Mac that hears Vietnamese properly and turns speech into the text the moment needs
+  (written down, cleaned up, translated).
+- Adjectives: kín đáo · nhanh tay · thuần Việt.
+- Signature detail: the text lands at the cursor with every tone mark right, confirmed by the small pill, nothing more.
+- Refuses: glowing "AI orb" looks and purple gradients; stats dashboards about the user; anything that hints at a cloud
+  account.
+- Default to avoid: a macOS Dictation clone or a generic AI voice app.
+
 ## Success measures
 
 | Measure                                               | Today (observed 2026-10-11)                    | Target  | How it is measured (command, dashboard, store data)                                                                     |
@@ -49,11 +61,13 @@ tags: [area/audio, area/ai, surface/macos]
 
 ## Links
 
-- UX: `ux/dictation.md` · `ux/ai-cleanup.md` · `ux/history.md`
+- UX: `ux/dictation.md` · `ux/ai-cleanup.md` · `ux/history.md` · `ux/site.md` (landing page, not published yet)
 - Logic: `logic/dictation.md` · `logic/ai-cleanup.md` · `logic/history.md`
 - Decisions: `decisions.md` · Releases: `releases.md`
 - Public context: `README.en.md`, `PRIVACY.md`, `NOTICE.md`, `CHANGELOG.md` at the repo root
 
 ## Change log
 
+- 2026-10-31: added the point-of-view card (owner direction 29/10; wording chosen by AI under the overnight delegation).
+- 2026-10-31: linked the landing page UX (`ux/site.md`, spec `specs/2026-10-31-landing-page.md`).
 - 2026-10-11: created (doc-engine rollout); measures read from the GitHub API on this date.

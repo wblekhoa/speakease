@@ -4,7 +4,7 @@ type: decision
 product: speakease
 title: "SpeakEase — Decisions"
 status: active
-updated: 2026-10-22
+updated: 2026-10-31
 summary: "Append-only record of SpeakEase's product and engineering decisions, newest first, each with its context, evidence and how to reverse it."
 tags: [area/docs]
 ---
@@ -13,6 +13,75 @@ tags: [area/docs]
 
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
+
+## 2026-10-31 · Landing page: open items closed overnight under the owner's delegation
+
+- **Context**: the owner told the parent session "Tự hành đến sáng cho xong hết hết, tôi sẽ kiểm tra sau khi tất cả đã
+  xong." Each open item below takes the AI's proposed option and is **chosen by AI under the owner's overnight
+  delegation (31/10)**; none is owner-confirmed.
+- **Meta descriptions** now follow the demo flow (press ⌥ Space, speak, press again) instead of "hold a key, let go".
+- **Download button colour**: stays dark ink, as ReadEase; pink marks the product.
+- **Centred section headings** (WAVE slop-05): kept, to match the ReadEase frame the owner chose in round 1.
+- **History screenshot** (a meeting at "công ty ABC", a Figma link): kept; round 1 ruled out re-capturing screenshots.
+- **GA4**: stays off. A SpeakEase web stream needs the owner's Google account; until then the page loads no analytics.
+- **Point-of-view card**: written in `goal.md` from the owner's 29/10 direction ("Trợ lý giọng nói đa năng: chép lời,
+  tóm tắt, dịch, sửa câu"); adjectives, signature detail and refusals drafted by the AI.
+- **Not done, waits for the owner's "phát hành"**: enabling GitHub Pages, running the Pages workflow, the website's
+  `/speakease` redirect. The one-step command is in `site/README.md` § Publishing.
+- **Reversal**: each item is one edit (meta tags in `site/index.html`/`site/en/index.html`; the section in `goal.md`).
+
+## 2026-10-31 · Landing-page demo: Apple's macOS 27 wallpaper, a realistic Notes window, the real overlay pill
+
+- **Context**: reviewing the local preview, the owner asked for a more realistic mockup: "sử dụng wallpaper của macOS
+  thật và thiết kế cái app demo cũng thật hơn", pointing at a macOS 27 wallpaper on 4kwallpapers.com. The AI asked
+  how to handle Apple's copyright on a public page, how real the demo app should be, and whether the pill should copy
+  the real overlay.
+- **Decisions** (owner): the wallpaper is Apple's macOS 27 image the owner downloaded and supplied
+  (`macos-27-golden--26625.png` from that site), not a self-made one: the owner chose to supply the file over the
+  AI-proposed self-made SVG; "Chỉ cửa sổ Ghi chú thật hơn" (no menu bar or Dock); "Giống hệt overlay thật (đề xuất)".
+- **Built**: `site/media/wallpaper.jpg` (2400 px JPEG, ~200 KB, resized from the 4480 px PNG); a two-pane Notes window
+  (list with today's notes, the open note with toolbar, date stamp, title and dictated text; the list hides on narrow
+  screens); the pill redrawn from `src/overlay` (236 x 40 proportions, dot | nine bars | cancel, then spinner | label |
+  cancel, flat with a hairline).
+- **Risk the AI raised, owner accepted**: the wallpaper is Apple's copyrighted artwork, re-hosted by a wallpaper site,
+  in a public repository and on a public page. Apple has not licensed it for this use.
+- **AI default, not owner-confirmed**: traffic lights stay neutral grey, because WAVE has no green token. Real colours
+  need a WAVE token request.
+- **Reversal**: replace `site/media/wallpaper.jpg` (one file, referenced only from `site/style.css` `.desk`).
+
+## 2026-10-31 · A landing page of its own on GitHub Pages, in ReadEase's frame (round 1)
+
+- **Context**: the owner asked for "a landing page for our app". The campaign entry of 2026-10-29 had chosen a separate
+  download page on the personal website (request `publishing/inbox/2026-10-29-speakease-download-page.md`, still
+  open), so round 1 asked first how the two relate, then languages, hero line, sections, version, call to action,
+  look, images, tone, stack, analytics and release. Option form, 31/10.
+- **Owner's answers** (verbatim labels): "Trang riêng trên GitHub Pages, website có đường ngắn /speakease chuyển hướng
+  tới đây"; "Việt ở /, Anh ở /en/"; hero "Gõ ít đi, nói nhiều hơn." (the campaign's closing line); sections "Mô phỏng
+  giữ phím, nói, chữ hiện vào app khác, AI sửa câu: bản gốc và bản đã sửa, Dịch khi nói, File và link ra chữ, Lịch sử
+  và số phút tiết kiệm, So với Mac Dictation và gõ Telex, 3 bước cài và quyền Micro, Trợ năng, Câu hỏi thường gặp";
+  "Chỉ tính năng đã phát hành (0.1.1)"; "Tải thẳng file .dmg mới nhất, tự theo bản phát hành"; "Khung giống ReadEase
+  (theo tryonenotch.com/vi), màu hồng SpeakEase"; images "Ảnh chụp app có sẵn (vi, en), Thanh ghi âm và chữ hiện ra vẽ
+  bằng CSS, chạy khi cuộn"; "Ít chữ, mỗi thẻ một tiêu đề, như ReadEase"; "React + Vite + GSAP như ReadEase"; "GA4 như
+  ReadEase, bỏ qua Do Not Track"; "Xem trước trên máy, anh duyệt rồi mới đưa lên". No answer: reference pages to
+  follow, anything else to add.
+- **Decisions** (owner): the page lives in this repo under `site/` and is served by GitHub Pages
+  (`wblekhoa.github.io/speakease`); the personal website keeps a short path `/speakease` that redirects to it, which
+  replaces the separate download page asked of publishing on 2026-10-29; Vietnamese at `/`, English at `/en/`; one
+  primary action, the newest `.dmg`; only what 0.1.1 ships; React, Vite and GSAP (new dependencies of `site/` only,
+  approved by picking them); GA4 page counts; local preview first, published only after the owner approves.
+- **Not chosen**: the page as the website's download page, two parallel pages, an own domain; Vietnamese only or
+  English first; the hero lines "Giữ phím, nói, chữ hiện ra", "Ý trong đầu chạy trước ngón tay", "Tiếng Việt, trên
+  máy, miễn phí", "Gõ Telex hay nói?"; sections for privacy, the Vietnamese WER table and the shortcut table; waiting
+  for 0.1.2 or a "coming soon" block; the Releases page or a GitHub button as the main action; the video-1 look, a warm
+  dark page, a short minimal page; embedding video 1, re-capturing screenshots, AI images; a friendly or technical
+  tone; plain HTML; no analytics; publishing on green checks or after 0.1.2.
+- **Risks raised by the AI and accepted**: the GitHub Pages address is long to print on a video (the website's short
+  path answers it); the website redirect is publishing's repo, so it goes through its inbox; a comparison with Telex
+  and Mac Dictation may only state facts the repo can show (no timings are measured).
+- **Consequences**: spec `specs/2026-10-31-landing-page.md`; the publishing request is amended to a redirect; GA4 needs
+  a SpeakEase web stream ID from the owner (until then the page sends nothing); GitHub Pages must be switched on for
+  the repo when the owner approves publishing.
+- **Reversal**: a new entry here.
 
 ## 2026-10-22 · A paid cloud edition through Setapp; the offline app stays separate
 
