@@ -8,7 +8,6 @@ export const content = {
     other: 'en', switchLabel: 'Switch to English', downloadId: 'tai', download: 'Tải về',
     github: 'Mã nguồn trên GitHub', theme: 'Đổi giao diện sáng hoặc tối',
     hero: ['Gõ ít đi,', 'nói nhiều hơn.'],
-    description: 'Giữ một phím, nói tiếng Việt, thả ra: chữ hiện đúng chỗ con trỏ, trong mọi app.',
     cta: 'Tải cho Mac', meta: ['Miễn phí', 'Mac M1 trở lên', 'Chạy trên máy'],
 
     demo: 'Đọc chính tả trong ba bước', demoSteps: 'Các bước đọc chính tả',
@@ -79,7 +78,6 @@ export const content = {
     other: 'vi', switchLabel: 'Chuyển sang tiếng Việt', downloadId: 'download', download: 'Download',
     github: 'Source on GitHub', theme: 'Switch light or dark',
     hero: ['Type less,', 'speak more.'],
-    description: 'Hold a key, speak, let go: the text lands where the cursor is, in any app. Made for Vietnamese first.',
     cta: 'Download for Mac', meta: ['Free', 'M1 Mac or later', 'Runs on your Mac'],
 
     demo: 'Dictation in three steps', demoSteps: 'Dictation steps',

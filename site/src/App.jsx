@@ -69,7 +69,6 @@ function Hero({ c, release }) {
   return <section className="hero" aria-labelledby="hero-title">
     <Beats />
     <h1 id="hero-title">{c.hero[0]}<br /><span className="accent">{c.hero[1]}</span></h1>
-    <p className="description">{c.description}</p>
     <div className="actions"><DownloadButton c={c} release={release} describedBy="compatibility" /></div>
     <p className="compatibility" id="compatibility">{c.meta.map((item, i) => <React.Fragment key={item}>{i > 0 && <span className="meta-dot" aria-hidden="true">·</span>}<span>{item}</span></React.Fragment>)}</p>
   </section>;

@@ -24,7 +24,7 @@ file. Vietnamese at `/`, English at `/en/`; the header switches between them.
 ## Top to bottom
 1. **Header** (floating pill, sticky): brand, four section links (hidden under 960 px), GitHub, theme toggle, language,
    a dark "Tải về / Download" pill.
-2. **Hero**: "Gõ ít đi, / nói nhiều hơn." (second line pink), one sentence, a dark "Tải cho Mac" button, then
+2. **Hero**: "Gõ ít đi, / nói nhiều hơn." (second line pink), no sentence under it (owner 31/10), a dark "Tải cho Mac" button, then
    Free · M1 Mac or later · Runs on your Mac (short, owner 31/10).
 3. **Demo**: a CSS laptop on Apple's macOS 27 wallpaper, with a two-pane Notes window (today's notes, then the open
    note "Cuối tuần" with its date stamp; the list hides on phones). The pill copies the app's real overlay; the ⌥ Space keys sit on screen just left of it (the pair is centred on phones).
@@ -54,6 +54,7 @@ file. Vietnamese at `/`, English at `/en/`; the header switches between them.
 
 ## Change log
 - 2026-10-31: created with the first build (owner round 1).
+- 2026-10-31: owner removed the hero sentence (the page's meta descriptions are unchanged).
 - 2026-10-31: owner changed the demo flow to Bấm phím tắt → Lắng nghe → Viết nội dung; phones drop the step numbers.
 - 2026-10-31: owner asked to put the shortcut keys inside the demo screen, beside the pill.
 - 2026-10-31: owner asked for a realistic demo: macOS 27 wallpaper, Notes window, real overlay pill.
