@@ -7,7 +7,7 @@ import { App, cardIndex, dragTarget } from '../src/App.jsx';
 import { content } from '../src/content.js';
 import { startAnalytics, GA_ID } from '../src/analytics.js';
 import { resolveRelease, fetchRelease, fallback } from '../src/release.js';
-import { createStory, keyboardIndex, progressIndex } from '../src/story.js';
+import { createStory, demoState, keyboardIndex, progressIndex, stepTargets } from '../src/story.js';
 
 // SE-SITE-002: the one action is the newest arm64 .dmg, from a trusted URL only.
 const asset = (overrides = {}) => ({ name: 'SpeakEase-1.2.3-arm64.dmg', size: 21728350,
@@ -49,10 +49,25 @@ test('keyboard wraps, Home/End jump, other keys do not intercept', () => {
 test('scroll progress splits into three equal steps, clamped at the ends', () => {
   assert.deepEqual([-.1, 0, .2, .34, .5, .67, .9, 1, 1.2].map(progressIndex), [0, 0, 0, 1, 1, 2, 2, 2, 2]);
 });
+// No pill until the first press; the second press transcribes; the keys move with the scroll.
+test('timeline: idle → press pops the pill → listen → second press → written', () => {
+  const at = p => { const { phase, key, typed } = demoState(p); return [phase, +key.toFixed(2), +typed.toFixed(2)]; };
+  assert.deepEqual(at(0), ['idle', 0, 0]);
+  assert.deepEqual(at(.1), ['idle', .5, 0]);
+  assert.deepEqual(at(1 / 6), ['rec', 1, 0]);
+  assert.deepEqual(at(stepTargets[0]), ['rec', 0, 0]);
+  assert.deepEqual(at(stepTargets[1]), ['rec', 0, 0]);
+  assert.deepEqual(at(2 / 3 + .05), ['work', 1, 0]);
+  assert.deepEqual(at(.9), ['work', 0, .73]);
+  assert.deepEqual(at(stepTargets[2]), ['done', 0, 1]);
+  assert.deepEqual(at(1.5), at(1));
+});
 function harness({ reduced = false, tall = false } = {}) {
   const handlers = new Map();
   const selections = [], pins = [], triggers = [], classes = new Set(), properties = new Map();
-  const stage = { getBoundingClientRect: () => ({ height: tall ? 2000 : 700 }), contains: el => el === stage.child, child: {} };
+  const vars = new Map();
+  const stage = { getBoundingClientRect: () => ({ height: tall ? 2000 : 700 }), contains: el => el === stage.child, child: {}, dataset: {},
+    style: { setProperty: (k, v) => vars.set(k, v), removeProperty: k => vars.delete(k) } };
   const document = { activeElement: null };
   const section = { ownerDocument: document, querySelector: () => stage, getBoundingClientRect: () => ({ top: 100 }),
     classList: { toggle(k, on) { on ? classes.add(k) : classes.delete(k); }, remove: k => classes.delete(k) },
@@ -62,7 +77,7 @@ function harness({ reduced = false, tall = false } = {}) {
     addEventListener: (k, fn) => handlers.set(k, fn), removeEventListener: k => handlers.delete(k), scrollTo: value => { win.lastScroll = value; } };
   const ScrollTrigger = { create(options) { const trigger = { options, progress: 0, killed: false, kill() { this.killed = true; } }; triggers.push(trigger); return trigger; } };
   const story = createStory(section, { ScrollTrigger, onSelect: i => selections.push(i), onPinned: p => pins.push(p), win });
-  return { story, win, document, stage, media, handlers, selections, pins, triggers, classes, properties };
+  return { story, win, document, stage, vars, media, handlers, selections, pins, triggers, classes, properties };
 }
 test('scroll walks press → listen → write and back; a tab click scrolls to its step', () => {
   const h = harness();
@@ -73,7 +88,9 @@ test('scroll walks press → listen → write and back; a tab click scrolls to i
   for (const progress of [.5, .9, .5, 0]) trigger.options.onUpdate({ progress });
   assert.deepEqual(h.selections, [0, 1, 2, 1, 0]);
   h.story.navigate(2);
-  assert.deepEqual(h.win.lastScroll, { top: 76 + 550 * 2 + 275, behavior: 'instant' });
+  assert.deepEqual(h.win.lastScroll, { top: 76 + 550 * 3 * .999, behavior: 'instant' });
+  h.story.navigate(0);
+  assert.deepEqual(h.win.lastScroll, { top: 76 + 550 * 3 * .3, behavior: 'instant' });
   h.story.destroy();
 });
 for (const mode of ['reduced', 'tall']) test(`${mode} view keeps tabs, does not pin and shows the result`, () => {
@@ -81,9 +98,11 @@ for (const mode of ['reduced', 'tall']) test(`${mode} view keeps tabs, does not 
   assert.equal(h.triggers.length, 0);
   assert.equal(h.classes.size, 0);
   assert.deepEqual(h.pins, [false]);
+  assert.equal(h.stage.dataset.phase, 'done');
   h.story.navigate(1);
   assert.deepEqual(h.selections, [1]);
   assert.equal(h.win.lastScroll, undefined);
+  assert.equal(h.stage.dataset.phase, 'rec');
   h.story.destroy();
 });
 test('scroll does not move the step while a tab inside the stage has focus', () => {
@@ -104,6 +123,8 @@ test('resize and preference changes recreate only the owned trigger; destroy rem
   assert.equal(h.triggers.at(-1).killed, true);
   assert.equal(h.handlers.size, 0);
   assert.equal(h.properties.size, 0);
+  assert.equal(h.vars.size, 0);
+  assert.equal(h.stage.dataset.phase, undefined);
 });
 
 // SE-SITE-007: no ID, localhost or Do Not Track → nothing loads, nothing is sent.

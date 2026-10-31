@@ -27,12 +27,12 @@ file. Vietnamese at `/`, English at `/en/`; the header switches between them.
 2. **Hero**: "Gõ ít đi, / nói nhiều hơn." (second line pink), no sentence under it (owner 31/10), a dark "Tải cho Mac" button, then
    Free · M1 Mac or later · Runs on your Mac (short, owner 31/10).
 3. **Demo**: a CSS laptop on Apple's macOS 27 wallpaper, with a two-pane Notes window (today's notes, then the open
-   note "Cuối tuần" with its date stamp; the list hides on phones). The pill copies the app's real overlay; the ⌥ Space keys sit on screen just left of it (the pair is centred on phones).
-   Scrolling walks three steps (owner 31/10, the app's default tap-to-start mode): Bấm phím tắt (the keys light
-   pink, the recording pill appears), Lắng nghe (keys up, the level moves), Viết nội dung (the keys tap again, the pill
-   says "Đang chép lời…", the sentence appears
-   in the note). Numbered tabs under the laptop jump to a step. On phones and short windows the laptop shows the result
-   and the tabs switch steps.
+   note "Cuối tuần" with its date stamp; the list hides on phones). The pill copies the app's real overlay; the ⌥ Space keys are keycaps with depth,
+   centred just above it. One scroll-linked timeline (owner 31/10, the app's default tap-to-start mode): at first
+   there is no pill; Bấm phím tắt (the keys sink and turn pink as you scroll, and the pill pops up), Lắng nghe (keys
+   up, the level moves), Viết nội dung (a second press, the pill says "Đang chép lời…", the sentence fills in word by
+   word with the scroll, the pill goes). Numbered tabs under the laptop jump to a step. On phones and short windows the
+   laptop shows the result and a tab plays its stretch of the same timeline.
 4. **Features** ("Không chỉ chép lời."): a card scroller with dots and arrows, one title per card. With a mouse it
    drags (a round badge with left/right arrows replaces the pointer over it) and settles on the nearest card; on touch it swipes. AI cleanup (raw
    above, cleaned below, and the line that it needs Apple Intelligence or your own API key); translate while speaking
@@ -54,6 +54,7 @@ file. Vietnamese at `/`, English at `/en/`; the header switches between them.
 
 ## Change log
 - 2026-10-31: created with the first build (owner round 1).
+- 2026-10-31: owner asked for a truer demo: no pill until the press, keys with depth above the pill, the press and the typing tied to the scroll.
 - 2026-10-31: owner removed the hero sentence (the page's meta descriptions are unchanged).
 - 2026-10-31: owner changed the demo flow to Bấm phím tắt → Lắng nghe → Viết nội dung; phones drop the step numbers.
 - 2026-10-31: owner asked to put the shortcut keys inside the demo screen, beside the pill.

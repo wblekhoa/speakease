@@ -113,10 +113,10 @@ main { overflow-x: clip; }
    follow the screen (cqw), so the scene is the same picture at any width. */
 .demo { padding-top: 24px; }
 .demo-stage { display: grid; justify-items: center; }
-.desk { --ph: max(26px, 4.4cqw); --shift: 0px; position: absolute; inset: 0; display: grid; place-items: center; background: var(--desk) url("./media/wallpaper.jpg") center / cover; }
+.desk { --ph: max(26px, 4.4cqw); position: absolute; inset: 0; display: grid; place-items: center; background: var(--desk) url("./media/wallpaper.jpg") center / cover; }
 /* A Notes window in the macOS layout: the note list, then the open note with its toolbar and date stamp. */
 .note { display: grid; grid-template-columns: 26cqw 1fr; width: 76cqw; height: 46cqw; border-radius: 1.6cqw; background: var(--bg);
-  box-shadow: 0 0 0 1px var(--edge), var(--shadow); overflow: hidden; translate: 0 -2.5cqw; text-align: left; }
+  box-shadow: 0 0 0 1px var(--edge), var(--shadow); overflow: hidden; translate: 0 -5cqw; text-align: left; }
 .note-list { padding: 0 1cqw; background: var(--card); border-right: 1px solid var(--edge); overflow: hidden; }
 .note-chrome { display: flex; align-items: center; height: 4cqw; padding-inline: .6cqw; }
 .lights { display: inline-flex; gap: .7cqw; }
@@ -130,8 +130,8 @@ main { overflow-x: clip; }
 .list-item.is-open { background: var(--edge); }
 /* The list preview follows the note: empty while it listens, the sentence once it lands. */
 .preview-empty { display: none; }
-[data-step="press"] .preview-empty, [data-step="listen"] .preview-empty { display: inline; }
-[data-step="press"] .preview-text, [data-step="listen"] .preview-text { display: none; }
+[data-phase="idle"] .preview-empty, [data-phase="rec"] .preview-empty, [data-phase="work"] .preview-empty { display: inline; }
+[data-phase="idle"] .preview-text, [data-phase="rec"] .preview-text, [data-phase="work"] .preview-text { display: none; }
 .list-item + .list-item:not(.is-open + .list-item) { box-shadow: 0 -1px 0 var(--edge); border-radius: 0; }
 .note-page { min-width: 0; }
 .note-tools { justify-content: flex-end; gap: 1.6cqw; padding-inline: 1.8cqw; color: var(--muted); }
@@ -144,14 +144,12 @@ main { overflow-x: clip; }
 .caret { display: inline-block; width: 2px; height: 1.1em; margin-left: 2px; vertical-align: -.15em; background: var(--brand); }
 /* Narrow screens: Notes hides its list, as the app does in a small window. */
 @container (max-width: 520px) {
-  .note { grid-template-columns: 1fr; width: 82cqw; height: 46cqw; translate: 0 -4.5cqw; }
-  /* Too narrow for the keys beside a centred pill: centre the pair instead. */
-  .desk { --shift: calc(var(--ph) * 1.5); }
+  .note { grid-template-columns: 1fr; width: 82cqw; height: 36cqw; translate: 0 -8cqw; }
   .note-list { display: none; }
 }
 /* The pill: the app's compact overlay at its own proportions (236 x 40, radius 24, flat, hairline), every inner size
    a share of its height. Recording: dot | nine bars | cancel. Working: spinner | label | cancel. */
-.pill { position: absolute; left: calc(50% + var(--shift)); bottom: 2.2cqw; translate: -50% 0; display: grid; width: calc(var(--ph) * 5.9); height: var(--ph);
+.pill { position: absolute; left: 50%; bottom: 2.2cqw; translate: -50% 0; display: grid; width: calc(var(--ph) * 5.9); height: var(--ph);
   padding-inline: calc(var(--ph) * .25); border-radius: 999px; background: color-mix(in srgb, var(--bg) 98%, transparent);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--muted) 22%, transparent); font-size: calc(var(--ph) * .3); color: var(--muted); }
 .pill > span { grid-area: 1 / 1; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; }
@@ -164,13 +162,17 @@ main { overflow-x: clip; }
 .pill-spinner { justify-self: start; margin-left: calc(var(--ph) * .125); width: calc(var(--ph) * .325); height: calc(var(--ph) * .325); box-sizing: border-box;
   border: 2px solid color-mix(in srgb, var(--muted) 12%, transparent); border-top-color: var(--brand); border-radius: 50%; }
 .pill-label { padding-inline: calc(var(--ph) * .2); white-space: nowrap; }
-/* The shortcut on screen, just left of the pill, so pressing it and the pill appearing read as one move. */
-.keys { --kh: calc(var(--ph) * .8); position: absolute; right: calc(50% - var(--shift) + var(--ph) * 2.95 + max(6px, 1.4cqw)); bottom: calc(2.2cqw + var(--ph) * .1);
-  display: flex; gap: max(3px, .5cqw); }
-.keys kbd { min-width: var(--kh); height: var(--kh); padding-inline: calc(var(--kh) * .3); border: 0; border-radius: calc(var(--kh) * .28);
-  background: var(--bg); color: var(--ink); font-size: calc(var(--kh) * .36);
-  box-shadow: 0 0 0 1px color-mix(in srgb, var(--muted) 22%, transparent), 0 calc(var(--kh) * .06) 0 color-mix(in srgb, var(--muted) 40%, transparent);
-  transition: translate 160ms ease-out, background-color 160ms ease-out, color 160ms ease-out, box-shadow 160ms ease-out; }
+/* The shortcut: keycaps with depth, centred just above the pill. `--key` (0-1, set by the scroll timeline in
+   story.js) is how far they are pressed: they sink, lose most of their side and turn pink. */
+.keys { --kh: calc(var(--ph) * .9); --kd: calc(var(--kh) * .16); --k: var(--key, 0); position: absolute; left: 50%; translate: -50% 0;
+  bottom: calc(2.2cqw + var(--ph) + max(8px, 1.6cqw)); display: flex; gap: max(4px, .6cqw); }
+.keys kbd { min-width: var(--kh); height: var(--kh); padding-inline: calc(var(--kh) * .3); border: 0; border-radius: calc(var(--kh) * .26);
+  translate: 0 calc(var(--kd) * .7 * var(--k)); font-size: calc(var(--kh) * .36);
+  background: color-mix(in srgb, var(--brand-fill) calc(var(--k) * 100%), var(--bg));
+  color: color-mix(in srgb, var(--light-color-background) calc(var(--k) * 100%), var(--ink));
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--muted) 25%, transparent),
+    0 calc(var(--kd) * (1 - .7 * var(--k))) 0 color-mix(in srgb, var(--brand) calc(var(--k) * 100%), color-mix(in srgb, var(--muted) 50%, var(--bg))),
+    0 calc(var(--kd) * (1 - .7 * var(--k)) + 6px) 14px -6px color-mix(in srgb, var(--color-text) 50%, transparent); }
 .keys .key-option { font-size: calc(var(--kh) * .44); }
 .keys .key-space { min-width: calc(var(--kh) * 2.2); }
 .demo-steps { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 28px; padding: 4px; border: 1px solid var(--edge); border-radius: 999px; background: var(--card); }
@@ -179,15 +181,17 @@ main { overflow-x: clip; }
 .step-number { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 999px; background: var(--edge); color: var(--muted); font-size: 11px; font-weight: 700; }
 .demo-steps button[aria-selected="true"] .step-number { background: var(--brand-fill); color: var(--light-color-background); }
 
-/* States. The default (no data-step match) is the result: text in the note, no pill. */
-.pill { opacity: 0; transition: opacity 240ms ease-out; }
-.pill-work { opacity: 0; }
-[data-step="press"] .pill, [data-step="listen"] .pill { opacity: 1; }
-[data-step="press"] .typed, [data-step="listen"] .typed { display: none; }
-.typed { white-space: pre-wrap; }
-[data-step="press"] .note-text, [data-step="listen"] .note-text { min-height: 3.2em; }
-[data-step="press"] .keys kbd { translate: 0 calc(var(--kh) * .05); background: var(--brand-fill); color: var(--light-color-background);
-  box-shadow: 0 0 0 1px var(--brand-fill); }
+/* States, from `data-phase` (story.js): idle → rec → work → done. With no phase (no JavaScript yet) it is done:
+   the sentence in the note, no pill. */
+.pill { opacity: 0; scale: .6; transform-origin: 50% 100%; }
+[data-phase="rec"] .pill, [data-phase="work"] .pill { opacity: 1; scale: 1; }
+.pill-work, [data-phase="work"] .pill-rec { opacity: 0; }
+[data-phase="work"] .pill-work { opacity: 1; }
+/* The sentence fills in word by word as `--typed` goes 0 → 1; before the second press it is not there at all. */
+.typed { white-space: pre-wrap; opacity: clamp(0, calc(var(--typed, 1) * var(--n, 1) - var(--i)), 1); }
+[data-phase="idle"] .typed, [data-phase="rec"] .typed { display: none; }
+[data-phase="work"] .caret { opacity: 0; }
+[data-phase="idle"] .note-text, [data-phase="rec"] .note-text { min-height: 3.2em; }
 [data-step="listen"] .pill-wave i { height: 60%; }
 [data-step="listen"] .pill-wave i:nth-child(3n) { height: 90%; }
 [data-step="listen"] .pill-wave i:nth-child(4n + 1) { height: 35%; }
@@ -342,14 +346,10 @@ details a { color: var(--ink); text-decoration: underline; text-underline-offset
   /* The level bars move while the demo is on "listen", a bounded number of times. */
   [data-step="listen"] .pill-wave i { animation: level 420ms ease-in-out calc(var(--i) * 60ms) 12 alternate; }
   [data-step="press"] .pill-wave i { animation: level 900ms ease-in-out calc(var(--i) * 80ms) 2 alternate; }
-  /* Write: the pill says "Transcribing…" for a beat and leaves; the words arrive in order. */
-  [data-step="write"] .pill { animation: work 1100ms ease-out both; }
-  /* Write starts with the second press: the keys tap once, then rest. */
-  [data-step="write"] .keys kbd { animation: tap 420ms ease-out both; }
-  [data-step="write"] .pill-rec { animation: hide-now 1100ms step-start both; }
-  [data-step="write"] .pill-work { animation: show-now 1100ms step-start both; }
-  [data-step="write"] .pill-spinner { animation: spin 700ms linear 2; }
-  [data-step="write"] .typed { animation: type-in 180ms ease-out calc(900ms + var(--i) * 45ms) both; }
+  /* The first press pops the pill up from the bottom; it settles with a small overshoot. */
+  .pill { transition: opacity 200ms ease-out, scale 460ms cubic-bezier(.34, 1.56, .64, 1); }
+  .pill > span { transition: opacity 160ms ease-out; }
+  [data-phase="work"] .pill-spinner { animation: spin 700ms linear 4; }
   .caret { animation: blink 1s steps(1) 6; }
   .way-card, .tile-grid li { transition: translate 360ms cubic-bezier(.2, .7, .2, 1), background-color 240ms ease-out, box-shadow 360ms ease-out; }
   .way-card:hover, .tile-grid li:hover { translate: 0 -4px; background: var(--raised); box-shadow: 0 0 0 1px var(--edge), var(--lift); }
@@ -364,16 +364,11 @@ details a { color: var(--ink); text-decoration: underline; text-underline-offset
     .tile-grid li:nth-child(3) { animation-range: entry 12% cover 36%; }
   }
 }
-@keyframes tap { from, 50% { translate: 0 calc(var(--kh) * .05); background: var(--brand-fill); color: var(--light-color-background); box-shadow: 0 0 0 1px var(--brand-fill); } }
 @keyframes rise { from { opacity: 0; transform: translateY(16px); } }
 @keyframes reveal { from { opacity: 0; transform: translateY(36px) scale(.98); } to { opacity: 1; transform: none; } }
 @keyframes beat { from { scale: 1 1; } to { scale: 1 .55; } }
 @keyframes level { from { height: 18%; } to { height: 95%; } }
-@keyframes work { 0%, 82% { opacity: 1; } 100% { opacity: 0; } }
-@keyframes hide-now { from { opacity: 0; } to { opacity: 0; } }
-@keyframes show-now { from { opacity: 1; } to { opacity: 1; } }
 @keyframes spin { to { rotate: 360deg; } }
-@keyframes type-in { from { opacity: 0; } }
 @keyframes blink { 50% { opacity: 0; } }
 @media (prefers-reduced-motion: reduce) {
   html { scroll-behavior: auto; }

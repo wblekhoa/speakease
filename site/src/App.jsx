@@ -103,7 +103,7 @@ function NotesWindow({ c, words }) {
       <p className="note-stamp" aria-hidden="true">{c.noteStamp}</p>
       <div className="note-body">
         <p className="note-title">{c.noteTitle}</p>
-        <p className="note-text">{words.map((word, i) => <span key={i} className="typed" style={{ '--i': i }}>{i > 0 ? ` ${word}` : word}</span>)}<span className="caret" aria-hidden="true" /></p>
+        <p className="note-text" style={{ '--n': words.length }}>{words.map((word, i) => <span key={i} className="typed" style={{ '--i': i }}>{i > 0 ? ` ${word}` : word}</span>)}<span className="caret" aria-hidden="true" /></p>
       </div>
     </div>
   </div>;
