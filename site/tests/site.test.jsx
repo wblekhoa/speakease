@@ -47,7 +47,7 @@ test('keyboard wraps, Home/End jump, other keys do not intercept', () => {
   assert.equal(keyboardIndex('Tab', 0), undefined);
 });
 test('scroll progress splits into three equal steps, clamped at the ends', () => {
-  assert.deepEqual([-.1, 0, .2, .34, .5, .67, .9, 1, 1.2].map(progressIndex), [0, 0, 0, 1, 1, 2, 2, 2, 2]);
+  assert.deepEqual([-.1, 0, .2, .23, .5, .59, .6, .9, 1, 1.2].map(progressIndex), [0, 0, 0, 1, 1, 1, 2, 2, 2, 2]);
 });
 // No pill until the first press; the second press transcribes; the keys move with the scroll.
 test('timeline: idle → ⌥ then Space pop the pill → listen → second chord → written', () => {
@@ -58,7 +58,7 @@ test('timeline: idle → ⌥ then Space pop the pill → listen → second chord
   assert.deepEqual(at(.1), ['idle', 1, 1, .8, 0, 0]);
   assert.deepEqual(at(1 / 6), ['rec', 1, 1, 1, 1, 0]);
   assert.deepEqual(at(.2), ['rec', 1, 1, 1, .37, 0]);
-  assert.deepEqual(at(stepTargets[0]), ['rec', 0, 0, 0, 0, 0]);
+  assert.deepEqual(at(stepTargets[0]), ['rec', 1, 1, 1, 1, 0]);
   assert.deepEqual(at(stepTargets[1]), ['rec', 0, 0, 0, 0, 0]);
   assert.deepEqual(at(.7), ['work', 1, 1, 1, 1, 0]);
   assert.deepEqual(at(.9), ['work', 0, 0, 0, 0, .77]);
@@ -93,7 +93,7 @@ test('scroll walks press → listen → write and back; a tab click scrolls to i
   h.story.navigate(2);
   assert.deepEqual(h.win.lastScroll, { top: 76 + 550 * 3 * .999, behavior: 'instant' });
   h.story.navigate(0);
-  assert.deepEqual(h.win.lastScroll, { top: 76 + 550 * 3 * .3, behavior: 'instant' });
+  assert.deepEqual(h.win.lastScroll, { top: 76 + 550 * 3 * stepTargets[0], behavior: 'instant' });
   h.story.destroy();
 });
 for (const mode of ['reduced', 'tall']) test(`${mode} view keeps tabs, does not pin and shows the result`, () => {

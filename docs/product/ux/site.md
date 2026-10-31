@@ -55,6 +55,7 @@ file. Vietnamese at `/`, English at `/en/`; the header switches between them.
 
 ## Change log
 - 2026-10-31: created with the first build (owner round 1).
+- 2026-10-31: overnight review fixes: the tabs follow the demo (tab 1 until the keys are up, tab 2 until the second press); the translate card says it needs AI.
 - 2026-10-31: owner asked for the two keys to come up one after the other, not together.
 - 2026-10-31: owner asked to show the keys only for a press and let them overlap the window.
 - 2026-10-31: owner asked for a truer demo: no pill until the press, keys with depth above the pill, the press and the typing tied to the scroll.

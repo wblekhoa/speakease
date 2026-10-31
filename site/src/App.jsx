@@ -95,7 +95,7 @@ function NotesWindow({ c, words }) {
     <div className="note-list" aria-hidden="true">
       <p className="note-chrome"><span className="lights"><i /><i /><i /></span></p>
       <p className="list-head">{c.noteToday}</p>
-      <p className="list-item is-open"><b>{c.noteTitle}</b><span><time>09:41</time> <span className="preview-empty">{c.noteEmpty}</span><span className="preview-text">{c.spoken}</span></span></p>
+      <p className="list-item is-open"><b>{c.noteTitle}</b><span><time>{c.noteTime}</time> <span className="preview-empty">{c.noteEmpty}</span><span className="preview-text">{c.spoken}</span></span></p>
       {c.otherNotes.map(([title, when, preview]) => <p className="list-item" key={title}><b>{title}</b><span><time>{when}</time> {preview}</span></p>)}
     </div>
     <div className="note-page">
@@ -242,6 +242,7 @@ function Features({ c, screenshots }) {
         <p className="sheet-label"><Glyph name="mic" />{c.said}</p><p className="bubble said" lang="vi">{c.saidText}</p>
         <p className="shortcut" aria-hidden="true"><kbd>⌃</kbd><kbd>⌥</kbd><kbd>Space</kbd></p>
         <p className="sheet-label accent"><Glyph name="translate" />{c.pasted}</p><p className="bubble pasted" lang="en">{c.pastedText}</p>
+        <p className="needs"><Glyph name="info" />{c.aiNeeds}</p>
       </figure></Card>
       <Card title={c.filesTitle}><figure className="sheet files" aria-label={c.filesLabel}>
         <div className="dropzone"><Glyph name="folder" /><span>{c.dropHint}</span></div>

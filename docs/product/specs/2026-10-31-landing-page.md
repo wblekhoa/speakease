@@ -77,3 +77,7 @@ Owner round 1 (`decisions.md`, 2026-10-31) decided every item below. Built local
   properties (slop-09). Open for the owner: centred section headings (slop-05, inherited from the ReadEase frame) and
   the missing point-of-view card in `goal.md`. Evidence receipt accepted with independent review.
 - 2026-10-31: owner changed the demo flow to Bấm phím tắt → Lắng nghe → Viết nội dung (SE-SITE-003 wording).
+- 2026-10-31: overnight design-edit (fresh reviewer, disposition `fix`): the translate card shows the AI requirement; the
+  comparison's AI note names its two rows and is dated; demo tabs follow what the laptop shows (press until the keys are
+  up, listen until the second press); keycap shadow stays dark in dark mode; the EN note list says 9:41 AM; install
+  numbers line up on phones. Publishing prepared as `site/publish.sh` (not run).

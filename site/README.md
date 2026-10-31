@@ -58,9 +58,18 @@ hero, screenshot size, relative URLs that exist, and the notices file. The root 
 
 ## Publishing
 
-`.github/workflows/pages.yml` runs only by hand: running it is a deploy, and the owner has not approved one yet.
-Pages must be enabled for the repository first. The website's short path `/speakease` (publishing company) will
-redirect here once the final URL exists.
+Not published. Running `.github/workflows/pages.yml` is a deploy and waits for the owner's "phát hành". The workflow
+runs only by hand, from `main`. When the owner says so, two steps from the repository root:
+
+```sh
+git fetch origin && git merge-base --is-ancestor origin/main <site-branch> && git push origin <site-branch-sha>:main
+site/publish.sh
+```
+
+The first line fast-forwards `main` to a branch that already contains `main` (no force). `site/publish.sh` enables
+Pages (GitHub Actions source) the first time, runs the workflow on `main`, waits for it, and checks that `/` and `/en/`
+answer at https://wblekhoa.github.io/speakease/. The website's short path `/speakease` (publishing company) redirects
+here once that URL is live.
 
 ## Dependencies
 

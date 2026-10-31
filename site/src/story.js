@@ -6,7 +6,9 @@ export function keyboardIndex(key, index) {
   const next = (index + 1) % 3, previous = (index + 2) % 3;
   return ({ ArrowRight: next, ArrowDown: next, ArrowLeft: previous, ArrowUp: previous, Home: 0, End: 2 })[key];
 }
-export const progressIndex = progress => Math.max(0, Math.min(2, Math.floor(progress * 3)));
+// A tab follows what the laptop shows: the first chord until its keys are up, listening until the second press starts.
+const stepStarts = [0, .23, .6];
+export const progressIndex = progress => progress < stepStarts[1] ? 0 : progress < stepStarts[2] ? 1 : 2;
 
 // One continuous timeline over the three steps (0 → 1), so the key presses move with
 // the scroll (owner, 31/10). Phase: idle (no pill yet) → rec (the pill pops up and
@@ -34,7 +36,7 @@ export function demoState(progress) {
 }
 const VARS = ['alt', 'altShow', 'space', 'spaceShow', 'typed'];
 // Where each tab lands on the timeline: just after the press, mid-listen, the end.
-export const stepTargets = [.3, .5, 1];
+export const stepTargets = [.17, .5, 1];
 
 // Own only this section's trigger and listeners; safe to dispose on React unmount/HMR.
 // CSS owns stickiness; GSAP measures three bounded scroll steps, not wheel input.
@@ -55,7 +57,7 @@ export function createStory(section, { ScrollTrigger, onSelect, onPinned = () =>
   // Without the pin, a tab plays its own stretch of the timeline (or jumps, with reduced motion).
   const play = index => {
     win.cancelAnimationFrame?.(tween);
-    const to = stepTargets[index], from = index / 3, still = !win.matchMedia('(prefers-reduced-motion: no-preference)').matches;
+    const to = stepTargets[index], from = stepStarts[index], still = !win.matchMedia('(prefers-reduced-motion: no-preference)').matches;
     if (still || !win.requestAnimationFrame) { apply(to); return; }
     const duration = [900, 700, 1800][index];
     let begin;
