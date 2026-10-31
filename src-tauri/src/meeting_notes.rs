@@ -497,6 +497,13 @@ pub fn checkbox_action_items(notes: &str, heading: &str) -> String {
                 }
             }
         };
+        // An owner the AI left as an empty box ("— [ ]", 31/10) is no owner.
+        let fixed = match fixed.strip_suffix("[ ]").map(str::trim_end) {
+            Some(head) if head.ends_with(['—', '–', '-', ',']) && head.len() > "- [ ]".len() => {
+                head.trim_end_matches(['—', '–', '-', ',', ' ']).to_string()
+            }
+            _ => fixed,
+        };
         out.push(fixed);
     }
     out.join("\n")
@@ -1099,11 +1106,11 @@ mod tests {
     // SE-MEET-009
     #[test]
     fn action_items_become_checkboxes_with_the_owner_after_the_action() {
-        let notes = "## Quyết định\n- Chốt ngày 15/11\n## Việc cần làm\n- [Hùng] gửi thiết kế trước 7/11\n- [ ] Trang viết ghi chú phát hành\n* kiểm tra máy chủ\n- [ ] — nhắn Lan hôm nay\n- - chuẩn bị bài đăng — Anh Minh";
+        let notes = "## Quyết định\n- Chốt ngày 15/11\n## Việc cần làm\n- [Hùng] gửi thiết kế trước 7/11\n- [ ] Trang viết ghi chú phát hành\n* kiểm tra máy chủ\n- [ ] — nhắn Lan hôm nay\n- - chuẩn bị bài đăng — Anh Minh\n- [ ] hoàn thiện trang thanh toán — [ ]";
         let fixed = checkbox_action_items(notes, "Việc cần làm");
         assert_eq!(
             fixed,
-            "## Quyết định\n- Chốt ngày 15/11\n## Việc cần làm\n- [ ] gửi thiết kế trước 7/11 — Hùng\n- [ ] Trang viết ghi chú phát hành\n- [ ] kiểm tra máy chủ\n- [ ] nhắn Lan hôm nay\n- [ ] chuẩn bị bài đăng — Anh Minh"
+            "## Quyết định\n- Chốt ngày 15/11\n## Việc cần làm\n- [ ] gửi thiết kế trước 7/11 — Hùng\n- [ ] Trang viết ghi chú phát hành\n- [ ] kiểm tra máy chủ\n- [ ] nhắn Lan hôm nay\n- [ ] chuẩn bị bài đăng — Anh Minh\n- [ ] hoàn thiện trang thanh toán"
         );
     }
 
