@@ -16,6 +16,7 @@ mod live_subtitles;
 mod llm_client;
 mod local_ai;
 mod managers;
+mod meeting_notes;
 mod memory;
 mod overlay;
 mod paste_tx;
@@ -499,6 +500,19 @@ fn run_headless_transcription(app: &AppHandle, args: &CliArgs) -> i32 {
         return code;
     }
 
+    // SpeakEase: meeting notes for a transcript file, no audio.
+    if let Some(path) = args.meeting_notes.as_deref() {
+        let code = meeting_notes::cli::run(
+            app,
+            path,
+            args.notes_kind.as_deref(),
+            args.notes_engine.as_deref(),
+            args.json,
+        );
+        local_ai::stop_server();
+        return code;
+    }
+
     // --list-devices: print registered compute devices (with indices) and exit.
     // Useful on multi-GPU machines to discover the index for --device-index.
     if args.list_devices {
@@ -918,7 +932,8 @@ pub fn run(cli_args: CliArgs) {
     let headless_mode = cli_args.transcribe_file.is_some()
         || cli_args.list_devices
         || cli_args.list_models
-        || cli_args.live_subtitle_probe.is_some();
+        || cli_args.live_subtitle_probe.is_some()
+        || cli_args.meeting_notes.is_some();
 
     #[allow(unused_mut)]
     let mut builder = tauri::Builder::default()

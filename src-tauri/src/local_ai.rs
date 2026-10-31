@@ -414,6 +414,12 @@ fn server_flags(port: u16) -> Vec<String> {
 /// returns its port. Blocking: up to START_TIMEOUT while the model loads.
 pub fn ensure_server(app: &AppHandle) -> Result<u16, String> {
     let model = active_model(app).ok_or_else(|| "no-local-model".to_string())?;
+    ensure_server_with(app, model)
+}
+
+/// [`ensure_server`] for a given model file: meeting notes run Qwen3.5-4B
+/// whichever model is in use for subtitles and clean-up.
+pub fn ensure_server_with(app: &AppHandle, model: PathBuf) -> Result<u16, String> {
     let mut server = SERVER.lock().map_err(|e| e.to_string())?;
     if let Some(running) = server.as_mut() {
         let alive = matches!(running.child.try_wait(), Ok(None));
@@ -574,6 +580,63 @@ pub async fn chat(app: &AppHandle, system: &str, user: &str) -> Result<String, S
     } else {
         Ok(text)
     }
+}
+
+/// A downloaded catalog model's file, by id.
+pub fn downloaded_model_file(app: &AppHandle, id: &str) -> Option<PathBuf> {
+    entry_downloaded(app, id)
+}
+
+/// How long one meeting-notes request may take: a 700-word part or a merge
+/// on a 4B model on a slow Mac.
+const LONG_TIMEOUT: Duration = Duration::from_secs(600);
+/// The longest answer a meeting-notes request may write.
+const LONG_ANSWER_TOKENS: u32 = 1_200;
+
+/// One chat turn for meeting notes on `model`: a longer answer and timeout
+/// than [`chat`], thinking off (the settings measured on 30/10).
+pub async fn chat_long(
+    app: &AppHandle,
+    model: &std::path::Path,
+    system: &str,
+    user: &str,
+) -> Result<String, String> {
+    let handle = app.clone();
+    let model = model.to_path_buf();
+    let port = tauri::async_runtime::spawn_blocking(move || ensure_server_with(&handle, model))
+        .await
+        .map_err(|e| e.to_string())??;
+    let body = serde_json::json!({
+        "messages": [
+            { "role": "system", "content": system },
+            { "role": "user", "content": user },
+        ],
+        "temperature": 0.2,
+        "max_tokens": LONG_ANSWER_TOKENS,
+        "chat_template_kwargs": { "enable_thinking": false },
+    });
+    let response = reqwest::Client::new()
+        .post(format!("http://127.0.0.1:{port}/v1/chat/completions"))
+        .timeout(LONG_TIMEOUT)
+        .json(&body)
+        .send()
+        .await
+        .map_err(|e| format!("server: {e}"))?;
+    let status = response.status();
+    let json: serde_json::Value = response.json().await.map_err(|e| e.to_string())?;
+    if !status.is_success() {
+        return Err(format!("server: {status}: {json}"));
+    }
+    if let Ok(mut server) = SERVER.lock() {
+        if let Some(running) = server.as_mut() {
+            running.last_used = Instant::now();
+        }
+    }
+    Ok(json["choices"][0]["message"]["content"]
+        .as_str()
+        .unwrap_or_default()
+        .trim()
+        .to_string())
 }
 
 /// [`chat`] for the subtitle threads, which are plain std threads.

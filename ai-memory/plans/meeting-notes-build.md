@@ -1,8 +1,8 @@
 ---
-status: proposed
+status: executing
 owner: Lê Khoa
 started: 2026-10-31
-current-phase: 0
+current-phase: 1
 summary: "Build meeting notes (SE-MEET-001…019) in five phases, starting with a testable notes pipeline and a hidden CLI that turns a recording or transcript into notes."
 tags: [area/ai, area/audio, area/capture, stack/rust]
 ---
@@ -23,14 +23,15 @@ Every phase keeps these green on its branch (the "five checks"): `bun run lint`,
    - New module `src-tauri/src/meeting_notes.rs`: empty-recording pre-check (one named constant, 20 words after
      fillers are removed); split into parts of about 700 words at sentence ends (reusing `files::split_for_ai`);
      each part fenced; notes per part → merge → template; the template guessed from the transcript; notes in the
-     language spoken; a refused part keeps its words and the job goes on (as SE-FILE-003).
+     language spoken; a refused part keeps its words and the job goes on (as rewriting a long file does).
    - Its own AI order, not the dictation provider setting: Apple Intelligence → a provider the user gave a key →
      Qwen3.5-4B on device → none (notes = transcript, with the reason). The AI switch off counts as none.
    - On-device: Qwen3.5-4B even when another on-device model is active (the server is started on the catalog entry
      `qwen3.5-4b`); a new chat call with a longer answer and timeout. `local_ai.rs` changes stay additive so PR
      wblekhoa/speakease#1 (`--cache-ram`) rebases cleanly.
-   - Hidden CLI `--meeting-notes <wav|txt>` (headless, like `--transcribe-file`) so the owner's test call can run
-     through the real pipeline and set the threshold.
+   - Hidden CLI `--meeting-notes <transcript.txt>` (headless, like `--transcribe-file`; `--notes-kind`,
+     `--notes-engine apple|key|local=<gguf>`, `--json`) so the owner's test call can run through the real pipeline
+     and set the threshold. Audio first goes through `handy -f <file>`.
    - Docs: `logic/meetings.md` (all 19 rules, these live, the rest `not built`).
    - Verify: five checks; `cargo test --lib meeting_notes` (pre-check both sides of the threshold on synthetic
      Vietnamese text, splitting loses no word, fence present, every template has its sections, AI order);
@@ -61,6 +62,19 @@ Every phase keeps these green on its branch (the "five checks"): `bun run lint`,
      recorded in `decisions.md` — until then SE-MEET-017 stays `not built`.
 
 ## Decisions
+
+Chosen by AI under the owner's overnight delegation (31/10) - for the owner to review:
+
+- Phases run without waiting for a go (owner, relayed 31/10: "Tự hành đến sáng cho xong hết hết").
+- AI switched off in AI & Translate means no AI notes (the switch gates every AI step, as elsewhere in the app).
+- "The user's API key" = the provider picked in AI & Translate when it has a key and a model, else the first other
+  provider that has both.
+- Meeting notes always run Qwen3.5-4B on device; another downloaded on-device model is not used instead.
+- Apple Intelligence writes notes through its content-transformation guardrails (as subtitles), because the
+  transcript is mostly words the user did not write and the default guardrails refused one interview part on 30/10.
+- Fillers for the pre-check: alo, à, ạ, ừ, ừm, ừa, ờ, ơ, ồ, hả, dạ, vâng, ok/okay/oke, nhé, nhỉ, nha and English
+  uh/um/hmm/oh/hello/hi/yeah. Words like "thì", "là", "mà" count as content.
+- An empty recording without a chosen kind is labelled a call.
 
 - Phase order puts the testable core first; the owner's test call can run through phase 1's CLI before any UI exists.
 - No new dependency in phases 1-2 and 4-5. `.docx` (phase 3) needs the owner's yes.

@@ -4,7 +4,7 @@ type: decision
 product: speakease
 title: "SpeakEase — Decisions"
 status: active
-updated: 2026-10-22
+updated: 2026-10-31
 summary: "Append-only record of SpeakEase's product and engineering decisions, newest first, each with its context, evidence and how to reverse it."
 tags: [area/docs]
 ---
@@ -13,6 +13,23 @@ tags: [area/docs]
 
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
+
+## 2026-10-31 · Meeting notes phase 1: choices made by AI under the owner's overnight delegation
+
+- **Context**: the owner asked for meeting notes to be built overnight without stopping ("Tự hành đến sáng cho xong
+  hết hết, tôi sẽ kiểm tra sau khi tất cả đã xong", relayed 31/10) and for each AI-made choice to be logged for review.
+  The owner's rounds 1-4 and the 30/10 measurement are on the `speakease` docs branch; build order in
+  `ai-memory/plans/meeting-notes-build.md`; rules in `logic/meetings.md`.
+- **Decision** (chosen by AI under the owner's overnight delegation, 31/10): AI switched off means no AI notes; "the
+  user's key" is the provider picked in AI & Translate when it has a key and a model, else the first other one that
+  has both; notes always run Qwen3.5-4B on device (no other on-device model instead); Apple Intelligence writes notes
+  through its content-transformation guardrails; the pre-check's fillers are listed in the plan and
+  `MIN_SUBSTANTIVE_WORDS` stays 20 until the owner's test call; a hidden `--meeting-notes <transcript.txt>` runs the
+  real pipeline headlessly.
+- **Evidence**: `cargo test --lib meeting_notes` (12 tests); `handy --meeting-notes` on a 523-word synthetic
+  Vietnamese meeting with Apple Intelligence: 24 s, four sections, every figure right, the Android idea put off to next quarter left out; on a four-line broken-mic call:
+  one line, no AI call (18 substantive words).
+- **Reversal**: revert the phase-1 commit; nothing is stored yet.
 
 ## 2026-10-22 · A paid cloud edition through Setapp; the offline app stays separate
 

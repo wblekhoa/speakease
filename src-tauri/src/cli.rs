@@ -98,4 +98,20 @@ pub struct CliArgs {
     /// Language the subtitles are written in (default Vietnamese).
     #[arg(long, value_name = "LANGUAGE", hide = true)]
     pub subtitle_to: Option<String>,
+
+    /// SpeakEase meeting notes: write notes for this transcript (a text
+    /// file, one speaker turn per line) headlessly with the app's AI order,
+    /// print them and exit. Honors --json.
+    #[arg(long, value_name = "TRANSCRIPT", hide = true)]
+    pub meeting_notes: Option<PathBuf>,
+
+    /// Template for --meeting-notes: meeting, call, lecture or interview
+    /// (default: AI guesses).
+    #[arg(long, value_name = "KIND", hide = true)]
+    pub notes_kind: Option<String>,
+
+    /// Engine for --meeting-notes instead of the app's order: "apple", "key"
+    /// or "local=<model.gguf>".
+    #[arg(long, value_name = "ENGINE", hide = true)]
+    pub notes_engine: Option<String>,
 }

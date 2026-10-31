@@ -96,6 +96,14 @@ fn strip_think_block(s: &str) -> &str {
     s
 }
 
+/// An AI answer without a leading think block or invisible characters
+/// (meeting notes).
+pub(crate) fn clean_ai_output(s: &str) -> String {
+    strip_invisible_chars(strip_think_block(s))
+        .trim()
+        .to_string()
+}
+
 /// Build a system prompt from the user's prompt template.
 /// Removes `${output}` placeholder since the transcription is sent as the user message.
 fn build_system_prompt(prompt_template: &str) -> String {
@@ -118,7 +126,7 @@ fn wrap_for_prompt(prompt_template: &str, transcription: &str) -> String {
 /// will not touch with a canned refusal instead of an error. Pasting that
 /// into the user's document is worse than pasting what they said, so it
 /// counts as no result and the raw transcript is used.
-fn is_model_refusal(text: &str) -> bool {
+pub(crate) fn is_model_refusal(text: &str) -> bool {
     const REFUSALS: [&str; 4] = [
         "unable to work with that request",
         "i can't help with that",
