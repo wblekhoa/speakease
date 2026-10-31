@@ -129,10 +129,10 @@ main { overflow-x: clip; }
 .list-item span { color: var(--muted); }
 .list-item time { color: var(--ink); font-weight: 500; }
 .list-item.is-open { background: var(--edge); }
-/* The list preview follows the note: empty while you speak, the sentence once it lands. */
+/* The list preview follows the note: empty while it listens, the sentence once it lands. */
 .preview-empty { display: none; }
-[data-step="hold"] .preview-empty, [data-step="speak"] .preview-empty { display: inline; }
-[data-step="hold"] .preview-text, [data-step="speak"] .preview-text { display: none; }
+[data-step="press"] .preview-empty, [data-step="listen"] .preview-empty { display: inline; }
+[data-step="press"] .preview-text, [data-step="listen"] .preview-text { display: none; }
 .list-item + .list-item:not(.is-open + .list-item) { box-shadow: 0 -1px 0 var(--edge); border-radius: 0; }
 .note-page { min-width: 0; }
 .note-tools { justify-content: flex-end; gap: 1.6cqw; padding-inline: 1.8cqw; color: var(--muted); }
@@ -183,15 +183,15 @@ main { overflow-x: clip; }
 /* States. The default (no data-step match) is the result: text in the note, no pill. */
 .pill { opacity: 0; transition: opacity 240ms ease-out; }
 .pill-work { opacity: 0; }
-[data-step="hold"] .pill, [data-step="speak"] .pill { opacity: 1; }
-[data-step="hold"] .typed, [data-step="speak"] .typed { display: none; }
+[data-step="press"] .pill, [data-step="listen"] .pill { opacity: 1; }
+[data-step="press"] .typed, [data-step="listen"] .typed { display: none; }
 .typed { white-space: pre-wrap; }
-[data-step="hold"] .note-text, [data-step="speak"] .note-text { min-height: 3.2em; }
-[data-step="hold"] .keys kbd, [data-step="speak"] .keys kbd { translate: 0 calc(var(--kh) * .05); background: var(--brand-fill); color: var(--light-color-background);
+[data-step="press"] .note-text, [data-step="listen"] .note-text { min-height: 3.2em; }
+[data-step="press"] .keys kbd { translate: 0 calc(var(--kh) * .05); background: var(--brand-fill); color: var(--light-color-background);
   box-shadow: 0 0 0 1px var(--brand-fill); }
-[data-step="speak"] .pill-wave i { height: 60%; }
-[data-step="speak"] .pill-wave i:nth-child(3n) { height: 90%; }
-[data-step="speak"] .pill-wave i:nth-child(4n + 1) { height: 35%; }
+[data-step="listen"] .pill-wave i { height: 60%; }
+[data-step="listen"] .pill-wave i:nth-child(3n) { height: 90%; }
+[data-step="listen"] .pill-wave i:nth-child(4n + 1) { height: 35%; }
 .scroll-demo::after { content: ""; display: block; height: var(--story-travel); }
 .scroll-demo .demo-stage { position: sticky; top: 76px; min-height: calc(100svh - 96px); align-content: center; }
 
@@ -318,6 +318,8 @@ details a { color: var(--ink); text-decoration: underline; text-underline-offset
   .nav-download { padding-inline: 14px; white-space: nowrap; }
   .beats { height: 48px; gap: 8px; } .beats i { width: 14px; } .beats i:nth-child(2) { height: 48px; } .beats i:nth-child(1), .beats i:nth-child(3) { height: 22px; }
   .demo-steps button, .step-static { padding-inline: 10px; gap: 6px; font-size: 13px; }
+  /* The Vietnamese labels are long: on a phone the row keeps one line by dropping the numbers (order reads left to right). */
+  .demo-steps .step-number { display: none; }
   .way-visual { height: 360px; padding: 20px 16px; }
   .tile-grid li { display: flex; align-items: center; gap: 14px; padding: 16px 18px; }
   .tile-grid h3 { margin-top: 0; font-size: 16px; }
@@ -338,15 +340,17 @@ details a { color: var(--ink); text-decoration: underline; text-underline-offset
   /* The beats speak a few times on load, then rest - no loop. */
   .beats i { transform-origin: center; animation: beat 520ms ease-in-out 900ms 4 alternate both; }
   .beats i:nth-child(2) { animation-delay: 1040ms; } .beats i:nth-child(3) { animation-delay: 1180ms; }
-  /* The level bars move while the demo is on "speak", a bounded number of times. */
-  [data-step="speak"] .pill-wave i { animation: level 420ms ease-in-out calc(var(--i) * 60ms) 12 alternate; }
-  [data-step="hold"] .pill-wave i { animation: level 900ms ease-in-out calc(var(--i) * 80ms) 2 alternate; }
-  /* Let go: the pill says "Transcribing…" for a beat and leaves; the words arrive in order. */
-  [data-step="release"] .pill { animation: work 1100ms ease-out both; }
-  [data-step="release"] .pill-rec { animation: hide-now 1100ms step-start both; }
-  [data-step="release"] .pill-work { animation: show-now 1100ms step-start both; }
-  [data-step="release"] .pill-spinner { animation: spin 700ms linear 2; }
-  [data-step="release"] .typed { animation: type-in 180ms ease-out calc(900ms + var(--i) * 45ms) both; }
+  /* The level bars move while the demo is on "listen", a bounded number of times. */
+  [data-step="listen"] .pill-wave i { animation: level 420ms ease-in-out calc(var(--i) * 60ms) 12 alternate; }
+  [data-step="press"] .pill-wave i { animation: level 900ms ease-in-out calc(var(--i) * 80ms) 2 alternate; }
+  /* Write: the pill says "Transcribing…" for a beat and leaves; the words arrive in order. */
+  [data-step="write"] .pill { animation: work 1100ms ease-out both; }
+  /* Write starts with the second press: the keys tap once, then rest. */
+  [data-step="write"] .keys kbd { animation: tap 420ms ease-out both; }
+  [data-step="write"] .pill-rec { animation: hide-now 1100ms step-start both; }
+  [data-step="write"] .pill-work { animation: show-now 1100ms step-start both; }
+  [data-step="write"] .pill-spinner { animation: spin 700ms linear 2; }
+  [data-step="write"] .typed { animation: type-in 180ms ease-out calc(900ms + var(--i) * 45ms) both; }
   .caret { animation: blink 1s steps(1) 6; }
   .way-card, .tile-grid li { transition: translate 360ms cubic-bezier(.2, .7, .2, 1), background-color 240ms ease-out, box-shadow 360ms ease-out; }
   .way-card:hover, .tile-grid li:hover { translate: 0 -4px; background: var(--raised); box-shadow: 0 0 0 1px var(--edge), var(--lift); }
@@ -361,6 +365,7 @@ details a { color: var(--ink); text-decoration: underline; text-underline-offset
     .tile-grid li:nth-child(3) { animation-range: entry 12% cover 36%; }
   }
 }
+@keyframes tap { from, 50% { translate: 0 calc(var(--kh) * .05); background: var(--brand-fill); color: var(--light-color-background); box-shadow: 0 0 0 1px var(--brand-fill); } }
 @keyframes rise { from { opacity: 0; transform: translateY(16px); } }
 @keyframes reveal { from { opacity: 0; transform: translateY(36px) scale(.98); } to { opacity: 1; transform: none; } }
 @keyframes beat { from { scale: 1 1; } to { scale: 1 .55; } }

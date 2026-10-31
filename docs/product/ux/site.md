@@ -28,8 +28,9 @@ file. Vietnamese at `/`, English at `/en/`; the header switches between them.
    Free · M1 Mac or later · Runs on your Mac (short, owner 31/10).
 3. **Demo**: a CSS laptop on Apple's macOS 27 wallpaper, with a two-pane Notes window (today's notes, then the open
    note "Cuối tuần" with its date stamp; the list hides on phones). The pill copies the app's real overlay; the ⌥ Space keys sit on screen just left of it (the pair is centred on phones).
-   Scrolling walks three steps: hold ⌥ Space (the keys light
-   pink, the recording pill shows a level), speak (the pill turns to "Đang chép lời…"), release (the sentence appears
+   Scrolling walks three steps (owner 31/10, the app's default tap-to-start mode): Bấm phím tắt (the keys light
+   pink, the recording pill appears), Lắng nghe (keys up, the level moves), Viết nội dung (the keys tap again, the pill
+   says "Đang chép lời…", the sentence appears
    in the note). Numbered tabs under the laptop jump to a step. On phones and short windows the laptop shows the result
    and the tabs switch steps.
 4. **Features** ("Không chỉ chép lời."): a card scroller with dots and arrows, one title per card. With a mouse it
@@ -53,6 +54,7 @@ file. Vietnamese at `/`, English at `/en/`; the header switches between them.
 
 ## Change log
 - 2026-10-31: created with the first build (owner round 1).
+- 2026-10-31: owner changed the demo flow to Bấm phím tắt → Lắng nghe → Viết nội dung; phones drop the step numbers.
 - 2026-10-31: owner asked to put the shortcut keys inside the demo screen, beside the pill.
 - 2026-10-31: owner asked for a realistic demo: macOS 27 wallpaper, Notes window, real overlay pill.
 - 2026-10-31: owner asked to drop the ¹ ² markers and for an icon drag cursor.

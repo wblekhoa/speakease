@@ -64,7 +64,7 @@ function harness({ reduced = false, tall = false } = {}) {
   const story = createStory(section, { ScrollTrigger, onSelect: i => selections.push(i), onPinned: p => pins.push(p), win });
   return { story, win, document, stage, media, handlers, selections, pins, triggers, classes, properties };
 }
-test('scroll walks hold → speak → let go and back; a tab click scrolls to its step', () => {
+test('scroll walks press → listen → write and back; a tab click scrolls to its step', () => {
   const h = harness();
   const trigger = h.triggers[0];
   assert.deepEqual(h.pins, [true]);
@@ -132,7 +132,7 @@ for (const locale of ['vi', 'en']) test(`${locale}: SSR carries every section, o
   assert.equal((html.match(/data-download=/g) || []).length, 2);
   assert.equal((html.match(new RegExp(`class="button" href="${fallback}"`, 'g')) || []).length, 2);
   // Without JavaScript the demo shows the result and plain steps, not inert tabs.
-  assert.match(html, /data-step="release"/);
+  assert.match(html, /data-step="write"/);
   assert.doesNotMatch(html, /role="tablist"/);
   assert.equal((html.match(/class="typed"/g) || []).length, c.spoken.split(' ').length);
   assert.equal((html.match(/class="way-card"/g) || []).length, 4);

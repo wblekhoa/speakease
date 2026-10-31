@@ -31,7 +31,7 @@ hero, screenshot size, relative URLs that exist, and the notices file. The root 
   0.1.1 ships; unreleased work (meeting notes, live subtitles, the on-device model) is refused by a test.
 - `src/App.jsx`: Header (floating pill), Hero, Laptop + Pill (the scroll demo), Features (card scroller), Compare,
   Install, FAQ, Closing and Footer.
-- `src/story.js`: the pinned three-step demo (hold → speak → release) on GSAP ScrollTrigger, and its cleanup.
+- `src/story.js`: the pinned three-step demo (press → listen → write) on GSAP ScrollTrigger, and its cleanup.
 - `src/release.js`: trusted GitHub release validation; anything else keeps the `/releases/latest` link.
 - `src/analytics.js`: GA4, off while `GA_ID` is empty, on localhost, and under Do Not Track.
 - `src/icons.js`: glyphs copied verbatim from the app's `src/components/icons/bulk.tsx`; `apple`, `sun`, `moon`,
@@ -46,7 +46,7 @@ hero, screenshot size, relative URLs that exist, and the notices file. The root 
 - One title per card; no eyebrow or description stacks; no gradients; few words.
 - Dark ink download button; pink marks the product (hero line, pill, SpeakEase column).
 - The demo is drawn in CSS on `media/wallpaper.jpg` (Apple's macOS 27 wallpaper, supplied by the owner; see
-  decisions.md): hold ⌥ Space, speak, release, and the sentence lands in a two-pane Notes window. The pill copies
+  decisions.md): press ⌥ Space, it listens, it writes: the sentence lands in a two-pane Notes window. The pill copies
   the app's compact overlay (`src/overlay`); the ⌥ Space keys sit on screen just left of it. It pins at 720 px+
   wide and 600 px+ tall with motion allowed; elsewhere it shows the result and the numbered tabs switch steps.
   Without JavaScript the steps are a plain list.

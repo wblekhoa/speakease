@@ -110,7 +110,7 @@ function NotesWindow({ c, words }) {
   </div>;
 }
 /* The demo: a note in another app, the pill and the keys. Scroll walks it
-   through hold → speak → let go where the window is large enough and motion is
+   through press → listen → write where the window is large enough and motion is
    welcome; elsewhere the step tabs do. Without JavaScript, or before the page
    wakes, it shows the result: the sentence already in the note. */
 function Demo({ c }) {

@@ -11,7 +11,7 @@ for (const [route, lang, hero] of [['index.html', 'vi', 'Gõ ít đi,'], ['en/in
   assert.match(html, new RegExp(`<html lang="${lang}">`));
   assert.doesNotMatch(html, /<!--app-html-->|\/src\/|src="\/site.js"/);
   assert.ok(html.includes(hero));
-  assert.match(html, /data-step="release"/);
+  assert.match(html, /data-step="write"/);
   const shot = `${route.startsWith('en/') ? '../' : ''}screenshots/${lang}-history.png`;
   assert.ok(html.includes(`src="${shot}"`));
   const png = readFileSync(resolve(dirname(resolve(dist, route)), shot));

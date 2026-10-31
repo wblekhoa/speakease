@@ -1,5 +1,5 @@
-// The dictation in three steps (owner, 31/10): hold the keys, speak, let go.
-export const stepIds = ['hold', 'speak', 'release'];
+// The dictation in three steps (owner, 31/10): press the shortcut, it listens, it writes.
+export const stepIds = ['press', 'listen', 'write'];
 export const lastStep = stepIds.length - 1;
 // Tabs sit in a row under the laptop; both arrow axes move through them (WAI-ARIA tabs).
 export function keyboardIndex(key, index) {

@@ -5,7 +5,7 @@ product: speakease
 title: "SpeakEase — Landing page (spec)"
 status: draft                 # draft → approved → building → verified → shipped
 updated: 2026-10-31
-summary: "A Vietnamese/English landing page in site/ (React + Vite + GSAP, ReadEase's frame in SpeakEase pink): a scroll demo of hold-speak-release, four feature cards, a checkable comparison, install steps and FAQ; 0.1.1 features only; published after owner approval."
+summary: "A Vietnamese/English landing page in site/ (React + Vite + GSAP, ReadEase's frame in SpeakEase pink): a scroll demo of press-listen-write, four feature cards, a checkable comparison, install steps and FAQ; 0.1.1 features only; published after owner approval."
 tags: [area/publish, area/i18n, area/analytics, stack/react, surface/web]
 figma: []
 relations:
@@ -45,7 +45,7 @@ Owner round 1 (`decisions.md`, 2026-10-31) decided every item below. Built local
 |---|---|---|---|
 | SE-SITE-001 | Add | `/` (vi) and `/en/` (en) are prerendered with their own `lang`, title, description, hreflang and hero text; both locales have the same content shape. | functional |
 | SE-SITE-002 | Add | Every download button starts as `…/releases/latest`; it switches to a `.dmg` only when the GitHub API returns a stable release whose `-arm64.dmg` URL is https on `github.com` under `/wblekhoa/speakease/releases/download/` with a positive size. Any failure keeps the fallback. | contract |
-| SE-SITE-003 | Add | The demo shows three steps (hold ⌥ Space, speak, release). It pins on scroll only at ≥ 720 px wide, ≥ 600 px tall and motion allowed; otherwise it shows the result and the tabs switch steps; without JavaScript the steps are a list. | functional |
+| SE-SITE-003 | Add | The demo shows three steps (press the shortcut, listen, write; owner 31/10). It pins on scroll only at ≥ 720 px wide, ≥ 600 px tall and motion allowed; otherwise it shows the result and the tabs switch steps; without JavaScript the steps are a list. | functional |
 | SE-SITE-004 | Add | The page names only features 0.1.1 ships; meeting notes, subtitles, the on-device model and "coming soon" never appear. | contract |
 | SE-SITE-005 | Add | The comparison with Telex and Mac Dictation states only checkable facts, with dated notes under it (no footnote numbers, owner 31/10) for Apple's language list and for AI needs. | quality |
 | SE-SITE-006 | Add | Light and dark follow the system with a manual toggle; no horizontal overflow at 375 px; colours come only from the app's `theme.css`, no gradients, no `infinite` animation. | quality |
@@ -74,3 +74,4 @@ Owner round 1 (`decisions.md`, 2026-10-31) decided every item below. Built local
   by index; `cardIndex` + test), "no" (×) vs "does not apply" (—) marks, readable footnote markers, no animated layout
   properties (slop-09). Open for the owner: centred section headings (slop-05, inherited from the ReadEase frame) and
   the missing point-of-view card in `goal.md`. Evidence receipt accepted with independent review.
+- 2026-10-31: owner changed the demo flow to Bấm phím tắt → Lắng nghe → Viết nội dung (SE-SITE-003 wording).
