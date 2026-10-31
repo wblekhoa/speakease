@@ -197,10 +197,14 @@ main { overflow-x: clip; }
 .way-track.is-dragging { scroll-snap-type: none; user-select: none; }
 .way-track img { -webkit-user-drag: none; }
 /* The drag cursor: a round ink badge that follows a fine pointer over the track; scrolling stays native for touch. */
-.drag-cursor { position: fixed; z-index: 40; left: -44px; top: -44px; display: grid; place-items: center; width: 88px; height: 88px; border-radius: 50%;
-  background: var(--ink); color: var(--bg); font: 600 14px/1 var(--body); pointer-events: none; opacity: 0; scale: .4; }
+.drag-cursor { position: fixed; z-index: 40; left: -32px; top: -32px; display: flex; align-items: center; justify-content: center; gap: 2px; width: 64px; height: 64px;
+  border-radius: 50%; background: var(--ink); color: var(--bg); box-shadow: var(--lift); pointer-events: none; opacity: 0; scale: .4; }
+.drag-cursor .glyph { width: 18px; height: 18px; }
 .drag-cursor.is-on { opacity: 1; scale: 1; }
-.drag-cursor.is-on.is-pressed { scale: .82; }
+/* Pressed: the badge tightens and the arrows lean outward, the way a held handle pulls. */
+.drag-cursor.is-on.is-pressed { scale: .86; }
+.drag-cursor.is-pressed .glyph:first-child { translate: -2px 0; }
+.drag-cursor.is-pressed .glyph:last-child { translate: 2px 0; }
 .way-card { scroll-snap-align: start; display: grid; grid-template-rows: auto 1fr; border-radius: 28px; background: var(--card); overflow: hidden; }
 .way-visual { display: grid; place-items: center; height: 400px; padding: 32px; }
 .way-card h3 { padding: 4px 28px 28px; font-size: clamp(21px, 2vw, 25px); line-height: 1.25; font-weight: 500; letter-spacing: -.03em; }
@@ -248,7 +252,6 @@ tbody tr:last-child td.ours { border-radius: 0 0 14px 14px; }
 .mark-yes { color: var(--muted); }
 .ours .mark-yes { color: var(--brand); }
 .mark-line { display: block; width: 14px; height: 2px; margin-block: 10px; border-radius: 2px; background: var(--muted); opacity: .5; }
-.mark sup { font-size: 13px; font-weight: 600; color: var(--ink); }
 .mark-no .glyph { width: 16px; height: 16px; margin-block: 3px; rotate: 45deg; color: var(--muted); }
 .notes { max-width: 880px; margin: 20px auto 0; color: var(--muted); font-size: 13px; }
 .notes p + p { margin-top: 4px; }
@@ -319,6 +322,7 @@ details a { color: var(--ink); text-decoration: underline; text-underline-offset
    Hover lifts use `translate` so they compose with the reveal's `transform`. */
 @media (prefers-reduced-motion: no-preference) {
   .drag-cursor { transition: opacity 180ms ease-out, scale 220ms ease-out; }
+  .drag-cursor .glyph { transition: translate 180ms ease-out; }
   .hero > * { animation: rise 760ms cubic-bezier(.2, .7, .2, 1) both; }
   .hero > :nth-child(2) { animation-delay: 80ms; } .hero > :nth-child(3) { animation-delay: 160ms; }
   .hero > :nth-child(4) { animation-delay: 240ms; } .hero > :nth-child(5) { animation-delay: 300ms; }

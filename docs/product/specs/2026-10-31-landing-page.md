@@ -47,7 +47,7 @@ Owner round 1 (`decisions.md`, 2026-10-31) decided every item below. Built local
 | SE-SITE-002 | Add | Every download button starts as `…/releases/latest`; it switches to a `.dmg` only when the GitHub API returns a stable release whose `-arm64.dmg` URL is https on `github.com` under `/wblekhoa/speakease/releases/download/` with a positive size. Any failure keeps the fallback. | contract |
 | SE-SITE-003 | Add | The demo shows three steps (hold ⌥ Space, speak, release). It pins on scroll only at ≥ 720 px wide, ≥ 600 px tall and motion allowed; otherwise it shows the result and the tabs switch steps; without JavaScript the steps are a list. | functional |
 | SE-SITE-004 | Add | The page names only features 0.1.1 ships; meeting notes, subtitles, the on-device model and "coming soon" never appear. | contract |
-| SE-SITE-005 | Add | The comparison with Telex and Mac Dictation states only checkable facts, with dated footnotes for Apple's language list and for AI needs. | quality |
+| SE-SITE-005 | Add | The comparison with Telex and Mac Dictation states only checkable facts, with dated notes under it (no footnote numbers, owner 31/10) for Apple's language list and for AI needs. | quality |
 | SE-SITE-006 | Add | Light and dark follow the system with a manual toggle; no horizontal overflow at 375 px; colours come only from the app's `theme.css`, no gradients, no `infinite` animation. | quality |
 | SE-SITE-007 | Add | Analytics load only with a GA4 ID, off localhost, and without Do Not Track. | contract |
 | SE-SITE-008 | Add | The licence (PolyForm Noncommercial, Handy MIT) and the AI cleanup requirement (Apple Intelligence or the user's own API key) are visible on the page. | contract |

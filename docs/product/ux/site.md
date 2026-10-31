@@ -32,12 +32,12 @@ file. Vietnamese at `/`, English at `/en/`; the header switches between them.
    in the note). Numbered tabs under the laptop jump to a step. On phones and short windows the laptop shows the result
    and the tabs switch steps.
 4. **Features** ("Không chỉ chép lời."): a card scroller with dots and arrows, one title per card. With a mouse it
-   drags (a round "Kéo" badge replaces the pointer over it) and settles on the nearest card; on touch it swipes. AI cleanup (raw
+   drags (a round badge with left/right arrows replaces the pointer over it) and settles on the nearest card; on touch it swipes. AI cleanup (raw
    above, cleaned below, and the line that it needs Apple Intelligence or your own API key); translate while speaking
    (Vietnamese said, English pasted, ⌃ ⌥ Space); files and links (a 10-minute video in about 11 seconds); History
    (the app's screenshot).
 5. **Compare** ("Gõ Telex, đọc chính tả của Mac, hay SpeakEase?"): six rows, the SpeakEase column tinted pink, two
-   dated footnotes.
+   dated notes under it (no footnote numbers).
 6. **Install** ("Cài trong một phút."): download the .dmg, drag to Applications, allow Microphone and Accessibility.
 7. **FAQ**: seven questions (free and licence, privacy, which Macs, internet, best model, permissions, YouTube links).
 8. **Closing**: "SpeakEase, miễn phí cho Mac.", the download button, version · size · .dmg.
@@ -53,4 +53,5 @@ file. Vietnamese at `/`, English at `/en/`; the header switches between them.
 ## Change log
 - 2026-10-31: created with the first build (owner round 1).
 - 2026-10-31: owner asked for a realistic demo: macOS 27 wallpaper, Notes window, real overlay pill.
+- 2026-10-31: owner asked to drop the ¹ ² markers and for an icon drag cursor.
 - 2026-10-31: owner asked for mouse drag with a custom cursor on the card scroller, and rounder demo keys.

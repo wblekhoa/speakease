@@ -253,7 +253,7 @@ function Features({ c, screenshots }) {
         <img src={`${screenshots}history.png`} width="1760" height="1240" loading="lazy" alt={c.historyAlt} />
       </figure></Card>
     </div>
-    {enhanced && <span className="drag-cursor" ref={cursor} aria-hidden="true">{c.drag}</span>}
+    {enhanced && <span className="drag-cursor" ref={cursor} aria-hidden="true"><Glyph name="arrowLeft" /><Glyph name="arrowRight" /></span>}
     <div className="way-controls container" hidden={!enhanced}>
       <div className="way-dots" aria-hidden="true">{Array.from({ length: count }, (_, i) => <span key={i} className={i === current ? 'is-on' : undefined} />)}</div>
       <div className="way-arrows">
@@ -265,10 +265,9 @@ function Features({ c, screenshots }) {
 }
 const MARKS = { yes: 'check', no: 'plus', na: null }; // 'no' turns the plus into ×; 'na' is a faint dash
 function Compare({ c }) {
-  const cell = value => {
-    const [kind, note = ''] = [value.replace(/[¹²]/g, ''), (value.match(/[¹²]/) || [''])[0]];
+  const cell = kind => {
     const label = { yes: c.yes, no: c.no, na: c.na }[kind];
-    return <span className={`mark mark-${kind}`}>{MARKS[kind] ? <Glyph name={MARKS[kind]} /> : <span className="mark-line" aria-hidden="true" />}<span className="sr-only">{label}</span>{note && <sup aria-hidden="true">{note}</sup>}</span>;
+    return <span className={`mark mark-${kind}`}>{MARKS[kind] ? <Glyph name={MARKS[kind]} /> : <span className="mark-line" aria-hidden="true" />}<span className="sr-only">{label}</span></span>;
   };
   return <section className="compare section container" id="compare" aria-labelledby="compare-title">
     <div className="heading"><h2 id="compare-title"><Lines value={c.compare} /></h2></div>
