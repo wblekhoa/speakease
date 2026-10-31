@@ -46,7 +46,7 @@ test('keyboard wraps, Home/End jump, other keys do not intercept', () => {
   assert.equal(keyboardIndex('End', 0), 2);
   assert.equal(keyboardIndex('Tab', 0), undefined);
 });
-test('scroll progress splits into three equal steps, clamped at the ends', () => {
+test('scroll progress picks the tab the laptop shows (press to .23, listen to .6), clamped at the ends', () => {
   assert.deepEqual([-.1, 0, .2, .23, .5, .59, .6, .9, 1, 1.2].map(progressIndex), [0, 0, 0, 1, 1, 1, 2, 2, 2, 2]);
 });
 // No pill until the first press; the second press transcribes; the keys move with the scroll.
