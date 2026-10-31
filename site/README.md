@@ -62,11 +62,12 @@ Not published. Running `.github/workflows/pages.yml` is a deploy and waits for t
 runs only by hand, from `main`. When the owner says so, two steps from the repository root:
 
 ```sh
-git fetch origin && git merge-base --is-ancestor origin/main <site-branch> && git push origin <site-branch-sha>:main
+git fetch origin && git merge-base --is-ancestor origin/main origin/claude/speakease-site-on-main && git push origin "$(git rev-parse origin/claude/speakease-site-on-main)":refs/heads/main
 site/publish.sh
 ```
 
-The first line fast-forwards `main` to a branch that already contains `main` (no force). `site/publish.sh` enables
+The first line fast-forwards `main` to `claude/speakease-site-on-main` (the landing page alone on top of `main`, no
+force); if `main` has moved since, merge `main` into that branch first. `site/publish.sh` enables
 Pages (GitHub Actions source) the first time, runs the workflow on `main`, waits for it, and checks that `/` and `/en/`
 answer at https://wblekhoa.github.io/speakease/. The website's short path `/speakease` (publishing company) redirects
 here once that URL is live.
