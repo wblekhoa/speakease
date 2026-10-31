@@ -137,10 +137,10 @@ function Demo({ c }) {
       <Laptop>
         <div className="desk" role={enhanced ? 'tabpanel' : undefined} id="demo-panel" aria-labelledby={enhanced ? `step-${stepIds[selected]}` : undefined}>
           <NotesWindow c={c} words={words} />
+          <p className="keys" aria-hidden="true"><kbd className="key-option">⌥</kbd><kbd className="key-space">Space</kbd></p>
           <Pill c={c} />
         </div>
       </Laptop>
-      <p className="keys" aria-hidden="true"><kbd className="key-option">⌥</kbd><kbd className="key-space">Space</kbd></p>
       <ol className="demo-steps" role={enhanced ? 'tablist' : undefined} aria-label={c.demoSteps}>
         {c.steps.map(([title, detail], i) => <li key={title} role={enhanced ? 'presentation' : undefined}>
           {enhanced

@@ -114,7 +114,7 @@ main { overflow-x: clip; }
    follow the screen (cqw), so the scene is the same picture at any width. */
 .demo { padding-top: 24px; }
 .demo-stage { display: grid; justify-items: center; }
-.desk { position: absolute; inset: 0; display: grid; place-items: center; background: var(--desk) url("./media/wallpaper.jpg") center / cover; }
+.desk { --ph: max(26px, 4.4cqw); --shift: 0px; position: absolute; inset: 0; display: grid; place-items: center; background: var(--desk) url("./media/wallpaper.jpg") center / cover; }
 /* A Notes window in the macOS layout: the note list, then the open note with its toolbar and date stamp. */
 .note { display: grid; grid-template-columns: 26cqw 1fr; width: 76cqw; height: 46cqw; border-radius: 1.6cqw; background: var(--bg);
   box-shadow: 0 0 0 1px var(--edge), var(--shadow); overflow: hidden; translate: 0 -2.5cqw; text-align: left; }
@@ -145,12 +145,14 @@ main { overflow-x: clip; }
 .caret { display: inline-block; width: 2px; height: 1.1em; margin-left: 2px; vertical-align: -.15em; background: var(--brand); }
 /* Narrow screens: Notes hides its list, as the app does in a small window. */
 @container (max-width: 520px) {
-  .note { grid-template-columns: 1fr; width: 82cqw; height: 58cqw; }
+  .note { grid-template-columns: 1fr; width: 82cqw; height: 46cqw; translate: 0 -4.5cqw; }
+  /* Too narrow for the keys beside a centred pill: centre the pair instead. */
+  .desk { --shift: calc(var(--ph) * 1.5); }
   .note-list { display: none; }
 }
 /* The pill: the app's compact overlay at its own proportions (236 x 40, radius 24, flat, hairline), every inner size
    a share of its height. Recording: dot | nine bars | cancel. Working: spinner | label | cancel. */
-.pill { --ph: max(26px, 4.4cqw); position: absolute; left: 50%; bottom: 2.2cqw; translate: -50% 0; display: grid; width: calc(var(--ph) * 5.9); height: var(--ph);
+.pill { position: absolute; left: calc(50% + var(--shift)); bottom: 2.2cqw; translate: -50% 0; display: grid; width: calc(var(--ph) * 5.9); height: var(--ph);
   padding-inline: calc(var(--ph) * .25); border-radius: 999px; background: color-mix(in srgb, var(--bg) 98%, transparent);
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--muted) 22%, transparent); font-size: calc(var(--ph) * .3); color: var(--muted); }
 .pill > span { grid-area: 1 / 1; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; }
@@ -163,10 +165,16 @@ main { overflow-x: clip; }
 .pill-spinner { justify-self: start; margin-left: calc(var(--ph) * .125); width: calc(var(--ph) * .325); height: calc(var(--ph) * .325); box-sizing: border-box;
   border: 2px solid color-mix(in srgb, var(--muted) 12%, transparent); border-top-color: var(--brand); border-radius: 50%; }
 .pill-label { padding-inline: calc(var(--ph) * .2); white-space: nowrap; }
-.keys { display: flex; gap: 8px; margin-top: 28px; }
-.keys kbd { min-width: 48px; height: 44px; border-radius: 14px; font-size: 16px; transition: translate 160ms ease-out, background-color 160ms ease-out, color 160ms ease-out; }
-.keys .key-space { min-width: 160px; }
-.demo-steps { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 20px; padding: 4px; border: 1px solid var(--edge); border-radius: 999px; background: var(--card); }
+/* The shortcut on screen, just left of the pill, so pressing it and the pill appearing read as one move. */
+.keys { --kh: calc(var(--ph) * .8); position: absolute; right: calc(50% - var(--shift) + var(--ph) * 2.95 + max(6px, 1.4cqw)); bottom: calc(2.2cqw + var(--ph) * .1);
+  display: flex; gap: max(3px, .5cqw); }
+.keys kbd { min-width: var(--kh); height: var(--kh); padding-inline: calc(var(--kh) * .3); border: 0; border-radius: calc(var(--kh) * .28);
+  background: var(--bg); color: var(--ink); font-size: calc(var(--kh) * .36);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--muted) 22%, transparent), 0 calc(var(--kh) * .06) 0 color-mix(in srgb, var(--muted) 40%, transparent);
+  transition: translate 160ms ease-out, background-color 160ms ease-out, color 160ms ease-out, box-shadow 160ms ease-out; }
+.keys .key-option { font-size: calc(var(--kh) * .44); }
+.keys .key-space { min-width: calc(var(--kh) * 2.2); }
+.demo-steps { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 28px; padding: 4px; border: 1px solid var(--edge); border-radius: 999px; background: var(--card); }
 .demo-steps button, .step-static { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; color: var(--muted); min-height: 40px; padding: 6px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; white-space: nowrap; }
 .demo-steps button[aria-selected="true"] { background: var(--bg); color: var(--ink); box-shadow: var(--lift); }
 .step-number { display: inline-grid; place-items: center; width: 20px; height: 20px; border-radius: 999px; background: var(--edge); color: var(--muted); font-size: 11px; font-weight: 700; }
@@ -179,7 +187,8 @@ main { overflow-x: clip; }
 [data-step="hold"] .typed, [data-step="speak"] .typed { display: none; }
 .typed { white-space: pre-wrap; }
 [data-step="hold"] .note-text, [data-step="speak"] .note-text { min-height: 3.2em; }
-[data-step="hold"] .keys kbd, [data-step="speak"] .keys kbd { translate: 0 2px; background: var(--brand-fill); border-color: var(--brand-fill); color: var(--light-color-background); }
+[data-step="hold"] .keys kbd, [data-step="speak"] .keys kbd { translate: 0 calc(var(--kh) * .05); background: var(--brand-fill); color: var(--light-color-background);
+  box-shadow: 0 0 0 1px var(--brand-fill); }
 [data-step="speak"] .pill-wave i { height: 60%; }
 [data-step="speak"] .pill-wave i:nth-child(3n) { height: 90%; }
 [data-step="speak"] .pill-wave i:nth-child(4n + 1) { height: 35%; }
@@ -307,7 +316,6 @@ details a { color: var(--ink); text-decoration: underline; text-underline-offset
   .theme-toggle { width: 34px; }
   .nav-download { padding-inline: 14px; white-space: nowrap; }
   .beats { height: 48px; gap: 8px; } .beats i { width: 14px; } .beats i:nth-child(2) { height: 48px; } .beats i:nth-child(1), .beats i:nth-child(3) { height: 22px; }
-  .keys kbd { min-width: 40px; height: 38px; font-size: 14px; } .keys .key-space { min-width: 120px; }
   .demo-steps button, .step-static { padding-inline: 10px; gap: 6px; font-size: 13px; }
   .way-visual { height: 360px; padding: 20px 16px; }
   .tile-grid li { display: flex; align-items: center; gap: 14px; padding: 16px 18px; }
