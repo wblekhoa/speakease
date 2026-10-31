@@ -8,22 +8,31 @@ export function keyboardIndex(key, index) {
 }
 export const progressIndex = progress => Math.max(0, Math.min(2, Math.floor(progress * 3)));
 
-// One continuous timeline over the three steps (0 → 1), so the key press moves with
+// One continuous timeline over the three steps (0 → 1), so the key presses move with
 // the scroll (owner, 31/10). Phase: idle (no pill yet) → rec (the pill pops up and
 // listens) → work (second press: "Transcribing…") → done (the sentence is in).
-// `key` is how far the keys are pressed (0-1); `show` whether they are on screen at all (they come
-// up for a press and leave once it is done, owner 31/10); `typed` how much of the sentence shows.
+// The keys are a real chord, one at a time (owner, 31/10): ⌥ comes up and goes down,
+// then Space; Space lets go first, then ⌥, and both leave. `alt`/`space` are how far
+// each is pressed (0-1), `altShow`/`spaceShow` whether it is on screen; `typed` is how
+// much of the sentence shows.
 const ramp = (x, a, b) => Math.max(0, Math.min(1, (x - a) / (b - a)));
+const DOWN = .44;
+function chord(x) {
+  const hide = 1 - ramp(x, .72, .88);
+  return {
+    altShow: Math.min(ramp(x, 0, .1), hide), alt: Math.min(ramp(x, .1, .22), 1 - ramp(x, .6, .68)),
+    spaceShow: Math.min(ramp(x, .22, .32), hide), space: Math.min(ramp(x, .32, DOWN), 1 - ramp(x, .55, .63)),
+  };
+}
+// The first press fills the first step; the second starts late in "listen" and is down early in "write".
+const second = p => (p - .6) / .22;
 export function demoState(progress) {
   const p = Math.max(0, Math.min(1, progress));
-  if (p < 1 / 3) {
-    const a = p * 3;
-    return { phase: a < .45 ? 'idle' : 'rec', key: a < .5 ? ramp(a, .15, .45) : 1 - ramp(a, .55, .8), show: Math.min(ramp(a, 0, .15), 1 - ramp(a, .75, .9)), typed: 0 };
-  }
-  if (p < 2 / 3) return { phase: 'rec', key: 0, show: ramp((p - 1 / 3) * 3, .8, 1), typed: 0 };
-  const c = (p - 2 / 3) * 3;
-  return { phase: c < .15 ? 'rec' : c < .85 ? 'work' : 'done', key: c < .2 ? ramp(c, 0, .15) : 1 - ramp(c, .2, .35), show: 1 - ramp(c, .4, .55), typed: ramp(c, .3, .85) };
+  const keys = p < 1 / 3 ? chord(p * 3) : chord(second(p));
+  const phase = p * 3 < DOWN ? 'idle' : second(p) < DOWN ? 'rec' : p < .95 ? 'work' : 'done';
+  return { phase, ...keys, typed: ramp(p, .73, .95) };
 }
+const VARS = ['alt', 'altShow', 'space', 'spaceShow', 'typed'];
 // Where each tab lands on the timeline: just after the press, mid-listen, the end.
 export const stepTargets = [.3, .5, 1];
 
@@ -39,11 +48,9 @@ export function createStory(section, { ScrollTrigger, onSelect, onPinned = () =>
   let step = 1;
   let tween = 0;
   const apply = progress => {
-    const { phase, key, show, typed } = demoState(progress);
-    stage.dataset.phase = phase;
-    stage.style.setProperty('--key', key.toFixed(3));
-    stage.style.setProperty('--show', show.toFixed(3));
-    stage.style.setProperty('--typed', typed.toFixed(3));
+    const state = demoState(progress);
+    stage.dataset.phase = state.phase;
+    for (const name of VARS) stage.style.setProperty(`--${name}`, state[name].toFixed(3));
   };
   // Without the pin, a tab plays its own stretch of the timeline (or jumps, with reduced motion).
   const play = index => {
@@ -103,9 +110,7 @@ export function createStory(section, { ScrollTrigger, onSelect, onPinned = () =>
       win.cancelAnimationFrame?.(tween);
       trigger?.kill();
       delete stage.dataset.phase;
-      stage.style.removeProperty('--key');
-      stage.style.removeProperty('--show');
-      stage.style.removeProperty('--typed');
+      for (const name of VARS) stage.style.removeProperty(`--${name}`);
       win.removeEventListener('resize', configure);
       motion.removeEventListener('change', configure);
       section.classList.remove('scroll-demo');

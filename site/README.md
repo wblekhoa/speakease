@@ -47,7 +47,7 @@ hero, screenshot size, relative URLs that exist, and the notices file. The root 
 - Dark ink download button; pink marks the product (hero line, pill, SpeakEase column).
 - The demo is drawn in CSS on `media/wallpaper.jpg` (Apple's macOS 27 wallpaper, supplied by the owner; see
   decisions.md): press ⌥ Space, it listens, it writes: the sentence lands in a two-pane Notes window. The pill copies
-  the app's compact overlay (`src/overlay`); the ⌥ Space keycaps sit centred above it, shown only around each press.
+  the app's compact overlay (`src/overlay`); the ⌥ Space keycaps sit centred above it, shown only around each press, ⌥ then Space.
   One timeline in `story.js` (`demoState`) drives the press depth, the pill pop and the typing from the scroll. It pins at 720 px+
   wide and 600 px+ tall with motion allowed; elsewhere it shows the result and the numbered tabs switch steps.
   Without JavaScript the steps are a plain list.

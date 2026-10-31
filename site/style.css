@@ -163,13 +163,14 @@ main { overflow-x: clip; }
   border: 2px solid color-mix(in srgb, var(--muted) 12%, transparent); border-top-color: var(--brand); border-radius: 50%; }
 .pill-label { padding-inline: calc(var(--ph) * .2); white-space: nowrap; }
 /* The shortcut: keycaps with depth, centred just above the pill, over the window if need be. The scroll timeline in
-   story.js sets `--show` (they rise in for a press and leave after it) and `--key` (how far they are pressed: they
-   sink, lose most of their side and turn pink). With no timeline they are not shown. */
-.keys { --kh: calc(var(--ph) * .9); --kd: calc(var(--kh) * .16); --k: var(--key, 0); position: absolute; left: 50%;
-  opacity: var(--show, 0); translate: -50% calc((1 - var(--show, 0)) * 40%);
+   story.js plays a real chord, one key at a time: each cap rises in (`--s`: `--altShow`/`--spaceShow`) and is pressed
+   (`--k`: `--alt`/`--space`), sinking, losing most of its side and turning pink. With no timeline they are not shown. */
+.keys { --kh: calc(var(--ph) * .9); --kd: calc(var(--kh) * .16); position: absolute; left: 50%; translate: -50% 0;
   bottom: calc(2.2cqw + var(--ph) + max(8px, 1.6cqw)); display: flex; gap: max(4px, .6cqw); }
+.keys .key-option { --k: var(--alt, 0); --s: var(--altShow, 0); }
+.keys .key-space { --k: var(--space, 0); --s: var(--spaceShow, 0); }
 .keys kbd { min-width: var(--kh); height: var(--kh); padding-inline: calc(var(--kh) * .3); border: 0; border-radius: calc(var(--kh) * .26);
-  translate: 0 calc(var(--kd) * .7 * var(--k)); font-size: calc(var(--kh) * .36);
+  opacity: var(--s); translate: 0 calc(var(--kd) * .7 * var(--k) + (1 - var(--s)) * var(--kh) * .4); font-size: calc(var(--kh) * .36);
   background: color-mix(in srgb, var(--brand-fill) calc(var(--k) * 100%), var(--bg));
   /* The label stays dark until the cap is mostly pink, so it never washes out mid-press. */
   color: color-mix(in srgb, var(--light-color-background) clamp(0%, (var(--k) - .5) * 200%, 100%), var(--ink));
