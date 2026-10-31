@@ -105,6 +105,12 @@ pub struct CliArgs {
     #[arg(long, value_name = "TRANSCRIPT", hide = true)]
     pub meeting_notes: Option<PathBuf>,
 
+    /// SpeakEase: tap one app (bundle id or pid) for --probe-seconds with no
+    /// microphone (muted with --probe-mute), print the meeting transcript and
+    /// its notes, and exit. Saves nothing to History.
+    #[arg(long, value_name = "APP", hide = true)]
+    pub meeting_probe: Option<String>,
+
     /// Template for --meeting-notes: meeting, call, lecture or interview
     /// (default: AI guesses).
     #[arg(long, value_name = "KIND", hide = true)]

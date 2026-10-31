@@ -472,6 +472,8 @@ pub fn checkbox_action_items(notes: &str, heading: &str) -> String {
         let bullet = trimmed
             .strip_prefix("- ")
             .or_else(|| trimmed.strip_prefix("* "));
+        // A nested bullet ("- - action", Apple Intelligence 31/10) is one item.
+        let bullet = bullet.map(|rest| rest.trim_start_matches(['-', '*', ' ']));
         let item = match bullet {
             Some(rest) if inside => rest.trim(),
             _ => {
@@ -1097,11 +1099,11 @@ mod tests {
     // SE-MEET-009
     #[test]
     fn action_items_become_checkboxes_with_the_owner_after_the_action() {
-        let notes = "## Quyết định\n- Chốt ngày 15/11\n## Việc cần làm\n- [Hùng] gửi thiết kế trước 7/11\n- [ ] Trang viết ghi chú phát hành\n* kiểm tra máy chủ\n- [ ] — nhắn Lan hôm nay";
+        let notes = "## Quyết định\n- Chốt ngày 15/11\n## Việc cần làm\n- [Hùng] gửi thiết kế trước 7/11\n- [ ] Trang viết ghi chú phát hành\n* kiểm tra máy chủ\n- [ ] — nhắn Lan hôm nay\n- - chuẩn bị bài đăng — Anh Minh";
         let fixed = checkbox_action_items(notes, "Việc cần làm");
         assert_eq!(
             fixed,
-            "## Quyết định\n- Chốt ngày 15/11\n## Việc cần làm\n- [ ] gửi thiết kế trước 7/11 — Hùng\n- [ ] Trang viết ghi chú phát hành\n- [ ] kiểm tra máy chủ\n- [ ] nhắn Lan hôm nay"
+            "## Quyết định\n- Chốt ngày 15/11\n## Việc cần làm\n- [ ] gửi thiết kế trước 7/11 — Hùng\n- [ ] Trang viết ghi chú phát hành\n- [ ] kiểm tra máy chủ\n- [ ] nhắn Lan hôm nay\n- [ ] chuẩn bị bài đăng — Anh Minh"
         );
     }
 

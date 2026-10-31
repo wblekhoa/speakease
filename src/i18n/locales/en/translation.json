@@ -15,7 +15,8 @@
     "translateTo": "Translate to",
     "off": "Off",
     "openApp": "Open SpeakEase",
-    "liveSubtitles": "Live subtitles"
+    "liveSubtitles": "Live subtitles",
+    "meetingNotes": "Meeting notes"
   },
   "sidebar": {
     "general": "General",
@@ -208,6 +209,10 @@
           "live_subtitles": {
             "name": "Live subtitles",
             "description": "Turns subtitles on or off for the app chosen on the Speak page."
+          },
+          "meeting_notes": {
+            "name": "Meeting notes",
+            "description": "Starts or stops recording the meeting app and your microphone; notes are written after."
           }
         },
         "errors": {
@@ -1115,6 +1120,22 @@
       "qwen3.5-4b": "Close to the meaning; keeps terms of art.",
       "gemma-4-e4b": "Heavy (over 5 GB); for Macs with plenty of memory.",
       "qwen3.5-9b": "Heaviest (almost 6 GB) and slower; for powerful Macs."
+    }
+  },
+  "meeting": {
+    "consent": "Recording. Remember to tell everyone.",
+    "transcribing": "Transcribing the meeting…",
+    "notes": "Writing the notes…",
+    "stop": "Stop",
+    "close": "Close",
+    "errors": {
+      "unsupported": "Meeting notes need macOS 14.2 or later.",
+      "no-app": "No meeting app is running. Open Zoom, Meet, Teams or another call app first.",
+      "running": "A meeting is already recording.",
+      "microphone": "The microphone could not be opened.",
+      "no-model": "Choose a speech model on the Models page first.",
+      "vad": "Speech detection could not start.",
+      "other": "The meeting could not be recorded or saved."
     }
   }
 }

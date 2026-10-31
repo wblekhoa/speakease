@@ -55,6 +55,14 @@ export const RecordingSettings: React.FC = () => {
             grouped
           />
         )}
+        {/* Meeting notes (beta), the same way. */}
+        {experimental && !isLinux && (
+          <ShortcutInput
+            shortcutId="meeting_notes"
+            descriptionMode="inline"
+            grouped
+          />
+        )}
         {/* Cancel shortcut remains hidden on Linux because of dynamic shortcut instability. */}
         {!isLinux && (
           <ShortcutInput shortcutId="cancel" descriptionMode="inline" grouped />

@@ -15,7 +15,8 @@
     "translateTo": "Dịch sang",
     "off": "Tắt",
     "openApp": "Mở SpeakEase",
-    "liveSubtitles": "Phụ đề trực tiếp"
+    "liveSubtitles": "Phụ đề trực tiếp",
+    "meetingNotes": "Ghi chú cuộc họp"
   },
   "sidebar": {
     "general": "Chung",
@@ -257,6 +258,10 @@
           "live_subtitles": {
             "name": "Phụ đề trực tiếp",
             "description": "Bật hoặc tắt phụ đề cho ứng dụng đã chọn trên trang Nói."
+          },
+          "meeting_notes": {
+            "name": "Ghi chú cuộc họp",
+            "description": "Bắt đầu hoặc dừng ghi âm ứng dụng họp và micro của bạn; ghi chú được viết sau đó."
           }
         },
         "errors": {
@@ -1115,6 +1120,22 @@
       "qwen3.5-4b": "Dịch sát nghĩa, giữ đúng thuật ngữ.",
       "gemma-4-e4b": "Nặng (trên 5 GB), chỉ nên dùng khi máy nhiều RAM.",
       "qwen3.5-9b": "Nặng nhất (gần 6 GB), chậm hơn; cho máy mạnh."
+    }
+  },
+  "meeting": {
+    "consent": "Đang ghi âm. Nhớ báo cho mọi người biết nhé.",
+    "transcribing": "Đang chép lời cuộc họp…",
+    "notes": "Đang viết ghi chú…",
+    "stop": "Dừng",
+    "close": "Đóng",
+    "errors": {
+      "unsupported": "Ghi chú cuộc họp cần macOS 14.2 trở lên.",
+      "no-app": "Chưa có ứng dụng họp nào đang chạy. Hãy mở Zoom, Meet, Teams hoặc ứng dụng gọi khác trước.",
+      "running": "Đang có một cuộc họp được ghi âm.",
+      "microphone": "Không mở được micro.",
+      "no-model": "Hãy chọn mô hình nhận giọng nói ở trang Mô hình trước.",
+      "vad": "Không khởi động được bộ nhận biết giọng nói.",
+      "other": "Không ghi âm hoặc lưu được cuộc họp."
     }
   }
 }

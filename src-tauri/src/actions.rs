@@ -1041,6 +1041,19 @@ impl ShortcutAction for LiveSubtitlesAction {
     fn stop(&self, _app: &AppHandle, _binding_id: &str, _shortcut_str: &str) {}
 }
 
+// SE-MEET-001
+/// Meeting notes (beta): starts recording a meeting, or stops it. Never a
+/// dictation; a start that fails says why on the meeting bar.
+struct MeetingAction;
+
+impl ShortcutAction for MeetingAction {
+    fn start(&self, app: &AppHandle, _binding_id: &str, _shortcut_str: &str) {
+        let _ = crate::meeting::session::toggle(app);
+    }
+
+    fn stop(&self, _app: &AppHandle, _binding_id: &str, _shortcut_str: &str) {}
+}
+
 // Test Action
 struct TestAction;
 
@@ -1098,6 +1111,10 @@ pub static ACTION_MAP: Lazy<HashMap<String, Arc<dyn ShortcutAction>>> = Lazy::ne
     map.insert(
         crate::settings::LIVE_SUBTITLES_BINDING_ID.to_string(),
         Arc::new(LiveSubtitlesAction) as Arc<dyn ShortcutAction>,
+    );
+    map.insert(
+        crate::settings::MEETING_BINDING_ID.to_string(),
+        Arc::new(MeetingAction) as Arc<dyn ShortcutAction>,
     );
     map.insert(
         "test".to_string(),

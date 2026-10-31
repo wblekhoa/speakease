@@ -67,6 +67,9 @@ struct MenuInputs {
     /// Live subtitles (beta): None when hidden (Experimental off or the Mac
     /// cannot tap an app), else whether they are on.
     subtitles: Option<bool>,
+    /// Meeting notes (beta): None when hidden, as subtitles, else whether a
+    /// meeting is recording.
+    meeting: Option<bool>,
 }
 
 /// What the tray's quick items show: the language listened for, and while
@@ -382,6 +385,8 @@ fn compute_desired(app: &AppHandle, icon_state: TrayIconState) -> TrayDesired {
             quick: QuickInputs::from_settings(&settings),
             subtitles: (settings.experimental_enabled && crate::system_audio_tap::available())
                 .then(crate::live_subtitles::session::is_running),
+            meeting: (settings.experimental_enabled && crate::system_audio_tap::available())
+                .then(crate::meeting::session::is_recording),
             selected_model: settings.selected_model,
             downloaded_models,
             locale: settings.app_language,
@@ -583,6 +588,18 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
         )?),
         None => None,
     };
+    // SE-MEET-001: meeting notes (beta) start/stop.
+    let meeting_i = match inputs.meeting {
+        Some(on) => Some(CheckMenuItem::with_id(
+            app,
+            "meeting_notes",
+            &strings.meeting_notes,
+            true,
+            on,
+            None::<&str>,
+        )?),
+        None => None,
+    };
     let quit_i = MenuItem::with_id(app, "quit", &strings.quit, true, quit_accelerator)?;
     let separator = || PredefinedMenuItem::separator(app);
 
@@ -647,6 +664,9 @@ fn build_menu(app: &AppHandle, inputs: &MenuInputs) -> tauri::Result<(Menu<tauri
             &open_history_i,
         ];
         if let Some(item) = &subtitles_i {
+            items.push(item);
+        }
+        if let Some(item) = &meeting_i {
             items.push(item);
         }
         items.extend([
@@ -921,6 +941,7 @@ mod tests {
             locale: "en".to_string(),
             quick: QuickInputs::from_settings(&crate::settings::get_default_settings()),
             subtitles: None,
+            meeting: None,
         }
     }
 

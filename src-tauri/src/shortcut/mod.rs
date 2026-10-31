@@ -1154,6 +1154,16 @@ pub fn change_experimental_enabled_setting(app: AppHandle, enabled: bool) -> Res
             let _ = register_shortcut(&app, binding);
         }
     }
+    // Meeting notes (beta) the same way; a recording meeting is stopped
+    // (and still saved).
+    if let Some(binding) = settings.bindings.get(settings::MEETING_BINDING_ID).cloned() {
+        if settings::binding_switched_off(settings::MEETING_BINDING_ID, &settings) {
+            let _ = unregister_shortcut(&app, binding);
+            crate::meeting::session::stop();
+        } else {
+            let _ = register_shortcut(&app, binding);
+        }
+    }
     tray::update_tray_menu(&app);
     Ok(())
 }

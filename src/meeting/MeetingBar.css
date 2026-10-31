@@ -1,0 +1,113 @@
+@import "../styles/theme.css";
+
+/* The meeting bar: one pill at the top of the screen (meeting_window.rs,
+   460 x 64), in the app's surface and text tokens so it follows light and
+   dark. No native blur behind it, so the pill is solid. */
+html,
+body {
+  background: transparent;
+}
+
+.mb-bar {
+  box-sizing: border-box;
+  margin: 8px;
+  height: calc(100% - 16px);
+  padding: 0 8px 0 16px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--color-hairline);
+  border-radius: 999px;
+  user-select: none;
+  cursor: default;
+}
+
+.mb-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.mb-dot {
+  flex: none;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--color-error);
+  animation: mb-pulse 1.6s ease-in-out infinite;
+}
+
+@keyframes mb-pulse {
+  50% {
+    opacity: 0.35;
+  }
+}
+
+.mb-timer {
+  flex: none;
+  font-variant-numeric: tabular-nums;
+  color: var(--color-mid-gray);
+}
+
+.mb-stop,
+.mb-close {
+  flex: none;
+  height: 32px;
+  border: none;
+  border-radius: 999px;
+  font: inherit;
+  cursor: pointer;
+}
+
+.mb-stop {
+  padding: 0 14px;
+  font-weight: 600;
+  color: var(--color-background);
+  background: var(--color-text);
+}
+
+.mb-close {
+  width: 32px;
+  font-size: 18px;
+  color: var(--color-text);
+  background: var(--color-glass);
+}
+
+.mb-close:hover {
+  background: var(--color-glass-hover);
+}
+
+.mb-error .mb-text {
+  white-space: normal;
+  line-height: 1.3;
+}
+
+.mb-spinner {
+  flex: none;
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  border: 2px solid var(--color-hairline);
+  border-top-color: var(--color-text);
+  animation: mb-spin 0.9s linear infinite;
+}
+
+@keyframes mb-spin {
+  to {
+    transform: rotate(360deg);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .mb-dot,
+  .mb-spinner {
+    animation: none;
+  }
+}

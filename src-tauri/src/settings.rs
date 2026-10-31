@@ -33,11 +33,14 @@ pub fn is_post_process_binding(id: &str) -> bool {
 /// and the Mac can tap an app, so it never takes the keys from anyone else.
 pub const LIVE_SUBTITLES_BINDING_ID: &str = "live_subtitles";
 
+/// Meeting notes (beta) start/stop, behind Experimental like live subtitles.
+pub const MEETING_BINDING_ID: &str = "meeting_notes";
+
 // SE-LIVE-001
 /// Whether a shortcut stays unregistered with these settings.
 pub fn binding_switched_off(id: &str, settings: &AppSettings) -> bool {
     (is_post_process_binding(id) && !settings.post_process_enabled)
-        || (id == LIVE_SUBTITLES_BINDING_ID
+        || ((id == LIVE_SUBTITLES_BINDING_ID || id == MEETING_BINDING_ID)
             && !(settings.experimental_enabled && crate::system_audio_tap::available()))
 }
 
@@ -538,6 +541,9 @@ pub struct AppSettings {
     /// None = auto.
     #[serde(default)]
     pub live_subtitle_translator: Option<String>,
+    /// Meeting notes (beta): the app last recorded as "Others" (bundle id).
+    #[serde(default)]
+    pub meeting_app: Option<String>,
     #[serde(default)]
     pub mute_while_recording: bool,
     #[serde(default)]
@@ -1138,6 +1144,20 @@ pub fn get_default_settings() -> AppSettings {
             current_binding: default_subtitles_shortcut.to_string(),
         },
     );
+    #[cfg(target_os = "macos")]
+    let default_meeting_shortcut = "control+option+command+m";
+    #[cfg(not(target_os = "macos"))]
+    let default_meeting_shortcut = "ctrl+alt+shift+m";
+    bindings.insert(
+        MEETING_BINDING_ID.to_string(),
+        ShortcutBinding {
+            id: MEETING_BINDING_ID.to_string(),
+            name: "Meeting notes".to_string(),
+            description: "Starts or stops recording a meeting.".to_string(),
+            default_binding: default_meeting_shortcut.to_string(),
+            current_binding: default_meeting_shortcut.to_string(),
+        },
+    );
     bindings.insert(
         "cancel".to_string(),
         ShortcutBinding {
@@ -1199,6 +1219,7 @@ pub fn get_default_settings() -> AppSettings {
         live_subtitle_translate: None,
         local_ai_model: None,
         live_subtitle_translator: None,
+        meeting_app: None,
         speakease_last_spoken_language: None,
         mute_while_recording: false,
         append_trailing_space: false,
@@ -1589,9 +1610,15 @@ mod tests {
 
     #[test]
     fn the_live_subtitles_shortcut_parses_for_both_keyboard_backends() {
-        let binding = &get_default_settings().bindings[LIVE_SUBTITLES_BINDING_ID];
-        assert!(crate::shortcut::handy_keys::validate_shortcut(&binding.current_binding).is_ok());
-        assert!(crate::shortcut::tauri_impl::validate_shortcut(&binding.current_binding).is_ok());
+        for id in [LIVE_SUBTITLES_BINDING_ID, MEETING_BINDING_ID] {
+            let binding = &get_default_settings().bindings[id];
+            assert!(
+                crate::shortcut::handy_keys::validate_shortcut(&binding.current_binding).is_ok()
+            );
+            assert!(
+                crate::shortcut::tauri_impl::validate_shortcut(&binding.current_binding).is_ok()
+            );
+        }
     }
 
     use super::*;

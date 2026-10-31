@@ -14,6 +14,23 @@ tags: [area/docs]
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
 
+## 2026-10-31 · Meeting notes phase 2: recording choices made by AI under the owner's overnight delegation
+
+- **Context**: phase 2 records a meeting (`ux/meetings.md`, `logic/meetings.md` SE-MEET-001/003/004/006/008/013);
+  the spec leaves how the two tracks are captured, named and stored open.
+- **Decision** (chosen by AI under the owner's overnight delegation, 31/10): the microphone is a second stream of its
+  own (no VAD) beside dictation's, so a dictation never cuts the meeting; a microphone line that is mostly words the
+  app said at the same time is dropped as echo (dictation lines and lines under 3 words kept); with no app given, the
+  call app playing sound is picked, then any call app running, then the one used last time; the History entry is
+  titled "<app> · dd/mm HH:MM" and keeps the mixed audio; an empty transcript is still saved, with the one-line notes;
+  a start that fails says why on the meeting bar; the feature stays behind Experimental, with its own shortcut
+  ⌃⌥⌘M.
+- **Evidence**: `cargo test --lib meeting` (track placement, spans, dictation marks, Me/Others order, echo drop, mix,
+  app pick, the migration); `handy --meeting-probe <afplay pid> --probe-mute` on a 41 s Vietnamese `say` file: four
+  "Others" lines with every figure right, Apple Intelligence notes in 7.7 s with the decision, the open proposal and
+  `- [ ] action — owner` items.
+- **Reversal**: turn Experimental off (the shortcut and tray item go away); the `meetings` table only adds rows.
+
 ## 2026-10-31 · Meeting notes phase 1: choices made by AI under the owner's overnight delegation
 
 - **Context**: the owner asked for meeting notes to be built overnight without stopping ("Tự hành đến sáng cho xong

@@ -2,7 +2,7 @@
   "$schema": "../gen/schemas/desktop-schema.json",
   "identifier": "default",
   "description": "Capabilities for the app",
-  "windows": ["main", "recording_overlay", "live_subtitles"],
+  "windows": ["main", "recording_overlay", "live_subtitles", "meeting_bar"],
   "permissions": [
     "core:default",
     "core:window:allow-internal-toggle-maximize",

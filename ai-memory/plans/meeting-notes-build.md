@@ -2,7 +2,7 @@
 status: executing
 owner: Lê Khoa
 started: 2026-10-31
-current-phase: 1
+current-phase: 2
 summary: "Build meeting notes (SE-MEET-001…019) in five phases, starting with a testable notes pipeline and a hidden CLI that turns a recording or transcript into notes."
 tags: [area/ai, area/audio, area/capture, stack/rust]
 ---
@@ -80,7 +80,15 @@ Chosen by AI under the owner's overnight delegation (31/10) - for the owner to r
 
 - Phase order puts the testable core first; the owner's test call can run through phase 1's CLI before any UI exists.
 - No new dependency in phases 1-2 and 4-5. `.docx` (phase 3) needs the owner's yes.
-- One PR to `main` per phase; merged only on the owner's word.
+- One PR to `main` per phase; a phase lands on `main` (fast-forward by hash) when its PR CI is green and its
+  fresh-context review found no blocker (owner, relayed 31/10).
+- Phase 2: the microphone is a second stream of its own (no VAD) beside dictation's, rather than sharing dictation's
+  stream; a line the microphone heard that is mostly words the app said at the same time is dropped as echo
+  (dictation lines and lines under 3 words kept); with no app given, the call app playing sound is picked, then any
+  call app running, then the one used last time; the mixed audio is kept as the History file; the entry is titled
+  "<app> · dd/mm HH:MM"; an empty transcript is still saved, with the one-line notes; a start that fails says why
+  on the meeting bar; the hidden `--meeting-probe <bundle id | pid> --probe-mute` checks tap → transcript → notes
+  with no microphone and writes nothing to History.
 
 ## Open risks
 
@@ -90,7 +98,11 @@ Chosen by AI under the owner's overnight delegation (31/10) - for the owner to r
 - Qwen3.5-4B needs a 3 GB download on Macs without Apple Intelligence and a key; an hour takes 4-12 minutes.
 - Dictation in parallel shares one microphone stream between two pipelines.
 - Screen-share hiding, heat and battery are untested.
+- Phase 2 was not run in the app with a real call and the microphone (the owner's microphone is not recorded
+  without consent); the tap → transcript → notes path is measured with `--meeting-probe` only.
+- Both tracks stay in memory as 16 kHz floats until the meeting ends (about 230 MB per hour per track).
 
 ## Next safe step
 
-Owner's go on these phases, then phase 1 on branch `claude/meeting-notes-07a8ee`.
+Phase 1 is on `main` (185cc1d, wblekhoa/speakease#2). Phase 2 on branch `claude/meeting-notes-p2`; then phase 3
+(Meetings page).

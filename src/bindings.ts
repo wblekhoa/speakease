@@ -1099,6 +1099,46 @@ async showLiveSubtitlesPanel() : Promise<void> {
     await TAURI_INVOKE("show_live_subtitles_panel");
 },
 /**
+ * Starts recording a meeting with `bundle_id` as "Others", or with the
+ * meeting app found running when it is None.
+ */
+async startMeeting(bundleId: string | null) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("start_meeting", { bundleId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async stopMeeting() : Promise<void> {
+    await TAURI_INVOKE("stop_meeting");
+},
+async meetingState() : Promise<MeetingState> {
+    return await TAURI_INVOKE("meeting_state");
+},
+/**
+ * The meeting bar's ×: clears a finished meeting's error and hides the bar.
+ */
+async closeMeetingBar() : Promise<void> {
+    await TAURI_INVOKE("close_meeting_bar");
+},
+async getMeeting(historyId: number) : Promise<Result<Meeting | null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("get_meeting", { historyId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+async listMeetings() : Promise<Result<Meeting[], string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("list_meetings") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Writes text to a file the person picked in a Save dialog.
  */
 async writeTextFile(path: string, contents: string) : Promise<Result<null, string>> {
@@ -1260,7 +1300,11 @@ local_ai_model?: string | null;
  * this Mac has it, else the on-device model), "apple" or "local".
  * None = auto.
  */
-live_subtitle_translator?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
+live_subtitle_translator?: string | null; 
+/**
+ * Meeting notes (beta): the app last recorded as "Others" (bundle id).
+ */
+meeting_app?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
 /**
  * Debug-gated ("beta") receipt-sequenced paste: restore the clipboard only
  * after the target app actually reads the transcript, instead of after a
@@ -1354,6 +1398,42 @@ export type LogLevel = "trace" | "debug" | "info" | "warn" | "error"
  * What the Files page hands over: a file on disk, or a link.
  */
 export type MediaSource = { kind: "path"; value: string } | { kind: "url"; value: string }
+/**
+ * SpeakEase: a meeting's notes beside its History entry.
+ */
+export type Meeting = { history_id: number; 
+/**
+ * The app whose sound was the "Others" track.
+ */
+app_name: string; started_at: number; duration_ms: number; 
+/**
+ * meeting, call, lecture or interview; None until the notes are written.
+ */
+kind: string | null; 
+/**
+ * Markdown notes, the empty-recording line, or None while writing.
+ */
+notes: string | null; 
+/**
+ * "writing", "done", "empty", "failed" or "no_ai:<reason>".
+ */
+notes_state: string; notes_engine: string | null }
+/**
+ * Where a meeting stands, for the meeting bar and the window.
+ */
+export type MeetingState = { 
+/**
+ * "idle", "recording", "transcribing" or "notes".
+ */
+phase: string; 
+/**
+ * Unix time the recording started.
+ */
+started_at: number | null; app_name: string | null; error: string | null; 
+/**
+ * The History entry of the meeting being finished or last finished.
+ */
+history_id: number | null }
 export type ModelInfo = { id: string; name: string; description: string; filename: string; source: ModelSource; size_mb: number; is_downloaded: boolean; is_downloading: boolean; partial_size: number; is_directory: boolean; engine_type: EngineType; accuracy_score: number; speed_score: number; supports_translation: boolean; is_recommended: boolean; supported_languages: string[]; supports_language_selection: boolean; is_custom: boolean; supports_streaming: boolean; supports_language_detection: boolean }
 export type ModelLoadStatus = { is_loaded: boolean; current_model: string | null }
 /**

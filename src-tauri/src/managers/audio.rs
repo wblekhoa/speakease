@@ -1057,6 +1057,13 @@ impl AudioRecordingManager {
             _ => None,
         }
     }
+    /// SpeakEase meeting notes: the microphone dictation would use now, for
+    /// the meeting's own stream (None = the system default).
+    pub fn meeting_microphone(&self) -> Option<cpal::Device> {
+        let settings = get_settings(&self.app_handle);
+        self.resolve_microphone_device(&settings).device
+    }
+
     pub fn is_recording(&self) -> bool {
         // Lock-free: mirrors the `state` {Recording, Stopping} membership via
         // an atomic maintained by `set_state()`. Polled from the webview/main

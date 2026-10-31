@@ -16,7 +16,9 @@ mod live_subtitles;
 mod llm_client;
 mod local_ai;
 mod managers;
+mod meeting;
 mod meeting_notes;
+mod meeting_window;
 mod memory;
 mod overlay;
 mod paste_tx;
@@ -371,6 +373,10 @@ fn initialize_core_logic(app_handle: &AppHandle) {
                     let _ = app.emit("navigate-to-section", "subtitles");
                 }
             }
+            // SE-MEET-001: meeting notes (beta) start/stop from the tray.
+            "meeting_notes" => {
+                let _ = meeting::session::toggle(app);
+            }
             "unload_model" => {
                 let transcription_manager = app.state::<Arc<TranscriptionManager>>();
                 if !transcription_manager.is_model_loaded() {
@@ -496,6 +502,43 @@ fn run_headless_transcription(app: &AppHandle, args: &CliArgs) -> i32 {
     if let Some(bundle_id) = args.live_subtitle_probe.as_deref() {
         let code = live_subtitles::probe::run(app, args, bundle_id);
         // A probe that translated on-device leaves no server behind.
+        local_ai::stop_server();
+        return code;
+    }
+
+    // SpeakEase: a meeting's transcript from one app's sound, then its notes.
+    if let Some(target) = args.meeting_probe.as_deref() {
+        let seconds = args.probe_seconds.unwrap_or(30);
+        let code = match meeting::session::probe(app, target, seconds, args.probe_mute) {
+            Ok(text) => {
+                let path = std::env::temp_dir().join(format!(
+                    "speakease-meeting-probe-{}.txt",
+                    std::process::id()
+                ));
+                println!("{text}");
+                match std::fs::write(&path, &text) {
+                    Ok(()) => {
+                        let code = meeting_notes::cli::run(
+                            app,
+                            &path,
+                            args.notes_kind.as_deref(),
+                            args.notes_engine.as_deref(),
+                            args.json,
+                        );
+                        let _ = std::fs::remove_file(&path);
+                        code
+                    }
+                    Err(e) => {
+                        eprintln!("meeting probe: {e}");
+                        1
+                    }
+                }
+            }
+            Err(e) => {
+                eprintln!("meeting probe: {e}");
+                1
+            }
+        };
         local_ai::stop_server();
         return code;
     }
@@ -905,6 +948,12 @@ pub fn run(cli_args: CliArgs) {
             commands::live_subtitles::change_live_subtitle_translator_setting,
             commands::live_subtitles::has_local_ai_model,
             commands::live_subtitles::show_live_subtitles_panel,
+            commands::meetings::start_meeting,
+            commands::meetings::stop_meeting,
+            commands::meetings::meeting_state,
+            commands::meetings::close_meeting_bar,
+            commands::meetings::get_meeting,
+            commands::meetings::list_meetings,
             commands::files::write_text_file,
             commands::files::ytdlp_available,
             commands::history::update_history_limit,
@@ -933,7 +982,8 @@ pub fn run(cli_args: CliArgs) {
         || cli_args.list_devices
         || cli_args.list_models
         || cli_args.live_subtitle_probe.is_some()
-        || cli_args.meeting_notes.is_some();
+        || cli_args.meeting_notes.is_some()
+        || cli_args.meeting_probe.is_some();
 
     #[allow(unused_mut)]
     let mut builder = tauri::Builder::default()

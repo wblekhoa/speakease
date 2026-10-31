@@ -31,7 +31,38 @@ static MIGRATIONS: &[M] = &[
     M::up("ALTER TABLE transcription_history ADD COLUMN post_processed_text TEXT;"),
     M::up("ALTER TABLE transcription_history ADD COLUMN post_process_prompt TEXT;"),
     M::up("ALTER TABLE transcription_history ADD COLUMN post_process_requested BOOLEAN NOT NULL DEFAULT 0;"),
+    // SpeakEase meeting notes (SE-MEET-013): one row per meeting, beside its
+    // History entry (the transcript); deleted with it.
+    M::up(
+        "CREATE TABLE IF NOT EXISTS meetings (
+            history_id INTEGER PRIMARY KEY,
+            app_name TEXT NOT NULL,
+            started_at INTEGER NOT NULL,
+            duration_ms INTEGER NOT NULL,
+            kind TEXT,
+            notes TEXT,
+            notes_state TEXT NOT NULL,
+            notes_engine TEXT
+        );",
+    ),
 ];
+
+/// SpeakEase: a meeting's notes beside its History entry.
+#[derive(Clone, Debug, Serialize, Deserialize, Type, PartialEq)]
+pub struct Meeting {
+    pub history_id: i64,
+    /// The app whose sound was the "Others" track.
+    pub app_name: String,
+    pub started_at: i64,
+    pub duration_ms: i64,
+    /// meeting, call, lecture or interview; None until the notes are written.
+    pub kind: Option<String>,
+    /// Markdown notes, the empty-recording line, or None while writing.
+    pub notes: Option<String>,
+    /// "writing", "done", "empty", "failed" or "no_ai:<reason>".
+    pub notes_state: String,
+    pub notes_engine: Option<String>,
+}
 
 #[derive(Clone, Debug, Serialize, Deserialize, Type)]
 pub struct PaginatedHistory {
@@ -422,6 +453,7 @@ impl HistoryManager {
                 "DELETE FROM transcription_history WHERE id = ?1",
                 params![id],
             )?;
+            conn.execute("DELETE FROM meetings WHERE history_id = ?1", params![id])?;
 
             // Delete WAV file
             let file_path = self.recordings_dir.join(file_name);
@@ -688,6 +720,7 @@ impl HistoryManager {
             "DELETE FROM transcription_history WHERE id = ?1",
             params![id],
         )?;
+        conn.execute("DELETE FROM meetings WHERE history_id = ?1", params![id])?;
 
         debug!("Deleted history entry with id: {}", id);
 
@@ -697,6 +730,81 @@ impl HistoryManager {
         }
 
         Ok(())
+    }
+
+    // SE-MEET-013
+    /// SpeakEase: records a meeting beside its History entry, its notes
+    /// still to be written.
+    pub fn save_meeting(
+        &self,
+        history_id: i64,
+        app_name: &str,
+        started_at: i64,
+        duration_ms: i64,
+    ) -> Result<()> {
+        self.get_connection()?.execute(
+            "INSERT OR REPLACE INTO meetings
+                (history_id, app_name, started_at, duration_ms, notes_state)
+             VALUES (?1, ?2, ?3, ?4, 'writing')",
+            params![history_id, app_name, started_at, duration_ms],
+        )?;
+        Ok(())
+    }
+
+    /// Stores a meeting's notes (or why there are none).
+    pub fn set_meeting_notes(
+        &self,
+        history_id: i64,
+        kind: Option<&str>,
+        notes: Option<&str>,
+        notes_state: &str,
+        notes_engine: Option<&str>,
+    ) -> Result<()> {
+        self.get_connection()?.execute(
+            "UPDATE meetings SET kind = ?2, notes = ?3, notes_state = ?4, notes_engine = ?5
+             WHERE history_id = ?1",
+            params![history_id, kind, notes, notes_state, notes_engine],
+        )?;
+        Ok(())
+    }
+
+    /// The meeting beside a History entry, if it is one.
+    pub fn get_meeting(&self, history_id: i64) -> Result<Option<Meeting>> {
+        let conn = self.get_connection()?;
+        Ok(conn
+            .query_row(
+                "SELECT history_id, app_name, started_at, duration_ms, kind, notes, notes_state,
+                        notes_engine
+                 FROM meetings WHERE history_id = ?1",
+                params![history_id],
+                Self::map_meeting,
+            )
+            .optional()?)
+    }
+
+    /// Every meeting, newest first.
+    pub fn list_meetings(&self) -> Result<Vec<Meeting>> {
+        let conn = self.get_connection()?;
+        let mut stmt = conn.prepare(
+            "SELECT history_id, app_name, started_at, duration_ms, kind, notes, notes_state,
+                    notes_engine
+             FROM meetings ORDER BY started_at DESC",
+        )?;
+        let rows = stmt.query_map([], Self::map_meeting)?;
+        Ok(rows.collect::<rusqlite::Result<Vec<_>>>()?)
+    }
+
+    fn map_meeting(row: &rusqlite::Row<'_>) -> rusqlite::Result<Meeting> {
+        Ok(Meeting {
+            history_id: row.get(0)?,
+            app_name: row.get(1)?,
+            started_at: row.get(2)?,
+            duration_ms: row.get(3)?,
+            kind: row.get(4)?,
+            notes: row.get(5)?,
+            notes_state: row.get(6)?,
+            notes_engine: row.get(7)?,
+        })
     }
 
     fn format_timestamp_title(&self, timestamp: i64) -> String {
@@ -888,6 +996,31 @@ mod tests {
             ],
         )
         .expect("insert history entry");
+    }
+
+    // SE-MEET-013
+    #[test]
+    fn migrations_add_the_meetings_table() {
+        let mut conn = Connection::open_in_memory().expect("open in-memory db");
+        Migrations::new(MIGRATIONS.to_vec())
+            .to_latest(&mut conn)
+            .expect("migrate");
+        conn.execute(
+            "INSERT INTO meetings (history_id, app_name, started_at, duration_ms, notes_state)
+             VALUES (1, 'Zoom', 0, 60000, 'writing')",
+            [],
+        )
+        .expect("insert meeting");
+        let meeting = conn
+            .query_row(
+                "SELECT history_id, app_name, started_at, duration_ms, kind, notes, notes_state,
+                        notes_engine FROM meetings",
+                [],
+                HistoryManager::map_meeting,
+            )
+            .expect("read meeting");
+        assert_eq!(meeting.app_name, "Zoom");
+        assert_eq!(meeting.notes, None);
     }
 
     #[test]
