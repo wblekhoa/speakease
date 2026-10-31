@@ -1,0 +1,40 @@
+# The landing page in site/: React/Vite with prerendered VI/EN HTML.
+# Manual only until the owner approves publishing (decisions.md, 2026-10-31):
+# running it IS a deploy, and Pages must first be enabled for the repository.
+# The download button asks GitHub for the newest release at view time, so a
+# release alone needs no redeploy.
+name: Pages
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+jobs:
+  deploy:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v5
+      - uses: oven-sh/setup-bun@v2
+      - name: Test and build the site
+        working-directory: site
+        run: |
+          bun install --frozen-lockfile
+          bun run verify
+      - uses: actions/configure-pages@v6
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: site/dist
+      - id: deployment
+        uses: actions/deploy-pages@v5
