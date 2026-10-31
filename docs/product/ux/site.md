@@ -25,7 +25,7 @@ file. Vietnamese at `/`, English at `/en/`; the header switches between them.
 1. **Header** (floating pill, sticky): brand, four section links (hidden under 960 px), GitHub, theme toggle, language,
    a dark "Tải về / Download" pill.
 2. **Hero**: "Gõ ít đi, / nói nhiều hơn." (second line pink), one sentence, a dark "Tải cho Mac" button, then
-   Free · Apple Silicon (M1+) · On-device recognition.
+   Free · M1 Mac or later · Runs on your Mac (short, owner 31/10).
 3. **Demo**: a CSS laptop on Apple's macOS 27 wallpaper, with a two-pane Notes window (today's notes, then the open
    note "Cuối tuần" with its date stamp; the list hides on phones). The pill copies the app's real overlay. Scrolling walks three steps: hold ⌥ Space (the keys light
    pink, the recording pill shows a level), speak (the pill turns to "Đang chép lời…"), release (the sentence appears
