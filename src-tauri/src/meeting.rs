@@ -468,7 +468,9 @@ pub mod session {
             stop();
             Ok(())
         } else if state().phase != "idle" {
-            // Still finishing the last meeting; the bar shows its progress.
+            // Still finishing the last meeting: show its progress again (the
+            // bar may have been closed with ×).
+            crate::meeting_window::follow(app, &state());
             Ok(())
         } else {
             start(app, None)
