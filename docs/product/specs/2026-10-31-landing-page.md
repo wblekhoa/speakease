@@ -69,3 +69,8 @@ Owner round 1 (`decisions.md`, 2026-10-31) decided every item below. Built local
 
 ## Change log
 - 2026-10-31: created (draft); filled from owner round 1. Stays draft until the owner approves the preview (gate 1).
+- 2026-10-31: design-edit with a fresh reviewer: disposition `fix`. Resolved: demo end state (recaptured; the text lands
+  after ~2 s), cards 3-4 and open FAQ captured, a scroller bug it exposed (at 1280 px the last card was unreachable
+  by index; `cardIndex` + test), "no" (×) vs "does not apply" (—) marks, readable footnote markers, no animated layout
+  properties (slop-09). Open for the owner: centred section headings (slop-05, inherited from the ReadEase frame) and
+  the missing point-of-view card in `goal.md`. Evidence receipt accepted with independent review.
