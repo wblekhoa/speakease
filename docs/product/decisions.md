@@ -14,6 +14,25 @@ tags: [area/docs]
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
 
+## 2026-10-31 · Landing-page demo: Apple's macOS 27 wallpaper, a realistic Notes window, the real overlay pill
+
+- **Context**: reviewing the local preview, the owner asked for a more realistic mockup: "sử dụng wallpaper của macOS
+  thật và thiết kế cái app demo cũng thật hơn", pointing at a macOS 27 wallpaper on 4kwallpapers.com. The AI asked
+  how to handle Apple's copyright on a public page, how real the demo app should be, and whether the pill should copy
+  the real overlay.
+- **Decisions** (owner): the wallpaper is Apple's macOS 27 image the owner downloaded and supplied
+  (`macos-27-golden--26625.png` from that site), not a self-made one: the owner chose to supply the file over the
+  AI-proposed self-made SVG; "Chỉ cửa sổ Ghi chú thật hơn" (no menu bar or Dock); "Giống hệt overlay thật (đề xuất)".
+- **Built**: `site/media/wallpaper.jpg` (2400 px JPEG, ~200 KB, resized from the 4480 px PNG); a two-pane Notes window
+  (list with today's notes, the open note with toolbar, date stamp, title and dictated text; the list hides on narrow
+  screens); the pill redrawn from `src/overlay` (236 x 40 proportions, dot | nine bars | cancel, then spinner | label |
+  cancel, flat with a hairline).
+- **Risk the AI raised, owner accepted**: the wallpaper is Apple's copyrighted artwork, re-hosted by a wallpaper site,
+  in a public repository and on a public page. Apple has not licensed it for this use.
+- **AI default, not owner-confirmed**: traffic lights stay neutral grey, because WAVE has no green token. Real colours
+  need a WAVE token request.
+- **Reversal**: replace `site/media/wallpaper.jpg` (one file, referenced only from `site/style.css` `.desk`).
+
 ## 2026-10-31 · A landing page of its own on GitHub Pages, in ReadEase's frame (round 1)
 
 - **Context**: the owner asked for "a landing page for our app". The campaign entry of 2026-10-29 had chosen a separate

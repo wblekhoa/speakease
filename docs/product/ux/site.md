@@ -26,7 +26,8 @@ file. Vietnamese at `/`, English at `/en/`; the header switches between them.
    a dark "Tải về / Download" pill.
 2. **Hero**: "Gõ ít đi, / nói nhiều hơn." (second line pink), one sentence, a dark "Tải cho Mac" button, then
    Free · Apple Silicon (M1+) · On-device recognition.
-3. **Demo**: a CSS laptop with a note titled "Cuối tuần". Scrolling walks three steps: hold ⌥ Space (the keys light
+3. **Demo**: a CSS laptop on Apple's macOS 27 wallpaper, with a two-pane Notes window (today's notes, then the open
+   note "Cuối tuần" with its date stamp; the list hides on phones). The pill copies the app's real overlay. Scrolling walks three steps: hold ⌥ Space (the keys light
    pink, the recording pill shows a level), speak (the pill turns to "Đang chép lời…"), release (the sentence appears
    in the note). Numbered tabs under the laptop jump to a step. On phones and short windows the laptop shows the result
    and the tabs switch steps.
@@ -51,4 +52,5 @@ file. Vietnamese at `/`, English at `/en/`; the header switches between them.
 
 ## Change log
 - 2026-10-31: created with the first build (owner round 1).
+- 2026-10-31: owner asked for a realistic demo: macOS 27 wallpaper, Notes window, real overlay pill.
 - 2026-10-31: owner asked for mouse drag with a custom cursor on the card scroller, and rounder demo keys.

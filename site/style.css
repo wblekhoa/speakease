@@ -114,24 +114,55 @@ main { overflow-x: clip; }
    follow the screen (cqw), so the scene is the same picture at any width. */
 .demo { padding-top: 24px; }
 .demo-stage { display: grid; justify-items: center; }
-.desk { position: absolute; inset: 0; display: grid; place-items: center; }
-.note { width: 62cqw; height: 62cqw; max-height: 74%; border-radius: 1.4cqw; background: var(--bg); box-shadow: 0 0 0 1px var(--edge), var(--lift); overflow: hidden; translate: 0 -4cqw; }
-.note-bar { display: flex; align-items: center; gap: 1.4cqw; padding: 1.2cqw 1.6cqw; border-bottom: 1px solid var(--edge); color: var(--muted); font-size: max(10px, 1.5cqw); font-weight: 500; }
+.desk { position: absolute; inset: 0; display: grid; place-items: center; background: var(--desk) url("./media/wallpaper.jpg") center / cover; }
+/* A Notes window in the macOS layout: the note list, then the open note with its toolbar and date stamp. */
+.note { display: grid; grid-template-columns: 26cqw 1fr; width: 76cqw; height: 46cqw; border-radius: 1.6cqw; background: var(--bg);
+  box-shadow: 0 0 0 1px var(--edge), var(--shadow); overflow: hidden; translate: 0 -2.5cqw; text-align: left; }
+.note-list { padding: 0 1cqw; background: var(--card); border-right: 1px solid var(--edge); overflow: hidden; }
+.note-chrome { display: flex; align-items: center; height: 4cqw; padding-inline: .6cqw; }
 .lights { display: inline-flex; gap: .7cqw; }
-.lights i { width: 1.2cqw; height: 1.2cqw; border-radius: 50%; background: var(--edge); }
-.note-body { padding: 3cqw 4cqw; text-align: left; }
-.note-title { font: 600 max(14px, 3cqw)/1.2 var(--display); letter-spacing: -.02em; }
-.note-text { margin-top: 1.6cqw; font-size: max(11px, 2.2cqw); line-height: 1.6; }
+.lights i { width: 1.1cqw; height: 1.1cqw; min-width: 6px; min-height: 6px; border-radius: 50%; background: color-mix(in srgb, var(--muted) 45%, transparent); }
+.list-head { margin: .6cqw .9cqw .5cqw; color: var(--muted); font-size: max(8px, 1.15cqw); font-weight: 600; }
+.list-item { display: grid; gap: .25cqw; padding: .9cqw; border-radius: .9cqw; font-size: max(8px, 1.2cqw); line-height: 1.3; }
+.list-item b, .list-item span { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; }
+.list-item b { font-weight: 600; }
+.list-item span { color: var(--muted); }
+.list-item time { color: var(--ink); font-weight: 500; }
+.list-item.is-open { background: var(--edge); }
+/* The list preview follows the note: empty while you speak, the sentence once it lands. */
+.preview-empty { display: none; }
+[data-step="hold"] .preview-empty, [data-step="speak"] .preview-empty { display: inline; }
+[data-step="hold"] .preview-text, [data-step="speak"] .preview-text { display: none; }
+.list-item + .list-item:not(.is-open + .list-item) { box-shadow: 0 -1px 0 var(--edge); border-radius: 0; }
+.note-page { min-width: 0; }
+.note-tools { justify-content: flex-end; gap: 1.6cqw; padding-inline: 1.8cqw; color: var(--muted); }
+.tool-aa { font-size: max(9px, 1.4cqw); font-weight: 600; letter-spacing: -.02em; }
+.note-tools .tool { width: max(11px, 1.8cqw); height: max(11px, 1.8cqw); }
+.note-stamp { color: var(--muted); font-size: max(8px, 1.1cqw); text-align: center; }
+.note-body { padding: 2cqw 3.4cqw; }
+.note-title { font: 700 max(13px, 2.4cqw)/1.2 var(--body); letter-spacing: -.01em; }
+.note-text { margin-top: 1.2cqw; font-size: max(10px, 1.65cqw); line-height: 1.55; }
 .caret { display: inline-block; width: 2px; height: 1.1em; margin-left: 2px; vertical-align: -.15em; background: var(--brand); }
-/* The pill: the app's overlay, near-opaque surface, a hairline, the pink dot. */
-.pill { position: absolute; left: 50%; bottom: 6cqw; translate: -50% 0; display: grid; min-width: 26cqw; height: max(28px, 5cqw); padding-inline: 2cqw; border-radius: 999px;
-  background: var(--bg); box-shadow: 0 0 0 1px var(--edge), var(--shadow); font-size: max(10px, 1.6cqw); color: var(--muted); }
-.pill > span { grid-area: 1 / 1; display: flex; align-items: center; justify-content: center; gap: 1.4cqw; }
-.pill-dot { width: max(7px, 1.2cqw); height: max(7px, 1.2cqw); border-radius: 50%; background: var(--brand); }
-.pill-wave { display: flex; align-items: center; gap: .5cqw; height: 3cqw; }
-.pill-wave i { width: .5cqw; min-width: 2px; height: 20%; border-radius: 999px; background: var(--brand); }
-.pill-time::before { content: "0:00"; font-variant-numeric: tabular-nums; }
-.pill-spinner { width: max(9px, 1.6cqw); height: max(9px, 1.6cqw); border: 2px solid var(--edge); border-top-color: var(--brand); border-radius: 50%; }
+/* Narrow screens: Notes hides its list, as the app does in a small window. */
+@container (max-width: 520px) {
+  .note { grid-template-columns: 1fr; width: 82cqw; height: 58cqw; }
+  .note-list { display: none; }
+}
+/* The pill: the app's compact overlay at its own proportions (236 x 40, radius 24, flat, hairline), every inner size
+   a share of its height. Recording: dot | nine bars | cancel. Working: spinner | label | cancel. */
+.pill { --ph: max(26px, 4.4cqw); position: absolute; left: 50%; bottom: 2.2cqw; translate: -50% 0; display: grid; width: calc(var(--ph) * 5.9); height: var(--ph);
+  padding-inline: calc(var(--ph) * .25); border-radius: 999px; background: color-mix(in srgb, var(--bg) 98%, transparent);
+  box-shadow: 0 0 0 1px color-mix(in srgb, var(--muted) 22%, transparent); font-size: calc(var(--ph) * .3); color: var(--muted); }
+.pill > span { grid-area: 1 / 1; display: grid; grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); align-items: center; }
+.pill-dot { justify-self: start; margin-left: calc(var(--ph) * .125); width: calc(var(--ph) * .175); height: calc(var(--ph) * .175); border-radius: 50%; background: var(--brand); }
+.pill-wave { display: flex; align-items: center; gap: calc(var(--ph) * .075); height: calc(var(--ph) * .45); padding-right: calc(var(--ph) * .2); }
+.pill-wave i { width: calc(var(--ph) * .1); height: 17%; border-radius: 999px; background: var(--brand); }
+.pill-x { position: relative; justify-self: end; width: calc(var(--ph) * .55); height: calc(var(--ph) * .55); border-radius: 50%; background: color-mix(in srgb, var(--muted) 12%, transparent); }
+.pill-x::before, .pill-x::after { content: ""; position: absolute; left: 30%; top: calc(50% - .75px); width: 40%; height: 1.5px; border-radius: 1px; background: var(--muted); rotate: 45deg; }
+.pill-x::after { rotate: -45deg; }
+.pill-spinner { justify-self: start; margin-left: calc(var(--ph) * .125); width: calc(var(--ph) * .325); height: calc(var(--ph) * .325); box-sizing: border-box;
+  border: 2px solid color-mix(in srgb, var(--muted) 12%, transparent); border-top-color: var(--brand); border-radius: 50%; }
+.pill-label { padding-inline: calc(var(--ph) * .2); white-space: nowrap; }
 .keys { display: flex; gap: 8px; margin-top: 28px; }
 .keys kbd { min-width: 48px; height: 44px; border-radius: 14px; font-size: 16px; transition: translate 160ms ease-out, background-color 160ms ease-out, color 160ms ease-out; }
 .keys .key-space { min-width: 160px; }
@@ -149,7 +180,6 @@ main { overflow-x: clip; }
 .typed { white-space: pre-wrap; }
 [data-step="hold"] .note-text, [data-step="speak"] .note-text { min-height: 3.2em; }
 [data-step="hold"] .keys kbd, [data-step="speak"] .keys kbd { translate: 0 2px; background: var(--brand-fill); border-color: var(--brand-fill); color: var(--light-color-background); }
-[data-step="speak"] .pill-time::before { content: "0:04"; }
 [data-step="speak"] .pill-wave i { height: 60%; }
 [data-step="speak"] .pill-wave i:nth-child(3n) { height: 90%; }
 [data-step="speak"] .pill-wave i:nth-child(4n + 1) { height: 35%; }
@@ -274,7 +304,6 @@ details a { color: var(--ink); text-decoration: underline; text-underline-offset
   .theme-toggle { width: 34px; }
   .nav-download { padding-inline: 14px; white-space: nowrap; }
   .beats { height: 48px; gap: 8px; } .beats i { width: 14px; } .beats i:nth-child(2) { height: 48px; } .beats i:nth-child(1), .beats i:nth-child(3) { height: 22px; }
-  .note { width: 76cqw; }
   .keys kbd { min-width: 40px; height: 38px; font-size: 14px; } .keys .key-space { min-width: 120px; }
   .demo-steps button, .step-static { padding-inline: 10px; gap: 6px; font-size: 13px; }
   .way-visual { height: 360px; padding: 20px 16px; }

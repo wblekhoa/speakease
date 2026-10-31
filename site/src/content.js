@@ -13,7 +13,8 @@ export const content = {
 
     demo: 'Đọc chính tả trong ba bước', demoSteps: 'Các bước đọc chính tả',
     steps: [['Giữ ⌥ Space', 'Giữ phím Option và phím cách.'], ['Nói', 'Nói như nói chuyện bình thường.'], ['Thả ra', 'Chữ được dán vào đúng chỗ con trỏ.']],
-    noteApp: 'Ghi chú', noteTitle: 'Cuối tuần',
+    noteTitle: 'Cuối tuần', noteToday: 'Hôm nay', noteStamp: '31 tháng 10, 2026 lúc 09:41', noteEmpty: 'Không có văn bản bổ sung',
+    otherNotes: [['Đi chợ', 'Hôm qua', 'Rau cải, trứng, cà phê'], ['Ý tưởng video', 'Thứ Ba', 'Gõ ít đi, nói nhiều hơn'], ['Sách muốn đọc', '24/10', 'Nhà giả kim, Xứ cát']],
     spoken: 'Thứ bảy mình đi Đà Lạt nhé. Nhớ đặt phòng trước tối thứ năm và mang theo áo ấm.',
     working: 'Đang chép lời…', cancel: 'Huỷ',
 
@@ -83,7 +84,8 @@ export const content = {
 
     demo: 'Dictation in three steps', demoSteps: 'Dictation steps',
     steps: [['Hold ⌥ Space', 'Hold Option and the space bar.'], ['Speak', 'Talk the way you normally talk.'], ['Let go', 'The text is pasted where the cursor is.']],
-    noteApp: 'Notes', noteTitle: 'Weekend',
+    noteTitle: 'Weekend', noteToday: 'Today', noteStamp: 'October 31, 2026 at 9:41 AM', noteEmpty: 'No additional text',
+    otherNotes: [['Groceries', 'Yesterday', 'Greens, eggs, coffee'], ['Video ideas', 'Tuesday', 'Type less, speak more'], ['Books to read', '10/24', 'The Alchemist, Dune']],
     spoken: 'Let’s go to Da Lat on Saturday. Remember to book the room by Thursday night and bring a warm jacket.',
     working: 'Transcribing...', cancel: 'Cancel',
 

@@ -81,12 +81,32 @@ function Laptop({ children }) {
     <div className="laptop-base" aria-hidden="true"><span /></div>
   </div>;
 }
-/* The app's recording pill as it looks on screen: a live dot, the level bars
-   and the timer while you speak; a spinner and "Transcribing…" after. */
+/* The app's compact recording overlay (src/overlay, 0.1.1): dot | nine level bars | cancel while you speak,
+   spinner | "Transcribing…" | cancel after. Same zones, proportions and tokens, scaled to the drawn screen. */
 function Pill({ c }) {
+  const cancel = <span className="pill-x" />;
   return <div className="pill" aria-hidden="true">
-    <span className="pill-rec"><span className="pill-dot" /><span className="pill-wave">{Array.from({ length: 9 }, (_, i) => <i key={i} style={{ '--i': i }} />)}</span><span className="pill-time" /></span>
-    <span className="pill-work"><span className="pill-spinner" />{c.working}</span>
+    <span className="pill-rec"><span className="pill-dot" /><span className="pill-wave">{Array.from({ length: 9 }, (_, i) => <i key={i} style={{ '--i': i }} />)}</span>{cancel}</span>
+    <span className="pill-work"><span className="pill-spinner" /><span className="pill-label">{c.working}</span>{cancel}</span>
+  </div>;
+}
+/* A Notes window in the macOS layout: the note list beside the open note, which the dictation fills. */
+function NotesWindow({ c, words }) {
+  return <div className="note">
+    <div className="note-list" aria-hidden="true">
+      <p className="note-chrome"><span className="lights"><i /><i /><i /></span></p>
+      <p className="list-head">{c.noteToday}</p>
+      <p className="list-item is-open"><b>{c.noteTitle}</b><span><time>09:41</time> <span className="preview-empty">{c.noteEmpty}</span><span className="preview-text">{c.spoken}</span></span></p>
+      {c.otherNotes.map(([title, when, preview]) => <p className="list-item" key={title}><b>{title}</b><span><time>{when}</time> {preview}</span></p>)}
+    </div>
+    <div className="note-page">
+      <p className="note-chrome note-tools" aria-hidden="true"><span className="tool-aa">Aa</span><Glyph name="check" className="tool" /></p>
+      <p className="note-stamp" aria-hidden="true">{c.noteStamp}</p>
+      <div className="note-body">
+        <p className="note-title">{c.noteTitle}</p>
+        <p className="note-text">{words.map((word, i) => <span key={i} className="typed" style={{ '--i': i }}>{i > 0 ? ` ${word}` : word}</span>)}<span className="caret" aria-hidden="true" /></p>
+      </div>
+    </div>
   </div>;
 }
 /* The demo: a note in another app, the pill and the keys. Scroll walks it
@@ -116,13 +136,7 @@ function Demo({ c }) {
     <div className="demo-stage" data-stage="" data-step={stepIds[selected]}>
       <Laptop>
         <div className="desk" role={enhanced ? 'tabpanel' : undefined} id="demo-panel" aria-labelledby={enhanced ? `step-${stepIds[selected]}` : undefined}>
-          <div className="note">
-            <p className="note-bar" aria-hidden="true"><span className="lights"><i /><i /><i /></span>{c.noteApp}</p>
-            <div className="note-body">
-              <p className="note-title">{c.noteTitle}</p>
-              <p className="note-text">{words.map((word, i) => <span key={i} className="typed" style={{ '--i': i }}>{i > 0 ? ` ${word}` : word}</span>)}<span className="caret" aria-hidden="true" /></p>
-            </div>
-          </div>
+          <NotesWindow c={c} words={words} />
           <Pill c={c} />
         </div>
       </Laptop>
