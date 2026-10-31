@@ -81,3 +81,7 @@ Owner round 1 (`decisions.md`, 2026-10-31) decided every item below. Built local
   comparison's AI note names its two rows and is dated; demo tabs follow what the laptop shows (press until the keys are
   up, listen until the second press); keycap shadow stays dark in dark mode; the EN note list says 9:41 AM; install
   numbers line up on phones. Publishing prepared as `site/publish.sh` (not run).
+- 2026-10-31: verdict pass (same reviewer, two rounds): all six fixes resolved, no regressions, disposition `ship`.
+  For the owner: History card vs the card's "no stats dashboards"; the purple wallpaper vs "no purple gradients"; the
+  words "Đọc chính tả" and "Miễn phí" on a PolyForm NC licence; motion feel and pin length; phones show the finished
+  note until a tab is tapped; the left-aligned Features heading.
