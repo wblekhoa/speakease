@@ -4,7 +4,7 @@ type: decision
 product: speakease
 title: "SpeakEase — Decisions"
 status: active
-updated: 2026-10-30
+updated: 2026-10-31
 summary: "Append-only record of SpeakEase's product and engineering decisions, newest first, each with its context, evidence and how to reverse it."
 tags: [area/docs]
 ---
@@ -13,6 +13,40 @@ tags: [area/docs]
 
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
+
+## 2026-10-31 · A landing page of its own on GitHub Pages, in ReadEase's frame (round 1)
+
+- **Context**: the owner asked for "a landing page for our app". The campaign entry of 2026-10-29 had chosen a separate
+  download page on the personal website (request `publishing/inbox/2026-10-29-speakease-download-page.md`, still
+  open), so round 1 asked first how the two relate, then languages, hero line, sections, version, call to action,
+  look, images, tone, stack, analytics and release. Option form, 31/10.
+- **Owner's answers** (verbatim labels): "Trang riêng trên GitHub Pages, website có đường ngắn /speakease chuyển hướng
+  tới đây"; "Việt ở /, Anh ở /en/"; hero "Gõ ít đi, nói nhiều hơn." (the campaign's closing line); sections "Mô phỏng
+  giữ phím, nói, chữ hiện vào app khác, AI sửa câu: bản gốc và bản đã sửa, Dịch khi nói, File và link ra chữ, Lịch sử
+  và số phút tiết kiệm, So với Mac Dictation và gõ Telex, 3 bước cài và quyền Micro, Trợ năng, Câu hỏi thường gặp";
+  "Chỉ tính năng đã phát hành (0.1.1)"; "Tải thẳng file .dmg mới nhất, tự theo bản phát hành"; "Khung giống ReadEase
+  (theo tryonenotch.com/vi), màu hồng SpeakEase"; images "Ảnh chụp app có sẵn (vi, en), Thanh ghi âm và chữ hiện ra vẽ
+  bằng CSS, chạy khi cuộn"; "Ít chữ, mỗi thẻ một tiêu đề, như ReadEase"; "React + Vite + GSAP như ReadEase"; "GA4 như
+  ReadEase, bỏ qua Do Not Track"; "Xem trước trên máy, anh duyệt rồi mới đưa lên". No answer: reference pages to
+  follow, anything else to add.
+- **Decisions** (owner): the page lives in this repo under `site/` and is served by GitHub Pages
+  (`wblekhoa.github.io/speakease`); the personal website keeps a short path `/speakease` that redirects to it, which
+  replaces the separate download page asked of publishing on 2026-10-29; Vietnamese at `/`, English at `/en/`; one
+  primary action, the newest `.dmg`; only what 0.1.1 ships; React, Vite and GSAP (new dependencies of `site/` only,
+  approved by picking them); GA4 page counts; local preview first, published only after the owner approves.
+- **Not chosen**: the page as the website's download page, two parallel pages, an own domain; Vietnamese only or
+  English first; the hero lines "Giữ phím, nói, chữ hiện ra", "Ý trong đầu chạy trước ngón tay", "Tiếng Việt, trên
+  máy, miễn phí", "Gõ Telex hay nói?"; sections for privacy, the Vietnamese WER table and the shortcut table; waiting
+  for 0.1.2 or a "coming soon" block; the Releases page or a GitHub button as the main action; the video-1 look, a warm
+  dark page, a short minimal page; embedding video 1, re-capturing screenshots, AI images; a friendly or technical
+  tone; plain HTML; no analytics; publishing on green checks or after 0.1.2.
+- **Risks raised by the AI and accepted**: the GitHub Pages address is long to print on a video (the website's short
+  path answers it); the website redirect is publishing's repo, so it goes through its inbox; a comparison with Telex
+  and Mac Dictation may only state facts the repo can show (no timings are measured).
+- **Consequences**: spec `specs/2026-10-31-landing-page.md`; the publishing request is amended to a redirect; GA4 needs
+  a SpeakEase web stream ID from the owner (until then the page sends nothing); GitHub Pages must be switched on for
+  the repo when the owner approves publishing.
+- **Reversal**: a new entry here.
 
 ## 2026-10-30 · Meeting notes: reuse Qwen3.5-4B as the on-device model
 

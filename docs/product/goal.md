@@ -4,7 +4,7 @@ type: goal
 product: speakease
 title: "SpeakEase — Product goal"
 status: active
-updated: 2026-10-15
+updated: 2026-10-31
 summary: "Why SpeakEase exists: on-device Vietnamese-first dictation for Mac users who write a lot, its promise, audience, success measures and non-goals."
 tags: [area/audio, area/ai, surface/macos]
 ---
@@ -49,11 +49,12 @@ tags: [area/audio, area/ai, surface/macos]
 
 ## Links
 
-- UX: `ux/dictation.md` · `ux/ai-cleanup.md` · `ux/history.md`
+- UX: `ux/dictation.md` · `ux/ai-cleanup.md` · `ux/history.md` · `ux/site.md` (landing page, not published yet)
 - Logic: `logic/dictation.md` · `logic/ai-cleanup.md` · `logic/history.md`
 - Decisions: `decisions.md` · Releases: `releases.md`
 - Public context: `README.en.md`, `PRIVACY.md`, `NOTICE.md`, `CHANGELOG.md` at the repo root
 
 ## Change log
 
+- 2026-10-31: linked the landing page UX (`ux/site.md`, spec `specs/2026-10-31-landing-page.md`).
 - 2026-10-11: created (doc-engine rollout); measures read from the GitHub API on this date.
