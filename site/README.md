@@ -67,7 +67,8 @@ site/publish.sh
 ```
 
 The first line fast-forwards `main` to `claude/speakease-site-on-main` (the landing page alone on top of `main`, no
-force); if `main` has moved since, merge `main` into that branch first. `site/publish.sh` enables
+force); if `main` has moved since, merge `main` into that branch first. `main` accepts the push only when the `app` and
+`rust` checks passed on that commit (repository ruleset); CI runs them on every branch push. `site/publish.sh` enables
 Pages (GitHub Actions source) the first time, runs the workflow on `main`, waits for it, and checks that `/` and `/en/`
 answer at https://wblekhoa.github.io/speakease/. The website's short path `/speakease` (publishing company) redirects
 here once that URL is live.
