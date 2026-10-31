@@ -449,12 +449,15 @@ pub mod session {
         }
     }
 
-    /// Clears a finished meeting's error so the bar hides; a meeting still
-    /// recording or being finished keeps its bar.
+    /// The bar's ×: clears a finished meeting's error; while a meeting is
+    /// being finished it only hides the bar (the work goes on, and the next
+    /// step shows it again). A recording meeting keeps its bar.
     pub fn dismiss(app: &AppHandle) {
         let now = state();
-        if now.phase == "idle" {
-            announce(app, MeetingState { error: None, ..now });
+        match now.phase.as_str() {
+            "idle" => announce(app, MeetingState { error: None, ..now }),
+            "recording" => {}
+            _ => crate::meeting_window::hide(app),
         }
     }
 

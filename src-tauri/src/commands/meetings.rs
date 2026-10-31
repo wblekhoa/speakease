@@ -26,7 +26,8 @@ pub fn meeting_state() -> MeetingState {
     session::state()
 }
 
-/// The meeting bar's ×: clears a finished meeting's error and hides the bar.
+/// The meeting bar's ×: clears a finished meeting's error, or hides the bar
+/// while the meeting is being finished.
 #[tauri::command]
 #[specta::specta]
 pub fn close_meeting_bar(app: AppHandle) {

@@ -38,6 +38,7 @@ const MeetingBar: React.FC = () => {
   if (state.phase === "idle" && state.error) {
     return (
       <div className="mb-bar mb-error" role="alert">
+        <span className="mb-error-mark" aria-hidden="true" />
         <span className="mb-text">
           {t(`meeting.errors.${meetingErrorKey(state.error)}`)}
         </span>
@@ -55,11 +56,16 @@ const MeetingBar: React.FC = () => {
 
   if (recording) {
     return (
-      <div className="mb-bar" role="status">
+      <div className="mb-bar">
         <span className="mb-dot" aria-hidden="true" />
-        <span className="mb-text">{t("meeting.consent")}</span>
+        <span className="mb-text" role="status">
+          {t("meeting.consent")}
+        </span>
+        {/* Outside the live region, so it is not read out every second. */}
         {state.started_at != null && (
-          <span className="mb-timer">{elapsed(state.started_at, now)}</span>
+          <span className="mb-timer" role="timer">
+            {elapsed(state.started_at, now)}
+          </span>
         )}
         <button
           type="button"
@@ -77,6 +83,15 @@ const MeetingBar: React.FC = () => {
       <div className="mb-bar" role="status">
         <span className="mb-spinner" aria-hidden="true" />
         <span className="mb-text">{t(`meeting.${state.phase}`)}</span>
+        {/* Hides the bar; the work goes on and the meeting lands in History. */}
+        <button
+          type="button"
+          className="mb-close"
+          aria-label={t("meeting.close")}
+          onClick={() => commands.closeMeetingBar()}
+        >
+          ×
+        </button>
       </div>
     );
   }
