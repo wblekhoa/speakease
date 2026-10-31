@@ -3,7 +3,7 @@ import assert from 'node:assert/strict';
 import { readFileSync } from 'node:fs';
 import React from 'react';
 import { renderToString } from 'react-dom/server';
-import { App, cardIndex } from '../src/App.jsx';
+import { App, cardIndex, dragTarget } from '../src/App.jsx';
 import { content } from '../src/content.js';
 import { startAnalytics, GA_ID } from '../src/analytics.js';
 import { resolveRelease, fetchRelease, fallback } from '../src/release.js';
@@ -177,4 +177,14 @@ test('card scroller: the track end selects the last card even when several cards
   // phones: one card per view, every card reachable by stride
   assert.equal(cardIndex(2 * 339, 3 * 339, 339, 4), 2);
   assert.equal(cardIndex(3 * 339, 3 * 339, 339, 4), 3);
+});
+
+test('card scroller: a mouse drag lands on a card edge, or the track end', () => {
+  // stride 544, max 1016 (1280 px)
+  assert.equal(dragTarget(0, 50, 1016, 544), 0);       // under 15%: back
+  assert.equal(dragTarget(0, 120, 1016, 544), 544);    // past 15%: next card
+  assert.equal(dragTarget(544, 470, 1016, 544), 544);  // 74 px back is under 15%: stays
+  assert.equal(dragTarget(544, 440, 1016, 544), 0);    // 104 px back: previous card
+  assert.equal(dragTarget(544, 900, 1016, 544), 1016); // beyond the last stop: the end
+  assert.equal(dragTarget(0, -40, 1016, 544), 0);
 });

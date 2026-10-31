@@ -18,7 +18,7 @@ export const content = {
     working: 'Đang chép lời…', cancel: 'Huỷ',
 
     features: ['Không chỉ', 'chép lời.'],
-    carousel: 'Những gì SpeakEase làm thêm', previous: 'Thẻ trước', next: 'Thẻ sau',
+    carousel: 'Những gì SpeakEase làm thêm', previous: 'Thẻ trước', next: 'Thẻ sau', drag: 'Kéo',
     cleanupTitle: 'AI sửa câu cho bạn.', cleanupLabel: 'Ví dụ bản gốc và bản AI đã sửa',
     original: 'Bản gốc', cleaned: 'AI sửa câu',
     raw: 'ờ thì sáng mai bảy giờ mình gặp nhau ở quán cà phê cũ nhé ừm nhớ mang theo hai cuốn sách',
@@ -88,7 +88,7 @@ export const content = {
     working: 'Transcribing...', cancel: 'Cancel',
 
     features: ['More than', 'transcription.'],
-    carousel: 'What else SpeakEase does', previous: 'Previous card', next: 'Next card',
+    carousel: 'What else SpeakEase does', previous: 'Previous card', next: 'Next card', drag: 'Drag',
     cleanupTitle: 'AI cleans up what you said.', cleanupLabel: 'An original and its AI cleanup',
     original: 'Original', cleaned: 'AI cleanup',
     raw: 'uh so tomorrow at seven we meet at the old coffee place um bring the two books',

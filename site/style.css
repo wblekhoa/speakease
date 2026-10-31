@@ -133,7 +133,7 @@ main { overflow-x: clip; }
 .pill-time::before { content: "0:00"; font-variant-numeric: tabular-nums; }
 .pill-spinner { width: max(9px, 1.6cqw); height: max(9px, 1.6cqw); border: 2px solid var(--edge); border-top-color: var(--brand); border-radius: 50%; }
 .keys { display: flex; gap: 8px; margin-top: 28px; }
-.keys kbd { min-width: 48px; height: 44px; font-size: 16px; transition: translate 160ms ease-out, background-color 160ms ease-out, color 160ms ease-out; }
+.keys kbd { min-width: 48px; height: 44px; border-radius: 14px; font-size: 16px; transition: translate 160ms ease-out, background-color 160ms ease-out, color 160ms ease-out; }
 .keys .key-space { min-width: 160px; }
 .demo-steps { display: inline-flex; flex-wrap: wrap; justify-content: center; gap: 4px; margin-top: 20px; padding: 4px; border: 1px solid var(--edge); border-radius: 999px; background: var(--card); }
 .demo-steps button, .step-static { display: inline-flex; align-items: center; gap: 8px; border: 0; background: transparent; color: var(--muted); min-height: 40px; padding: 6px 16px; border-radius: 999px; font-size: 14px; font-weight: 500; white-space: nowrap; }
@@ -163,6 +163,14 @@ main { overflow-x: clip; }
   scroll-snap-type: x mandatory; scroll-padding-inline: max(32px, calc((100vw - 1200px) / 2 + 32px));
   padding: 4px max(32px, calc((100vw - 1200px) / 2 + 32px)) 16px; scrollbar-width: none; }
 .way-track::-webkit-scrollbar { display: none; }
+.way-track.has-cursor, .way-track.has-cursor * { cursor: none; }
+.way-track.is-dragging { scroll-snap-type: none; user-select: none; }
+.way-track img { -webkit-user-drag: none; }
+/* The drag cursor: a round ink badge that follows a fine pointer over the track; scrolling stays native for touch. */
+.drag-cursor { position: fixed; z-index: 40; left: -44px; top: -44px; display: grid; place-items: center; width: 88px; height: 88px; border-radius: 50%;
+  background: var(--ink); color: var(--bg); font: 600 14px/1 var(--body); pointer-events: none; opacity: 0; scale: .4; }
+.drag-cursor.is-on { opacity: 1; scale: 1; }
+.drag-cursor.is-on.is-pressed { scale: .82; }
 .way-card { scroll-snap-align: start; display: grid; grid-template-rows: auto 1fr; border-radius: 28px; background: var(--card); overflow: hidden; }
 .way-visual { display: grid; place-items: center; height: 400px; padding: 32px; }
 .way-card h3 { padding: 4px 28px 28px; font-size: clamp(21px, 2vw, 25px); line-height: 1.25; font-weight: 500; letter-spacing: -.03em; }
@@ -281,6 +289,7 @@ details a { color: var(--ink); text-decoration: underline; text-underline-offset
 /* Motion. Only when the viewer allows it; every state is complete without it.
    Hover lifts use `translate` so they compose with the reveal's `transform`. */
 @media (prefers-reduced-motion: no-preference) {
+  .drag-cursor { transition: opacity 180ms ease-out, scale 220ms ease-out; }
   .hero > * { animation: rise 760ms cubic-bezier(.2, .7, .2, 1) both; }
   .hero > :nth-child(2) { animation-delay: 80ms; } .hero > :nth-child(3) { animation-delay: 160ms; }
   .hero > :nth-child(4) { animation-delay: 240ms; } .hero > :nth-child(5) { animation-delay: 300ms; }

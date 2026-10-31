@@ -146,11 +146,69 @@ function Card({ title, children }) {
 /* Wide windows show several cards, so the track ends before the last card reaches the left edge: the end is the last card. */
 export const cardIndex = (left, max, stride, count) =>
   left >= max - 2 ? count - 1 : Math.max(0, Math.min(count - 1, Math.round(left / stride)));
+/* Where a mouse drag lands: past 15% of a card in either direction moves to the next card that way, else back. */
+export const dragTarget = (startLeft, left, max, stride) => {
+  const moved = left - startLeft;
+  const index = Math.abs(moved) < stride * .15 ? Math.round(startLeft / stride) : moved > 0 ? Math.ceil(left / stride) : Math.floor(left / stride);
+  return Math.max(0, Math.min(max, index * stride));
+};
+/* Mouse drag scrolls the track (touch already swipes natively); a round "Kéo / Drag" cursor follows a fine pointer. */
+function useDrag(track, cursor, enhanced) {
+  useEffect(() => {
+    const el = track.current; const bubble = cursor.current;
+    if (!el || !bubble) return undefined;
+    const fine = window.matchMedia('(hover: hover) and (pointer: fine)');
+    const reduce = window.matchMedia('(prefers-reduced-motion: reduce)');
+    let drag = null; let frame = 0; let settle = 0; let point = { x: 0, y: 0 };
+    const place = () => { frame = 0; bubble.style.translate = `${point.x}px ${point.y}px`; };
+    const follow = event => { point = { x: event.clientX, y: event.clientY }; if (!frame) frame = requestAnimationFrame(place); };
+    const enter = event => { if (!fine.matches || event.pointerType !== 'mouse') return; follow(event); el.classList.add('has-cursor'); bubble.classList.add('is-on'); };
+    const leave = () => { if (!drag) { el.classList.remove('has-cursor'); bubble.classList.remove('is-on'); } };
+    const down = event => {
+      if (event.pointerType !== 'mouse' || event.button !== 0) return;
+      clearTimeout(settle);
+      drag = { x: event.clientX, left: el.scrollLeft, moved: false, id: event.pointerId };
+      el.setPointerCapture(event.pointerId); el.classList.add('is-dragging'); bubble.classList.add('is-pressed');
+    };
+    const move = event => {
+      if (bubble.classList.contains('is-on')) follow(event);
+      if (!drag) return;
+      const dx = event.clientX - drag.x;
+      if (Math.abs(dx) > 4) drag.moved = true;
+      el.scrollLeft = drag.left - dx;
+    };
+    const up = event => {
+      if (!drag) return;
+      const { left, moved, id } = drag; drag = null;
+      if (el.hasPointerCapture(id)) el.releasePointerCapture(id);
+      bubble.classList.remove('is-pressed');
+      // Snap stays off until the glide ends, or the browser snaps to the nearest card before it starts.
+      const stride = el.querySelector('.way-card').offsetWidth + 24;
+      const target = dragTarget(left, el.scrollLeft, el.scrollWidth - el.clientWidth, stride);
+      clearTimeout(settle);
+      settle = setTimeout(() => el.classList.remove('is-dragging'), reduce.matches ? 0 : 700);
+      el.scrollTo({ left: target, behavior: reduce.matches ? 'auto' : 'smooth' });
+      if (moved) el.addEventListener('click', stop, { capture: true, once: true });
+      if (!el.matches(':hover')) leave();
+    };
+    const stop = event => { event.preventDefault(); event.stopPropagation(); };
+    const noNativeDrag = event => event.preventDefault();
+    const on = [['pointerenter', enter], ['pointerleave', leave], ['pointerdown', down], ['pointermove', move], ['pointerup', up], ['pointercancel', up], ['dragstart', noNativeDrag]];
+    on.forEach(([type, handler]) => el.addEventListener(type, handler));
+    return () => {
+      on.forEach(([type, handler]) => el.removeEventListener(type, handler));
+      el.removeEventListener('click', stop, { capture: true });
+      cancelAnimationFrame(frame); clearTimeout(settle); el.classList.remove('has-cursor', 'is-dragging');
+    };
+  }, [track, cursor, enhanced]);
+}
 function Features({ c, screenshots }) {
   const track = useRef(null);
+  const cursor = useRef(null);
   const enhanced = useEnhanced();
   const [current, setCurrent] = useState(0);
   const count = 4;
+  useDrag(track, cursor, enhanced);
   const step = direction => {
     const el = track.current; const card = el.querySelector('.way-card');
     el.scrollBy({ left: direction * (card.offsetWidth + 24), behavior: window.matchMedia('(prefers-reduced-motion: reduce)').matches ? 'auto' : 'smooth' });
@@ -181,6 +239,7 @@ function Features({ c, screenshots }) {
         <img src={`${screenshots}history.png`} width="1760" height="1240" loading="lazy" alt={c.historyAlt} />
       </figure></Card>
     </div>
+    {enhanced && <span className="drag-cursor" ref={cursor} aria-hidden="true">{c.drag}</span>}
     <div className="way-controls container" hidden={!enhanced}>
       <div className="way-dots" aria-hidden="true">{Array.from({ length: count }, (_, i) => <span key={i} className={i === current ? 'is-on' : undefined} />)}</div>
       <div className="way-arrows">

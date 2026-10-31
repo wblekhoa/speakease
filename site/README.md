@@ -49,6 +49,8 @@ hero, screenshot size, relative URLs that exist, and the notices file. The root 
   wide and 600 px+ tall with motion allowed; elsewhere it shows the result and the numbered tabs switch steps.
   Without JavaScript the steps are a plain list.
 - The comparison only states facts a reader can check, with dated footnotes.
+- The card scroller drags with the mouse (touch swipes natively) and lands on the nearest card past 15 % of a
+  card; over it a fine pointer becomes a round ink "Kéo / Drag" badge. Arrows, dots and keyboard scrolling stay.
 - Light and dark follow the system; the header toggle overrides it (`speakease-site-theme` in localStorage).
 
 ## Publishing
