@@ -26,6 +26,8 @@ use tauri::{AppHandle, Emitter};
 const START_TIMEOUT: Duration = Duration::from_secs(90);
 /// The context the server keeps; subtitle prompts and clean-up fit easily.
 const CONTEXT_TOKENS: &str = "8192";
+/// Prompt states llama-server may keep in RAM besides the live context (MiB).
+const PROMPT_CACHE_MB: &str = "256";
 
 #[derive(Debug, Clone, Deserialize)]
 struct CatalogEntry {
@@ -384,6 +386,30 @@ fn healthy(port: u16) -> bool {
         .is_ok_and(|n| head[..n].starts_with(b"HTTP/1.1 200"))
 }
 
+/// Everything after `-m <model>`. The prompt cache in RAM is capped: left at
+/// llama-server's 8 GiB default it grew the process to 9-11 GB over one long
+/// summary, far past the catalog's `ram_mb`.
+fn server_flags(port: u16) -> Vec<String> {
+    [
+        "--host",
+        "127.0.0.1",
+        "--port",
+        &port.to_string(),
+        "-ngl",
+        "99",
+        "-c",
+        CONTEXT_TOKENS,
+        "-np",
+        "1",
+        "--cache-ram",
+        PROMPT_CACHE_MB,
+        "--jinja",
+        "--no-webui",
+    ]
+    .map(String::from)
+    .to_vec()
+}
+
 /// Starts the server with the model in use (or keeps the one running) and
 /// returns its port. Blocking: up to START_TIMEOUT while the model loads.
 pub fn ensure_server(app: &AppHandle) -> Result<u16, String> {
@@ -404,20 +430,7 @@ pub fn ensure_server(app: &AppHandle) -> Result<u16, String> {
     let mut child = Command::new(&binary)
         .arg("-m")
         .arg(&model)
-        .args([
-            "--host",
-            "127.0.0.1",
-            "--port",
-            &port.to_string(),
-            "-ngl",
-            "99",
-            "-c",
-            CONTEXT_TOKENS,
-            "-np",
-            "1",
-            "--jinja",
-            "--no-webui",
-        ])
+        .args(server_flags(port))
         .stdin(Stdio::null())
         .stdout(Stdio::null())
         .stderr(Stdio::piped())
@@ -599,5 +612,18 @@ mod tests {
                 "one model in the {slot} slot"
             );
         }
+    }
+
+    // SE-AI-012
+    #[test]
+    fn server_caps_its_prompt_cache() {
+        let flags = server_flags(8080);
+        let at = flags
+            .iter()
+            .position(|f| f == "--cache-ram")
+            .expect("--cache-ram");
+        let mb: u64 = flags[at + 1].parse().expect("MiB");
+        assert!(mb <= 512, "prompt cache {mb} MiB");
+        assert!(flags.windows(2).any(|w| w == ["--port", "8080"]));
     }
 }
