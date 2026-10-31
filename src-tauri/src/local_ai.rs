@@ -291,7 +291,8 @@ pub async fn download(app: AppHandle, id: String) -> Result<(), String> {
     result
 }
 
-fn entry_downloaded(app: &AppHandle, id: &str) -> Option<PathBuf> {
+/// A downloaded catalog model's file, by id.
+pub fn entry_downloaded(app: &AppHandle, id: &str) -> Option<PathBuf> {
     let entry = entry(id).ok()?;
     let path = model_path(app, entry).ok()?;
     path.exists().then_some(path)
@@ -543,19 +544,52 @@ pub async fn chat(app: &AppHandle, system: &str, user: &str) -> Result<String, S
     let port = tauri::async_runtime::spawn_blocking(move || ensure_server(&handle))
         .await
         .map_err(|e| e.to_string())??;
+    ask_server(port, system, user, 512, Duration::from_secs(60)).await
+}
+
+/// How long one meeting-notes request may take: a 700-word part or a merge
+/// on a 4B model on a slow Mac.
+const LONG_TIMEOUT: Duration = Duration::from_secs(600);
+/// The longest answer a meeting-notes request may write (as measured 30/10).
+const LONG_ANSWER_TOKENS: u32 = 1_200;
+
+/// [`chat`] for meeting notes on `model` (Qwen3.5-4B whichever model is in
+/// use), with a longer answer and timeout.
+pub async fn chat_long(
+    app: &AppHandle,
+    model: &std::path::Path,
+    system: &str,
+    user: &str,
+) -> Result<String, String> {
+    let handle = app.clone();
+    let model = model.to_path_buf();
+    let port = tauri::async_runtime::spawn_blocking(move || ensure_server_with(&handle, model))
+        .await
+        .map_err(|e| e.to_string())??;
+    ask_server(port, system, user, LONG_ANSWER_TOKENS, LONG_TIMEOUT).await
+}
+
+/// One request to the running server, thinking off.
+async fn ask_server(
+    port: u16,
+    system: &str,
+    user: &str,
+    max_tokens: u32,
+    timeout: Duration,
+) -> Result<String, String> {
     let body = serde_json::json!({
         "messages": [
             { "role": "system", "content": system },
             { "role": "user", "content": user },
         ],
         "temperature": 0.2,
-        "max_tokens": 512,
+        "max_tokens": max_tokens,
         "cache_prompt": true,
         "chat_template_kwargs": { "enable_thinking": false },
     });
     let response = reqwest::Client::new()
         .post(format!("http://127.0.0.1:{port}/v1/chat/completions"))
-        .timeout(Duration::from_secs(60))
+        .timeout(timeout)
         .json(&body)
         .send()
         .await
@@ -580,63 +614,6 @@ pub async fn chat(app: &AppHandle, system: &str, user: &str) -> Result<String, S
     } else {
         Ok(text)
     }
-}
-
-/// A downloaded catalog model's file, by id.
-pub fn downloaded_model_file(app: &AppHandle, id: &str) -> Option<PathBuf> {
-    entry_downloaded(app, id)
-}
-
-/// How long one meeting-notes request may take: a 700-word part or a merge
-/// on a 4B model on a slow Mac.
-const LONG_TIMEOUT: Duration = Duration::from_secs(600);
-/// The longest answer a meeting-notes request may write.
-const LONG_ANSWER_TOKENS: u32 = 1_200;
-
-/// One chat turn for meeting notes on `model`: a longer answer and timeout
-/// than [`chat`], thinking off (the settings measured on 30/10).
-pub async fn chat_long(
-    app: &AppHandle,
-    model: &std::path::Path,
-    system: &str,
-    user: &str,
-) -> Result<String, String> {
-    let handle = app.clone();
-    let model = model.to_path_buf();
-    let port = tauri::async_runtime::spawn_blocking(move || ensure_server_with(&handle, model))
-        .await
-        .map_err(|e| e.to_string())??;
-    let body = serde_json::json!({
-        "messages": [
-            { "role": "system", "content": system },
-            { "role": "user", "content": user },
-        ],
-        "temperature": 0.2,
-        "max_tokens": LONG_ANSWER_TOKENS,
-        "chat_template_kwargs": { "enable_thinking": false },
-    });
-    let response = reqwest::Client::new()
-        .post(format!("http://127.0.0.1:{port}/v1/chat/completions"))
-        .timeout(LONG_TIMEOUT)
-        .json(&body)
-        .send()
-        .await
-        .map_err(|e| format!("server: {e}"))?;
-    let status = response.status();
-    let json: serde_json::Value = response.json().await.map_err(|e| e.to_string())?;
-    if !status.is_success() {
-        return Err(format!("server: {status}: {json}"));
-    }
-    if let Ok(mut server) = SERVER.lock() {
-        if let Some(running) = server.as_mut() {
-            running.last_used = Instant::now();
-        }
-    }
-    Ok(json["choices"][0]["message"]["content"]
-        .as_str()
-        .unwrap_or_default()
-        .trim()
-        .to_string())
 }
 
 /// [`chat`] for the subtitle threads, which are plain std threads.

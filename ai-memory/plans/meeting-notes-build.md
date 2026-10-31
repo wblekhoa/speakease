@@ -36,7 +36,7 @@ Every phase keeps these green on its branch (the "five checks"): `bun run lint`,
    - Verify: five checks; `cargo test --lib meeting_notes` (pre-check both sides of the threshold on synthetic
      Vietnamese text, splitting loses no word, fence present, every template has its sections, AI order);
      `handy --meeting-notes <synthetic.txt>` prints notes with the template's headings;
-     `node ~/JAK/companies/docs-house/doc-engine/bin/doc-index.mjs --check --product speakease` 0 errors.
+     docs-house `doc-index --check --product speakease` 0 errors.
 2. **Recording** — SE-MEET-001, 003, 004, 006, 008, 013, and level 1 of SE-MEET-005.
    - Start/stop from its own shortcut, the tray and the pill menu; microphone and the meeting app's sound (process
      tap shared with live subtitles) as two tracks, "Me" and "Others"; the consent line; a timer; dictation runs in
@@ -75,6 +75,8 @@ Chosen by AI under the owner's overnight delegation (31/10) - for the owner to r
 - Fillers for the pre-check: alo, à, ạ, ừ, ừm, ừa, ờ, ơ, ồ, hả, dạ, vâng, ok/okay/oke, nhé, nhỉ, nha and English
   uh/um/hmm/oh/hello/hi/yeah. Words like "thì", "là", "mà" count as content.
 - An empty recording without a chosen kind is labelled a call.
+- Action-item bullets the AI writes in another shape are rewritten into `- [ ] action — owner`.
+- Meeting notes ship behind Experimental, like live subtitles, until the owner has tried them.
 
 - Phase order puts the testable core first; the owner's test call can run through phase 1's CLI before any UI exists.
 - No new dependency in phases 1-2 and 4-5. `.docx` (phase 3) needs the owner's yes.

@@ -104,6 +104,16 @@ pub(crate) fn clean_ai_output(s: &str) -> String {
         .to_string()
 }
 
+/// Providers asked to skip reasoning/thinking: it rarely helps rewriting a
+/// transcript and adds seconds. llm_client retries without the fields if an
+/// endpoint rejects them.
+pub(crate) fn skips_reasoning(provider_id: &str) -> bool {
+    matches!(
+        provider_id,
+        "custom" | "openrouter" | crate::settings::LOCAL_AI_PROVIDER_ID
+    )
+}
+
 /// Build a system prompt from the user's prompt template.
 /// Removes `${output}` placeholder since the transcription is sent as the user message.
 fn build_system_prompt(prompt_template: &str) -> String {
@@ -259,10 +269,7 @@ pub(crate) async fn post_process_with_prompt(
     // Ask these providers to skip reasoning/thinking — post-processing rarely
     // benefits from it and it adds seconds of latency. llm_client picks the
     // field the endpoint understands and retries without it if rejected.
-    let disable_reasoning = matches!(
-        provider.id.as_str(),
-        "custom" | "openrouter" | crate::settings::LOCAL_AI_PROVIDER_ID
-    );
+    let disable_reasoning = skips_reasoning(&provider.id);
 
     // SE-AI-012
     // The on-device model: start the bundled server (or keep it) and point

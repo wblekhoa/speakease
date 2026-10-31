@@ -24,8 +24,9 @@ repo; each cites its source.
   user's key" is the provider picked in AI & Translate when it has a key and a model, else the first other one that
   has both; notes always run Qwen3.5-4B on device (no other on-device model instead); Apple Intelligence writes notes
   through its content-transformation guardrails; the pre-check's fillers are listed in the plan and
-  `MIN_SUBSTANTIVE_WORDS` stays 20 until the owner's test call; a hidden `--meeting-notes <transcript.txt>` runs the
-  real pipeline headlessly.
+  `MIN_SUBSTANTIVE_WORDS` stays 20 until the owner's test call; bullets under the action-items heading are rewritten
+  into `- [ ] action — owner` when the AI writes another shape; a hidden `--meeting-notes <transcript.txt>` runs the
+  real pipeline headlessly and, with no AI, prints the transcript and the reason.
 - **Evidence**: `cargo test --lib meeting_notes` (12 tests); `handy --meeting-notes` on a 523-word synthetic
   Vietnamese meeting with Apple Intelligence: 24 s, four sections, every figure right, the Android idea put off to next quarter left out; on a four-line broken-mic call:
   one line, no AI call (18 substantive words).
