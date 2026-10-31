@@ -14,6 +14,22 @@ tags: [area/docs]
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
 
+## 2026-10-31 · Landing page: open items closed overnight under the owner's delegation
+
+- **Context**: the owner told the parent session "Tự hành đến sáng cho xong hết hết, tôi sẽ kiểm tra sau khi tất cả đã
+  xong." Each open item below takes the AI's proposed option and is **chosen by AI under the owner's overnight
+  delegation (31/10)**; none is owner-confirmed.
+- **Meta descriptions** now follow the demo flow (press ⌥ Space, speak, press again) instead of "hold a key, let go".
+- **Download button colour**: stays dark ink, as ReadEase; pink marks the product.
+- **Centred section headings** (WAVE slop-05): kept, to match the ReadEase frame the owner chose in round 1.
+- **History screenshot** (a meeting at "công ty ABC", a Figma link): kept; round 1 ruled out re-capturing screenshots.
+- **GA4**: stays off. A SpeakEase web stream needs the owner's Google account; until then the page loads no analytics.
+- **Point-of-view card**: written in `goal.md` from the owner's 29/10 direction ("Trợ lý giọng nói đa năng: chép lời,
+  tóm tắt, dịch, sửa câu"); adjectives, signature detail and refusals drafted by the AI.
+- **Not done, waits for the owner's "phát hành"**: enabling GitHub Pages, running the Pages workflow, the website's
+  `/speakease` redirect. The one-step command is in `site/README.md` § Publishing.
+- **Reversal**: each item is one edit (meta tags in `site/index.html`/`site/en/index.html`; the section in `goal.md`).
+
 ## 2026-10-31 · Landing-page demo: Apple's macOS 27 wallpaper, a realistic Notes window, the real overlay pill
 
 - **Context**: reviewing the local preview, the owner asked for a more realistic mockup: "sử dụng wallpaper của macOS

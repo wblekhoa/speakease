@@ -36,9 +36,11 @@ Owner round 1 (`decisions.md`, 2026-10-31) decided every item below. Built local
 | Stack | DECIDED | React + Vite + GSAP (new dependencies of `site/` only) |
 | Analytics | DECIDED | GA4 like ReadEase, skipped under Do Not Track |
 | Release | DECIDED | Local preview first; published only after the owner approves |
-| CTA colour | AI default, not owner-confirmed | Dark ink button, as ReadEase; pink marks the product |
-| GA4 stream ID | OPEN | Needs a SpeakEase web stream; analytics stay off until then |
-| Point-of-view card | OPEN | `goal.md` has none (inbox 2026-10-27); the design review ran without it |
+| CTA colour | AI, overnight delegation 31/10 | Dark ink button, as ReadEase; pink marks the product |
+| GA4 stream ID | OPEN (owner) | Needs a SpeakEase web stream on the owner's account; analytics stay off until then |
+| Point-of-view card | AI, overnight delegation 31/10 | Written in `goal.md` from the owner's 29/10 direction |
+| Centred headings (slop-05) | AI, overnight delegation 31/10 | Kept, matching the ReadEase frame |
+| History screenshot | AI, overnight delegation 31/10 | Kept as captured (round 1 ruled out re-capturing) |
 
 ## Change
 | REQ-ID | Add / edit / deprecate | Rule after the change | Kind |
