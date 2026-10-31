@@ -384,7 +384,7 @@ async fn ask_clean<A: NotesAi>(ai: &A, instructions: &str, text: &str) -> Result
 }
 
 /// The part notes, merged until they fit one request. A part the AI refuses
-/// keeps its own words (as SE-FILE-003); only all parts failing fails the job.
+/// keeps its own words (as rewriting a long file does); only all parts failing fails the job.
 async fn condensed_notes<A: NotesAi>(
     ai: &A,
     transcript: &str,
