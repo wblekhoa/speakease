@@ -207,7 +207,7 @@ main { overflow-x: clip; }
 .drag-cursor.is-pressed .glyph:last-child { translate: 2px 0; }
 .way-card { scroll-snap-align: start; display: grid; grid-template-rows: auto 1fr; border-radius: 28px; background: var(--card); overflow: hidden; }
 .way-visual { display: grid; place-items: center; height: 400px; padding: 32px; }
-.way-card h3 { padding: 4px 28px 28px; font-size: clamp(21px, 2vw, 25px); line-height: 1.25; font-weight: 500; letter-spacing: -.03em; }
+.way-card h3 { align-self: end; padding: 4px 28px 28px; font-size: clamp(21px, 2vw, 25px); line-height: 1.25; font-weight: 500; letter-spacing: -.03em; }
 .sheet { width: 100%; max-width: 420px; padding: 22px; border-radius: 18px; background: var(--bg); box-shadow: 0 0 0 1px var(--edge), var(--lift); }
 .sheet-label { display: flex; align-items: center; gap: 8px; color: var(--muted); font-size: 12px; font-weight: 500; }
 .sheet-label .glyph { width: 16px; height: 16px; }
