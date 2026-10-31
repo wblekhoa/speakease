@@ -29,3 +29,51 @@ export const elapsed = (startedAt: number, nowMs: number) => {
   const s = String(total % 60).padStart(2, "0");
   return h > 0 ? `${h}:${String(m).padStart(2, "0")}:${s}` : `${m}:${s}`;
 };
+
+// SpeakEase Meetings page (SE-MEET-018).
+
+/** A meeting's length as the timer shows it. */
+export const duration = (ms: number) => elapsed(0, ms);
+
+/** What the notes area shows for a meeting's stored `notes_state`. */
+export type NotesView =
+  | { kind: "writing" }
+  | { kind: "notes" }
+  | { kind: "empty" }
+  | { kind: "failed" }
+  | { kind: "noAi"; reason: "ai_off" | "nothing_available" };
+
+export const notesView = (state: string, hasNotes: boolean): NotesView => {
+  if (state === "writing") return { kind: "writing" };
+  if (state === "empty") return { kind: "empty" };
+  if (state === "failed") return { kind: "failed" };
+  if (state.startsWith("no_ai:")) {
+    return {
+      kind: "noAi",
+      reason: state.endsWith(":ai_off") ? "ai_off" : "nothing_available",
+    };
+  }
+  return hasNotes ? { kind: "notes" } : { kind: "failed" };
+};
+
+/** The four note templates (meeting_notes.rs NoteKind), in menu order. */
+export const NOTE_KINDS = ["meeting", "call", "lecture", "interview"] as const;
+
+// SE-MEET-015
+/** A meeting as a file: the notes (when there are any), then the transcript.
+ *  `txt` drops the Markdown heading marks and keeps the checkboxes. */
+export const exportMeeting = (
+  meeting: { title: string; notes: string | null; transcript: string },
+  format: "md" | "txt",
+  transcriptHeading: string,
+) => {
+  const parts = [`# ${meeting.title}`];
+  if (meeting.notes) parts.push(meeting.notes.trim());
+  parts.push(`## ${transcriptHeading}`, meeting.transcript.trim());
+  const text = parts.join("\n\n") + "\n";
+  return format === "md" ? text : text.replace(/^#{1,6} /gm, "");
+};
+
+/** A file name from a meeting's title ("Zoom · 31/10 09:30"), safe on macOS. */
+export const meetingFileName = (title: string, format: "md" | "txt") =>
+  `${title.replace(/[/:\\]/g, "-").trim() || "meeting"}.${format}`;

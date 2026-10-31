@@ -1,5 +1,11 @@
 import assert from "node:assert/strict";
-import { elapsed, meetingErrorKey } from "./meeting";
+import {
+  elapsed,
+  exportMeeting,
+  meetingErrorKey,
+  meetingFileName,
+  notesView,
+} from "./meeting";
 
 // The timer counts from the start, and shows hours only past an hour.
 assert.equal(elapsed(1000, 1000_000), "0:00");
@@ -14,3 +20,41 @@ assert.equal(meetingErrorKey("microphone: device busy"), "microphone");
 assert.equal(meetingErrorKey("Tap failed with status -1"), "other");
 
 console.log("meeting.test.ts: ok");
+
+// SE-MEET-018: the notes area follows the stored state.
+assert.deepEqual(notesView("writing", false), { kind: "writing" });
+assert.deepEqual(notesView("done", true), { kind: "notes" });
+assert.deepEqual(notesView("done", false), { kind: "failed" });
+assert.deepEqual(notesView("empty", true), { kind: "empty" });
+assert.deepEqual(notesView("no_ai:ai_off", false), {
+  kind: "noAi",
+  reason: "ai_off",
+});
+assert.deepEqual(notesView("no_ai:nothing_available", false), {
+  kind: "noAi",
+  reason: "nothing_available",
+});
+
+// SE-MEET-015: a file holds the notes, then the transcript; .txt has no "#".
+const meeting = {
+  title: "Zoom · 31/10 09:30",
+  notes:
+    "## Quyết định\n- Ra mắt 15/11\n\n## Việc cần làm\n- [ ] gửi bài — Minh",
+  transcript: "[Tôi] chào mọi người",
+};
+assert.equal(
+  exportMeeting(meeting, "md", "Bản ghi lời"),
+  "# Zoom · 31/10 09:30\n\n## Quyết định\n- Ra mắt 15/11\n\n## Việc cần làm\n- [ ] gửi bài — Minh\n\n## Bản ghi lời\n\n[Tôi] chào mọi người\n",
+);
+assert.equal(
+  exportMeeting(meeting, "txt", "Bản ghi lời"),
+  "Zoom · 31/10 09:30\n\nQuyết định\n- Ra mắt 15/11\n\nViệc cần làm\n- [ ] gửi bài — Minh\n\nBản ghi lời\n\n[Tôi] chào mọi người\n",
+);
+// With no notes (no AI), the file is the transcript.
+assert.equal(
+  exportMeeting({ ...meeting, notes: null }, "txt", "Transcript"),
+  "Zoom · 31/10 09:30\n\nTranscript\n\n[Tôi] chào mọi người\n",
+);
+assert.equal(meetingFileName(meeting.title, "md"), "Zoom · 31-10 09-30.md");
+
+console.log("meeting.test.ts (page): ok");

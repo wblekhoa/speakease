@@ -57,7 +57,8 @@ pub struct Meeting {
     pub duration_ms: i64,
     /// meeting, call, lecture or interview; None until the notes are written.
     pub kind: Option<String>,
-    /// Markdown notes, the empty-recording line, or None while writing.
+    /// Markdown notes or the empty-recording line; None while first written
+    /// (a rewrite keeps the previous notes until the new ones are in).
     pub notes: Option<String>,
     /// "writing", "done", "empty", "failed" or "no_ai:<reason>".
     pub notes_state: String,

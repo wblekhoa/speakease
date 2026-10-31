@@ -1117,12 +1117,13 @@ async meetingState() : Promise<MeetingState> {
     return await TAURI_INVOKE("meeting_state");
 },
 /**
- * The meeting bar's ×: clears a finished meeting's error and hides the bar.
+ * The meeting bar's ×: clears a finished meeting's error, or hides the bar
+ * while the meeting is being finished.
  */
 async closeMeetingBar() : Promise<void> {
     await TAURI_INVOKE("close_meeting_bar");
 },
-async getMeeting(historyId: number) : Promise<Result<Meeting | null, string>> {
+async getMeeting(historyId: number) : Promise<Result<MeetingEntry | null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_meeting", { historyId }) };
 } catch (e) {
@@ -1130,9 +1131,24 @@ async getMeeting(historyId: number) : Promise<Result<Meeting | null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
-async listMeetings() : Promise<Result<Meeting[], string>> {
+/**
+ * Every meeting, newest first.
+ */
+async listMeetings() : Promise<Result<MeetingEntry[], string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("list_meetings") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The template switch: writes the notes again as `kind` (meeting, call,
+ * lecture or interview), in the background.
+ */
+async rewriteMeetingNotes(historyId: number, kind: string) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("rewrite_meeting_notes", { historyId, kind }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
@@ -1411,13 +1427,19 @@ app_name: string; started_at: number; duration_ms: number;
  */
 kind: string | null; 
 /**
- * Markdown notes, the empty-recording line, or None while writing.
+ * Markdown notes or the empty-recording line; None while first written
+ * (a rewrite keeps the previous notes until the new ones are in).
  */
 notes: string | null; 
 /**
  * "writing", "done", "empty", "failed" or "no_ai:<reason>".
  */
 notes_state: string; notes_engine: string | null }
+/**
+ * A meeting with its History entry's title and transcript, for the
+ * Meetings page (SE-MEET-018).
+ */
+export type MeetingEntry = { meeting: Meeting; title: string; transcript: string }
 /**
  * Where a meeting stands, for the meeting bar and the window.
  */

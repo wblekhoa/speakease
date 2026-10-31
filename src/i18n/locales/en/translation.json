@@ -38,7 +38,8 @@
     "unfoldDrag": "Drag out to open the sidebar · double-click to open it",
     "files": "Files & links",
     "language": "Interface language",
-    "subtitles": "Live subtitles"
+    "subtitles": "Live subtitles",
+    "meetings": "Meetings"
   },
   "onboarding": {
     "subtitle": "To get started, choose a transcription model",
@@ -1136,6 +1137,36 @@
       "no-model": "Choose a speech model on the Models page first.",
       "vad": "Speech detection could not start.",
       "other": "The meeting could not be recorded or saved."
+    },
+    "page": {
+      "empty": "No meetings yet. Start one from the tray, or with the Meeting notes shortcut on the Recording page.",
+      "notesTab": "Notes",
+      "transcriptTab": "Transcript",
+      "check": "AI wrote these notes. Check names and numbers against the transcript.",
+      "openTranscript": "Open the transcript",
+      "writing": "Writing the notes…",
+      "emptyNotes": "Nothing substantive was said in this recording, so there is no summary.",
+      "failed": "The notes could not be written. The whole transcript is here.",
+      "noAi": {
+        "ai_off": "AI is switched off in AI & Translate, so there are no notes. The transcript is the record.",
+        "nothing_available": "This Mac has no AI for notes (Apple Intelligence, an API key or the on-device model), so there are no notes. The transcript is the record."
+      },
+      "template": "Template",
+      "kinds": {
+        "meeting": "Meeting",
+        "call": "Call",
+        "lecture": "Lecture",
+        "interview": "Interview"
+      },
+      "copy": "Copy",
+      "copied": "Copied",
+      "saveMd": "Save .md",
+      "saveTxt": "Save .txt",
+      "saved": "File saved",
+      "saveFailed": "The file could not be saved.",
+      "markdownFile": "Markdown",
+      "textFile": "Text",
+      "rewriteFailed": "The notes could not be written again."
     }
   }
 }
