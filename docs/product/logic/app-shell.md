@@ -4,7 +4,7 @@ type: logic
 product: speakease
 title: "SpeakEase — App shell (logic)"
 status: active
-updated: 2026-10-31
+updated: 2026-11-01
 summary: "Rules for the side column's widths and folding, the language menu, tray navigation, the update feed and manual checks, and first-launch permissions (SE-APP)."
 tags: [area/layout, area/updater, area/permissions, stack/tauri]
 reqPrefix: SE-APP

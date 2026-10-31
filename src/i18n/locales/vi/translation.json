@@ -38,7 +38,8 @@
     "unfoldDrag": "Kéo ra để mở thanh bên · bấm đúp để mở",
     "files": "Tệp/liên kết",
     "language": "Ngôn ngữ giao diện",
-    "subtitles": "Phụ đề trực tiếp"
+    "subtitles": "Phụ đề trực tiếp",
+    "meetings": "Cuộc họp"
   },
   "onboarding": {
     "subtitle": "Để bắt đầu, hãy chọn một mô hình chép lời",
@@ -1136,6 +1137,36 @@
       "no-model": "Hãy chọn mô hình nhận giọng nói ở trang Mô hình trước.",
       "vad": "Không khởi động được bộ nhận biết giọng nói.",
       "other": "Không ghi âm hoặc lưu được cuộc họp."
+    },
+    "page": {
+      "empty": "Chưa có cuộc họp nào. Bắt đầu từ khay hệ thống, hoặc bằng phím tắt Ghi chú cuộc họp ở trang Ghi âm.",
+      "notesTab": "Ghi chú",
+      "transcriptTab": "Bản ghi lời",
+      "check": "AI viết ghi chú này. Hãy đối chiếu tên và con số với bản ghi lời.",
+      "openTranscript": "Xem bản ghi lời",
+      "writing": "Đang viết ghi chú…",
+      "failed": "Không viết được ghi chú. Bản ghi lời vẫn đầy đủ ở đây.",
+      "noAi": {
+        "ai_off": "AI đang tắt trong AI & dịch, nên không có ghi chú. Bản ghi lời là nội dung cuộc họp.",
+        "nothing_available": "Máy Mac này chưa có AI để viết ghi chú (Apple Intelligence, khoá API hoặc mô hình trên máy), nên không có ghi chú. Bản ghi lời là nội dung cuộc họp."
+      },
+      "template": "Mẫu ghi chú",
+      "kinds": {
+        "meeting": "Cuộc họp",
+        "call": "Cuộc gọi",
+        "lecture": "Bài giảng",
+        "interview": "Phỏng vấn"
+      },
+      "copy": "Sao chép",
+      "copied": "Đã sao chép",
+      "saveMd": "Lưu .md",
+      "saveTxt": "Lưu .txt",
+      "saved": "Đã lưu tệp",
+      "saveFailed": "Không lưu được tệp.",
+      "markdownFile": "Markdown",
+      "textFile": "Văn bản",
+      "rewriteFailed": "Không viết lại được ghi chú.",
+      "view": "Xem"
     }
   }
 }

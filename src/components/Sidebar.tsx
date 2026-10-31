@@ -8,6 +8,7 @@ import {
   KeyboardIcon,
   MagicStarIcon,
   MicrophoneIcon,
+  PeopleIcon,
   ReadingSettingsIcon,
   SidebarIcon,
   TranslateIcon,
@@ -22,6 +23,7 @@ import {
   SpeakPage,
   FilesPage,
   LiveSubtitlesPage,
+  MeetingsPage,
   HistorySettings,
   RecordingSettings,
   RecognitionSettings,
@@ -49,8 +51,8 @@ interface SectionConfig {
   settings?: boolean;
 }
 
-// SpeakEase's sections. Speak, Files, Live subtitles (beta) and History are
-// where the app is used; the
+// SpeakEase's sections. Speak, Files, Live subtitles and Meetings (betas) and
+// History are where the app is used; the
 // settings follow a dictation from start to end: recording it, turning it
 // into words, AI on the words, and the app around it.
 export const SECTIONS_CONFIG = {
@@ -71,6 +73,13 @@ export const SECTIONS_CONFIG = {
     labelKey: "sidebar.subtitles",
     icon: TranslateIcon,
     component: LiveSubtitlesPage,
+    enabled: (settings) => settings?.experimental_enabled ?? false,
+  },
+  // Meeting notes (beta): recorded meetings and their notes, the same way.
+  meetings: {
+    labelKey: "sidebar.meetings",
+    icon: PeopleIcon,
+    component: MeetingsPage,
     enabled: (settings) => settings?.experimental_enabled ?? false,
   },
   history: {

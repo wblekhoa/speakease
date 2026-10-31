@@ -57,7 +57,8 @@ pub struct Meeting {
     pub duration_ms: i64,
     /// meeting, call, lecture or interview; None until the notes are written.
     pub kind: Option<String>,
-    /// Markdown notes, the empty-recording line, or None while writing.
+    /// Markdown notes or the empty-recording line; None while first written
+    /// (a rewrite keeps the previous notes until the new ones are in).
     pub notes: Option<String>,
     /// "writing", "done", "empty", "failed" or "no_ai:<reason>".
     pub notes_state: String,
@@ -163,6 +164,21 @@ impl HistoryManager {
             debug!("Database already at latest version {}", version_after);
         }
 
+        Self::settle_unfinished_notes(&conn)?;
+
+        Ok(())
+    }
+
+    /// SpeakEase: notes still "writing" at startup were cut off by a quit;
+    /// they keep the notes they had ("done"), else count as failed, so the
+    /// Meetings page can write them again (SE-MEET-010).
+    fn settle_unfinished_notes(conn: &Connection) -> Result<()> {
+        conn.execute(
+            "UPDATE meetings
+             SET notes_state = CASE WHEN notes IS NULL THEN 'failed' ELSE 'done' END
+             WHERE notes_state = 'writing'",
+            [],
+        )?;
         Ok(())
     }
 
@@ -1021,6 +1037,31 @@ mod tests {
             .expect("read meeting");
         assert_eq!(meeting.app_name, "Zoom");
         assert_eq!(meeting.notes, None);
+    }
+
+    // SE-MEET-010
+    #[test]
+    fn notes_cut_off_by_a_quit_are_settled_at_startup() {
+        let mut conn = Connection::open_in_memory().expect("open in-memory db");
+        Migrations::new(MIGRATIONS.to_vec())
+            .to_latest(&mut conn)
+            .expect("migrate");
+        conn.execute_batch(
+            "INSERT INTO meetings (history_id, app_name, started_at, duration_ms, notes, notes_state)
+             VALUES (1, 'Zoom', 0, 1, NULL, 'writing'),
+                    (2, 'Zoom', 0, 1, '## Notes', 'writing'),
+                    (3, 'Zoom', 0, 1, NULL, 'no_ai:ai_off');",
+        )
+        .expect("insert meetings");
+        HistoryManager::settle_unfinished_notes(&conn).expect("settle");
+        let states: Vec<String> = conn
+            .prepare("SELECT notes_state FROM meetings ORDER BY history_id")
+            .expect("prepare")
+            .query_map([], |row| row.get(0))
+            .expect("query")
+            .collect::<rusqlite::Result<_>>()
+            .expect("read");
+        assert_eq!(states, ["failed", "done", "no_ai:ai_off"]);
     }
 
     #[test]

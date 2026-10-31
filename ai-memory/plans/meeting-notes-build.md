@@ -2,7 +2,7 @@
 status: executing
 owner: Lê Khoa
 started: 2026-10-31
-current-phase: 2
+current-phase: 3
 summary: "Build meeting notes (SE-MEET-001…019) in five phases, starting with a testable notes pipeline and a hidden CLI that turns a recording or transcript into notes."
 tags: [area/ai, area/audio, area/capture, stack/rust]
 ---
@@ -82,6 +82,11 @@ Chosen by AI under the owner's overnight delegation (31/10) - for the owner to r
 - No new dependency in phases 1-2 and 4-5. `.docx` (phase 3) needs the owner's yes.
 - One PR to `main` per phase; a phase lands on `main` (fast-forward by hash) when its PR CI is green and its
   fresh-context review found no blocker (owner, relayed 31/10).
+- Phase 3 (chosen by AI under the owner's overnight delegation, 31/10): the Meetings page sits under Live subtitles
+  in the side column, behind Experimental; its icon is the source set's "people"; Copy takes the tab in view; a saved
+  file is the notes then the transcript; choosing a template rewrites the notes in the background and keeps the old
+  ones on screen until the new ones are in; with no AI the transcript is shown; `.docx` is left for the owner (new
+  library).
 - Phase 2 (the first point deviates from the spec's "same microphone stream", for the owner): the microphone is a
   second stream of its own (no VAD) beside dictation's, rather than sharing dictation's
   stream; a line the microphone heard that is mostly words the app said at the same time is dropped as echo
@@ -106,5 +111,5 @@ Chosen by AI under the owner's overnight delegation (31/10) - for the owner to r
 
 ## Next safe step
 
-Phase 1 is on `main` (185cc1d, wblekhoa/speakease#2). Phase 2 on branch `claude/meeting-notes-p2`; then phase 3
-(Meetings page).
+Phase 1 is on `main` (185cc1d, wblekhoa/speakease#2), phase 2 too (48eae09, wblekhoa/speakease#3). Phase 3 on branch
+`claude/meeting-notes-p3`; then phase 4 (live help).

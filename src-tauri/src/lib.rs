@@ -954,6 +954,7 @@ pub fn run(cli_args: CliArgs) {
             commands::meetings::close_meeting_bar,
             commands::meetings::get_meeting,
             commands::meetings::list_meetings,
+            commands::meetings::rewrite_meeting_notes,
             commands::files::write_text_file,
             commands::files::ytdlp_available,
             commands::history::update_history_limit,

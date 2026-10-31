@@ -618,7 +618,7 @@ pub mod session {
             .save_meeting(entry.id, &done.app_name, done.started_at, done.duration_ms)
             .map_err(|e| e.to_string())?;
         set_phase(app, "notes", Some(entry.id));
-        write_notes_for(app, &history, entry.id, &text, Some(&done.app_name));
+        write_notes_for(app, &history, entry.id, &text, Some(&done.app_name), None);
         Ok(())
     }
 
@@ -696,61 +696,174 @@ pub mod session {
     }
 
     // SE-MEET-009, SE-MEET-012
-    /// Writes a meeting's notes with the engine this Mac has and stores them.
+    /// Writes a meeting's notes with the engine this Mac has and stores them;
+    /// `kind` None lets the AI pick the template.
     pub fn write_notes_for(
         app: &AppHandle,
         history: &HistoryManager,
         history_id: i64,
         transcript: &str,
         app_name: Option<&str>,
+        kind: Option<crate::meeting_notes::NoteKind>,
     ) {
+        let stored = notes_for(app, transcript, app_name, kind);
+        if let Err(e) = history.set_meeting_notes(
+            history_id,
+            stored.kind,
+            stored.text.as_deref(),
+            &stored.state,
+            stored.engine.as_deref(),
+        ) {
+            log::error!("Meeting notes: cannot save: {e}");
+        }
+        let _ = app.emit(NOTES_EVENT, history_id);
+    }
+
+    /// The event the Meetings page listens to when a meeting's notes change.
+    pub const NOTES_EVENT: &str = "meeting-notes-updated";
+
+    /// Sent when a template switch could not write new notes; the old ones stay.
+    pub const REWRITE_FAILED_EVENT: &str = "meeting-notes-rewrite-failed";
+
+    /// Whether a template switch's result replaces the notes the user has:
+    /// only new notes (or an empty meeting's one line) do; a failure or "no
+    /// AI" keeps the old ones (SE-MEET-010).
+    pub(crate) fn rewrite_replaces(state: &str) -> bool {
+        matches!(state, "done" | "empty")
+    }
+
+    /// What is stored for a meeting's notes (`meetings` row).
+    struct StoredNotes {
+        kind: Option<&'static str>,
+        text: Option<String>,
+        /// "empty", "no_ai:<reason>", "done" or "failed".
+        state: String,
+        engine: Option<String>,
+    }
+
+    fn notes_for(
+        app: &AppHandle,
+        transcript: &str,
+        app_name: Option<&str>,
+        kind: Option<crate::meeting_notes::NoteKind>,
+    ) -> StoredNotes {
         use crate::meeting_notes as notes;
-        let stored = if !notes::has_substance(transcript) {
-            let empty = notes::empty_notes(transcript, None);
-            (
-                Some(empty.kind.id()),
-                Some(empty.text),
-                "empty".to_string(),
-                None,
-            )
-        } else {
-            match notes::engine_for(app) {
-                Err(reason) => (None, None, format!("no_ai:{}", no_ai_id(reason)), None),
-                Ok(engine) => {
-                    let engine_name = engine_label(&engine);
-                    let ai = notes::EngineAi {
-                        app: app.clone(),
-                        engine,
-                    };
-                    let result = tauri::async_runtime::block_on(notes::write_notes(
-                        &ai,
-                        transcript,
-                        None,
-                        app_name,
-                        &mut |step| log::debug!("Meeting notes: {step}"),
-                    ));
-                    match result {
-                        Ok(written) => (
-                            Some(written.kind.id()),
-                            Some(written.text),
-                            "done".to_string(),
-                            Some(engine_name),
-                        ),
-                        Err(e) => {
-                            log::warn!("Meeting notes: {e}");
-                            (None, None, "failed".to_string(), Some(engine_name))
-                        }
-                    }
+        if !notes::has_substance(transcript) {
+            let empty = notes::empty_notes(transcript, kind);
+            return StoredNotes {
+                kind: Some(empty.kind.id()),
+                text: Some(empty.text),
+                state: "empty".to_string(),
+                engine: None,
+            };
+        }
+        let engine = match notes::engine_for(app) {
+            Ok(engine) => engine,
+            Err(reason) => {
+                return StoredNotes {
+                    kind: None,
+                    text: None,
+                    state: format!("no_ai:{}", no_ai_id(reason)),
+                    engine: None,
                 }
             }
         };
-        let (kind, text, state, engine) = stored;
-        if let Err(e) =
-            history.set_meeting_notes(history_id, kind, text.as_deref(), &state, engine.as_deref())
-        {
-            log::error!("Meeting notes: cannot save: {e}");
+        let engine_name = engine_label(&engine);
+        let ai = notes::EngineAi {
+            app: app.clone(),
+            engine,
+        };
+        let result = tauri::async_runtime::block_on(notes::write_notes(
+            &ai,
+            transcript,
+            kind,
+            app_name,
+            &mut |step| log::debug!("Meeting notes: {step}"),
+        ));
+        match result {
+            Ok(written) => StoredNotes {
+                kind: Some(written.kind.id()),
+                text: Some(written.text),
+                state: "done".to_string(),
+                engine: Some(engine_name),
+            },
+            Err(e) => {
+                log::warn!("Meeting notes: {e}");
+                StoredNotes {
+                    kind: None,
+                    text: None,
+                    state: "failed".to_string(),
+                    engine: Some(engine_name),
+                }
+            }
         }
-        let _ = app.emit("meeting-notes-updated", history_id);
+    }
+
+    // SE-MEET-010
+    /// The Meetings page's template switch: writes the notes again with
+    /// `kind`, in the background. Refused while they are being written.
+    pub fn rewrite_notes(
+        app: &AppHandle,
+        history_id: i64,
+        kind: crate::meeting_notes::NoteKind,
+    ) -> Result<(), String> {
+        let history = app.state::<Arc<HistoryManager>>().inner().clone();
+        let meeting = history
+            .get_meeting(history_id)
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| "missing: no such meeting".to_string())?;
+        if meeting.notes_state == "writing" {
+            return Err("busy: the notes are being written".to_string());
+        }
+        history
+            .set_meeting_notes(
+                history_id,
+                meeting.kind.as_deref(),
+                meeting.notes.as_deref(),
+                "writing",
+                meeting.notes_engine.as_deref(),
+            )
+            .map_err(|e| e.to_string())?;
+        let _ = app.emit(NOTES_EVENT, history_id);
+        let app = app.clone();
+        // Off the command's thread: the entry is read and the notes written here.
+        std::thread::spawn(move || {
+            let stored = match tauri::async_runtime::block_on(history.get_entry_by_id(history_id)) {
+                Ok(Some(entry)) => Some(notes_for(
+                    &app,
+                    &entry.transcription_text,
+                    Some(&meeting.app_name),
+                    Some(kind),
+                )),
+                _ => None,
+            };
+            let saved = match stored.filter(|s| rewrite_replaces(&s.state)) {
+                Some(stored) => history.set_meeting_notes(
+                    history_id,
+                    stored.kind,
+                    stored.text.as_deref(),
+                    &stored.state,
+                    stored.engine.as_deref(),
+                ),
+                // Failed, no AI any more, or the entry went: the notes the
+                // user had stay as they were.
+                None => {
+                    let _ = app.emit(REWRITE_FAILED_EVENT, history_id);
+                    history.set_meeting_notes(
+                        history_id,
+                        meeting.kind.as_deref(),
+                        meeting.notes.as_deref(),
+                        &meeting.notes_state,
+                        meeting.notes_engine.as_deref(),
+                    )
+                }
+            };
+            if let Err(e) = saved {
+                log::error!("Meeting notes: cannot save: {e}");
+            }
+            let _ = app.emit(NOTES_EVENT, history_id);
+        });
+        Ok(())
     }
 
     fn no_ai_id(reason: crate::meeting_notes::NoAiReason) -> &'static str {
@@ -775,6 +888,16 @@ pub mod session {
 mod tests {
     use super::*;
     use crate::system_audio_tap::RunningApp;
+
+    // SE-MEET-010
+    #[test]
+    fn a_failed_template_switch_keeps_the_old_notes() {
+        assert!(session::rewrite_replaces("done"));
+        assert!(session::rewrite_replaces("empty"));
+        assert!(!session::rewrite_replaces("failed"));
+        assert!(!session::rewrite_replaces("no_ai:ai_off"));
+        assert!(!session::rewrite_replaces("no_ai:nothing_available"));
+    }
 
     // SE-MEET-003
     #[test]

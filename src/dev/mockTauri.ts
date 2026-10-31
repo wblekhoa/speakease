@@ -309,6 +309,77 @@ function words(text: string) {
   return text.split(/\s+/).filter(Boolean).length;
 }
 
+// Local time, so the list's "dd/mm HH:MM" matches each title (meeting.rs).
+const localSeconds = (
+  y: number,
+  m: number,
+  d: number,
+  h: number,
+  min: number,
+) => Math.floor(new Date(y, m - 1, d, h, min).getTime() / 1000);
+
+const MEETINGS = [
+  {
+    title: "zoom.us · 31/10 09:30",
+    transcript:
+      "[Người khác] Chào mọi người, hôm nay mình họp nhanh về kế hoạch ra mắt ứng dụng trong tháng mười một.\n[Tôi] Bên thiết kế đã xong màn hình đăng ký, còn trang thanh toán cần thêm một tuần.\n[Người khác] Chúng ta thống nhất ngày ra mắt là 15 tháng 11. Anh Minh chuẩn bị bài đăng giới thiệu trước ngày 12.\n[Tôi (đọc chính tả)] nhắc chị Lan kiểm tra giá gói năm\n[Người khác] Có đề xuất giảm giá 20 phần trăm cho người dùng đầu tiên, tuần sau bàn tiếp.",
+    meeting: {
+      history_id: 41,
+      app_name: "zoom.us",
+      started_at: localSeconds(2026, 10, 31, 9, 30),
+      duration_ms: 41 * 60_000,
+      kind: "meeting",
+      notes:
+        "## Tóm tắt ngắn\nNgày ra mắt là 15 tháng 11; trang thanh toán cần thêm một tuần.\n\n## Quyết định\n- Ra mắt ngày 15 tháng 11.\n\n## Đề xuất chưa chốt\n- Giảm giá 20 phần trăm cho người dùng đầu tiên.\n\n## Việc cần làm\n- [ ] chuẩn bị bài đăng giới thiệu — Anh Minh, trước ngày 12\n- [ ] kiểm tra lại giá gói năm — Chị Lan",
+      notes_state: "done",
+      notes_engine: "apple",
+    },
+  },
+  {
+    title: "Microsoft Teams · 30/10 14:00",
+    transcript: "[Người khác] alo alo\n[Tôi] ừ nghe không",
+    meeting: {
+      history_id: 40,
+      app_name: "Microsoft Teams",
+      started_at: localSeconds(2026, 10, 30, 14, 0),
+      duration_ms: 95_000,
+      kind: "call",
+      notes: "Cuộc gọi không có nội dung đáng kể (4 từ).",
+      notes_state: "empty",
+      notes_engine: null,
+    },
+  },
+  {
+    title: "Google Chrome · 29/10 10:15",
+    transcript:
+      "[Người khác] Phần hôm nay nói về định luật bảo toàn năng lượng.",
+    meeting: {
+      history_id: 39,
+      app_name: "Google Chrome",
+      started_at: localSeconds(2026, 10, 29, 10, 15),
+      duration_ms: 52 * 60_000,
+      kind: null,
+      notes: null,
+      notes_state: "no_ai:nothing_available",
+      notes_engine: null,
+    },
+  },
+  {
+    title: "Slack · 28/10 16:00",
+    transcript: "[Tôi] Mình chốt lịch họp tuần sau vào thứ Ba nhé.",
+    meeting: {
+      history_id: 38,
+      app_name: "Slack",
+      started_at: localSeconds(2026, 10, 28, 16, 0),
+      duration_ms: 12 * 60_000,
+      kind: null,
+      notes: null,
+      notes_state: "failed",
+      notes_engine: "apple",
+    },
+  },
+];
+
 function handle(cmd: string, args: Json): unknown {
   if (applyChange(cmd, args)) return null;
   switch (cmd) {
@@ -365,6 +436,27 @@ function handle(cmd: string, args: Json): unknown {
     case "stop_meeting":
     case "close_meeting_bar":
       return null;
+    // `?subtitles` (Experimental on) also shows Meetings with these three.
+    case "list_meetings":
+      // A fresh copy each time, as the backend sends.
+      return structuredClone(MEETINGS);
+    case "rewrite_meeting_notes": {
+      const found = MEETINGS.find(
+        (m) => m.meeting.history_id === args.historyId,
+      );
+      if (found) {
+        // As meeting.rs: "writing" with the old notes kept, then the new ones.
+        const done = found.meeting.notes_state;
+        found.meeting.notes_state = "writing";
+        emit("meeting-notes-updated", found.meeting.history_id);
+        setTimeout(() => {
+          found.meeting.kind = args.kind as string;
+          found.meeting.notes_state = done;
+          emit("meeting-notes-updated", found.meeting.history_id);
+        }, 1500);
+      }
+      return null;
+    }
     case "live_subtitles_supported":
       return true;
     case "live_subtitle_apps":

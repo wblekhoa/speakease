@@ -36,3 +36,4 @@ export { AutostartToggle } from "./AutostartToggle";
 export { SpeakPage } from "./speak/SpeakPage";
 export { FilesPage } from "./files/FilesPage";
 export { LiveSubtitlesPage } from "./subtitles/LiveSubtitlesPage";
+export { MeetingsPage } from "./meetings/MeetingsPage";
