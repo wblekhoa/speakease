@@ -341,6 +341,30 @@ function handle(cmd: string, args: Json): unknown {
       return null;
     case "write_text_file":
       return null;
+    // `?meeting=recording|transcribing|notes|error` previews the meeting bar
+    // (src/meeting/index.html).
+    case "meeting_state": {
+      const phase =
+        new URLSearchParams(location.search).get("meeting") ?? "recording";
+      return phase === "error"
+        ? {
+            phase: "idle",
+            started_at: null,
+            app_name: null,
+            error: "no-app: no meeting app is running",
+            history_id: null,
+          }
+        : {
+            phase,
+            started_at: Math.floor(Date.now() / 1000) - 754,
+            app_name: "zoom.us",
+            error: null,
+            history_id: null,
+          };
+    }
+    case "stop_meeting":
+    case "close_meeting_bar":
+      return null;
     case "live_subtitles_supported":
       return true;
     case "live_subtitle_apps":

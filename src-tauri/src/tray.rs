@@ -383,9 +383,9 @@ fn compute_desired(app: &AppHandle, icon_state: TrayIconState) -> TrayDesired {
             warning,
             model_loaded,
             quick: QuickInputs::from_settings(&settings),
-            subtitles: (settings.experimental_enabled && crate::system_audio_tap::available())
+            subtitles: crate::settings::app_audio_features_on(&settings)
                 .then(crate::live_subtitles::session::is_running),
-            meeting: (settings.experimental_enabled && crate::system_audio_tap::available())
+            meeting: crate::settings::app_audio_features_on(&settings)
                 .then(crate::meeting::session::is_recording),
             selected_model: settings.selected_model,
             downloaded_models,

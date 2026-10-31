@@ -223,27 +223,35 @@ pub const MEETING_APPS: [&str; 12] = [
     "com.microsoft.edgemac",
 ];
 
-/// The app to record as "Others" when the user did not pick one: a known
-/// meeting app that is playing, else one that is running (calls before
-/// browsers), else the app recorded last time if it is running.
+/// Where the browsers start in [`MEETING_APPS`].
+const FIRST_BROWSER: usize = 8;
+
+/// The app to record as "Others" when the user did not pick one: a call app
+/// that is playing, else one that is running, else the app recorded last
+/// time if it is running, else a browser that is playing. A browser playing
+/// a video never wins over a call app that is quiet for a moment.
 pub fn pick_meeting_app(
     running: &[crate::system_audio_tap::RunningApp],
     remembered: Option<&str>,
 ) -> Option<String> {
     let rank = |bundle: &str| MEETING_APPS.iter().position(|known| *known == bundle);
-    let best = |playing_only: bool| {
+    let best = |playing_only: bool, ranks: std::ops::Range<usize>| {
         running
             .iter()
             .filter(|app| !playing_only || app.playing)
             .filter_map(|app| rank(&app.bundle_id).map(|r| (r, app)))
+            .filter(|(r, _)| ranks.contains(r))
             .min_by_key(|(r, _)| *r)
             .map(|(_, app)| app.bundle_id.clone())
     };
-    best(true).or_else(|| best(false)).or_else(|| {
-        remembered
-            .filter(|id| running.iter().any(|app| app.bundle_id == *id))
-            .map(str::to_string)
-    })
+    best(true, 0..FIRST_BROWSER)
+        .or_else(|| best(false, 0..FIRST_BROWSER))
+        .or_else(|| {
+            remembered
+                .filter(|id| running.iter().any(|app| app.bundle_id == *id))
+                .map(str::to_string)
+        })
+        .or_else(|| best(true, FIRST_BROWSER..MEETING_APPS.len()))
 }
 
 /// Where a meeting stands, for the meeting bar and the window.
@@ -315,7 +323,8 @@ pub mod session {
     pub fn start(app: &AppHandle, bundle_id: Option<String>) -> Result<(), String> {
         try_start(app, bundle_id).inspect_err(|e| {
             log::warn!("Meeting: {e}");
-            if !is_recording() {
+            // A meeting still recording or being finished keeps its bar.
+            if !is_recording() && state().phase == "idle" {
                 announce(
                     app,
                     MeetingState {
@@ -346,7 +355,9 @@ pub mod session {
         let stop = Arc::new(AtomicBool::new(false));
         {
             let mut running = RUNNING.lock().map_err(|e| e.to_string())?;
-            if running.is_some() {
+            // The last meeting is still being transcribed or noted: its
+            // thread owns the bar until it is idle again.
+            if running.is_some() || state().phase != "idle" {
                 return Err("running: a meeting is already recording".to_string());
             }
             *running = Some(Running { stop: stop.clone() });
@@ -365,7 +376,9 @@ pub mod session {
                 return Err(e);
             }
         };
-        let mut settings = settings;
+        // Read again: opening the microphone can take seconds, and a change
+        // made meanwhile must not be written over.
+        let mut settings = crate::settings::get_settings(app);
         settings.meeting_app = Some(bundle_id.clone());
         crate::settings::write_settings(app, settings);
 
@@ -451,6 +464,9 @@ pub mod session {
         if is_recording() {
             stop();
             Ok(())
+        } else if state().phase != "idle" {
+            // Still finishing the last meeting; the bar shows its progress.
+            Ok(())
         } else {
             start(app, None)
         }
@@ -520,17 +536,20 @@ pub mod session {
                 Err(std::sync::mpsc::RecvTimeoutError::Timeout) if stopped_at.is_none() => continue,
                 Err(_) => break,
             };
+            // A new resampler when the app's sample rate changes.
             if resampler.as_ref().map(|(rate, _)| *rate) != Some(chunk.sample_rate) {
-                resampler = Some((
+                resampler = None;
+            }
+            let (_, rs) = resampler.get_or_insert_with(|| {
+                (
                     chunk.sample_rate,
                     FrameResampler::new(
                         chunk.sample_rate as usize,
                         RATE,
                         Duration::from_millis(FRAME_MS),
                     ),
-                ));
-            }
-            let (_, rs) = resampler.as_mut().expect("resampler set above");
+                )
+            });
             let mut resampled = Vec::new();
             rs.push(&chunk.samples, |frame| resampled.extend_from_slice(frame));
             let end = chunk
@@ -870,6 +889,7 @@ mod tests {
 
     #[test]
     fn a_playing_call_app_is_picked_before_a_browser() {
+        // A quiet Zoom call wins over YouTube playing in Chrome.
         let running = [
             app("com.google.Chrome", true),
             app("us.zoom.xos", false),
@@ -877,8 +897,22 @@ mod tests {
         ];
         assert_eq!(
             pick_meeting_app(&running, None).as_deref(),
+            Some("us.zoom.xos")
+        );
+        // With no call app, the remembered app, then a playing browser.
+        let running = [
+            app("com.google.Chrome", true),
+            app("com.apple.Safari", false),
+        ];
+        assert_eq!(
+            pick_meeting_app(&running, Some("com.apple.Safari")).as_deref(),
+            Some("com.apple.Safari")
+        );
+        assert_eq!(
+            pick_meeting_app(&running, None).as_deref(),
             Some("com.google.Chrome")
         );
+        assert_eq!(MEETING_APPS[FIRST_BROWSER], "com.google.Chrome");
         let running = [app("com.google.Chrome", true), app("us.zoom.xos", true)];
         assert_eq!(
             pick_meeting_app(&running, None).as_deref(),

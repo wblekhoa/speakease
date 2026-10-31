@@ -41,7 +41,13 @@ pub const MEETING_BINDING_ID: &str = "meeting_notes";
 pub fn binding_switched_off(id: &str, settings: &AppSettings) -> bool {
     (is_post_process_binding(id) && !settings.post_process_enabled)
         || ((id == LIVE_SUBTITLES_BINDING_ID || id == MEETING_BINDING_ID)
-            && !(settings.experimental_enabled && crate::system_audio_tap::available()))
+            && !app_audio_features_on(settings))
+}
+
+/// Live subtitles and meeting notes (betas that hear another app) show only
+/// with Experimental on and a Mac that can tap an app (macOS 14.2+).
+pub fn app_audio_features_on(settings: &AppSettings) -> bool {
+    settings.experimental_enabled && crate::system_audio_tap::available()
 }
 
 #[derive(Serialize, Debug, Clone, Copy, PartialEq, Eq, Type)]

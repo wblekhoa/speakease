@@ -40,7 +40,7 @@ relations:
 - **Where it lives**: with App › Experimental on (macOS 14.2+), Recording lists a **Meeting notes** shortcut
   (⌃⌥⌘M by default) and the tray gains a **Meeting notes** item with a tick while a meeting records.
 - **Starting**: the shortcut or tray item records the call app that is running (Zoom, Teams, Zalo, Messenger,
-  FaceTime, Slack, Discord first, then a browser), playing sound first, else the app used last time; and the
+  FaceTime, Slack, Discord), playing sound first, else the app used last time, else a browser playing sound; and the
   microphone picked for dictation, as its own stream. No dictation starts.
 - **Meeting bar**: a pill at the top centre of the screen that never takes focus from the call: a pulsing red dot,
   "Đang ghi âm. Nhớ báo cho mọi người biết nhé." (EN "Recording. Remember to tell everyone."), a timer and **Stop**.

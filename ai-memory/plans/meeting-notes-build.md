@@ -82,10 +82,11 @@ Chosen by AI under the owner's overnight delegation (31/10) - for the owner to r
 - No new dependency in phases 1-2 and 4-5. `.docx` (phase 3) needs the owner's yes.
 - One PR to `main` per phase; a phase lands on `main` (fast-forward by hash) when its PR CI is green and its
   fresh-context review found no blocker (owner, relayed 31/10).
-- Phase 2: the microphone is a second stream of its own (no VAD) beside dictation's, rather than sharing dictation's
+- Phase 2 (the first point deviates from the spec's "same microphone stream", for the owner): the microphone is a
+  second stream of its own (no VAD) beside dictation's, rather than sharing dictation's
   stream; a line the microphone heard that is mostly words the app said at the same time is dropped as echo
   (dictation lines and lines under 3 words kept); with no app given, the call app playing sound is picked, then any
-  call app running, then the one used last time; the mixed audio is kept as the History file; the entry is titled
+  call app running, then the one used last time, then a browser playing sound; the mixed audio is kept as the History file; the entry is titled
   "<app> · dd/mm HH:MM"; an empty transcript is still saved, with the one-line notes; a start that fails says why
   on the meeting bar; the hidden `--meeting-probe <bundle id | pid> --probe-mute` checks tap → transcript → notes
   with no microphone and writes nothing to History.
@@ -96,7 +97,8 @@ Chosen by AI under the owner's overnight delegation (31/10) - for the owner to r
 - Every engine makes 1-3 number or name errors per hour (worst: law article numbers); the UI must show notes as AI
   output to check.
 - Qwen3.5-4B needs a 3 GB download on Macs without Apple Intelligence and a key; an hour takes 4-12 minutes.
-- Dictation in parallel shares one microphone stream between two pipelines.
+- Dictation in parallel reads the same microphone through two streams (the spec said one; deviation logged in
+  `decisions.md` 31/10 for the owner).
 - Screen-share hiding, heat and battery are untested.
 - Phase 2 was not run in the app with a real call and the microphone (the owner's microphone is not recorded
   without consent); the tap → transcript → notes path is measured with `--meeting-probe` only.

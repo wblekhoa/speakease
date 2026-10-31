@@ -1,6 +1,7 @@
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { type } from "@tauri-apps/plugin-os";
+import { commands } from "@/bindings";
 import { SettingsGroup } from "../../ui/SettingsGroup";
 import { useSettings } from "../../../hooks/useSettings";
 import { ShortcutInput } from "../ShortcutInput";
@@ -24,6 +25,13 @@ export const RecordingSettings: React.FC = () => {
   const isLinux = type() === "linux";
   const aiEnabled = getSetting("post_process_enabled") ?? false;
   const experimental = getSetting("experimental_enabled") ?? false;
+  // Live subtitles and meeting notes hear another app: macOS 14.2+ only
+  // (settings.rs app_audio_features_on).
+  const [canTapApps, setCanTapApps] = useState(false);
+  useEffect(() => {
+    commands.liveSubtitlesSupported().then(setCanTapApps);
+  }, []);
+  const appAudio = experimental && !isLinux && canTapApps;
 
   return (
     <div className="max-w-3xl w-full mx-auto space-y-6">
@@ -48,7 +56,7 @@ export const RecordingSettings: React.FC = () => {
           />
         )}
         {/* Live subtitles (beta) register only with Experimental on. */}
-        {experimental && !isLinux && (
+        {appAudio && (
           <ShortcutInput
             shortcutId="live_subtitles"
             descriptionMode="inline"
@@ -56,7 +64,7 @@ export const RecordingSettings: React.FC = () => {
           />
         )}
         {/* Meeting notes (beta), the same way. */}
-        {experimental && !isLinux && (
+        {appAudio && (
           <ShortcutInput
             shortcutId="meeting_notes"
             descriptionMode="inline"

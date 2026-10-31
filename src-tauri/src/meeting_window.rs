@@ -7,7 +7,7 @@ use crate::meeting::MeetingState;
 use tauri::AppHandle;
 
 pub const LABEL: &str = "meeting_bar";
-const WIDTH: f64 = 460.0;
+const WIDTH: f64 = 500.0;
 const HEIGHT: f64 = 64.0;
 const TOP_GAP: f64 = 8.0;
 
@@ -81,6 +81,8 @@ mod imp {
                 .build()
             {
                 Ok(panel) => {
+                    // Stop and × must not bring SpeakEase over the call.
+                    crate::subtitle_window::prevent_activation(&handle, LABEL);
                     keep_out_of_screen_sharing(&handle);
                     panel.order_front_regardless();
                 }

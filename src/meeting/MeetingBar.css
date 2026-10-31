@@ -1,7 +1,7 @@
 @import "../styles/theme.css";
 
 /* The meeting bar: one pill at the top of the screen (meeting_window.rs,
-   460 x 64), in the app's surface and text tokens so it follows light and
+   500 x 64), in the app's surface and text tokens so it follows light and
    dark. No native blur behind it, so the pill is solid. */
 html,
 body {
@@ -63,7 +63,17 @@ body {
   border: none;
   border-radius: 999px;
   font: inherit;
+  white-space: nowrap;
   cursor: pointer;
+  transition:
+    background-color 150ms ease,
+    opacity 150ms ease;
+}
+
+.mb-stop:focus-visible,
+.mb-close:focus-visible {
+  outline: 2px solid var(--color-logo-primary);
+  outline-offset: 2px;
 }
 
 .mb-stop {
@@ -71,6 +81,10 @@ body {
   font-weight: 600;
   color: var(--color-background);
   background: var(--color-text);
+}
+
+.mb-stop:hover {
+  opacity: 0.85;
 }
 
 .mb-close {
@@ -109,5 +123,9 @@ body {
   .mb-dot,
   .mb-spinner {
     animation: none;
+  }
+  .mb-stop,
+  .mb-close {
+    transition: none;
   }
 }

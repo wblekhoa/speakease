@@ -95,7 +95,7 @@ mod imp {
                 .build()
             {
                 Ok(panel) => {
-                    prevent_activation(&handle);
+                    prevent_activation(&handle, LABEL);
                     frost(&handle);
                     panel.order_front_regardless();
                 }
@@ -127,11 +127,12 @@ mod imp {
     /// SpeakEase and raise its main window over the video (owner, 20/10).
     /// The nonactivating style alone does not stop it on a window made
     /// before it became a panel; AppKit's `_setPreventsActivation:` does.
-    /// Checked first, so a macOS without it only loses this nicety.
-    fn prevent_activation(app: &AppHandle) {
+    /// Checked first, so a macOS without it only loses this nicety. The
+    /// meeting bar uses it too (`meeting_window.rs`).
+    pub fn prevent_activation(app: &AppHandle, label: &str) {
         use objc2::runtime::{AnyObject, Bool};
         use objc2::{msg_send, sel};
-        let Some(window) = app.get_webview_window(LABEL) else {
+        let Some(window) = app.get_webview_window(label) else {
             return;
         };
         let Ok(pointer) = window.ns_window() else {
@@ -146,9 +147,7 @@ mod imp {
             if responds.as_bool() {
                 let _: () = msg_send![ns_window, _setPreventsActivation: Bool::YES];
             } else {
-                log::warn!(
-                    "Live subtitles: this macOS cannot keep the panel from activating the app"
-                );
+                log::warn!("{label}: this macOS cannot keep the panel from activating the app");
             }
         }
     }
@@ -222,6 +221,9 @@ mod imp {
         });
     }
 }
+
+#[cfg(target_os = "macos")]
+pub use imp::prevent_activation;
 
 #[cfg(not(target_os = "macos"))]
 mod imp {

@@ -16,12 +16,18 @@ repo; each cites its source.
 
 ## 2026-10-31 · Meeting notes phase 2: recording choices made by AI under the owner's overnight delegation
 
-- **Context**: phase 2 records a meeting (`ux/meetings.md`, `logic/meetings.md` SE-MEET-001/003/004/006/008/013);
-  the spec leaves how the two tracks are captured, named and stored open.
-- **Decision** (chosen by AI under the owner's overnight delegation, 31/10): the microphone is a second stream of its
-  own (no VAD) beside dictation's, so a dictation never cuts the meeting; a microphone line that is mostly words the
+- **Context**: phase 2 records a meeting (`ux/meetings.md`, `logic/meetings.md` SE-MEET-001/003/004/006/008/013).
+  The spec leaves how the tracks are named and stored open. It had decided that dictation shares the meeting's
+  microphone stream; the build differs (below), so that point is a deviation for the owner, not an open fork.
+- **Deviation for the owner to review**: the meeting reads the same microphone through a second stream of its own (no
+  VAD) instead of dictation's stream, because dictation's recorder only runs while a dictation does and trims silence;
+  sharing it needs that recorder to run for the whole meeting. Observable behaviour is the rule's (dictation runs in
+  parallel, the meeting goes on, dictated words are marked). Reversal: make the recorder run continuously during a
+  meeting and read both from it.
+- **Decision** (chosen by AI under the owner's overnight delegation, 31/10): a microphone line that is mostly words the
   app said at the same time is dropped as echo (dictation lines and lines under 3 words kept); with no app given, the
-  call app playing sound is picked, then any call app running, then the one used last time; the History entry is
+  call app playing sound is picked, then any call app running, then the one used last time, then a browser playing
+  sound; the History entry is
   titled "<app> · dd/mm HH:MM" and keeps the mixed audio; an empty transcript is still saved, with the one-line notes;
   a start that fails says why on the meeting bar; the feature stays behind Experimental, with its own shortcut
   ⌃⌥⌘M.
