@@ -261,11 +261,13 @@ const MeetingDetail: React.FC<{
           )}
           {view.kind === "empty" && <p className="text-sm">{meeting.notes}</p>}
           {view.kind === "failed" && (
-            <p className="text-sm">{t("meeting.page.failed")}</p>
+            <p className="border-b border-hairline pb-3 text-sm font-medium">
+              {t("meeting.page.failed")}
+            </p>
           )}
           {/* SE-MEET-012: with no AI, the user is told why. */}
           {view.kind === "noAi" && (
-            <p className="rounded-xl border border-hairline px-3 py-2 text-sm font-medium">
+            <p className="border-b border-hairline pb-3 text-sm font-medium">
               {t(`meeting.page.noAi.${view.reason}`)}
             </p>
           )}
