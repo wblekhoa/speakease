@@ -198,9 +198,10 @@ main { overflow-x: clip; }
 /* Features: a native horizontal scroller of large cards, one title each. */
 .heading h2 { font-size: clamp(32px, 4vw, 52px); font-weight: 500; line-height: 1.1; letter-spacing: -.035em; }
 .compare .heading, .install .heading, .faq .heading { text-align: center; }
-.way-track { display: grid; grid-auto-flow: column; grid-auto-columns: min(520px, 84vw); gap: 24px; margin-top: 56px; overflow-x: auto;
+/* Padding leaves room for the hover lift above and its shadow below; the margins give that space back. */
+.way-track { display: grid; grid-auto-flow: column; grid-auto-columns: min(520px, 84vw); gap: 24px; margin-top: 44px; overflow-x: auto;
   scroll-snap-type: x mandatory; scroll-padding-inline: max(32px, calc((100vw - 1200px) / 2 + 32px));
-  padding: 4px max(32px, calc((100vw - 1200px) / 2 + 32px)) 16px; scrollbar-width: none; }
+  padding: 16px max(32px, calc((100vw - 1200px) / 2 + 32px)) 32px; scrollbar-width: none; }
 .way-track::-webkit-scrollbar { display: none; }
 .way-track.has-cursor, .way-track.has-cursor * { cursor: none; }
 .way-track.is-dragging { scroll-snap-type: none; user-select: none; }
@@ -238,7 +239,7 @@ main { overflow-x: clip; }
 .file-result { margin-top: 14px; color: var(--muted); font-size: 13px; text-align: center; }
 .shot { width: 100%; height: 100%; position: relative; }
 .shot img { position: absolute; inset: 0; margin: auto; width: auto; max-width: 100%; max-height: 100%; border-radius: 12px; box-shadow: var(--shadow); }
-.way-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 20px; }
+.way-controls { display: flex; justify-content: space-between; align-items: center; margin-top: 4px; }
 .way-dots { display: flex; gap: 6px; }
 .way-dots span { width: 8px; height: 8px; border-radius: 999px; background: var(--edge); transition: background-color 240ms ease-out; }
 .way-dots span.is-on { width: 28px; background: var(--ink); }
