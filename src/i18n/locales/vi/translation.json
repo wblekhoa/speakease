@@ -1165,7 +1165,8 @@
       "saveFailed": "Không lưu được tệp.",
       "markdownFile": "Markdown",
       "textFile": "Văn bản",
-      "rewriteFailed": "Không viết lại được ghi chú."
+      "rewriteFailed": "Không viết lại được ghi chú.",
+      "view": "Xem"
     }
   }
 }

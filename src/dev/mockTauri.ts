@@ -364,6 +364,20 @@ const MEETINGS = [
       notes_engine: null,
     },
   },
+  {
+    title: "Slack · 28/10 16:00",
+    transcript: "[Tôi] Mình chốt lịch họp tuần sau vào thứ Ba nhé.",
+    meeting: {
+      history_id: 38,
+      app_name: "Slack",
+      started_at: localSeconds(2026, 10, 28, 16, 0),
+      duration_ms: 12 * 60_000,
+      kind: null,
+      notes: null,
+      notes_state: "failed",
+      notes_engine: "apple",
+    },
+  },
 ];
 
 function handle(cmd: string, args: Json): unknown {

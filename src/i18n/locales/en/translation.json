@@ -1165,7 +1165,8 @@
       "saveFailed": "The file could not be saved.",
       "markdownFile": "Markdown",
       "textFile": "Text",
-      "rewriteFailed": "The notes could not be written again."
+      "rewriteFailed": "The notes could not be written again.",
+      "view": "View"
     }
   }
 }

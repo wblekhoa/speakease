@@ -96,7 +96,7 @@ export const MeetingsPage: React.FC = () => {
                   setChosen(m.meeting.history_id);
                   setTab("notes");
                 }}
-                className={`w-full rounded-xl px-3 py-2 text-start transition-colors ${
+                className={`w-full rounded-xl px-3 py-2 text-start transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary ${
                   active ? "bg-glass-chosen" : "hover:bg-glass-hover"
                 }`}
               >
@@ -178,7 +178,7 @@ const MeetingDetail: React.FC<{
       type="button"
       aria-pressed={tab === value}
       onClick={() => onTab(value)}
-      className={`whitespace-nowrap rounded-full px-3 py-1 text-sm transition-colors ${
+      className={`whitespace-nowrap rounded-xl px-3 py-1 text-sm transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary ${
         tab === value ? "bg-glass-chosen font-medium" : "hover:bg-glass-hover"
       }`}
     >
@@ -204,12 +204,22 @@ const MeetingDetail: React.FC<{
       </div>
 
       <div className="flex flex-wrap items-center gap-2">
-        <div className="me-auto flex gap-1" role="group">
+        <div
+          className="me-auto flex gap-1"
+          role="group"
+          aria-label={t("meeting.page.view")}
+        >
           {tabButton("notes", t("meeting.page.notesTab"))}
           {tabButton("transcript", t("meeting.page.transcriptTab"))}
         </div>
         {/* The template the notes are written with; choosing one rewrites
             them (SE-MEET-010). */}
+        {/* With no template yet, the menu's placeholder names it. */}
+        {meeting.kind && (
+          <span className="text-sm text-mid-gray">
+            {t("meeting.page.template")}
+          </span>
+        )}
         <Dropdown
           className="flex-none"
           options={NOTE_KINDS.map((kind) => ({
@@ -241,7 +251,7 @@ const MeetingDetail: React.FC<{
                 <button
                   type="button"
                   onClick={() => onTab("transcript")}
-                  className="underline underline-offset-2 hover:text-text"
+                  className="rounded underline underline-offset-2 hover:text-text focus-visible:outline-2 focus-visible:outline-logo-primary"
                 >
                   {t("meeting.page.openTranscript")}
                 </button>
@@ -255,7 +265,9 @@ const MeetingDetail: React.FC<{
           )}
           {/* SE-MEET-012: with no AI, the user is told why. */}
           {view.kind === "noAi" && (
-            <p className="text-sm">{t(`meeting.page.noAi.${view.reason}`)}</p>
+            <p className="rounded-xl border border-hairline px-3 py-2 text-sm font-medium">
+              {t(`meeting.page.noAi.${view.reason}`)}
+            </p>
           )}
           {(view.kind === "failed" || view.kind === "noAi") && (
             <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
