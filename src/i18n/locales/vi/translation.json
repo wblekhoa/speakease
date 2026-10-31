@@ -1145,7 +1145,6 @@
       "check": "AI viết ghi chú này. Hãy đối chiếu tên và con số với bản ghi lời.",
       "openTranscript": "Xem bản ghi lời",
       "writing": "Đang viết ghi chú…",
-      "emptyNotes": "Bản ghi này không có nội dung đáng kể, nên không có tóm tắt.",
       "failed": "Không viết được ghi chú. Bản ghi lời vẫn đầy đủ ở đây.",
       "noAi": {
         "ai_off": "AI đang tắt trong AI & dịch, nên không có ghi chú. Bản ghi lời là nội dung cuộc họp.",

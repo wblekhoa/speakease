@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — Meeting notes (UX)"
 status: active
-updated: 2026-10-31
+updated: 2026-11-01
 summary: "Beta behind Experimental: a shortcut or the tray records the meeting app and the microphone, a bar at the top of the screen shows the consent line, a timer and Stop, and the meeting lands in History with its notes written in the background."
 tags: [area/ai, area/audio, area/capture, surface/macos, stack/react]
 relations:
@@ -35,7 +35,7 @@ relations:
 - Included (phase 2): the shortcut on Recording, the tray item, the meeting bar, the History entry with its notes.
 - Also included (phase 3): the Meetings page (list, notes, transcript, template menu, copy, save .md / .txt).
 - Not yet (phases 4-5): asking whether to take notes when a call starts, live transcript and help,
-  the meeting chat, export. Dictation itself is `ux/dictation.md`.
+  the meeting chat, saving as .docx. Dictation itself is `ux/dictation.md`.
 
 ## Current truth
 
@@ -55,7 +55,7 @@ relations:
 - **Meetings page**: with Experimental on, the side column gains **Meetings** under Live subtitles. Left: meetings,
   newest first, each with its app, "dd/mm HH:MM" and length. Right: the meeting's title with **Copy**, **Save .md**
   and **Save .txt**; then **Notes** / **Transcript** and the template menu (Meeting, Call, Lecture, Interview) -
-  choosing another writes the notes again in the background. Notes open with "AI wrote these notes. Check names and
+  choosing another writes the notes again in the background ("Writing the notes…" above the old ones, which stay if it fails). Notes open with "AI wrote these notes. Check names and
   numbers against the transcript." and a link to the transcript. With no AI the page says why (AI off, or nothing
   on this Mac) and shows the transcript; an empty recording shows its one line; failed notes show the transcript.
   A saved file holds the notes, then the transcript; Copy takes the tab in view.

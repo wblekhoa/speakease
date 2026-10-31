@@ -722,6 +722,16 @@ pub mod session {
     /// The event the Meetings page listens to when a meeting's notes change.
     pub const NOTES_EVENT: &str = "meeting-notes-updated";
 
+    /// Sent when a template switch could not write new notes; the old ones stay.
+    pub const REWRITE_FAILED_EVENT: &str = "meeting-notes-rewrite-failed";
+
+    /// Whether a template switch's result replaces the notes the user has:
+    /// only new notes (or an empty meeting's one line) do; a failure or "no
+    /// AI" keeps the old ones (SE-MEET-010).
+    pub(crate) fn rewrite_replaces(state: &str) -> bool {
+        matches!(state, "done" | "empty")
+    }
+
     /// What is stored for a meeting's notes (`meetings` row).
     struct StoredNotes {
         kind: Option<&'static str>,
@@ -818,27 +828,40 @@ pub mod session {
         let app = app.clone();
         // Off the command's thread: the entry is read and the notes written here.
         std::thread::spawn(move || {
-            match tauri::async_runtime::block_on(history.get_entry_by_id(history_id)) {
-                Ok(Some(entry)) => write_notes_for(
+            let stored = match tauri::async_runtime::block_on(history.get_entry_by_id(history_id)) {
+                Ok(Some(entry)) => Some(notes_for(
                     &app,
-                    &history,
-                    history_id,
                     &entry.transcription_text,
                     Some(&meeting.app_name),
                     Some(kind),
+                )),
+                _ => None,
+            };
+            let saved = match stored.filter(|s| rewrite_replaces(&s.state)) {
+                Some(stored) => history.set_meeting_notes(
+                    history_id,
+                    stored.kind,
+                    stored.text.as_deref(),
+                    &stored.state,
+                    stored.engine.as_deref(),
                 ),
-                // The entry went (deleted meanwhile): put the notes back as they were.
-                _ => {
-                    let _ = history.set_meeting_notes(
+                // Failed, no AI any more, or the entry went: the notes the
+                // user had stay as they were.
+                None => {
+                    let _ = app.emit(REWRITE_FAILED_EVENT, history_id);
+                    history.set_meeting_notes(
                         history_id,
                         meeting.kind.as_deref(),
                         meeting.notes.as_deref(),
                         &meeting.notes_state,
                         meeting.notes_engine.as_deref(),
-                    );
-                    let _ = app.emit(NOTES_EVENT, history_id);
+                    )
                 }
+            };
+            if let Err(e) = saved {
+                log::error!("Meeting notes: cannot save: {e}");
             }
+            let _ = app.emit(NOTES_EVENT, history_id);
         });
         Ok(())
     }
@@ -865,6 +888,16 @@ pub mod session {
 mod tests {
     use super::*;
     use crate::system_audio_tap::RunningApp;
+
+    // SE-MEET-010
+    #[test]
+    fn a_failed_template_switch_keeps_the_old_notes() {
+        assert!(session::rewrite_replaces("done"));
+        assert!(session::rewrite_replaces("empty"));
+        assert!(!session::rewrite_replaces("failed"));
+        assert!(!session::rewrite_replaces("no_ai:ai_off"));
+        assert!(!session::rewrite_replaces("no_ai:nothing_available"));
+    }
 
     // SE-MEET-003
     #[test]

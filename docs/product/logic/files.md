@@ -4,7 +4,7 @@ type: logic
 product: speakease
 title: "SpeakEase — Files (logic)"
 status: active
-updated: 2026-10-31
+updated: 2026-11-01
 summary: "Rules for Files & links: decode only the sound to 16 kHz, transcribe into a History entry, AI on long text in pieces, links via download or yt-dlp, live progress (SE-FILE)."
 tags: [area/audio, area/data-import, area/ai, stack/rust]
 reqPrefix: SE-FILE

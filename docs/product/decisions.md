@@ -22,10 +22,12 @@ repo; each cites its source.
   side column, behind Experimental, with the source set's "people" icon; the title row holds Copy, Save .md and Save
   .txt, the row below the Notes / Transcript tabs and the template menu; Copy takes the tab in view; a saved file is
   the notes, then the transcript; choosing a template writes the notes again in the background and keeps the old ones
-  on screen until the new ones are in; with no AI, and when notes fail, the transcript is shown under the reason;
+  on screen until the new ones are in, and keeps them stored when the new ones fail; notes left "writing" by a quit
+  are settled at the next start; with no AI, and when notes fail, the transcript is shown under the reason;
   `.docx` is not built, since it needs a new library (owner's call).
-- **Evidence**: `bun run test:unit` (`src/lib/meeting.test.ts`: `notesView`, `exportMeeting`, `meetingFileName`,
-  `duration`); the page walked in the browser preview with the mock (notes, empty, no AI, the transcript link, the
+- **Evidence**: `bun run test:unit` (`src/lib/meeting.test.ts`: `notesView`, `shownNotes`, `copyText`,
+  `exportMeeting`, `meetingFileName`, `duration`); `cargo test --lib` (`a_failed_template_switch_keeps_the_old_notes`,
+  `notes_cut_off_by_a_quit_are_settled_at_startup`); the page walked in the browser preview with the mock (notes, empty, no AI, the transcript link, the
   template switch). Not yet seen in the running app.
 - **Reversal**: drop the side-column entry; the `meetings` table and History are unchanged.
 

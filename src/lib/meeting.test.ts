@@ -5,6 +5,8 @@ import {
   meetingErrorKey,
   meetingFileName,
   notesView,
+  shownNotes,
+  copyText,
 } from "./meeting";
 
 // The timer counts from the start, and shows hours only past an hour.
@@ -56,5 +58,15 @@ assert.equal(
   "Zoom · 31/10 09:30\n\nTranscript\n\n[Tôi] chào mọi người\n",
 );
 assert.equal(meetingFileName(meeting.title, "md"), "Zoom · 31-10 09-30.md");
+
+// SE-MEET-010: a template switch keeps the old notes on screen while writing.
+assert.equal(shownNotes({ kind: "writing" }, "## Old"), "## Old");
+assert.equal(shownNotes({ kind: "writing" }, null), null);
+assert.equal(shownNotes({ kind: "failed" }, "## Old"), null);
+assert.equal(shownNotes({ kind: "noAi", reason: "ai_off" }, "## Old"), null);
+// SE-MEET-015: Copy takes the tab in view; with no notes, the transcript.
+assert.equal(copyText("notes", "## N", "T"), "## N");
+assert.equal(copyText("transcript", "## N", "T"), "T");
+assert.equal(copyText("notes", null, "T"), "T");
 
 console.log("meeting.test.ts (page): ok");

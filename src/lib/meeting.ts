@@ -56,6 +56,25 @@ export const notesView = (state: string, hasNotes: boolean): NotesView => {
   return hasNotes ? { kind: "notes" } : { kind: "failed" };
 };
 
+/** The notes on screen, if any: kept while a template switch writes new
+ *  ones (SE-MEET-010). */
+export const shownNotes = (
+  view: NotesView,
+  notes: string | null,
+): string | null =>
+  view.kind === "notes" || view.kind === "empty" || view.kind === "writing"
+    ? notes
+    : null;
+
+// SE-MEET-015
+/** What Copy takes: the notes on the Notes tab when there are any, else the
+ *  transcript. */
+export const copyText = (
+  tab: "notes" | "transcript",
+  notes: string | null,
+  transcript: string,
+): string => (tab === "notes" && notes ? notes : transcript);
+
 /** The four note templates (meeting_notes.rs NoteKind), in menu order. */
 export const NOTE_KINDS = ["meeting", "call", "lecture", "interview"] as const;
 

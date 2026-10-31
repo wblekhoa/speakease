@@ -5,11 +5,13 @@ import { save } from "@tauri-apps/plugin-dialog";
 import { toast } from "sonner";
 import { commands, type MeetingEntry } from "@/bindings";
 import {
+  copyText,
   duration,
   exportMeeting,
   meetingFileName,
   NOTE_KINDS,
   notesView,
+  shownNotes,
 } from "@/lib/meeting";
 import { Button } from "../../ui/Button";
 import { Dropdown } from "../../ui/Dropdown";
@@ -19,6 +21,8 @@ import { copyToClipboard } from "../history/clipboard";
 /** Events that change the list (meeting.rs NOTES_EVENT and STATE_EVENT). */
 const NOTES_EVENT = "meeting-notes-updated";
 const STATE_EVENT = "meeting-state";
+/** A template switch could not write new notes (meeting.rs REWRITE_FAILED_EVENT). */
+const REWRITE_FAILED_EVENT = "meeting-notes-rewrite-failed";
 
 type Tab = "notes" | "transcript";
 
@@ -45,11 +49,15 @@ export const MeetingsPage: React.FC = () => {
     refresh();
     const notes = listen(NOTES_EVENT, refresh);
     const state = listen(STATE_EVENT, refresh);
+    const failed = listen(REWRITE_FAILED_EVENT, () =>
+      toast.error(t("meeting.page.rewriteFailed")),
+    );
     return () => {
       notes.then((stop) => stop());
       state.then((stop) => stop());
+      failed.then((stop) => stop());
     };
-  }, [refresh]);
+  }, [refresh, t]);
 
   if (meetings === null) return null;
   if (meetings.length === 0) {
@@ -95,7 +103,7 @@ export const MeetingsPage: React.FC = () => {
                 <span className="block truncate text-sm font-medium">
                   {m.meeting.app_name}
                 </span>
-                <span className="block text-xs text-mid-gray tabular-nums">
+                <span className="block whitespace-nowrap text-sm text-mid-gray tabular-nums">
                   {startedAt(m.meeting.started_at)} ·{" "}
                   {duration(m.meeting.duration_ms)}
                 </span>
@@ -126,13 +134,12 @@ const MeetingDetail: React.FC<{
 
   const file = {
     title: entry.title,
-    notes:
-      view.kind === "notes" || view.kind === "empty" ? meeting.notes : null,
+    notes: shownNotes(view, meeting.notes),
     transcript: entry.transcript,
   };
 
   const copy = async () => {
-    const text = tab === "notes" && file.notes ? file.notes : entry.transcript;
+    const text = copyText(tab, file.notes, entry.transcript);
     if (await copyToClipboard(text)) toast.success(t("meeting.page.copied"));
   };
 
@@ -171,7 +178,7 @@ const MeetingDetail: React.FC<{
       type="button"
       aria-pressed={tab === value}
       onClick={() => onTab(value)}
-      className={`rounded-full px-3 py-1 text-sm transition-colors ${
+      className={`whitespace-nowrap rounded-full px-3 py-1 text-sm transition-colors ${
         tab === value ? "bg-glass-chosen font-medium" : "hover:bg-glass-hover"
       }`}
     >
@@ -222,7 +229,10 @@ const MeetingDetail: React.FC<{
         </pre>
       ) : (
         <div className="space-y-3 rounded-2xl border border-hairline bg-surface px-5 py-4">
-          {view.kind === "notes" && (
+          {view.kind === "writing" && (
+            <p className="text-sm">{t("meeting.page.writing")}</p>
+          )}
+          {(view.kind === "notes" || (writing && file.notes)) && (
             <>
               {/* Every engine measured made 1-3 name or number errors an
                   hour: the notes are AI output to check (SE-MEET fixed). */}
@@ -236,11 +246,8 @@ const MeetingDetail: React.FC<{
                   {t("meeting.page.openTranscript")}
                 </button>
               </p>
-              <MarkdownContent markdown={meeting.notes ?? ""} />
+              <MarkdownContent markdown={file.notes ?? ""} />
             </>
-          )}
-          {view.kind === "writing" && (
-            <p className="text-sm">{t("meeting.page.writing")}</p>
           )}
           {view.kind === "empty" && <p className="text-sm">{meeting.notes}</p>}
           {view.kind === "failed" && (

@@ -309,6 +309,15 @@ function words(text: string) {
   return text.split(/\s+/).filter(Boolean).length;
 }
 
+// Local time, so the list's "dd/mm HH:MM" matches each title (meeting.rs).
+const localSeconds = (
+  y: number,
+  m: number,
+  d: number,
+  h: number,
+  min: number,
+) => Math.floor(new Date(y, m - 1, d, h, min).getTime() / 1000);
+
 const MEETINGS = [
   {
     title: "zoom.us · 31/10 09:30",
@@ -317,7 +326,7 @@ const MEETINGS = [
     meeting: {
       history_id: 41,
       app_name: "zoom.us",
-      started_at: Math.floor(Date.now() / 1000) - 3600 * 5,
+      started_at: localSeconds(2026, 10, 31, 9, 30),
       duration_ms: 41 * 60_000,
       kind: "meeting",
       notes:
@@ -332,7 +341,7 @@ const MEETINGS = [
     meeting: {
       history_id: 40,
       app_name: "Microsoft Teams",
-      started_at: Math.floor(Date.now() / 1000) - 86400,
+      started_at: localSeconds(2026, 10, 30, 14, 0),
       duration_ms: 95_000,
       kind: "call",
       notes: "Cuộc gọi không có nội dung đáng kể (4 từ).",
@@ -347,7 +356,7 @@ const MEETINGS = [
     meeting: {
       history_id: 39,
       app_name: "Google Chrome",
-      started_at: Math.floor(Date.now() / 1000) - 2 * 86400,
+      started_at: localSeconds(2026, 10, 29, 10, 15),
       duration_ms: 52 * 60_000,
       kind: null,
       notes: null,
@@ -422,8 +431,15 @@ function handle(cmd: string, args: Json): unknown {
         (m) => m.meeting.history_id === args.historyId,
       );
       if (found) {
-        found.meeting.kind = args.kind as string;
+        // As meeting.rs: "writing" with the old notes kept, then the new ones.
+        const done = found.meeting.notes_state;
+        found.meeting.notes_state = "writing";
         emit("meeting-notes-updated", found.meeting.history_id);
+        setTimeout(() => {
+          found.meeting.kind = args.kind as string;
+          found.meeting.notes_state = done;
+          emit("meeting-notes-updated", found.meeting.history_id);
+        }, 1500);
       }
       return null;
     }

@@ -1145,7 +1145,6 @@
       "check": "AI wrote these notes. Check names and numbers against the transcript.",
       "openTranscript": "Open the transcript",
       "writing": "Writing the notes…",
-      "emptyNotes": "Nothing substantive was said in this recording, so there is no summary.",
       "failed": "The notes could not be written. The whole transcript is here.",
       "noAi": {
         "ai_off": "AI is switched off in AI & Translate, so there are no notes. The transcript is the record.",

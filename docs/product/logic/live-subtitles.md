@@ -4,7 +4,7 @@ type: logic
 product: speakease
 title: "SpeakEase — Live subtitles (logic)"
 status: active
-updated: 2026-10-31
+updated: 2026-11-01
 summary: "Rules for live subtitles: hear one app through a process tap, cut lines at breaths, recognise on the Mac, translate with Apple Intelligence with playing-media context, re-join half-sentences, save to History (SE-LIVE)."
 tags:
   [
