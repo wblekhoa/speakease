@@ -11,17 +11,18 @@ export const progressIndex = progress => Math.max(0, Math.min(2, Math.floor(prog
 // One continuous timeline over the three steps (0 → 1), so the key press moves with
 // the scroll (owner, 31/10). Phase: idle (no pill yet) → rec (the pill pops up and
 // listens) → work (second press: "Transcribing…") → done (the sentence is in).
-// `key` is how far the keys are pressed (0-1); `typed` how much of the sentence shows.
+// `key` is how far the keys are pressed (0-1); `show` whether they are on screen at all (they come
+// up for a press and leave once it is done, owner 31/10); `typed` how much of the sentence shows.
 const ramp = (x, a, b) => Math.max(0, Math.min(1, (x - a) / (b - a)));
 export function demoState(progress) {
   const p = Math.max(0, Math.min(1, progress));
   if (p < 1 / 3) {
     const a = p * 3;
-    return { phase: a < .45 ? 'idle' : 'rec', key: a < .5 ? ramp(a, .15, .45) : 1 - ramp(a, .55, .8), typed: 0 };
+    return { phase: a < .45 ? 'idle' : 'rec', key: a < .5 ? ramp(a, .15, .45) : 1 - ramp(a, .55, .8), show: Math.min(ramp(a, 0, .15), 1 - ramp(a, .75, .9)), typed: 0 };
   }
-  if (p < 2 / 3) return { phase: 'rec', key: 0, typed: 0 };
+  if (p < 2 / 3) return { phase: 'rec', key: 0, show: ramp((p - 1 / 3) * 3, .8, 1), typed: 0 };
   const c = (p - 2 / 3) * 3;
-  return { phase: c < .15 ? 'rec' : c < .85 ? 'work' : 'done', key: c < .2 ? ramp(c, 0, .15) : 1 - ramp(c, .2, .35), typed: ramp(c, .3, .85) };
+  return { phase: c < .15 ? 'rec' : c < .85 ? 'work' : 'done', key: c < .2 ? ramp(c, 0, .15) : 1 - ramp(c, .2, .35), show: 1 - ramp(c, .4, .55), typed: ramp(c, .3, .85) };
 }
 // Where each tab lands on the timeline: just after the press, mid-listen, the end.
 export const stepTargets = [.3, .5, 1];
@@ -38,9 +39,10 @@ export function createStory(section, { ScrollTrigger, onSelect, onPinned = () =>
   let step = 1;
   let tween = 0;
   const apply = progress => {
-    const { phase, key, typed } = demoState(progress);
+    const { phase, key, show, typed } = demoState(progress);
     stage.dataset.phase = phase;
     stage.style.setProperty('--key', key.toFixed(3));
+    stage.style.setProperty('--show', show.toFixed(3));
     stage.style.setProperty('--typed', typed.toFixed(3));
   };
   // Without the pin, a tab plays its own stretch of the timeline (or jumps, with reduced motion).
@@ -102,6 +104,7 @@ export function createStory(section, { ScrollTrigger, onSelect, onPinned = () =>
       trigger?.kill();
       delete stage.dataset.phase;
       stage.style.removeProperty('--key');
+      stage.style.removeProperty('--show');
       stage.style.removeProperty('--typed');
       win.removeEventListener('resize', configure);
       motion.removeEventListener('change', configure);

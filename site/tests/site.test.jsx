@@ -51,15 +51,17 @@ test('scroll progress splits into three equal steps, clamped at the ends', () =>
 });
 // No pill until the first press; the second press transcribes; the keys move with the scroll.
 test('timeline: idle → press pops the pill → listen → second press → written', () => {
-  const at = p => { const { phase, key, typed } = demoState(p); return [phase, +key.toFixed(2), +typed.toFixed(2)]; };
-  assert.deepEqual(at(0), ['idle', 0, 0]);
-  assert.deepEqual(at(.1), ['idle', .5, 0]);
-  assert.deepEqual(at(1 / 6), ['rec', 1, 0]);
-  assert.deepEqual(at(stepTargets[0]), ['rec', 0, 0]);
-  assert.deepEqual(at(stepTargets[1]), ['rec', 0, 0]);
-  assert.deepEqual(at(2 / 3 + .05), ['work', 1, 0]);
-  assert.deepEqual(at(.9), ['work', 0, .73]);
-  assert.deepEqual(at(stepTargets[2]), ['done', 0, 1]);
+  const at = p => { const { phase, key, show, typed } = demoState(p); return [phase, +key.toFixed(2), +show.toFixed(2), +typed.toFixed(2)]; };
+  // [phase, key pressed, keys shown, sentence typed]
+  assert.deepEqual(at(0), ['idle', 0, 0, 0]);
+  assert.deepEqual(at(.1), ['idle', .5, 1, 0]);
+  assert.deepEqual(at(1 / 6), ['rec', 1, 1, 0]);
+  assert.deepEqual(at(stepTargets[0]), ['rec', 0, 0, 0]);
+  assert.deepEqual(at(stepTargets[1]), ['rec', 0, 0, 0]);
+  assert.deepEqual(at(2 / 3 - .01), ['rec', 0, .85, 0]);
+  assert.deepEqual(at(2 / 3 + .05), ['work', 1, 1, 0]);
+  assert.deepEqual(at(.9), ['work', 0, 0, .73]);
+  assert.deepEqual(at(stepTargets[2]), ['done', 0, 0, 1]);
   assert.deepEqual(at(1.5), at(1));
 });
 function harness({ reduced = false, tall = false } = {}) {

@@ -116,7 +116,7 @@ main { overflow-x: clip; }
 .desk { --ph: max(26px, 4.4cqw); position: absolute; inset: 0; display: grid; place-items: center; background: var(--desk) url("./media/wallpaper.jpg") center / cover; }
 /* A Notes window in the macOS layout: the note list, then the open note with its toolbar and date stamp. */
 .note { display: grid; grid-template-columns: 26cqw 1fr; width: 76cqw; height: 46cqw; border-radius: 1.6cqw; background: var(--bg);
-  box-shadow: 0 0 0 1px var(--edge), var(--shadow); overflow: hidden; translate: 0 -5cqw; text-align: left; }
+  box-shadow: 0 0 0 1px var(--edge), var(--shadow); overflow: hidden; translate: 0 -2.5cqw; text-align: left; }
 .note-list { padding: 0 1cqw; background: var(--card); border-right: 1px solid var(--edge); overflow: hidden; }
 .note-chrome { display: flex; align-items: center; height: 4cqw; padding-inline: .6cqw; }
 .lights { display: inline-flex; gap: .7cqw; }
@@ -144,7 +144,7 @@ main { overflow-x: clip; }
 .caret { display: inline-block; width: 2px; height: 1.1em; margin-left: 2px; vertical-align: -.15em; background: var(--brand); }
 /* Narrow screens: Notes hides its list, as the app does in a small window. */
 @container (max-width: 520px) {
-  .note { grid-template-columns: 1fr; width: 82cqw; height: 36cqw; translate: 0 -8cqw; }
+  .note { grid-template-columns: 1fr; width: 82cqw; height: 46cqw; translate: 0 -4.5cqw; }
   .note-list { display: none; }
 }
 /* The pill: the app's compact overlay at its own proportions (236 x 40, radius 24, flat, hairline), every inner size
@@ -162,14 +162,17 @@ main { overflow-x: clip; }
 .pill-spinner { justify-self: start; margin-left: calc(var(--ph) * .125); width: calc(var(--ph) * .325); height: calc(var(--ph) * .325); box-sizing: border-box;
   border: 2px solid color-mix(in srgb, var(--muted) 12%, transparent); border-top-color: var(--brand); border-radius: 50%; }
 .pill-label { padding-inline: calc(var(--ph) * .2); white-space: nowrap; }
-/* The shortcut: keycaps with depth, centred just above the pill. `--key` (0-1, set by the scroll timeline in
-   story.js) is how far they are pressed: they sink, lose most of their side and turn pink. */
-.keys { --kh: calc(var(--ph) * .9); --kd: calc(var(--kh) * .16); --k: var(--key, 0); position: absolute; left: 50%; translate: -50% 0;
+/* The shortcut: keycaps with depth, centred just above the pill, over the window if need be. The scroll timeline in
+   story.js sets `--show` (they rise in for a press and leave after it) and `--key` (how far they are pressed: they
+   sink, lose most of their side and turn pink). With no timeline they are not shown. */
+.keys { --kh: calc(var(--ph) * .9); --kd: calc(var(--kh) * .16); --k: var(--key, 0); position: absolute; left: 50%;
+  opacity: var(--show, 0); translate: -50% calc((1 - var(--show, 0)) * 40%);
   bottom: calc(2.2cqw + var(--ph) + max(8px, 1.6cqw)); display: flex; gap: max(4px, .6cqw); }
 .keys kbd { min-width: var(--kh); height: var(--kh); padding-inline: calc(var(--kh) * .3); border: 0; border-radius: calc(var(--kh) * .26);
   translate: 0 calc(var(--kd) * .7 * var(--k)); font-size: calc(var(--kh) * .36);
   background: color-mix(in srgb, var(--brand-fill) calc(var(--k) * 100%), var(--bg));
-  color: color-mix(in srgb, var(--light-color-background) calc(var(--k) * 100%), var(--ink));
+  /* The label stays dark until the cap is mostly pink, so it never washes out mid-press. */
+  color: color-mix(in srgb, var(--light-color-background) clamp(0%, (var(--k) - .5) * 200%, 100%), var(--ink));
   box-shadow: 0 0 0 1px color-mix(in srgb, var(--muted) 25%, transparent),
     0 calc(var(--kd) * (1 - .7 * var(--k))) 0 color-mix(in srgb, var(--brand) calc(var(--k) * 100%), color-mix(in srgb, var(--muted) 50%, var(--bg))),
     0 calc(var(--kd) * (1 - .7 * var(--k)) + 6px) 14px -6px color-mix(in srgb, var(--color-text) 50%, transparent); }

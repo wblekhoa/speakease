@@ -28,7 +28,7 @@ file. Vietnamese at `/`, English at `/en/`; the header switches between them.
    Free · M1 Mac or later · Runs on your Mac (short, owner 31/10).
 3. **Demo**: a CSS laptop on Apple's macOS 27 wallpaper, with a two-pane Notes window (today's notes, then the open
    note "Cuối tuần" with its date stamp; the list hides on phones). The pill copies the app's real overlay; the ⌥ Space keys are keycaps with depth,
-   centred just above it. One scroll-linked timeline (owner 31/10, the app's default tap-to-start mode): at first
+   centred just above it (over the window's edge if need be), on screen only for a press: they rise in, press, and leave. One scroll-linked timeline (owner 31/10, the app's default tap-to-start mode): at first
    there is no pill; Bấm phím tắt (the keys sink and turn pink as you scroll, and the pill pops up), Lắng nghe (keys
    up, the level moves), Viết nội dung (a second press, the pill says "Đang chép lời…", the sentence fills in word by
    word with the scroll, the pill goes). Numbered tabs under the laptop jump to a step. On phones and short windows the
@@ -54,6 +54,7 @@ file. Vietnamese at `/`, English at `/en/`; the header switches between them.
 
 ## Change log
 - 2026-10-31: created with the first build (owner round 1).
+- 2026-10-31: owner asked to show the keys only for a press and let them overlap the window.
 - 2026-10-31: owner asked for a truer demo: no pill until the press, keys with depth above the pill, the press and the typing tied to the scroll.
 - 2026-10-31: owner removed the hero sentence (the page's meta descriptions are unchanged).
 - 2026-10-31: owner changed the demo flow to Bấm phím tắt → Lắng nghe → Viết nội dung; phones drop the step numbers.
