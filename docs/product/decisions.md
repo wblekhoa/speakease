@@ -29,7 +29,7 @@ repo; each cites its source.
     reflow to one sentence a line was tried and dropped, because it rewrote the stored original.
   - The notes are written on a thread of their own; a quit while they are written is settled at the next start.
 - **Evidence**: `handy --meeting-notes` with no app (Apple Intelligence) guessed a hand-written Vietnamese lecture and
-  interview right and wrote each template; the button and the file meeting in the browser preview.
+  interview right and wrote each template, and a one-paragraph vlog transcript as a lecture; the button and the file meeting in the browser preview.
 - **Not measured**: a real file through Files & links and the button in the running app; a long file.
 - **Reverse**: hide the button (`files.meetingNotes`); Files is then as before.
 

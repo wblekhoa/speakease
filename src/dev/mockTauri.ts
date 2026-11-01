@@ -14,6 +14,7 @@ import { emit } from "@tauri-apps/api/event";
 import { mockIPC, mockWindows } from "@tauri-apps/api/mocks";
 import modelsFixture from "./models.fixture.json";
 import settingsFixture from "./settings.fixture.json";
+import type { MeetingEntry } from "@/bindings";
 
 type Json = Record<string, unknown>;
 
@@ -318,7 +319,7 @@ const localSeconds = (
   min: number,
 ) => Math.floor(new Date(y, m - 1, d, h, min).getTime() / 1000);
 
-const MEETINGS = [
+const MEETINGS: MeetingEntry[] = [
   {
     title: "zoom.us · 31/10 09:30",
     transcript:
@@ -553,11 +554,41 @@ function handle(cmd: string, args: Json): unknown {
       return new URLSearchParams(location.search).has("noai") ? "ai_off" : null;
     case "ask_meeting":
       return mockAsk(String(args.question).toLowerCase());
-    case "note_file_as_meeting":
-      // As meeting.rs `note_file`: listed now, the notes written later.
-      return MEETINGS.some((m) => m.meeting.history_id === args.historyId)
-        ? Promise.reject("exists: already a meeting")
-        : null;
+    case "note_file_as_meeting": {
+      // As meeting.rs `note_file`: listed now, the notes written later (the
+      // notes Apple Intelligence wrote for FILE_TEXT on 01/11, guessed as a
+      // lecture).
+      if (MEETINGS.some((m) => m.meeting.history_id === args.historyId)) {
+        return Promise.reject("exists: already a meeting");
+      }
+      const entry = history.find((e) => e.id === args.historyId);
+      if (!entry) return Promise.reject("missing: no such entry");
+      const added: MeetingEntry = {
+        title: entry.title,
+        transcript: entry.transcription_text,
+        meeting: {
+          history_id: entry.id,
+          app_name: entry.title,
+          started_at: entry.timestamp,
+          duration_ms: 4 * 60_000,
+          kind: null,
+          notes: null,
+          notes_state: "writing",
+          notes_engine: null,
+        },
+      };
+      MEETINGS.unshift(added);
+      emit("meeting-notes-updated", entry.id);
+      setTimeout(() => {
+        added.meeting.kind = "lecture";
+        added.meeting.notes =
+          "## Dàn ý theo chủ đề\n\n## Khái niệm và định nghĩa\n- kế hoạch video\n\n## Ví dụ được nêu\n- quay thử một đoạn ngắn để kiểm tra âm thanh và ánh sáng\n- nếu âm thanh bị rè, cả video sẽ mất đi nhiều giá trị\n- dùng micro cài áo và ngồi trong phòng có nhiều rèm để giảm tiếng vang\n- quay thử một đoạn ngắn trước khi phát video\n\n## Câu hỏi ôn tập\n- Nếu âm thanh bị rè, điều gì sẽ xảy ra với video?\n- Vì sao cần quay thử một đoạn ngắn trước khi phát video?";
+        added.meeting.notes_state = "done";
+        added.meeting.notes_engine = "apple";
+        emit("meeting-notes-updated", entry.id);
+      }, 4000 * SLOW);
+      return null;
+    }
     case "rewrite_meeting_notes": {
       const found = MEETINGS.find(
         (m) => m.meeting.history_id === args.historyId,

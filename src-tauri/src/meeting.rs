@@ -993,7 +993,10 @@ pub mod session {
             .ok_or_else(|| "missing: no such entry".to_string())?;
         let duration_ms = hound::WavReader::open(history.get_audio_file_path(&entry.file_name))
             .map(|wav| wav.duration() as i64 * 1000 / i64::from(wav.spec().sample_rate.max(1)))
-            .unwrap_or(0);
+            .unwrap_or_else(|e| {
+                log::warn!("Meeting notes: no audio kept for the file, so no length: {e}");
+                0
+            });
         history
             .save_meeting(history_id, &entry.title, entry.timestamp, duration_ms)
             .map_err(|e| e.to_string())?;

@@ -77,6 +77,12 @@ export const FilesPage: React.FC = () => {
     "idle",
   );
   useEffect(() => setNoted("idle"), [entry?.id]);
+  // Meeting notes need a Mac that can tap an app (macOS 14.2+), as live
+  // subtitles do.
+  const [canTap, setCanTap] = useState(false);
+  useEffect(() => {
+    commands.liveSubtitlesSupported().then(setCanTap);
+  }, []);
   const busy = progress !== null;
   // When the job, the phase and the last finished part began (SE-FILE-005).
   const timing = useRef({
@@ -551,10 +557,12 @@ export const FilesPage: React.FC = () => {
                 )
               }
             />
-            {settings?.experimental_enabled && noted !== "done" && (
+            {settings?.experimental_enabled && canTap && noted !== "done" && (
               <Button
                 variant="secondary"
-                size="sm"
+                size="md"
+                // The menus' height, so the row reads as one set of controls.
+                className="h-9"
                 disabled={busy || noted === "busy"}
                 onClick={async () => {
                   if (!entry) return;
@@ -573,7 +581,8 @@ export const FilesPage: React.FC = () => {
             )}
             {noted === "done" && (
               <p className="text-xs text-mid-gray" role="status">
-                {t("files.meetingNoted")}{" "}
+                {/* With AI off the meeting says why there are no notes. */}
+                {t(aiOn ? "files.meetingNoted" : "files.meetingNotedNoAi")}{" "}
                 <button
                   type="button"
                   onClick={() => openSection("meetings")}

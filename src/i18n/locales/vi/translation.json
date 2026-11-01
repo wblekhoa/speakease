@@ -1014,7 +1014,8 @@
     "meetingNotes": "Ghi chú cuộc họp",
     "meetingNoted": "Đã thêm vào Cuộc họp, ghi chú đang được viết.",
     "openMeetings": "Mở Cuộc họp",
-    "meetingFailed": "Không thêm được vào Cuộc họp.",
+    "meetingNotedNoAi": "Đã thêm vào Cuộc họp. AI đang tắt nên chưa có ghi chú.",
+    "meetingFailed": "Không thêm được vào Cuộc họp. Bấm lại để thử.",
     "openAi": "Mở AI & Dịch",
     "recent": "File gần đây",
     "errors": {

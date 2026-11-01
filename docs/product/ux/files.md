@@ -49,7 +49,7 @@ relations:
 - **The result** shows the file's name, a word count and the text, with **Copy** and **Save .txt**. **Rewrite…**
   offers the prompts from AI & Translate; **Translate to…** the same languages as the Speak page. The AI version
   shows on top with the **Original** under it. With AI off, both menus are greyed out and a link turns AI on.
-- **Meeting notes** (with App › Experimental on): **Ghi chú cuộc họp** on the result lists the file on the Meetings
+- **Meeting notes** (with App › Experimental on, macOS 14.2+): **Ghi chú cuộc họp** on the result lists the file on the Meetings
   page and writes its notes in the template AI guesses; then "Đã thêm vào Cuộc họp, ghi chú đang được viết." with
   **Mở Cuộc họp** (`ux/meetings.md`). Nothing runs unless pressed.
 - **Recent files** lists the last six files; choosing one shows its text again.

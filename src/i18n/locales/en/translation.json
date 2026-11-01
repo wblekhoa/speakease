@@ -1014,7 +1014,8 @@
     "meetingNotes": "Meeting notes",
     "meetingNoted": "Added to Meetings; the notes are being written.",
     "openMeetings": "Open Meetings",
-    "meetingFailed": "Could not add it to Meetings.",
+    "meetingNotedNoAi": "Added to Meetings. AI is off, so there are no notes yet.",
+    "meetingFailed": "Could not add it to Meetings. Press it again to retry.",
     "openAi": "Open AI & Translate",
     "recent": "Recent files",
     "errors": {
