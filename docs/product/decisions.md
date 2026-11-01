@@ -28,8 +28,13 @@ repo; each cites its source.
   a line on another subject. A yes/no check on the cited lines caught one of them but hid a right answer, so it was
   dropped; the quoted line is the guard.
 - **Evidence**: `cargo test --lib meeting_ask` (8 tests); `bun run test:unit`; `handy --meeting-ask` with Apple
-  Intelligence on a 7-line transcript (6 questions, 0.8-1.6 s each); the page walked in the browser preview at 780,
-  1024 and 1280 px.
+  Intelligence on a 7-line Vietnamese transcript (the launch meeting of the phase 2 probe, one sentence per line),
+  no notes sent: right with the right line for "Ai chuẩn bị bài đăng giới thiệu, hạn khi nào?" (L4), "Giá gói năm là
+  bao nhiêu?" (L5), "Đề xuất giảm giá đã chốt chưa?" (L6), "Trang thanh toán bao giờ xong?" (L2); wrong for "Ngân sách
+  quảng cáo là bao nhiêu?" (L5, the price) and "Ai làm phần dịch sang tiếng Anh?" (L4); 0.8-1.6 s each. The page
+  walked in the browser preview at 780, 1024 and 1280 px. SE-MEET-014 stays `not built` until seen in the running
+  app and an engine declines a question the meeting does not answer.
+- **Limits**: each question stands alone (no follow-ups); an answer taken from the notes cannot point to a line.
 - **Reversal**: drop the column and the `ask_meeting` command; nothing is stored.
 
 ## 2026-10-31 · Meeting notes phase 3: the Meetings page, choices made by AI under the owner's overnight delegation

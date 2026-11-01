@@ -76,11 +76,12 @@ const said = "[Tôi] một\n\n[Người khác]  ba ";
 assert.equal(transcriptLine(said, 1), "[Tôi] một");
 assert.equal(transcriptLine(said, 3), "[Người khác]  ba");
 assert.equal(transcriptLine(said, 9), "");
-assert.equal(askError("no_ai:ai_off"), "meeting.page.noAi.ai_off");
+assert.equal(askError("no_ai:ai_off"), "meeting.page.ask.noAi.ai_off");
 assert.equal(
   askError("no_ai:nothing_available"),
-  "meeting.page.noAi.nothing_available",
+  "meeting.page.ask.noAi.nothing_available",
 );
 assert.equal(askError("missing: gone"), "meeting.page.ask.failed");
+assert.equal(askError(""), "meeting.page.ask.failed");
 
 console.log("meeting.test.ts (page): ok");

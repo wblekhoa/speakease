@@ -1176,7 +1176,11 @@
         "notFound": "The meeting doesn't say.",
         "noLines": "The AI named no lines. Check the transcript.",
         "line": "Line {{n}}",
-        "failed": "Couldn't ask. Try again later."
+        "failed": "Couldn't ask. Try again later.",
+        "noAi": {
+          "ai_off": "AI is switched off, so questions can't be answered. Turn it on in AI & Translate.",
+          "nothing_available": "This Mac has no AI to answer (Apple Intelligence, an API key or the on-device model)."
+        }
       }
     }
   }

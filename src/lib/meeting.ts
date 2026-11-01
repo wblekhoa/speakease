@@ -99,12 +99,13 @@ export const meetingFileName = (title: string, format: "md" | "txt") =>
 
 // SE-MEET-014
 /** The i18n key for an ask_meeting error ("no_ai:<reason>", else a failure). */
-export const askError = (error: string): string =>
-  error === "no_ai:ai_off"
-    ? "meeting.page.noAi.ai_off"
-    : error.startsWith("no_ai:")
-      ? "meeting.page.noAi.nothing_available"
-      : "meeting.page.ask.failed";
+export const askError = (error: string): string => {
+  // The same "no_ai:<reason>" the notes' state carries (notesView).
+  const view = notesView(error, false);
+  return view.kind === "noAi"
+    ? `meeting.page.ask.noAi.${view.reason}`
+    : "meeting.page.ask.failed";
+};
 
 /** Line `n` (1-based) of a transcript, trimmed; "" past its end. */
 export const transcriptLine = (transcript: string, n: number): string =>

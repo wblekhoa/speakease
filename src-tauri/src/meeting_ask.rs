@@ -105,7 +105,9 @@ pub fn meeting_text(context: &str, notes: Option<&str>) -> String {
 
 /// Line numbers inside one citation's brackets: "L12", "L12, L15", "L3-L5".
 fn cited(inner: &str, max_line: u32, into: &mut Vec<u32>) -> bool {
-    let mut any = false;
+    // Every piece must read as lines, or the bracket is not a citation and
+    // cites nothing.
+    let mut found = Vec::new();
     for piece in inner.split([',', ';']) {
         let piece = piece.trim();
         // A citation names lines as "L12"; a bare "[12]" may be a footnote.
@@ -126,15 +128,18 @@ fn cited(inner: &str, max_line: u32, into: &mut Vec<u32>) -> bool {
         let (Some(from), Some(to)) = (number(from), number(to)) else {
             return false;
         };
-        let to = to.min(from.saturating_add(MAX_RANGE - 1));
-        for line in from..=to {
-            if (1..=max_line).contains(&line) && !into.contains(&line) {
-                into.push(line);
-            }
+        if from == 0 || to < from {
+            return false;
         }
-        any = true;
+        let to = to.min(from.saturating_add(MAX_RANGE - 1));
+        found.extend((from..=to).filter(|line| *line <= max_line));
     }
-    any
+    for line in found {
+        if !into.contains(&line) {
+            into.push(line);
+        }
+    }
+    true
 }
 
 /// Splits the AI's answer into its text (citations taken out) and the lines
@@ -164,15 +169,21 @@ pub fn parse_answer(answer: &str, max_line: u32) -> MeetingAnswer {
         rest = &rest[close + 1..];
     }
     text.push_str(rest);
-    // Citations leave " ." and double spaces behind.
+    // A citation taken out leaves a space before the punctuation after it,
+    // or two spaces; the line's own indentation stays.
     let text = text
         .lines()
         .map(|line| {
-            line.split_whitespace()
-                .collect::<Vec<_>>()
-                .join(" ")
-                .replace(" .", ".")
-                .replace(" ,", ",")
+            let body = line.trim_start();
+            let indent = &line[..line.len() - body.len()];
+            let mut body = body.trim_end().to_string();
+            while body.contains("  ") {
+                body = body.replace("  ", " ");
+            }
+            for mark in [".", ",", ";", ":", ")"] {
+                body = body.replace(&format!(" {mark}"), mark);
+            }
+            format!("{indent}{body}")
         })
         .collect::<Vec<_>>()
         .join("\n")
@@ -305,6 +316,13 @@ mod tests {
         assert_eq!(parse_answer("Có [L1, L3].", 4).lines, vec![1, 3]);
         assert_eq!(parse_answer("Có [L2-L4].", 4).lines, vec![2, 3, 4]);
         assert_eq!(parse_answer("Có [L2–4].", 9).lines, vec![2, 3, 4]);
+        // A bracket that is only partly lines cites nothing and stays.
+        let partial = parse_answer("Có [L1, xem thêm].", 4);
+        assert_eq!(partial.text, "Có [L1, xem thêm].");
+        assert!(partial.lines.is_empty());
+        // Line 0 and a reversed range are not citations.
+        assert_eq!(parse_answer("x [L0]", 4).text, "x [L0]");
+        assert_eq!(parse_answer("x [L5-L2]", 9).text, "x [L5-L2]");
         // A range is capped, so a typo cannot cite the whole meeting.
         assert_eq!(
             parse_answer("x [L1-L900]", 900).lines.len(),
@@ -318,11 +336,16 @@ mod tests {
         let answer = parse_answer("- [ ] gửi bài [L4] (xem [1])", 4);
         assert_eq!(answer.text, "- [ ] gửi bài (xem [1])");
         assert_eq!(answer.lines, vec![4]);
+        // A list's indentation is kept.
+        assert_eq!(
+            parse_answer("- Minh [L4]\n  - trước ngày 12 [L4]", 4).text,
+            "- Minh\n  - trước ngày 12"
+        );
     }
 
     // SE-MEET-014
     #[test]
-    fn a_question_the_meeting_does_not_answer_says_so() {
+    fn a_none_reply_reads_as_not_found() {
         for said in ["[none]", " [none]. ", ""] {
             let answer = parse_answer(said, 4);
             assert!(!answer.found, "{said:?}");

@@ -380,6 +380,29 @@ const MEETINGS = [
   },
 ];
 
+// As meeting_ask.rs, after a moment: an answer with the lines it used;
+// "ngân sách" is not in the meeting, "tắt" is AI switched off, "dòng" an
+// answer that cites no line.
+async function mockAsk(question: string) {
+  await new Promise((resolve) => setTimeout(resolve, 1200));
+  if (question.includes("tắt")) throw "no_ai:ai_off";
+  if (question.includes("ngân sách")) {
+    return { text: "", lines: [], found: false };
+  }
+  if (question.includes("dòng")) {
+    return {
+      text: "Tuần sau bàn tiếp đề xuất giảm giá.",
+      lines: [],
+      found: true,
+    };
+  }
+  return {
+    text: "Anh Minh chuẩn bị bài đăng giới thiệu trước ngày 12.",
+    lines: [3],
+    found: true,
+  };
+}
+
 function handle(cmd: string, args: Json): unknown {
   if (applyChange(cmd, args)) return null;
   switch (cmd) {
@@ -440,19 +463,8 @@ function handle(cmd: string, args: Json): unknown {
     case "list_meetings":
       // A fresh copy each time, as the backend sends.
       return structuredClone(MEETINGS);
-    case "ask_meeting": {
-      // As meeting_ask.rs: an answer with the lines it used; "ngân sách"
-      // is a question this meeting does not answer.
-      const question = String(args.question).toLowerCase();
-      if (question.includes("ngân sách")) {
-        return { text: "", lines: [], found: false };
-      }
-      return {
-        text: "Anh Minh chuẩn bị bài đăng giới thiệu trước ngày 12.",
-        lines: [3],
-        found: true,
-      };
-    }
+    case "ask_meeting":
+      return mockAsk(String(args.question).toLowerCase());
     case "rewrite_meeting_notes": {
       const found = MEETINGS.find(
         (m) => m.meeting.history_id === args.historyId,

@@ -26,6 +26,11 @@ const STATE_EVENT = "meeting-state";
 const REWRITE_FAILED_EVENT = "meeting-notes-rewrite-failed";
 
 type Tab = "notes" | "transcript";
+/** Questions asked per meeting, kept while the app runs: the page itself
+ *  unmounts when the user opens another one (SE-MEET-014). */
+let askedSoFar: Record<number, Exchange[]> = {};
+/** Lines an answer used, and the one the user clicked. */
+type Cited = { lines: number[]; line: number };
 
 // SE-MEET-018
 /** Meetings (beta): the list on the left, the chosen meeting on the right -
@@ -36,8 +41,9 @@ export const MeetingsPage: React.FC = () => {
   const [chosen, setChosen] = useState<number | null>(null);
   const [tab, setTab] = useState<Tab>("notes");
   // Questions asked per meeting, kept while the app runs (SE-MEET-014).
-  const [chats, setChats] = useState<Record<number, Exchange[]>>({});
-  const [cited, setCited] = useState<number[]>([]);
+  const [chats, setChats] = useState(askedSoFar);
+  // A new object per click, so the same line scrolls into view again.
+  const [cited, setCited] = useState<Cited>({ lines: [], line: 0 });
 
   const refresh = useCallback(() => {
     commands.listMeetings().then((result) => {
@@ -102,7 +108,7 @@ export const MeetingsPage: React.FC = () => {
                   onClick={() => {
                     setChosen(m.meeting.history_id);
                     setTab("notes");
-                    setCited([]);
+                    setCited({ lines: [], line: 0 });
                   }}
                   className={`w-full rounded-xl px-3 py-2 text-start transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary ${
                     active ? "bg-glass-chosen" : "hover:bg-glass-hover"
@@ -134,15 +140,18 @@ export const MeetingsPage: React.FC = () => {
             transcript={entry.transcript}
             exchanges={chats[entry.meeting.history_id] ?? []}
             onExchanges={(update) =>
-              setChats((all) => ({
-                ...all,
-                [entry.meeting.history_id]: update(
-                  all[entry.meeting.history_id] ?? [],
-                ),
-              }))
+              setChats((all) => {
+                askedSoFar = {
+                  ...all,
+                  [entry.meeting.history_id]: update(
+                    all[entry.meeting.history_id] ?? [],
+                  ),
+                };
+                return askedSoFar;
+              })
             }
-            onShowLines={(lines) => {
-              setCited(lines);
+            onShowLines={(lines, line) => {
+              setCited({ lines, line });
               setTab("transcript");
             }}
           />
@@ -156,8 +165,8 @@ const MeetingDetail: React.FC<{
   entry: MeetingEntry;
   tab: Tab;
   onTab: (tab: Tab) => void;
-  /** Transcript lines an answer used, highlighted on the transcript tab. */
-  cited: number[];
+  /** Transcript lines an answer used, marked on the transcript tab. */
+  cited: Cited;
 }> = ({ entry, tab, onTab, cited }) => {
   const { t } = useTranslation();
   const { meeting } = entry;
@@ -312,24 +321,25 @@ const MeetingDetail: React.FC<{
   );
 };
 
-/** The transcript line by line; cited lines are marked and the first is
- *  scrolled into view (SE-MEET-014). */
-const TranscriptLines: React.FC<{ transcript: string; cited: number[] }> = ({
+/** The transcript line by line; an answer's lines are marked and the one
+ *  clicked is scrolled into view (SE-MEET-014). */
+const TranscriptLines: React.FC<{ transcript: string; cited: Cited }> = ({
   transcript,
   cited,
 }) => {
-  const first = useRef<HTMLParagraphElement>(null);
+  const clicked = useRef<HTMLParagraphElement>(null);
   useEffect(() => {
-    first.current?.scrollIntoView({ block: "center" });
+    clicked.current?.scrollIntoView({ block: "center" });
   }, [cited]);
   return (
     <div className="rounded-2xl border border-hairline bg-surface px-5 py-4 text-sm leading-relaxed">
       {transcript.split("\n").map((line, i) => {
-        const marked = cited.includes(i + 1);
+        const marked = cited.lines.includes(i + 1);
         return (
           <p
             key={i}
-            ref={marked && cited[0] === i + 1 ? first : undefined}
+            ref={cited.line === i + 1 ? clicked : undefined}
+            aria-current={marked ? "true" : undefined}
             className={`min-h-[1lh] whitespace-pre-wrap rounded-lg ${
               marked ? "-mx-2 bg-glass-chosen px-2" : ""
             }`}

@@ -111,6 +111,9 @@ pub async fn ask_meeting(
     history_id: i64,
     question: String,
 ) -> Result<crate::meeting_ask::MeetingAnswer, String> {
+    if question.trim().is_empty() {
+        return Err("empty: no question".to_string());
+    }
     let meeting = history_manager
         .get_meeting(history_id)
         .map_err(|e| e.to_string())?

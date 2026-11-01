@@ -52,8 +52,8 @@ Every phase keeps these green on its branch (the "five checks"): `bun run lint`,
      `jak-hq:design-edit` review.
 4. **Live help** — SE-MEET-005 levels 2-5, 007, 014, 016. Split (AI, 01/11): **4a** the meeting chat (014) on the
    Meetings page; **4b** the floating panel with levels 2-5 and the suggestions (005, 007, 016).
-   - Floating panel under the pill: live transcript, "what did I miss?", a summary that updates, suggestion cards;
-     Q&A over one meeting with line references.
+   - Floating panel under the pill: live transcript, "what did I miss?", a summary that updates, suggestion cards
+     (4b). Q&A over one meeting with line references is the Meetings page column (4a).
    - Verify: five checks; unit tests for the rolling-window and suggestion parsing; panel in the preview;
      `jak-hq:design-edit`. Heat and battery over an hour are measured and reported, not claimed.
 5. **Asking and hiding** — SE-MEET-002, 017; recordings brought in from Files use the template AI guesses.

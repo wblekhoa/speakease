@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { commands, type MeetingAnswer } from "@/bindings";
 import { askError, transcriptLine } from "@/lib/meeting";
@@ -22,11 +22,17 @@ export const MeetingAsk: React.FC<{
   transcript: string;
   exchanges: Exchange[];
   onExchanges: (update: (exchanges: Exchange[]) => Exchange[]) => void;
-  onShowLines: (lines: number[]) => void;
+  /** Marks `lines` on the transcript tab and scrolls to `line`. */
+  onShowLines: (lines: number[], line: number) => void;
 }> = ({ historyId, transcript, exchanges, onExchanges, onShowLines }) => {
   const { t } = useTranslation();
   const [question, setQuestion] = useState("");
   const [asking, setAsking] = useState(false);
+  // The newest answer (or the "looking" line) stays in view.
+  const list = useRef<HTMLOListElement>(null);
+  useEffect(() => {
+    list.current?.scrollTo({ top: list.current.scrollHeight });
+  }, [exchanges.length, asking]);
 
   const ask = async (event: React.FormEvent) => {
     event.preventDefault();
@@ -34,21 +40,26 @@ export const MeetingAsk: React.FC<{
     if (!asked || asking) return;
     setAsking(true);
     setQuestion("");
-    const result = await commands.askMeeting(historyId, asked);
-    onExchanges((list) => [
-      ...list,
-      result.status === "ok"
-        ? { question: asked, answer: result.data }
-        : { question: asked, error: askError(result.error) },
-    ]);
-    setAsking(false);
+    let exchange: Exchange;
+    try {
+      const result = await commands.askMeeting(historyId, asked);
+      exchange =
+        result.status === "ok"
+          ? { question: asked, answer: result.data }
+          : { question: asked, error: askError(result.error) };
+    } catch {
+      exchange = { question: asked, error: askError("") };
+    } finally {
+      setAsking(false);
+    }
+    onExchanges((list) => [...list, exchange]);
   };
 
   return (
     <aside className="w-full flex-none space-y-3 @5xl:w-72">
       <h3 className="text-sm font-semibold">{t("meeting.page.ask.title")}</h3>
       <p className="text-sm text-mid-gray">{t("meeting.page.ask.hint")}</p>
-      <ol className="space-y-3">
+      <ol ref={list} className="max-h-[60vh] space-y-3 overflow-y-auto">
         {exchanges.map((exchange, i) => (
           <li
             key={i}
@@ -76,10 +87,10 @@ export const MeetingAsk: React.FC<{
                       <li key={n}>
                         <button
                           type="button"
-                          onClick={() => onShowLines(exchange.answer!.lines)}
-                          className="w-full rounded-lg text-start text-sm text-mid-gray hover:text-text focus-visible:outline-2 focus-visible:outline-logo-primary"
+                          onClick={() => onShowLines(exchange.answer!.lines, n)}
+                          className="w-full rounded-lg text-start text-sm text-mid-gray transition-colors hover:text-text focus-visible:outline-2 focus-visible:outline-logo-primary"
                         >
-                          <span className="whitespace-nowrap font-medium tabular-nums">
+                          <span className="whitespace-nowrap font-medium tabular-nums underline underline-offset-2">
                             {t("meeting.page.ask.line", { n })}
                           </span>{" "}
                           {transcriptLine(transcript, n)}

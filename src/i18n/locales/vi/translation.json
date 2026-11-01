@@ -1176,7 +1176,11 @@
         "notFound": "Cuộc họp không nói tới điều này.",
         "noLines": "AI không chỉ ra dòng nào. Hãy kiểm tra bản ghi lời.",
         "line": "Dòng {{n}}",
-        "failed": "Không hỏi được. Thử lại sau."
+        "failed": "Không hỏi được. Thử lại sau.",
+        "noAi": {
+          "ai_off": "AI đang tắt nên chưa hỏi được. Bật lại ở AI & dịch.",
+          "nothing_available": "Máy Mac này chưa có AI để trả lời (Apple Intelligence, khoá API hoặc mô hình trên máy)."
+        }
       }
     }
   }
