@@ -14,6 +14,24 @@ tags: [area/docs]
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
 
+## 2026-11-01 · Meeting notes phase 4a: questions about a meeting, choices made by AI under the owner's overnight delegation
+
+- **Context**: the owner asked to keep finishing the app overnight under the same rules ("Tiếp tục hoàn thiện app
+  nhé", relayed 01/11). Phase 4 (`logic/meetings.md` SE-MEET-005/007/014/016) is split so each landed piece is whole:
+  4a is the meeting chat (SE-MEET-014); the live transcript and help go with the floating panel they show in (4b).
+- **Decision** (chosen by AI under the owner's overnight delegation, 01/11): the chat is a column on the Meetings
+  page; it uses the notes' AI order; the transcript is sent with line numbers (a long meeting: the ~1,400 words that
+  share most words with the question) plus the written notes; answers cite `[L12]` and quote each cited line, which
+  opens the transcript with it marked; questions are kept per meeting while the app runs, not stored; the page's
+  columns stack at the 780 px default window (phase 3 had only been checked at 1280).
+- **Measured limit**: Apple Intelligence never answered "the meeting doesn't say": both unanswerable questions got
+  a line on another subject. A yes/no check on the cited lines caught one of them but hid a right answer, so it was
+  dropped; the quoted line is the guard.
+- **Evidence**: `cargo test --lib meeting_ask` (8 tests); `bun run test:unit`; `handy --meeting-ask` with Apple
+  Intelligence on a 7-line transcript (6 questions, 0.8-1.6 s each); the page walked in the browser preview at 780,
+  1024 and 1280 px.
+- **Reversal**: drop the column and the `ask_meeting` command; nothing is stored.
+
 ## 2026-10-31 · Meeting notes phase 3: the Meetings page, choices made by AI under the owner's overnight delegation
 
 - **Context**: phase 3 builds the Meetings page (`ux/meetings.md`, `logic/meetings.md` SE-MEET-010/012/015/018). The

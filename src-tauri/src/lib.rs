@@ -17,6 +17,7 @@ mod llm_client;
 mod local_ai;
 mod managers;
 mod meeting;
+mod meeting_ask;
 mod meeting_notes;
 mod meeting_window;
 mod memory;
@@ -556,6 +557,19 @@ fn run_headless_transcription(app: &AppHandle, args: &CliArgs) -> i32 {
         return code;
     }
 
+    // SpeakEase: one question about a transcript file (SE-MEET-014).
+    if let Some(path) = args.meeting_ask.as_deref() {
+        let code = meeting_ask::cli::run(
+            app,
+            path,
+            args.question.as_deref(),
+            args.notes_engine.as_deref(),
+            args.json,
+        );
+        local_ai::stop_server();
+        return code;
+    }
+
     // --list-devices: print registered compute devices (with indices) and exit.
     // Useful on multi-GPU machines to discover the index for --device-index.
     if args.list_devices {
@@ -955,6 +969,7 @@ pub fn run(cli_args: CliArgs) {
             commands::meetings::get_meeting,
             commands::meetings::list_meetings,
             commands::meetings::rewrite_meeting_notes,
+            commands::meetings::ask_meeting,
             commands::files::write_text_file,
             commands::files::ytdlp_available,
             commands::history::update_history_limit,
@@ -984,7 +999,8 @@ pub fn run(cli_args: CliArgs) {
         || cli_args.list_models
         || cli_args.live_subtitle_probe.is_some()
         || cli_args.meeting_notes.is_some()
-        || cli_args.meeting_probe.is_some();
+        || cli_args.meeting_probe.is_some()
+        || cli_args.meeting_ask.is_some();
 
     #[allow(unused_mut)]
     let mut builder = tauri::Builder::default()

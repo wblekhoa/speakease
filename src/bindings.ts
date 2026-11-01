@@ -1155,6 +1155,19 @@ async rewriteMeetingNotes(historyId: number, kind: string) : Promise<Result<null
 }
 },
 /**
+ * One question about a meeting, answered only from its transcript and
+ * notes, with the transcript lines it used. Errors: "missing: …", or
+ * "no_ai:<reason>" when this Mac has no AI for it.
+ */
+async askMeeting(historyId: number, question: string) : Promise<Result<MeetingAnswer, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("ask_meeting", { historyId, question }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * Writes text to a file the person picked in a Save dialog.
  */
 async writeTextFile(path: string, contents: string) : Promise<Result<null, string>> {
@@ -1435,6 +1448,11 @@ notes: string | null;
  * "writing", "done", "empty", "failed" or "no_ai:<reason>".
  */
 notes_state: string; notes_engine: string | null }
+/**
+ * An answer, its cited lines (1-based, as the transcript's lines), and
+ * whether the meeting said anything about the question.
+ */
+export type MeetingAnswer = { text: string; lines: number[]; found: boolean }
 /**
  * A meeting with its History entry's title and transcript, for the
  * Meetings page (SE-MEET-018).

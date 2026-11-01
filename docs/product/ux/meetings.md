@@ -5,12 +5,13 @@ product: speakease
 title: "SpeakEase — Meeting notes (UX)"
 status: active
 updated: 2026-11-01
-summary: "Beta behind Experimental: a shortcut or the tray records the meeting app and the microphone, a bar at the top of the screen shows the consent line, a timer and Stop, and the meeting lands in History with its notes written in the background."
+summary: "Beta behind Experimental: a shortcut or the tray records the meeting app and the microphone, a bar at the top of the screen shows the consent line, a timer and Stop, and the meeting lands in History and on the Meetings page, where its notes are read and questions about it answered."
 tags: [area/ai, area/audio, area/capture, surface/macos, stack/react]
 relations:
   specifies:
     - speakease:src/meeting/MeetingBar.tsx
     - speakease:src/components/settings/meetings/MeetingsPage.tsx
+    - speakease:src/components/settings/meetings/MeetingAsk.tsx
     - speakease:src-tauri/src/meeting.rs
     - speakease:src-tauri/src/tray.rs
   dependsOn: [speakease-logic-meetings]
@@ -34,8 +35,9 @@ relations:
 
 - Included (phase 2): the shortcut on Recording, the tray item, the meeting bar, the History entry with its notes.
 - Also included (phase 3): the Meetings page (list, notes, transcript, template menu, copy, save .md / .txt).
-- Not yet (phases 4-5): asking whether to take notes when a call starts, live transcript and help,
-  the meeting chat, saving as .docx. Dictation itself is `ux/dictation.md`.
+- Also included (phase 4a): questions about a meeting on the Meetings page.
+- Not yet (phases 4b-5): asking whether to take notes when a call starts, live transcript and help in a panel under
+  the bar, saving as .docx. Dictation itself is `ux/dictation.md`.
 
 ## Current truth
 
@@ -59,6 +61,11 @@ relations:
   numbers against the transcript." and a link to the transcript. With no AI the page says why (AI off, or nothing
   on this Mac) and shows the transcript; an empty recording shows its one line; failed notes show the transcript.
   A saved file holds the notes, then the transcript; Copy takes the tab in view.
+- **Ask about this meeting** (on the Meetings page; beside the meeting when the page is wide, under it otherwise):
+  "Answers come from this meeting only, with the lines they used. Read those lines." The user types a question and
+  presses **Ask**; "Looking through the meeting…" shows while it runs. Each answer quotes the lines it used ("Line 3
+  [Others] …"); clicking one opens the Transcript tab with those lines marked. "The meeting doesn't say." when it
+  does not; with no AI the reason shows. Questions stay while the app runs, per meeting.
 - **Errors** (on the bar, with ×): macOS too old; no call app running; already recording; the microphone could not
   open; no speech model; the speech detector did not start.
 

@@ -714,7 +714,10 @@ pub mod cli {
     use std::time::Instant;
 
     /// An engine named on the command line, to compare engines.
-    fn forced_engine(app: &tauri::AppHandle, choice: &str) -> Result<NotesEngine, String> {
+    pub(crate) fn forced_engine(
+        app: &tauri::AppHandle,
+        choice: &str,
+    ) -> Result<NotesEngine, String> {
         if choice == "apple" {
             return Ok(NotesEngine::Apple);
         }

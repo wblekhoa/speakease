@@ -1,4 +1,4 @@
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
 import { save } from "@tauri-apps/plugin-dialog";
@@ -17,6 +17,7 @@ import { Button } from "../../ui/Button";
 import { Dropdown } from "../../ui/Dropdown";
 import { MarkdownContent } from "../../whats-new/MarkdownContent";
 import { copyToClipboard } from "../history/clipboard";
+import { MeetingAsk, type Exchange } from "./MeetingAsk";
 
 /** Events that change the list (meeting.rs NOTES_EVENT and STATE_EVENT). */
 const NOTES_EVENT = "meeting-notes-updated";
@@ -34,6 +35,9 @@ export const MeetingsPage: React.FC = () => {
   const [meetings, setMeetings] = useState<MeetingEntry[] | null>(null);
   const [chosen, setChosen] = useState<number | null>(null);
   const [tab, setTab] = useState<Tab>("notes");
+  // Questions asked per meeting, kept while the app runs (SE-MEET-014).
+  const [chats, setChats] = useState<Record<number, Exchange[]>>({});
+  const [cited, setCited] = useState<number[]>([]);
 
   const refresh = useCallback(() => {
     commands.listMeetings().then((result) => {
@@ -80,44 +84,70 @@ export const MeetingsPage: React.FC = () => {
   };
 
   return (
-    <div className="w-full mx-auto flex gap-4 min-h-0">
-      <ul
-        className="w-56 flex-none space-y-1"
-        aria-label={t("sidebar.meetings")}
-      >
-        {meetings.map((m) => {
-          const active = m.meeting.history_id === entry.meeting.history_id;
-          return (
-            <li key={m.meeting.history_id}>
-              <button
-                type="button"
-                aria-current={active ? "true" : undefined}
-                onClick={() => {
-                  setChosen(m.meeting.history_id);
-                  setTab("notes");
-                }}
-                className={`w-full rounded-xl px-3 py-2 text-start transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary ${
-                  active ? "bg-glass-chosen" : "hover:bg-glass-hover"
-                }`}
-              >
-                <span className="block truncate text-sm font-medium">
-                  {m.meeting.app_name}
-                </span>
-                <span className="block whitespace-nowrap text-sm text-mid-gray tabular-nums">
-                  {startedAt(m.meeting.started_at)} ·{" "}
-                  {duration(m.meeting.duration_ms)}
-                </span>
-              </button>
-            </li>
-          );
-        })}
-      </ul>
-      <MeetingDetail
-        key={entry.meeting.history_id}
-        entry={entry}
-        tab={tab}
-        onTab={setTab}
-      />
+    // The window opens at 780 px: the columns stack until the page is wide
+    // enough for them (container queries, as the side column may fold).
+    <div className="@container w-full mx-auto min-h-0">
+      <div className="flex flex-col gap-4 @2xl:flex-row">
+        <ul
+          className="max-h-48 w-full flex-none space-y-1 overflow-y-auto @2xl:max-h-none @2xl:w-56 @2xl:overflow-visible"
+          aria-label={t("sidebar.meetings")}
+        >
+          {meetings.map((m) => {
+            const active = m.meeting.history_id === entry.meeting.history_id;
+            return (
+              <li key={m.meeting.history_id}>
+                <button
+                  type="button"
+                  aria-current={active ? "true" : undefined}
+                  onClick={() => {
+                    setChosen(m.meeting.history_id);
+                    setTab("notes");
+                    setCited([]);
+                  }}
+                  className={`w-full rounded-xl px-3 py-2 text-start transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary ${
+                    active ? "bg-glass-chosen" : "hover:bg-glass-hover"
+                  }`}
+                >
+                  <span className="block truncate text-sm font-medium">
+                    {m.meeting.app_name}
+                  </span>
+                  <span className="block whitespace-nowrap text-sm text-mid-gray tabular-nums">
+                    {startedAt(m.meeting.started_at)} ·{" "}
+                    {duration(m.meeting.duration_ms)}
+                  </span>
+                </button>
+              </li>
+            );
+          })}
+        </ul>
+        <div className="flex min-w-0 flex-1 flex-col gap-6 @5xl:flex-row @5xl:gap-4">
+          <MeetingDetail
+            key={entry.meeting.history_id}
+            entry={entry}
+            tab={tab}
+            onTab={setTab}
+            cited={cited}
+          />
+          <MeetingAsk
+            key={`ask-${entry.meeting.history_id}`}
+            historyId={entry.meeting.history_id}
+            transcript={entry.transcript}
+            exchanges={chats[entry.meeting.history_id] ?? []}
+            onExchanges={(update) =>
+              setChats((all) => ({
+                ...all,
+                [entry.meeting.history_id]: update(
+                  all[entry.meeting.history_id] ?? [],
+                ),
+              }))
+            }
+            onShowLines={(lines) => {
+              setCited(lines);
+              setTab("transcript");
+            }}
+          />
+        </div>
+      </div>
     </div>
   );
 };
@@ -126,7 +156,9 @@ const MeetingDetail: React.FC<{
   entry: MeetingEntry;
   tab: Tab;
   onTab: (tab: Tab) => void;
-}> = ({ entry, tab, onTab }) => {
+  /** Transcript lines an answer used, highlighted on the transcript tab. */
+  cited: number[];
+}> = ({ entry, tab, onTab, cited }) => {
   const { t } = useTranslation();
   const { meeting } = entry;
   const view = notesView(meeting.notes_state, meeting.notes !== null);
@@ -234,9 +266,7 @@ const MeetingDetail: React.FC<{
       </div>
 
       {tab === "transcript" ? (
-        <pre className="whitespace-pre-wrap rounded-2xl border border-hairline bg-surface px-5 py-4 font-sans text-sm leading-relaxed">
-          {entry.transcript}
-        </pre>
+        <TranscriptLines transcript={entry.transcript} cited={cited} />
       ) : (
         <div className="space-y-3 rounded-2xl border border-hairline bg-surface px-5 py-4">
           {view.kind === "writing" && (
@@ -279,5 +309,35 @@ const MeetingDetail: React.FC<{
         </div>
       )}
     </section>
+  );
+};
+
+/** The transcript line by line; cited lines are marked and the first is
+ *  scrolled into view (SE-MEET-014). */
+const TranscriptLines: React.FC<{ transcript: string; cited: number[] }> = ({
+  transcript,
+  cited,
+}) => {
+  const first = useRef<HTMLParagraphElement>(null);
+  useEffect(() => {
+    first.current?.scrollIntoView({ block: "center" });
+  }, [cited]);
+  return (
+    <div className="rounded-2xl border border-hairline bg-surface px-5 py-4 text-sm leading-relaxed">
+      {transcript.split("\n").map((line, i) => {
+        const marked = cited.includes(i + 1);
+        return (
+          <p
+            key={i}
+            ref={marked && cited[0] === i + 1 ? first : undefined}
+            className={`min-h-[1lh] whitespace-pre-wrap rounded-lg ${
+              marked ? "-mx-2 bg-glass-chosen px-2" : ""
+            }`}
+          >
+            {line}
+          </p>
+        );
+      })}
+    </div>
   );
 };

@@ -96,3 +96,16 @@ export const exportMeeting = (
 /** A file name from a meeting's title ("Zoom · 31/10 09:30"), safe on macOS. */
 export const meetingFileName = (title: string, format: "md" | "txt") =>
   `${title.replace(/[/:\\]/g, "-").trim() || "meeting"}.${format}`;
+
+// SE-MEET-014
+/** The i18n key for an ask_meeting error ("no_ai:<reason>", else a failure). */
+export const askError = (error: string): string =>
+  error === "no_ai:ai_off"
+    ? "meeting.page.noAi.ai_off"
+    : error.startsWith("no_ai:")
+      ? "meeting.page.noAi.nothing_available"
+      : "meeting.page.ask.failed";
+
+/** Line `n` (1-based) of a transcript, trimmed; "" past its end. */
+export const transcriptLine = (transcript: string, n: number): string =>
+  (transcript.split("\n")[n - 1] ?? "").trim();

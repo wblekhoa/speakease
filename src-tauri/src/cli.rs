@@ -120,4 +120,14 @@ pub struct CliArgs {
     /// or "local=<model.gguf>".
     #[arg(long, value_name = "ENGINE", hide = true)]
     pub notes_engine: Option<String>,
+
+    /// SpeakEase: ask --question about this transcript (a text file, one
+    /// speaker turn per line) with the app's AI order (or --notes-engine),
+    /// print the answer and the lines it cites, and exit. Honors --json.
+    #[arg(long, value_name = "TRANSCRIPT", hide = true)]
+    pub meeting_ask: Option<PathBuf>,
+
+    /// The question for --meeting-ask.
+    #[arg(long, value_name = "TEXT", hide = true)]
+    pub question: Option<String>,
 }

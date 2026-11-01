@@ -98,3 +98,31 @@ pub fn rewrite_meeting_notes(app: AppHandle, history_id: i64, kind: String) -> R
         .ok_or_else(|| format!("kind: unknown template {kind}"))?;
     session::rewrite_notes(&app, history_id, kind)
 }
+
+// SE-MEET-014
+/// One question about a meeting, answered only from its transcript and
+/// notes, with the transcript lines it used. Errors: "missing: …", or
+/// "no_ai:<reason>" when this Mac has no AI for it.
+#[tauri::command]
+#[specta::specta]
+pub async fn ask_meeting(
+    app: AppHandle,
+    history_manager: State<'_, Arc<HistoryManager>>,
+    history_id: i64,
+    question: String,
+) -> Result<crate::meeting_ask::MeetingAnswer, String> {
+    let meeting = history_manager
+        .get_meeting(history_id)
+        .map_err(|e| e.to_string())?
+        .ok_or_else(|| "missing: no such meeting".to_string())?;
+    let notes = (meeting.notes_state == "done")
+        .then(|| meeting.notes.clone())
+        .flatten();
+    let entry = with_entry(&history_manager, meeting)
+        .await?
+        .ok_or_else(|| "missing: the History entry is gone".to_string())?;
+    let engine = crate::meeting_notes::engine_for(&app)
+        .map_err(|reason| format!("no_ai:{}", session::no_ai_id(reason)))?;
+    let ai = crate::meeting_notes::EngineAi { app, engine };
+    crate::meeting_ask::ask(&ai, &entry.transcript, notes.as_deref(), &question).await
+}

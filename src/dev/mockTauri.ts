@@ -440,6 +440,19 @@ function handle(cmd: string, args: Json): unknown {
     case "list_meetings":
       // A fresh copy each time, as the backend sends.
       return structuredClone(MEETINGS);
+    case "ask_meeting": {
+      // As meeting_ask.rs: an answer with the lines it used; "ngân sách"
+      // is a question this meeting does not answer.
+      const question = String(args.question).toLowerCase();
+      if (question.includes("ngân sách")) {
+        return { text: "", lines: [], found: false };
+      }
+      return {
+        text: "Anh Minh chuẩn bị bài đăng giới thiệu trước ngày 12.",
+        lines: [3],
+        found: true,
+      };
+    }
     case "rewrite_meeting_notes": {
       const found = MEETINGS.find(
         (m) => m.meeting.history_id === args.historyId,

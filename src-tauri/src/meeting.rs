@@ -866,7 +866,7 @@ pub mod session {
         Ok(())
     }
 
-    fn no_ai_id(reason: crate::meeting_notes::NoAiReason) -> &'static str {
+    pub(crate) fn no_ai_id(reason: crate::meeting_notes::NoAiReason) -> &'static str {
         match reason {
             crate::meeting_notes::NoAiReason::AiOff => "ai_off",
             crate::meeting_notes::NoAiReason::NothingAvailable => "nothing_available",

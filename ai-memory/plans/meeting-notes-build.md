@@ -2,7 +2,7 @@
 status: executing
 owner: Lê Khoa
 started: 2026-10-31
-current-phase: 3
+current-phase: 4
 summary: "Build meeting notes (SE-MEET-001…019) in five phases, starting with a testable notes pipeline and a hidden CLI that turns a recording or transcript into notes."
 tags: [area/ai, area/audio, area/capture, stack/rust]
 ---
@@ -50,7 +50,8 @@ Every phase keeps these green on its branch (the "five checks"): `bun run lint`,
      its size before it is added.
    - Verify: five checks; `bun run test:unit` for the export and list logic; the page driven in the browser preview;
      `jak-hq:design-edit` review.
-4. **Live help** — SE-MEET-005 levels 2-5, 007, 014, 016.
+4. **Live help** — SE-MEET-005 levels 2-5, 007, 014, 016. Split (AI, 01/11): **4a** the meeting chat (014) on the
+   Meetings page; **4b** the floating panel with levels 2-5 and the suggestions (005, 007, 016).
    - Floating panel under the pill: live transcript, "what did I miss?", a summary that updates, suggestion cards;
      Q&A over one meeting with line references.
    - Verify: five checks; unit tests for the rolling-window and suggestion parsing; panel in the preview;
@@ -111,5 +112,5 @@ Chosen by AI under the owner's overnight delegation (31/10) - for the owner to r
 
 ## Next safe step
 
-Phase 1 is on `main` (185cc1d, wblekhoa/speakease#2), phase 2 too (48eae09, wblekhoa/speakease#3). Phase 3 on branch
-`claude/meeting-notes-p3`; then phase 4 (live help).
+Phases 1-3 are on `main` (185cc1d #2, 48eae09 #3, da9b198 #4, all wblekhoa/speakease). Phase 4a (meeting chat) on
+branch `claude/meeting-notes-p4`; then phase 5 (asking when a call starts), then 4b (the live panel).

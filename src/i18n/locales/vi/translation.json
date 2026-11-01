@@ -1166,7 +1166,18 @@
       "markdownFile": "Markdown",
       "textFile": "Văn bản",
       "rewriteFailed": "Không viết lại được ghi chú.",
-      "view": "Xem"
+      "view": "Xem",
+      "ask": {
+        "title": "Hỏi về cuộc họp",
+        "hint": "Câu trả lời chỉ lấy từ cuộc họp này, kèm các dòng đã dùng. Hãy đọc các dòng đó.",
+        "placeholder": "Ví dụ: Ai gửi bài, hạn khi nào?",
+        "send": "Hỏi",
+        "asking": "Đang tìm trong cuộc họp…",
+        "notFound": "Cuộc họp không nói tới điều này.",
+        "noLines": "AI không chỉ ra dòng nào. Hãy kiểm tra bản ghi lời.",
+        "line": "Dòng {{n}}",
+        "failed": "Không hỏi được. Thử lại sau."
+      }
     }
   }
 }

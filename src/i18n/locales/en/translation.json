@@ -1166,7 +1166,18 @@
       "markdownFile": "Markdown",
       "textFile": "Text",
       "rewriteFailed": "The notes could not be written again.",
-      "view": "View"
+      "view": "View",
+      "ask": {
+        "title": "Ask about this meeting",
+        "hint": "Answers come from this meeting only, with the lines they used. Read those lines.",
+        "placeholder": "e.g. Who sends the post, and by when?",
+        "send": "Ask",
+        "asking": "Looking through the meeting…",
+        "notFound": "The meeting doesn't say.",
+        "noLines": "The AI named no lines. Check the transcript.",
+        "line": "Line {{n}}",
+        "failed": "Couldn't ask. Try again later."
+      }
     }
   }
 }

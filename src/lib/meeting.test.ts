@@ -7,6 +7,8 @@ import {
   notesView,
   shownNotes,
   copyText,
+  askError,
+  transcriptLine,
 } from "./meeting";
 
 // The timer counts from the start, and shows hours only past an hour.
@@ -68,5 +70,17 @@ assert.equal(shownNotes({ kind: "noAi", reason: "ai_off" }, "## Old"), null);
 assert.equal(copyText("notes", "## N", "T"), "## N");
 assert.equal(copyText("transcript", "## N", "T"), "T");
 assert.equal(copyText("notes", null, "T"), "T");
+
+// SE-MEET-014: a cited line is quoted as stored; errors name why.
+const said = "[Tôi] một\n\n[Người khác]  ba ";
+assert.equal(transcriptLine(said, 1), "[Tôi] một");
+assert.equal(transcriptLine(said, 3), "[Người khác]  ba");
+assert.equal(transcriptLine(said, 9), "");
+assert.equal(askError("no_ai:ai_off"), "meeting.page.noAi.ai_off");
+assert.equal(
+  askError("no_ai:nothing_available"),
+  "meeting.page.noAi.nothing_available",
+);
+assert.equal(askError("missing: gone"), "meeting.page.ask.failed");
 
 console.log("meeting.test.ts (page): ok");
