@@ -756,7 +756,11 @@
     "recording": {
       "shortcuts": "Shortcuts",
       "microphone": "Microphone",
-      "feedback": "Overlay & sounds"
+      "feedback": "Overlay & sounds",
+      "meetingLive": {
+        "title": "Live help at the start",
+        "description": "How much a meeting shows live in the panel under the meeting bar. The bar's Help button changes it for one meeting. Higher levels use more of this Mac's power."
+      }
     },
     "recognition": {
       "listening": "Listening",
@@ -1188,6 +1192,41 @@
           "ai_off": "AI is switched off, so questions can't be answered. Turn it on in AI & Translate.",
           "nothing_available": "This Mac has no AI to answer (Apple Intelligence, an API key or the on-device model)."
         }
+      }
+    },
+    "live": {
+      "title": "Live help",
+      "show": "Help",
+      "hide": "Hide",
+      "level": "Live help level",
+      "levels": {
+        "1": "Timer",
+        "2": "Transcript",
+        "3": "Catch up",
+        "4": "Summary",
+        "5": "Suggestions"
+      },
+      "only": "Recording only. Choose Transcript or higher to follow the meeting here.",
+      "listening": "Listening… lines show here a few seconds after they are said.",
+      "me": "Me",
+      "others": "Others",
+      "catchUp": "What did I miss?",
+      "catchingUp": "Reading the last 5 minutes…",
+      "nothingYet": "Nothing has been said yet.",
+      "failed": "Could not answer. Try again.",
+      "summary": "Summary so far",
+      "summaryWaiting": "The summary comes after the first few lines and updates every 2 minutes.",
+      "kinds": {
+        "question": "Question to ask",
+        "action": "Action item",
+        "unsettled": "Still open",
+        "term": "Term or name",
+        "earlier": "Said earlier",
+        "answer": "Possible answer"
+      },
+      "noAi": {
+        "ai_off": "AI is switched off in AI & Translate, so catch-up, summary and suggestions are off. The transcript still runs.",
+        "nothing_available": "This Mac has no AI for catch-up, summary or suggestions. The transcript still runs."
       }
     }
   }

@@ -1,29 +1,38 @@
 import React, { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
-import { commands, type MeetingState } from "@/bindings";
+import { commands, type LiveView, type MeetingState } from "@/bindings";
 import { elapsed, meetingErrorKey } from "@/lib/meeting";
+import { MeetingPanel } from "./MeetingPanel";
 import "./MeetingBar.css";
 
 /** The event meeting.rs sends on every change (session::STATE_EVENT). */
 const STATE_EVENT = "meeting-state";
+/** The live panel's event (meeting_live.rs LIVE_EVENT). */
+const LIVE_EVENT = "meeting-live";
 
 // SE-MEET-004
 /** The meeting bar: the question when a call starts; the consent line, a
- *  timer and Stop while recording; what
+ *  timer, the live panel and Stop while recording; what
  *  is being done after the stop; an error until it is closed. */
 const MeetingBar: React.FC = () => {
   const { t } = useTranslation();
   const [state, setState] = useState<MeetingState | null>(null);
   const [now, setNow] = useState(() => Date.now());
+  const [live, setLive] = useState<LiveView | null>(null);
 
   useEffect(() => {
     commands.meetingState().then(setState);
+    commands.meetingLive().then(setLive);
     const unlisten = listen<MeetingState>(STATE_EVENT, (event) =>
       setState(event.payload),
     );
+    const unlistenLive = listen<LiveView>(LIVE_EVENT, (event) =>
+      setLive(event.payload),
+    );
     return () => {
       unlisten.then((stop) => stop());
+      unlistenLive.then((stop) => stop());
     };
   }, []);
 
@@ -95,26 +104,39 @@ const MeetingBar: React.FC = () => {
   }
 
   if (recording) {
+    const panelOpen = live?.panel_open ?? false;
     return (
-      <div className="mb-bar">
-        <span className="mb-dot" aria-hidden="true" />
-        <span className="mb-text" role="status">
-          {t("meeting.consent")}
-        </span>
-        {/* Outside the live region, so it is not read out every second. */}
-        {state.started_at != null && (
-          <span className="mb-timer" role="timer">
-            {elapsed(state.started_at, now)}
+      <>
+        <div className="mb-bar mb-recording">
+          <span className="mb-dot" aria-hidden="true" />
+          <span className="mb-text" role="status">
+            {t("meeting.consent")}
           </span>
-        )}
-        <button
-          type="button"
-          className="mb-stop"
-          onClick={() => commands.stopMeeting()}
-        >
-          {t("meeting.stop")}
-        </button>
-      </div>
+          {/* Outside the live region, so it is not read out every second. */}
+          {state.started_at != null && (
+            <span className="mb-timer" role="timer">
+              {elapsed(state.started_at, now)}
+            </span>
+          )}
+          {/* SE-MEET-016: the live panel opens below the pill. */}
+          <button
+            type="button"
+            className="mb-no"
+            aria-expanded={panelOpen}
+            onClick={() => commands.setMeetingPanel(!panelOpen)}
+          >
+            {t(panelOpen ? "meeting.live.hide" : "meeting.live.show")}
+          </button>
+          <button
+            type="button"
+            className="mb-stop"
+            onClick={() => commands.stopMeeting()}
+          >
+            {t("meeting.stop")}
+          </button>
+        </div>
+        {panelOpen && live && <MeetingPanel view={live} />}
+      </>
     );
   }
 

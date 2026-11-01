@@ -383,6 +383,57 @@ const MEETINGS = [
 // As meeting_ask.rs, after a moment: an answer with the lines it used;
 // "ngân sách" is not in the meeting, "tắt" is AI switched off, "dòng" an
 // answer that cites no line.
+function mockLive() {
+  const params = new URLSearchParams(location.search);
+  const level = Number(params.get("level") ?? "2");
+  const lines = [
+    [
+      900,
+      false,
+      "Chào mọi người, hôm nay mình họp nhanh về kế hoạch ra mắt ứng dụng trong tháng mười một.",
+    ],
+    [6800, false, "Bên thiết kế đã xong màn hình đăng ký."],
+    [9700, false, "Còn trang thanh toán thì cần thêm một tuần nữa."],
+    [
+      12700,
+      true,
+      "Vậy mình thống nhất ngày ra mắt là mười lăm tháng mười một nhé.",
+    ],
+    [16300, false, "Anh Minh sẽ chuẩn bị bài đăng giới thiệu trước ngày 12."],
+    [
+      25600,
+      false,
+      "Có đề xuất giảm giá hai mươi phần trăm cho người dùng đầu tiên.",
+    ],
+    [29800, true, "Nhưng mình chưa chốt việc này, tuần sau bàn tiếp."],
+  ].map(([at_ms, me, text]) => ({ at_ms, me, text }));
+  return {
+    level,
+    panel_open: params.has("panel"),
+    lines,
+    summary:
+      level >= 4
+        ? "- Ra mắt 15/11.\n- Thiết kế xong màn đăng ký; thanh toán cần thêm một tuần.\n- Giảm giá 20% chưa chốt."
+        : null,
+    suggestions:
+      level >= 5
+        ? [
+            {
+              kind: "question",
+              text: "Ai chịu trách nhiệm trang thanh toán?",
+              at_ms: 10000,
+            },
+            {
+              kind: "unsettled",
+              text: "Giảm giá 20% cho người dùng đầu tiên: tuần sau bàn tiếp.",
+              at_ms: 30000,
+            },
+          ]
+        : [],
+    ai_missing: params.has("noai") ? "ai_off" : null,
+  };
+}
+
 async function mockAsk(question: string) {
   await new Promise((resolve) => setTimeout(resolve, 1200));
   if (question.includes("tắt")) throw "no_ai:ai_off";
@@ -456,6 +507,18 @@ function handle(cmd: string, args: Json): unknown {
             history_id: null,
           };
     }
+    // `?meeting=recording&level=1-5&panel` previews the live panel.
+    case "meeting_live":
+      return mockLive();
+    case "set_meeting_live_level":
+    case "set_meeting_panel":
+    case "change_meeting_live_level_setting":
+      return null;
+    case "meeting_catch_up":
+      return new Promise((r) => setTimeout(r, 800)).then(
+        () =>
+          "- Ngày ra mắt chốt 15/11.\n- Anh Minh gửi bài giới thiệu trước ngày 12.\n- Giảm giá 20% chưa chốt, tuần sau bàn tiếp.",
+      );
     case "stop_meeting":
     case "close_meeting_bar":
     case "answer_meeting_ask":

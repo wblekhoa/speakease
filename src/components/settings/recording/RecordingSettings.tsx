@@ -15,6 +15,7 @@ import { SoundPicker } from "../SoundPicker";
 import { OutputDeviceSelector } from "../OutputDeviceSelector";
 import { VolumeSlider } from "../VolumeSlider";
 import { ShowOverlay } from "../ShowOverlay";
+import { MeetingLiveLevel } from "../MeetingLiveLevel";
 
 // SpeakEase's Recording page: everything up to the moment the words are
 // captured. Every shortcut lives here, each saying what it does; the two AI
@@ -71,6 +72,7 @@ export const RecordingSettings: React.FC = () => {
             grouped
           />
         )}
+        {appAudio && <MeetingLiveLevel descriptionMode="tooltip" grouped />}
         {/* Cancel shortcut remains hidden on Linux because of dynamic shortcut instability. */}
         {!isLinux && (
           <ShortcutInput shortcutId="cancel" descriptionMode="inline" grouped />

@@ -550,6 +550,10 @@ pub struct AppSettings {
     /// Meeting notes (beta): the app last recorded as "Others" (bundle id).
     #[serde(default)]
     pub meeting_app: Option<String>,
+    /// Meeting notes (beta): the live level a meeting starts at (SE-MEET-005,
+    /// 1 recording + timer … 5 live suggestions).
+    #[serde(default = "default_meeting_live_level")]
+    pub meeting_live_level: u8,
     #[serde(default)]
     pub mute_while_recording: bool,
     #[serde(default)]
@@ -618,6 +622,10 @@ fn default_model() -> String {
 }
 
 const CURRENT_SETTINGS_SCHEMA_VERSION: u32 = 2;
+
+fn default_meeting_live_level() -> u8 {
+    1
+}
 
 fn default_settings_schema_version() -> u32 {
     CURRENT_SETTINGS_SCHEMA_VERSION
@@ -1226,6 +1234,7 @@ pub fn get_default_settings() -> AppSettings {
         local_ai_model: None,
         live_subtitle_translator: None,
         meeting_app: None,
+        meeting_live_level: default_meeting_live_level(),
         speakease_last_spoken_language: None,
         mute_while_recording: false,
         append_trailing_space: false,

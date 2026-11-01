@@ -9,6 +9,9 @@ use tauri::AppHandle;
 pub const LABEL: &str = "meeting_bar";
 const WIDTH: f64 = 540.0;
 const HEIGHT: f64 = 64.0;
+/// The live panel under the pill (SE-MEET-016), in the same window so it
+/// shares the pill's focus and screen-sharing behaviour.
+const PANEL_HEIGHT: f64 = 440.0;
 const TOP_GAP: f64 = 8.0;
 
 #[cfg(target_os = "macos")]
@@ -111,6 +114,18 @@ mod imp {
         }
     }
 
+    pub fn set_height(app: &AppHandle, height: f64) {
+        let handle = app.clone();
+        let _ = app.run_on_main_thread(move || {
+            if let Some(window) = handle.get_webview_window(LABEL) {
+                let _ = window.set_size(tauri::Size::Logical(tauri::LogicalSize {
+                    width: WIDTH,
+                    height,
+                }));
+            }
+        });
+    }
+
     pub fn hide(app: &AppHandle) {
         let handle = app.clone();
         let _ = app.run_on_main_thread(move || {
@@ -125,7 +140,14 @@ mod imp {
 mod imp {
     use tauri::AppHandle;
     pub fn show(_app: &AppHandle) {}
+    pub fn set_height(_app: &AppHandle, _height: f64) {}
     pub fn hide(_app: &AppHandle) {}
+}
+
+// SE-MEET-016
+/// Opens the live panel under the pill, or closes it.
+pub fn set_panel(app: &AppHandle, open: bool) {
+    imp::set_height(app, if open { HEIGHT + PANEL_HEIGHT } else { HEIGHT });
 }
 
 /// Hides the bar until the meeting's next step (its × while finishing).

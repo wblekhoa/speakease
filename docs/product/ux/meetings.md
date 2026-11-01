@@ -38,7 +38,8 @@ relations:
 - Also included (phase 4a): questions about a meeting on the Meetings page.
 - Also included (phase 5): asking whether to take notes when a call app (or Google Meet in a browser) takes the
   microphone.
-- Not yet: live transcript and help in a panel under the bar (4b); saving as .docx. Dictation itself is `ux/dictation.md`.
+- Also included (phase 4b): live help in a panel under the bar, at five levels.
+- Not yet: saving as .docx. Dictation itself is `ux/dictation.md`.
 
 ## Current truth
 
@@ -58,6 +59,14 @@ relations:
 - **Meeting bar**: a pill at the top centre of the screen that never takes focus from the call: a pulsing red dot,
   "Đang ghi âm. Nhớ báo cho mọi người biết nhé." (EN "Recording. Remember to tell everyone."), a timer and **Stop**.
   It asks macOS to keep it out of screen sharing (untested).
+- **Live help** (panel under the bar): **Trợ giúp** (Help) on the pill opens a panel below it, **Ẩn** (Hide) closes
+  it. Its top row picks the level for this meeting: Hẹn giờ (timer only), Lời nói (live transcript, "Tôi" / "Người
+  khác", newest line in view), Bỏ lỡ gì ("Tôi vừa bỏ lỡ gì?" answers from the last 5 minutes), Tóm tắt (a summary after
+  the first lines, updated every 2 minutes), Gợi ý (cards: a question to ask, an action item, still open, a term or
+  name, said earlier, a possible answer; a new card shows alone at the top for 4 s). Cards are only shown, never
+  copied or sent. With no AI, levels 3-5 say why and the transcript still runs. The level a meeting starts at is set
+  on Recording ("Trợ giúp trực tiếp khi bắt đầu", Hẹn giờ by default). The consent line may take two lines so it is
+  never cut. After Stop the panel closes and the saved transcript is recognised again from the whole recording.
 - **During the meeting**: dictation works as usual; what is dictated stays in the meeting's transcript, marked.
 - **Ending**: the shortcut, the tray item or **Stop**. The bar then says "Đang chép lời cuộc họp…", then "Đang viết
   ghi chú…", and hides when the meeting is saved.
@@ -80,11 +89,11 @@ relations:
 
 ## Screens and states
 
-| Screen        | States                                                                      | Entry                                      | Exit / next                                                  |
-| ------------- | --------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------ |
-| Meeting bar   | asking · recording · transcribing · notes · error                           | call app on the microphone, shortcut, tray | Take notes / Not now / ×; Stop / shortcut / tray; × on error |
-| Tray item     | hidden · off · on (ticked)                                                  | tray menu (Experimental on)                | starts or stops                                              |
-| Meetings page | none yet · notes · writing · empty · no AI · failed; Notes / Transcript tab | side column (Experimental on)              | another meeting, template menu, copy, save                   |
+| Screen        | States                                                                                | Entry                                      | Exit / next                                                  |
+| ------------- | ------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------ |
+| Meeting bar   | asking · recording (panel closed / open at levels 1-5) · transcribing · notes · error | call app on the microphone, shortcut, tray | Take notes / Not now / ×; Stop / shortcut / tray; × on error |
+| Tray item     | hidden · off · on (ticked)                                                            | tray menu (Experimental on)                | starts or stops                                              |
+| Meetings page | none yet · notes · writing · empty · no AI · failed; Notes / Transcript tab           | side column (Experimental on)              | another meeting, template menu, copy, save                   |
 
 ## Flow
 

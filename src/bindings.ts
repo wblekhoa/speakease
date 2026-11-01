@@ -1135,6 +1135,39 @@ async answerMeetingAsk(yes: boolean) : Promise<Result<null, string>> {
     else return { status: "error", error: e  as any };
 }
 },
+/**
+ * The live panel's state now.
+ */
+async meetingLive() : Promise<LiveView> {
+    return await TAURI_INVOKE("meeting_live");
+},
+/**
+ * The pill's level buttons: this meeting only.
+ */
+async setMeetingLiveLevel(level: number) : Promise<void> {
+    await TAURI_INVOKE("set_meeting_live_level", { level });
+},
+async setMeetingPanel(open: boolean) : Promise<void> {
+    await TAURI_INVOKE("set_meeting_panel", { open });
+},
+/**
+ * "What did I miss?": the last minutes of the meeting, briefly. Errors:
+ * "empty: …" or "no_ai:<reason>".
+ */
+async meetingCatchUp() : Promise<Result<string, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("meeting_catch_up") };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
+ * The level a meeting starts at, from Settings (1-5).
+ */
+async changeMeetingLiveLevelSetting(level: number) : Promise<void> {
+    await TAURI_INVOKE("change_meeting_live_level_setting", { level });
+},
 async getMeeting(historyId: number) : Promise<Result<MeetingEntry | null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_meeting", { historyId }) };
@@ -1352,7 +1385,12 @@ live_subtitle_translator?: string | null;
 /**
  * Meeting notes (beta): the app last recorded as "Others" (bundle id).
  */
-meeting_app?: string | null; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
+meeting_app?: string | null; 
+/**
+ * Meeting notes (beta): the live level a meeting starts at (SE-MEET-005,
+ * 1 recording + timer … 5 live suggestions).
+ */
+meeting_live_level?: number; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
 /**
  * Debug-gated ("beta") receipt-sequenced paste: restore the clipboard only
  * after the target app actually reads the transcript, instead of after a
@@ -1441,6 +1479,26 @@ export type KeyboardDiagnosticReport = { secure_input_enabled: boolean; culprit_
 key_down: number; key_up: number; flags_changed: number; mouse: number; duration_ms: number }
 export type KeyboardImplementation = "tauri" | "handy_keys"
 export type LLMPrompt = { id: string; name: string; prompt: string }
+/**
+ * One line of the live transcript.
+ */
+export type LiveLine = { 
+/**
+ * Milliseconds since the meeting started.
+ */
+at_ms: number; 
+/**
+ * Said into the user's microphone.
+ */
+me: boolean; text: string }
+/**
+ * What the panel shows.
+ */
+export type LiveView = { level: number; panel_open: boolean; lines: LiveLine[]; summary: string | null; suggestions: Suggestion[]; 
+/**
+ * Why levels 3-5 cannot run ("ai_off" / "nothing_available").
+ */
+ai_missing: string | null }
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error"
 /**
  * What the Files page hands over: a file on disk, or a link.
@@ -1640,6 +1698,14 @@ error: string | null;
  * Lines are being translated (the panel's Translate switch).
  */
 translate: boolean }
+/**
+ * One suggestion card; shown only, never sent or pasted anywhere.
+ */
+export type Suggestion = { 
+/**
+ * "question", "action", "unsettled", "term", "earlier" or "answer".
+ */
+kind: string; text: string; at_ms: number }
 /**
  * UI appearance mode. `System` follows the OS `prefers-color-scheme`; `Light`
  * and `Dark` force one of the two palettes Handy already ships.

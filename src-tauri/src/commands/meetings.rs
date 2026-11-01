@@ -36,6 +36,46 @@ pub fn close_meeting_bar(app: AppHandle) {
     session::dismiss(&app);
 }
 
+// SE-MEET-005
+/// The live panel's state now.
+#[tauri::command]
+#[specta::specta]
+pub fn meeting_live() -> crate::meeting_live::LiveView {
+    crate::meeting_live::session::view()
+}
+
+/// The pill's level buttons: this meeting only.
+#[tauri::command]
+#[specta::specta]
+pub fn set_meeting_live_level(app: AppHandle, level: u8) {
+    crate::meeting_live::session::set_level(&app, level);
+}
+
+// SE-MEET-016
+#[tauri::command]
+#[specta::specta]
+pub fn set_meeting_panel(app: AppHandle, open: bool) {
+    crate::meeting_live::session::set_panel(&app, open);
+}
+
+// SE-MEET-005 level 3
+/// "What did I miss?": the last minutes of the meeting, briefly. Errors:
+/// "empty: …" or "no_ai:<reason>".
+#[tauri::command]
+#[specta::specta]
+pub async fn meeting_catch_up(app: AppHandle) -> Result<String, String> {
+    crate::meeting_live::session::catch_up(&app).await
+}
+
+/// The level a meeting starts at, from Settings (1-5).
+#[tauri::command]
+#[specta::specta]
+pub fn change_meeting_live_level_setting(app: AppHandle, level: u8) {
+    let mut settings = crate::settings::get_settings(&app);
+    settings.meeting_live_level = crate::meeting_live::clamp_level(level);
+    crate::settings::write_settings(&app, settings);
+}
+
 // SE-MEET-002
 /// The meeting bar's answer to "take notes of this call?": only a yes
 /// records. Returns the error a start ran into.

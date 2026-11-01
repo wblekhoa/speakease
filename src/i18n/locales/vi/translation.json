@@ -756,7 +756,11 @@
     "recording": {
       "shortcuts": "Phím tắt",
       "microphone": "Micro",
-      "feedback": "Lớp phủ & âm báo"
+      "feedback": "Lớp phủ & âm báo",
+      "meetingLive": {
+        "title": "Trợ giúp trực tiếp khi bắt đầu",
+        "description": "Cuộc họp hiện bao nhiêu trong khung dưới thanh cuộc họp. Nút Trợ giúp trên thanh đổi mức cho từng cuộc họp. Mức cao dùng nhiều sức máy hơn."
+      }
     },
     "recognition": {
       "listening": "Nghe & chép lời",
@@ -1188,6 +1192,41 @@
           "ai_off": "AI đang tắt nên chưa hỏi được. Bật lại ở AI & dịch.",
           "nothing_available": "Máy Mac này chưa có AI để trả lời (Apple Intelligence, khoá API hoặc mô hình trên máy)."
         }
+      }
+    },
+    "live": {
+      "title": "Trợ giúp trực tiếp",
+      "show": "Trợ giúp",
+      "hide": "Ẩn",
+      "level": "Mức trợ giúp trực tiếp",
+      "levels": {
+        "1": "Hẹn giờ",
+        "2": "Lời nói",
+        "3": "Bỏ lỡ gì",
+        "4": "Tóm tắt",
+        "5": "Gợi ý"
+      },
+      "only": "Chỉ ghi âm. Chọn Lời nói trở lên để theo dõi cuộc họp ở đây.",
+      "listening": "Đang nghe… lời nói hiện ở đây vài giây sau khi được nói.",
+      "me": "Tôi",
+      "others": "Người khác",
+      "catchUp": "Tôi vừa bỏ lỡ gì?",
+      "catchingUp": "Đang đọc 5 phút vừa qua…",
+      "nothingYet": "Chưa ai nói gì.",
+      "failed": "Không trả lời được. Thử lại sau.",
+      "summary": "Tóm tắt đến giờ",
+      "summaryWaiting": "Tóm tắt có sau vài câu đầu và cập nhật mỗi 2 phút.",
+      "kinds": {
+        "question": "Câu nên hỏi",
+        "action": "Việc cần làm",
+        "unsettled": "Chưa chốt",
+        "term": "Thuật ngữ, tên",
+        "earlier": "Đã nói trước đó",
+        "answer": "Gợi ý trả lời"
+      },
+      "noAi": {
+        "ai_off": "AI đang tắt ở AI & dịch nên không có bỏ lỡ gì, tóm tắt và gợi ý. Lời nói vẫn chạy.",
+        "nothing_available": "Máy Mac này chưa có AI cho bỏ lỡ gì, tóm tắt và gợi ý. Lời nói vẫn chạy."
       }
     }
   }

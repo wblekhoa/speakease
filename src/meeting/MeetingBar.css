@@ -11,7 +11,8 @@ body {
 .mb-bar {
   box-sizing: border-box;
   margin: 8px;
-  height: calc(100% - 16px);
+  /* Fixed: the window grows when the live panel opens below. */
+  height: 48px;
   padding: 0 8px 0 16px;
   display: flex;
   align-items: center;
@@ -110,6 +111,13 @@ body {
   border: 1px solid var(--color-hairline);
 }
 
+/* The consent line is never cut: it may take two lines beside the
+   timer, Help and Stop. */
+.mb-recording .mb-text {
+  white-space: normal;
+  line-height: 1.3;
+}
+
 /* The app's sentence and the question, one whole line each. */
 .mb-ask .mb-text {
   display: flex;
@@ -155,7 +163,142 @@ body {
   }
 }
 
+/* SE-MEET-016: the live panel under the pill, solid like the pill. */
+.mp-panel {
+  box-sizing: border-box;
+  margin: 0 8px 8px;
+  height: calc(100vh - 72px);
+  padding: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  font-family:
+    -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+  font-size: 13px;
+  line-height: 1.45;
+  color: var(--color-text);
+  background: var(--color-background);
+  border: 1px solid var(--color-hairline);
+  border-radius: 16px;
+  cursor: default;
+}
+
+.mp-levels {
+  display: flex;
+  gap: 4px;
+  padding: 2px;
+  border-radius: 999px;
+  background: var(--color-surface);
+}
+
+.mp-level {
+  flex: 1;
+  height: 28px;
+  border: none;
+  border-radius: 999px;
+  font: inherit;
+  color: var(--color-mid-gray);
+  background: transparent;
+  cursor: pointer;
+  transition: background-color 150ms ease;
+}
+
+.mp-level[aria-checked="true"] {
+  color: var(--color-text);
+  font-weight: 600;
+  background: var(--color-glass-chosen);
+}
+
+.mp-level:focus-visible,
+.mp-catch-up .mb-no:focus-visible {
+  outline: 2px solid var(--color-logo-primary);
+  outline-offset: 2px;
+}
+
+.mp-note {
+  margin: 0;
+  color: var(--color-mid-gray);
+}
+
+.mp-card {
+  margin: 0;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: var(--color-surface);
+}
+
+.mp-card-title {
+  margin: 0 0 2px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--color-mid-gray);
+}
+
+.mp-card-text {
+  white-space: pre-wrap;
+}
+
+.mp-catch-up {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 6px;
+}
+
+.mp-lines,
+.mp-fresh {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.mp-lines {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.mp-who {
+  font-weight: 600;
+  color: var(--color-mid-gray);
+}
+
+.mp-suggestion {
+  padding: 6px 10px;
+  border: 1px solid var(--color-hairline);
+  border-radius: 10px;
+  background: var(--color-surface);
+}
+
+.mp-suggestion-new {
+  border-color: var(--color-logo-primary);
+  animation: mp-arrive 200ms ease-out;
+}
+
+@keyframes mp-arrive {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+}
+
+.mp-kind {
+  display: block;
+  font-size: 11px;
+  font-weight: 600;
+  color: var(--color-mid-gray);
+}
+
 @media (prefers-reduced-motion: reduce) {
+  .mp-suggestion-new {
+    animation: none;
+  }
+  .mp-level {
+    transition: none;
+  }
   .mb-dot,
   .mb-spinner {
     animation: none;

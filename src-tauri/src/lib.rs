@@ -18,6 +18,7 @@ mod local_ai;
 mod managers;
 mod meeting;
 mod meeting_ask;
+mod meeting_live;
 mod meeting_notes;
 mod meeting_window;
 mod memory;
@@ -967,6 +968,11 @@ pub fn run(cli_args: CliArgs) {
             commands::meetings::meeting_state,
             commands::meetings::close_meeting_bar,
             commands::meetings::answer_meeting_ask,
+            commands::meetings::meeting_live,
+            commands::meetings::set_meeting_live_level,
+            commands::meetings::set_meeting_panel,
+            commands::meetings::meeting_catch_up,
+            commands::meetings::change_meeting_live_level_setting,
             commands::meetings::get_meeting,
             commands::meetings::list_meetings,
             commands::meetings::rewrite_meeting_notes,
