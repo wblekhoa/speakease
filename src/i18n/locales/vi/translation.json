@@ -1133,7 +1133,8 @@
       "using": "{{app}} đang dùng micro.",
       "question": "Ghi chú cuộc gọi này?",
       "yes": "Ghi chú",
-      "no": "Lúc khác"
+      "no": "Lúc khác",
+      "someApp": "Một ứng dụng gọi"
     },
     "errors": {
       "unsupported": "Ghi chú cuộc họp cần macOS 14.2 trở lên.",

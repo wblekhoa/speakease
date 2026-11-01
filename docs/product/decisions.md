@@ -30,8 +30,9 @@ repo; each cites its source.
   - No question while a meeting records or is being finished, nor over an error the user has not closed; such a call
     is not asked about later either. Turning Experimental off takes the question away.
   - Google Meet (part of the decided row, not a fork): a browser holding the microphone asks only when its front
-    window's title reads as Meet ("Meet - <code>", "Google Meet"), read through Accessibility, which SpeakEase already
-    holds for pasting; no Automation permission. Not measured against a real Meet tab.
+    window's title is a Meet call ("Meet - <code>"), read through Accessibility, which SpeakEase already holds for
+    pasting; no Automation permission. Not measured against a real Meet tab. Known limit: leaving the Meet tab for
+    over a minute ends the call for the watch, so coming back asks again.
   - SE-MEET-017 (keeping the bar out of screen sharing) needs a share test with the owner and stays untested.
 - **Evidence**: six tests in `src-tauri/src/meeting.rs` (see SE-MEET-002); the bar at 540 x 64 in the browser
   preview. Not measured: the microphone flag on a real call and Meet's real tab title (that needs a call on this Mac

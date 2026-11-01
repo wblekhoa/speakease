@@ -52,7 +52,8 @@ relations:
   dùng micro." / "Ghi chú cuộc gọi này?" (EN "Microsoft Teams is using the mic." / "Take notes of this call?")
   with **Lúc khác** (Not now), **Ghi chú** (Take notes) and ×. Only **Ghi chú**, the shortcut or the tray item records;
   **Lúc khác** or × closes it, and that call is not asked about again (a call ends after a minute with no call app on
-  the microphone). Sound alone (a video) never asks, nor does a browser on another site. No question while a meeting
+  the microphone; leaving a Meet tab for over a minute counts as an end too). Sound alone (a video) never asks, nor
+  does a browser on another site. No question while a meeting
   records or is being finished, or over an error not yet closed; turning Experimental off takes it away.
 - **Meeting bar**: a pill at the top centre of the screen that never takes focus from the call: a pulsing red dot,
   "Đang ghi âm. Nhớ báo cho mọi người biết nhé." (EN "Recording. Remember to tell everyone."), a timer and **Stop**.

@@ -272,14 +272,12 @@ pub fn browser_on_microphone(
 
 // SE-MEET-002
 /// Whether a browser window's title (its front tab, read through
-/// Accessibility) is a Google Meet call: Meet titles its tab "Meet - <code>"
-/// (or with an en dash) and its landing page "Google Meet".
+/// Accessibility) is a Google Meet call: Meet titles a call's tab
+/// "Meet - <code>" (or with an en dash). Its landing page ("Google Meet") is
+/// not a call, nor is a page that only names Meet.
 pub fn is_meet_title(title: &str) -> bool {
     let title = title.trim_start();
-    title.starts_with("Meet - ")
-        || title.starts_with("Meet \u{2013} ")
-        || title.contains("Google Meet")
-        || title.contains("meet.google.com")
+    title.starts_with("Meet - ") || title.starts_with("Meet \u{2013} ")
 }
 
 fn on_microphone(
@@ -303,9 +301,10 @@ fn on_microphone(
         .map(|(_, id)| id.clone())
 }
 
-/// The name the question uses for a call app ("Zoom", not "zoom.us").
-pub fn call_app_name(bundle_id: &str) -> &'static str {
-    match bundle_id {
+/// The name the question uses for a call app ("Zoom", not "zoom.us");
+/// `None` for an app it does not know (the bar then says "a call app").
+pub fn call_app_name(bundle_id: &str) -> Option<&'static str> {
+    Some(match bundle_id {
         "us.zoom.xos" => "Zoom",
         "com.microsoft.teams2" | "com.microsoft.teams" => "Microsoft Teams",
         "com.vng.zalo" => "Zalo",
@@ -315,8 +314,8 @@ pub fn call_app_name(bundle_id: &str) -> &'static str {
         "com.hnc.Discord" => "Discord",
         // A browser is asked about only for a Meet call.
         id if MEETING_APPS[FIRST_BROWSER..].contains(&id) => "Google Meet",
-        _ => "A call app",
-    }
+        _ => return None,
+    })
 }
 
 /// How often the microphone is looked at, and how many looks in a row
@@ -632,7 +631,7 @@ pub mod session {
         if is_recording() {
             return;
         }
-        let app_name = call_app_name(&bundle_id).to_string();
+        let app_name = call_app_name(&bundle_id).map(str::to_string);
         if let Ok(mut asked) = ASKED.lock() {
             *asked = Some(bundle_id);
         }
@@ -641,7 +640,7 @@ pub mod session {
             |now| now.phase == "idle" && now.error.is_none(),
             MeetingState {
                 phase: "asking".to_string(),
-                app_name: Some(app_name),
+                app_name,
                 ..MeetingState::default()
             },
         );
@@ -1345,18 +1344,20 @@ mod tests {
         );
         assert!(is_meet_title("Meet - abc-defg-hij"));
         assert!(is_meet_title("Meet \u{2013} abc-defg-hij"));
-        assert!(is_meet_title("Google Meet"));
+        assert!(!is_meet_title("Google Meet"));
+        assert!(!is_meet_title("How to use Google Meet - YouTube"));
         assert!(!is_meet_title("YouTube"));
         assert!(!is_meet_title("Meeting notes - Google Docs"));
-        assert_eq!(call_app_name("com.apple.Safari"), "Google Meet");
+        assert_eq!(call_app_name("com.apple.Safari"), Some("Google Meet"));
     }
 
     #[test]
     fn every_call_app_has_a_name_for_the_question() {
-        for bundle in &MEETING_APPS[..FIRST_BROWSER] {
-            assert_ne!(call_app_name(bundle), call_app_name("com.example.Other"));
+        for bundle in &MEETING_APPS {
+            assert!(call_app_name(bundle).is_some(), "{bundle}");
         }
-        assert_eq!(call_app_name("us.zoom.xos"), "Zoom");
+        assert_eq!(call_app_name("us.zoom.xos"), Some("Zoom"));
+        assert_eq!(call_app_name("com.example.Other"), None);
     }
 
     // SE-MEET-002

@@ -60,7 +60,11 @@ const MeetingBar: React.FC = () => {
     return (
       <div className="mb-bar mb-ask">
         <span className="mb-text" role="status">
-          <span>{t("meeting.ask.using", { app: state.app_name ?? "" })}</span>
+          <span>
+            {t("meeting.ask.using", {
+              app: state.app_name ?? t("meeting.ask.someApp"),
+            })}
+          </span>
           <span>{t("meeting.ask.question")}</span>
         </span>
         <button

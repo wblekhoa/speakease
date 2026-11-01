@@ -1133,7 +1133,8 @@
       "using": "{{app}} is using the mic.",
       "question": "Take notes of this call?",
       "yes": "Take notes",
-      "no": "Not now"
+      "no": "Not now",
+      "someApp": "A call app"
     },
     "errors": {
       "unsupported": "Meeting notes need macOS 14.2 or later.",
