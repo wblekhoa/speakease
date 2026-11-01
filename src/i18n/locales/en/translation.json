@@ -1130,7 +1130,8 @@
     "stop": "Stop",
     "close": "Close",
     "ask": {
-      "question": "{{app}} is using the microphone. Take notes of this call?",
+      "using": "{{app}} is using the mic.",
+      "question": "Take notes of this call?",
       "yes": "Take notes",
       "no": "Not now"
     },

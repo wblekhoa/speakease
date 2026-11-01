@@ -113,5 +113,5 @@ Chosen by AI under the owner's overnight delegation (31/10) - for the owner to r
 ## Next safe step
 
 Phases 1-3 and 4a are on `main` (185cc1d #2, 48eae09 #3, da9b198 #4, eac9dda #5, all wblekhoa/speakease). Phase 5
-(asking when a call app takes the microphone; Google Meet and SE-MEET-017 left) on branch
+(asking when a call app or a Meet tab takes the microphone; SE-MEET-017 and recordings from Files left) on branch
 `claude/meeting-notes-p5-ask`; then 4b (the live panel).

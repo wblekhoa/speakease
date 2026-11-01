@@ -36,9 +36,9 @@ relations:
 - Included (phase 2): the shortcut on Recording, the tray item, the meeting bar, the History entry with its notes.
 - Also included (phase 3): the Meetings page (list, notes, transcript, template menu, copy, save .md / .txt).
 - Also included (phase 4a): questions about a meeting on the Meetings page.
-- Also included (phase 5, part): asking whether to take notes when a call app takes the microphone.
-- Not yet: asking for Google Meet in a browser; live transcript and help in a panel under the bar (4b); saving as
-  .docx. Dictation itself is `ux/dictation.md`.
+- Also included (phase 5): asking whether to take notes when a call app (or Google Meet in a browser) takes the
+  microphone.
+- Not yet: live transcript and help in a panel under the bar (4b); saving as .docx. Dictation itself is `ux/dictation.md`.
 
 ## Current truth
 
@@ -48,11 +48,12 @@ relations:
   FaceTime, Slack, Discord), playing sound first, else the app used last time, else a browser playing sound; and the
   microphone picked for dictation, as its own stream. No dictation starts.
 - **Asked when a call starts**: when Zoom, Teams, Zalo, Messenger, FaceTime, Slack or Discord starts using the
-  microphone, the bar asks "Microsoft Teams đang dùng micro. Ghi chú cuộc gọi này?" (EN "Microsoft Teams is using the
-  microphone. Take notes of this call?") with **Lúc khác** (Not now) and **Ghi chú** (Take notes). Only **Ghi chú**,
-  the shortcut or the tray item records; **Lúc khác** or × closes it, and that call is not asked about again (a call
-  ends after a minute with no call app on the microphone). Sound alone (a video) never asks; a browser never asks
-  (Google Meet is not covered yet). No question while a meeting records or is being finished.
+  microphone, or a browser does while its front tab is Google Meet, the bar asks on two lines "Microsoft Teams đang
+  dùng micro." / "Ghi chú cuộc gọi này?" (EN "Microsoft Teams is using the mic." / "Take notes of this call?")
+  with **Lúc khác** (Not now), **Ghi chú** (Take notes) and ×. Only **Ghi chú**, the shortcut or the tray item records;
+  **Lúc khác** or × closes it, and that call is not asked about again (a call ends after a minute with no call app on
+  the microphone). Sound alone (a video) never asks, nor does a browser on another site. No question while a meeting
+  records or is being finished, or over an error not yet closed; turning Experimental off takes it away.
 - **Meeting bar**: a pill at the top centre of the screen that never takes focus from the call: a pulsing red dot,
   "Đang ghi âm. Nhớ báo cho mọi người biết nhé." (EN "Recording. Remember to tell everyone."), a timer and **Stop**.
   It asks macOS to keep it out of screen sharing (untested).

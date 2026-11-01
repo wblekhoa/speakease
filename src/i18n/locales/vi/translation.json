@@ -1130,7 +1130,8 @@
     "stop": "Dừng",
     "close": "Đóng",
     "ask": {
-      "question": "{{app}} đang dùng micro. Ghi chú cuộc gọi này?",
+      "using": "{{app}} đang dùng micro.",
+      "question": "Ghi chú cuộc gọi này?",
       "yes": "Ghi chú",
       "no": "Lúc khác"
     },

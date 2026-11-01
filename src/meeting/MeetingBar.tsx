@@ -60,7 +60,8 @@ const MeetingBar: React.FC = () => {
     return (
       <div className="mb-bar mb-ask">
         <span className="mb-text" role="status">
-          {t("meeting.ask.question", { app: state.app_name ?? "" })}
+          <span>{t("meeting.ask.using", { app: state.app_name ?? "" })}</span>
+          <span>{t("meeting.ask.question")}</span>
         </span>
         <button
           type="button"
@@ -75,6 +76,15 @@ const MeetingBar: React.FC = () => {
           onClick={() => commands.answerMeetingAsk(true)}
         >
           {t("meeting.ask.yes")}
+        </button>
+        {/* The same as Not now. */}
+        <button
+          type="button"
+          className="mb-close"
+          aria-label={t("meeting.close")}
+          onClick={() => commands.closeMeetingBar()}
+        >
+          ×
         </button>
       </div>
     );

@@ -256,12 +256,38 @@ pub fn pick_meeting_app(
 
 // SE-MEET-002
 /// The call app holding the microphone now, if one does. Sound alone (a
-/// video playing) is not a call. Browsers are left out: one holding the
-/// microphone may be on any site, and reading its front tab needs an
-/// Automation permission SpeakEase does not ask for yet.
+/// video playing) is not a call. Browsers are left out here: one holding the
+/// microphone may be on any site (see [`browser_on_microphone`]).
 pub fn call_on_microphone(processes: &[crate::system_audio_tap::AudioProcess]) -> Option<String> {
+    on_microphone(processes, 0..FIRST_BROWSER)
+}
+
+/// A browser holding the microphone: a call only when its front tab is
+/// Google Meet ([`is_meet_title`]).
+pub fn browser_on_microphone(
+    processes: &[crate::system_audio_tap::AudioProcess],
+) -> Option<String> {
+    on_microphone(processes, FIRST_BROWSER..MEETING_APPS.len())
+}
+
+// SE-MEET-002
+/// Whether a browser window's title (its front tab, read through
+/// Accessibility) is a Google Meet call: Meet titles its tab "Meet - <code>"
+/// (or with an en dash) and its landing page "Google Meet".
+pub fn is_meet_title(title: &str) -> bool {
+    let title = title.trim_start();
+    title.starts_with("Meet - ")
+        || title.starts_with("Meet \u{2013} ")
+        || title.contains("Google Meet")
+        || title.contains("meet.google.com")
+}
+
+fn on_microphone(
+    processes: &[crate::system_audio_tap::AudioProcess],
+    ranks: std::ops::Range<usize>,
+) -> Option<String> {
     let rank = |bundle: &str| {
-        MEETING_APPS[..FIRST_BROWSER]
+        MEETING_APPS[ranks.clone()]
             .iter()
             .position(|known| *known == bundle)
     };
@@ -275,6 +301,22 @@ pub fn call_on_microphone(processes: &[crate::system_audio_tap::AudioProcess]) -
         })
         .min_by_key(|(r, _)| *r)
         .map(|(_, id)| id.clone())
+}
+
+/// The name the question uses for a call app ("Zoom", not "zoom.us").
+pub fn call_app_name(bundle_id: &str) -> &'static str {
+    match bundle_id {
+        "us.zoom.xos" => "Zoom",
+        "com.microsoft.teams2" | "com.microsoft.teams" => "Microsoft Teams",
+        "com.vng.zalo" => "Zalo",
+        "com.facebook.archon" => "Messenger",
+        "com.apple.FaceTime" => "FaceTime",
+        "com.tinyspeck.slackmacgap" => "Slack",
+        "com.hnc.Discord" => "Discord",
+        // A browser is asked about only for a Meet call.
+        id if MEETING_APPS[FIRST_BROWSER..].contains(&id) => "Google Meet",
+        _ => "A call app",
+    }
 }
 
 /// How often the microphone is looked at, and how many looks in a row
@@ -394,8 +436,37 @@ pub mod session {
         if let Ok(mut slot) = STATE.lock() {
             *slot = Some(state.clone());
         }
-        let _ = app.emit(STATE_EVENT, &state);
-        crate::meeting_window::follow(app, &state);
+        show(app, &state);
+    }
+
+    /// Like [`announce`], only while `when` holds for the state now, checked
+    /// and written under one lock: the call watch and a start from the
+    /// shortcut never overwrite each other's phase.
+    fn announce_if(
+        app: &AppHandle,
+        when: impl Fn(&MeetingState) -> bool,
+        state: MeetingState,
+    ) -> bool {
+        {
+            let Ok(mut slot) = STATE.lock() else {
+                return false;
+            };
+            let now = slot.clone().unwrap_or_else(|| MeetingState {
+                phase: "idle".to_string(),
+                ..MeetingState::default()
+            });
+            if !when(&now) {
+                return false;
+            }
+            *slot = Some(state.clone());
+        }
+        show(app, &state);
+        true
+    }
+
+    fn show(app: &AppHandle, state: &MeetingState) {
+        let _ = app.emit(STATE_EVENT, state);
+        crate::meeting_window::follow(app, state);
         crate::tray::update_tray_menu(app);
     }
 
@@ -552,21 +623,22 @@ pub mod session {
 
     // SE-MEET-002
     /// Puts the question on the meeting bar: "<app> is using the microphone.
-    /// Take notes of this meeting?" Nothing records until [`answer`].
+    /// Take notes of this call?" Nothing records until [`answer`]. Never over
+    /// a meeting or an error the user has not closed. A start that slips in
+    /// after the check still announces "recording" last, so it wins.
     fn ask(app: &AppHandle, bundle_id: String) {
-        if is_recording() || state().phase != "idle" {
+        // RUNNING before STATE, never inside it: try_start takes them in
+        // that order.
+        if is_recording() {
             return;
         }
-        let app_name = crate::system_audio_tap::list_apps()
-            .into_iter()
-            .find(|a| a.bundle_id == bundle_id)
-            .map(|a| a.name)
-            .unwrap_or_else(|| bundle_id.clone());
+        let app_name = call_app_name(&bundle_id).to_string();
         if let Ok(mut asked) = ASKED.lock() {
             *asked = Some(bundle_id);
         }
-        announce(
+        announce_if(
             app,
+            |now| now.phase == "idle" && now.error.is_none(),
             MeetingState {
                 phase: "asking".to_string(),
                 app_name: Some(app_name),
@@ -575,19 +647,19 @@ pub mod session {
         );
     }
 
-    /// Takes the question off the bar, if it is still there.
+    /// Takes the question off the bar if it is still there, and returns the
+    /// app it asked about.
     fn end_ask(app: &AppHandle) -> Option<String> {
         let asked = ASKED.lock().ok().and_then(|mut a| a.take());
-        if state().phase == "asking" {
-            announce(
-                app,
-                MeetingState {
-                    phase: "idle".to_string(),
-                    ..MeetingState::default()
-                },
-            );
-        }
-        asked
+        let ended = announce_if(
+            app,
+            |now| now.phase == "asking",
+            MeetingState {
+                phase: "idle".to_string(),
+                ..MeetingState::default()
+            },
+        );
+        asked.filter(|_| ended)
     }
 
     // SE-MEET-002
@@ -610,9 +682,15 @@ pub mod session {
                 let settings = crate::settings::get_settings(&app);
                 if !crate::settings::app_audio_features_on(&settings) {
                     watch = CallWatch::default();
+                    end_ask(&app);
                     continue;
                 }
-                let holder = call_on_microphone(&crate::system_audio_tap::list_processes());
+                let processes = crate::system_audio_tap::list_processes();
+                let holder = call_on_microphone(&processes).or_else(|| {
+                    browser_on_microphone(&processes).filter(|browser| {
+                        is_meet_title(&crate::system_audio_tap::app_context(browser).window_title)
+                    })
+                });
                 let busy = is_recording() || !matches!(state().phase.as_str(), "idle" | "asking");
                 match watch.see(holder, busy) {
                     CallStep::Ask(bundle_id) => ask(&app, bundle_id),
@@ -1251,6 +1329,34 @@ mod tests {
         assert_eq!(watch.see(zoom(), true), CallStep::Nothing);
         // The recording stopped, the call goes on: still not asked.
         assert_eq!(watch.see(zoom(), false), CallStep::Nothing);
+    }
+
+    // SE-MEET-002
+    #[test]
+    fn a_browser_on_the_microphone_is_found_and_meet_is_known_by_its_title() {
+        let chrome = process("com.google.Chrome.helper", "com.google.Chrome", true);
+        assert_eq!(
+            browser_on_microphone(&[chrome]).as_deref(),
+            Some("com.google.Chrome")
+        );
+        assert_eq!(
+            browser_on_microphone(&[process("us.zoom.xos", "", true)]),
+            None
+        );
+        assert!(is_meet_title("Meet - abc-defg-hij"));
+        assert!(is_meet_title("Meet \u{2013} abc-defg-hij"));
+        assert!(is_meet_title("Google Meet"));
+        assert!(!is_meet_title("YouTube"));
+        assert!(!is_meet_title("Meeting notes - Google Docs"));
+        assert_eq!(call_app_name("com.apple.Safari"), "Google Meet");
+    }
+
+    #[test]
+    fn every_call_app_has_a_name_for_the_question() {
+        for bundle in &MEETING_APPS[..FIRST_BROWSER] {
+            assert_ne!(call_app_name(bundle), call_app_name("com.example.Other"));
+        }
+        assert_eq!(call_app_name("us.zoom.xos"), "Zoom");
     }
 
     // SE-MEET-002

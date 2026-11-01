@@ -24,14 +24,18 @@ repo; each cites its source.
   - The microphone is looked at every 3 s while Experimental is on; a call ends after 20 looks (about a minute) with
     no call app on it, so muting or switching devices does not ask twice.
   - The question is a new "asking" phase of the meeting bar, not a macOS notification (no new permission): "<app>
-    đang dùng micro. Ghi chú cuộc gọi này?" with **Lúc khác** and **Ghi chú**. Not now and × close it for this call;
-    the shortcut or tray item while asked counts as yes.
-  - No question while a meeting records or is being finished; such a call is not asked about later either.
-  - Google Meet is **not built**: knowing a browser's front tab is Meet needs an Automation (Apple Events) permission
-    prompt per browser, a new permission the owner has not approved. A browser holding the microphone never asks.
+    đang dùng micro." / "Ghi chú cuộc gọi này?" with **Lúc khác**, **Ghi chú** and ×. Not now and × close it for this
+    call; the shortcut or tray item while asked counts as yes. Apps are named as people know them ("Zoom", not
+    "zoom.us").
+  - No question while a meeting records or is being finished, nor over an error the user has not closed; such a call
+    is not asked about later either. Turning Experimental off takes the question away.
+  - Google Meet (part of the decided row, not a fork): a browser holding the microphone asks only when its front
+    window's title reads as Meet ("Meet - <code>", "Google Meet"), read through Accessibility, which SpeakEase already
+    holds for pasting; no Automation permission. Not measured against a real Meet tab.
   - SE-MEET-017 (keeping the bar out of screen sharing) needs a share test with the owner and stays untested.
-- **Evidence**: four tests in `src-tauri/src/meeting.rs` (see SE-MEET-002); the bar at 540 x 64 in the browser
-  preview. Not measured: the microphone flag on a real call (that needs a call on this Mac with the owner's consent).
+- **Evidence**: six tests in `src-tauri/src/meeting.rs` (see SE-MEET-002); the bar at 540 x 64 in the browser
+  preview. Not measured: the microphone flag on a real call and Meet's real tab title (that needs a call on this Mac
+  with the owner's consent).
 - **Reverse**: drop `session::watch_calls` from `lib.rs`; the asking phase is then never entered.
 
 ## 2026-11-01 · Meeting notes phase 4a: questions about a meeting, choices made by AI under the owner's overnight delegation
