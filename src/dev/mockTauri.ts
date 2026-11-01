@@ -194,6 +194,10 @@ if (new URLSearchParams(location.search).has("onboarding")) {
 if (new URLSearchParams(location.search).has("subtitles")) {
   settings.experimental_enabled = true;
 }
+// `?subtitles&noai` also turns AI off in AI & Translate.
+if (new URLSearchParams(location.search).has("noai")) {
+  settings.post_process_enabled = false;
+}
 let subtitlesRunning: string | null = null;
 let subtitlesTranslate = true;
 const SUBTITLE_APPS = [
@@ -558,6 +562,10 @@ function handle(cmd: string, args: Json): unknown {
       // As meeting.rs `note_file`: listed now, the notes written later (the
       // notes Apple Intelligence wrote for FILE_TEXT on 01/11, guessed as a
       // lecture).
+      // `?notefail` shows the card when adding fails.
+      if (new URLSearchParams(location.search).has("notefail")) {
+        return Promise.reject("missing: no such entry");
+      }
       if (MEETINGS.some((m) => m.meeting.history_id === args.historyId)) {
         return Promise.reject("exists: already a meeting");
       }

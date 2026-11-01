@@ -81,7 +81,10 @@ export const FilesPage: React.FC = () => {
   // subtitles do.
   const [canTap, setCanTap] = useState(false);
   useEffect(() => {
-    commands.liveSubtitlesSupported().then(setCanTap);
+    commands
+      .liveSubtitlesSupported()
+      .then(setCanTap)
+      .catch(() => setCanTap(false));
   }, []);
   const busy = progress !== null;
   // When the job, the phase and the last finished part began (SE-FILE-005).
