@@ -463,6 +463,9 @@ function handle(cmd: string, args: Json): unknown {
     case "list_meetings":
       // A fresh copy each time, as the backend sends.
       return structuredClone(MEETINGS);
+    case "meeting_ai_missing":
+      // `?subtitles&noai` shows the Q&A with AI off.
+      return new URLSearchParams(location.search).has("noai") ? "ai_off" : null;
     case "ask_meeting":
       return mockAsk(String(args.question).toLowerCase());
     case "rewrite_meeting_notes": {

@@ -28,6 +28,14 @@ export const MeetingAsk: React.FC<{
   const { t } = useTranslation();
   const [question, setQuestion] = useState("");
   const [asking, setAsking] = useState(false);
+  // Known before typing: with no AI the form gives way to the reason.
+  const [noAi, setNoAi] = useState<string | null>(null);
+  useEffect(() => {
+    commands
+      .meetingAiMissing()
+      .then(setNoAi)
+      .catch(() => setNoAi(null));
+  }, []);
   // Beside the meeting the list scrolls on its own; the newest answer (or the
   // "looking" line) stays in view. Stacked, the page scrolls instead.
   const list = useRef<HTMLOListElement>(null);
@@ -113,25 +121,31 @@ export const MeetingAsk: React.FC<{
           </li>
         )}
       </ol>
-      <form onSubmit={ask} className="flex gap-2">
-        <Input
-          type="text"
-          variant="compact"
-          value={question}
-          onChange={(e) => setQuestion(e.target.value)}
-          placeholder={t("meeting.page.ask.placeholder")}
-          aria-label={t("meeting.page.ask.title")}
-          className="min-w-0 flex-1"
-        />
-        <Button
-          type="submit"
-          variant="secondary"
-          size="sm"
-          disabled={asking || !question.trim()}
-        >
-          {t("meeting.page.ask.send")}
-        </Button>
-      </form>
+      {noAi ? (
+        <p className="text-sm text-mid-gray">
+          {t(`meeting.page.ask.noAi.${noAi}`)}
+        </p>
+      ) : (
+        <form onSubmit={ask} className="flex gap-2">
+          <Input
+            type="text"
+            variant="compact"
+            value={question}
+            onChange={(e) => setQuestion(e.target.value)}
+            placeholder={t("meeting.page.ask.placeholder")}
+            aria-label={t("meeting.page.ask.title")}
+            className="min-w-0 flex-1"
+          />
+          <Button
+            type="submit"
+            variant="secondary"
+            size="sm"
+            disabled={asking || !question.trim()}
+          >
+            {t("meeting.page.ask.send")}
+          </Button>
+        </form>
+      )}
     </aside>
   );
 };

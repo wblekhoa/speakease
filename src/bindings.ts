@@ -1168,6 +1168,13 @@ async askMeeting(historyId: number, question: string) : Promise<Result<MeetingAn
 }
 },
 /**
+ * Why no AI can answer right now (`ai_off` / `nothing_available`), or
+ * `None`, so the Q&A says so before a question is typed.
+ */
+async meetingAiMissing() : Promise<string | null> {
+    return await TAURI_INVOKE("meeting_ai_missing");
+},
+/**
  * Writes text to a file the person picked in a Save dialog.
  */
 async writeTextFile(path: string, contents: string) : Promise<Result<null, string>> {

@@ -65,7 +65,7 @@ relations:
   "Answers come from this meeting only, with the lines they used. Read those lines." The user types a question and
   presses **Ask**; "Looking through the meeting…" shows while it runs. Each answer quotes the lines it used ("Line 3
   [Others] …"); clicking one opens the Transcript tab with those lines marked. "The meeting doesn't say." when it
-  does not; "The AI named no lines. Check the transcript." when an answer cites none; with no AI the reason shows. Questions stay while the app runs, per meeting.
+  does not; "The AI named no lines. Check the transcript." when an answer cites none; with no AI the reason shows in place of the question box, before anything is typed. Questions stay while the app runs, per meeting.
 - **Errors** (on the bar, with ×): macOS too old; no call app running; already recording; the microphone could not
   open; no speech model; the speech detector did not start.
 

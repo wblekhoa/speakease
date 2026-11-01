@@ -100,6 +100,16 @@ pub fn rewrite_meeting_notes(app: AppHandle, history_id: i64, kind: String) -> R
 }
 
 // SE-MEET-014
+/// Why no AI can answer right now (`ai_off` / `nothing_available`), or
+/// `None`, so the Q&A says so before a question is typed.
+#[tauri::command]
+#[specta::specta]
+pub fn meeting_ai_missing(app: AppHandle) -> Option<String> {
+    crate::meeting_notes::engine_for(&app)
+        .err()
+        .map(|reason| session::no_ai_id(reason).to_string())
+}
+
 /// One question about a meeting, answered only from its transcript and
 /// notes, with the transcript lines it used. Errors: "missing: …", or
 /// "no_ai:<reason>" when this Mac has no AI for it.
