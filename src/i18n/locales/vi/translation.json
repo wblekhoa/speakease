@@ -1129,6 +1129,11 @@
     "notes": "Đang viết ghi chú…",
     "stop": "Dừng",
     "close": "Đóng",
+    "ask": {
+      "question": "{{app}} đang dùng micro. Ghi chú cuộc gọi này?",
+      "yes": "Ghi chú",
+      "no": "Lúc khác"
+    },
     "errors": {
       "unsupported": "Ghi chú cuộc họp cần macOS 14.2 trở lên.",
       "no-app": "Chưa có ứng dụng họp nào đang chạy. Hãy mở Zoom, Meet, Teams hoặc ứng dụng gọi khác trước.",

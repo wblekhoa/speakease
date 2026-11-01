@@ -1123,6 +1123,18 @@ async meetingState() : Promise<MeetingState> {
 async closeMeetingBar() : Promise<void> {
     await TAURI_INVOKE("close_meeting_bar");
 },
+/**
+ * The meeting bar's answer to "take notes of this call?": only a yes
+ * records. Returns the error a start ran into.
+ */
+async answerMeetingAsk(yes: boolean) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("answer_meeting_ask", { yes }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
 async getMeeting(historyId: number) : Promise<Result<MeetingEntry | null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_meeting", { historyId }) };
@@ -1470,7 +1482,8 @@ export type MeetingEntry = { meeting: Meeting; title: string; transcript: string
  */
 export type MeetingState = { 
 /**
- * "idle", "recording", "transcribing" or "notes".
+ * "idle", "asking" (a call started: take notes?), "recording",
+ * "transcribing" or "notes".
  */
 phase: string; 
 /**

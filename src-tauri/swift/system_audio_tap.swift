@@ -79,6 +79,8 @@ private struct TapProcess {
     let responsiblePID: pid_t
     let appBundleID: String?
     let playing: Bool
+    /// Reading from an input (a microphone) right now.
+    let recording: Bool
 }
 
 /// `responsibility_get_pid_responsible_for_pid` (libSystem, not in the SDK
@@ -106,6 +108,8 @@ private func tapProcesses() -> [TapProcess] {
             responsiblePID: responsible,
             appBundleID: NSRunningApplication(processIdentifier: responsible)?.bundleIdentifier,
             playing: (readProperty(object, kAudioProcessPropertyIsRunningOutput, UInt32(0)) ?? 0)
+                != 0,
+            recording: (readProperty(object, kAudioProcessPropertyIsRunningInput, UInt32(0)) ?? 0)
                 != 0)
     }
 }
@@ -172,6 +176,7 @@ public func se_tap_list_processes() -> UnsafeMutablePointer<CChar>? {
             [
                 "pid": Int($0.pid), "bundle_id": $0.bundleID ?? "",
                 "app_bundle_id": $0.appBundleID ?? "", "playing": $0.playing,
+                "recording": $0.recording,
             ]
         }
     guard let data = try? JSONSerialization.data(withJSONObject: rows),

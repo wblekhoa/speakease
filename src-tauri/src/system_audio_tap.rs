@@ -16,6 +16,9 @@ pub struct AudioProcess {
     pub app_bundle_id: String,
     /// Sending sound to an output right now.
     pub playing: bool,
+    /// Reading from an input (a microphone) right now.
+    #[serde(default)]
+    pub recording: bool,
 }
 
 /// A running app the user can pick for subtitles.

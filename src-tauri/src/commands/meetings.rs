@@ -36,6 +36,15 @@ pub fn close_meeting_bar(app: AppHandle) {
     session::dismiss(&app);
 }
 
+// SE-MEET-002
+/// The meeting bar's answer to "take notes of this call?": only a yes
+/// records. Returns the error a start ran into.
+#[tauri::command]
+#[specta::specta]
+pub fn answer_meeting_ask(app: AppHandle, yes: bool) -> Result<(), String> {
+    session::answer(&app, yes)
+}
+
 /// A meeting with its History entry's title and transcript, for the
 /// Meetings page (SE-MEET-018).
 #[derive(Debug, Clone, Serialize, Type)]

@@ -254,10 +254,93 @@ pub fn pick_meeting_app(
         .or_else(|| best(true, FIRST_BROWSER..MEETING_APPS.len()))
 }
 
+// SE-MEET-002
+/// The call app holding the microphone now, if one does. Sound alone (a
+/// video playing) is not a call. Browsers are left out: one holding the
+/// microphone may be on any site, and reading its front tab needs an
+/// Automation permission SpeakEase does not ask for yet.
+pub fn call_on_microphone(processes: &[crate::system_audio_tap::AudioProcess]) -> Option<String> {
+    let rank = |bundle: &str| {
+        MEETING_APPS[..FIRST_BROWSER]
+            .iter()
+            .position(|known| *known == bundle)
+    };
+    processes
+        .iter()
+        .filter(|process| process.recording)
+        .filter_map(|process| {
+            [&process.app_bundle_id, &process.bundle_id]
+                .into_iter()
+                .find_map(|id| rank(id).map(|r| (r, id)))
+        })
+        .min_by_key(|(r, _)| *r)
+        .map(|(_, id)| id.clone())
+}
+
+/// How often the microphone is looked at, and how many looks in a row
+/// without a call app on it end the call (a mute or a device switch can
+/// let go of it for a moment).
+pub const CALL_POLL: std::time::Duration = std::time::Duration::from_secs(3);
+pub const CALL_GAP_POLLS: u32 = 20;
+
+/// What one look at the microphone calls for.
+#[derive(Debug, PartialEq)]
+pub enum CallStep {
+    /// A new call: ask whether to take notes.
+    Ask(String),
+    /// The call that was asked about is over.
+    CallEnded,
+    Nothing,
+}
+
+/// Asks once per call: a call lasts while one call app holds the
+/// microphone, short gaps included.
+#[derive(Default)]
+pub struct CallWatch {
+    call: Option<String>,
+    gap: u32,
+}
+
+impl CallWatch {
+    /// `busy`: a meeting is recording or being finished; a call that starts
+    /// then counts as seen, so its end of recording does not ask.
+    pub fn see(&mut self, holder: Option<String>, busy: bool) -> CallStep {
+        let Some(app) = holder else {
+            if self.call.is_none() {
+                return CallStep::Nothing;
+            }
+            self.gap += 1;
+            if self.gap < CALL_GAP_POLLS {
+                return CallStep::Nothing;
+            }
+            self.call = None;
+            self.gap = 0;
+            return CallStep::CallEnded;
+        };
+        self.gap = 0;
+        if self.call.as_deref() == Some(app.as_str()) {
+            return CallStep::Nothing;
+        }
+        self.call = Some(app.clone());
+        if busy {
+            CallStep::Nothing
+        } else {
+            CallStep::Ask(app)
+        }
+    }
+}
+
+/// The app to record after the user answered the question about `asked`:
+/// nothing records without a yes.
+pub fn app_to_record(yes: bool, asked: Option<String>) -> Option<String> {
+    asked.filter(|_| yes)
+}
+
 /// Where a meeting stands, for the meeting bar and the window.
 #[derive(Debug, Clone, Default, Serialize, Type)]
 pub struct MeetingState {
-    /// "idle", "recording", "transcribing" or "notes".
+    /// "idle", "asking" (a call started: take notes?), "recording",
+    /// "transcribing" or "notes".
     pub phase: String,
     /// Unix time the recording started.
     pub started_at: Option<i64>,
@@ -456,15 +539,99 @@ pub mod session {
         let now = state();
         match now.phase.as_str() {
             "idle" => announce(app, MeetingState { error: None, ..now }),
+            "asking" => {
+                end_ask(app);
+            }
             "recording" => {}
             _ => crate::meeting_window::hide(app),
         }
     }
 
+    /// The call app the bar is asking about (SE-MEET-002).
+    static ASKED: Mutex<Option<String>> = Mutex::new(None);
+
+    // SE-MEET-002
+    /// Puts the question on the meeting bar: "<app> is using the microphone.
+    /// Take notes of this meeting?" Nothing records until [`answer`].
+    fn ask(app: &AppHandle, bundle_id: String) {
+        if is_recording() || state().phase != "idle" {
+            return;
+        }
+        let app_name = crate::system_audio_tap::list_apps()
+            .into_iter()
+            .find(|a| a.bundle_id == bundle_id)
+            .map(|a| a.name)
+            .unwrap_or_else(|| bundle_id.clone());
+        if let Ok(mut asked) = ASKED.lock() {
+            *asked = Some(bundle_id);
+        }
+        announce(
+            app,
+            MeetingState {
+                phase: "asking".to_string(),
+                app_name: Some(app_name),
+                ..MeetingState::default()
+            },
+        );
+    }
+
+    /// Takes the question off the bar, if it is still there.
+    fn end_ask(app: &AppHandle) -> Option<String> {
+        let asked = ASKED.lock().ok().and_then(|mut a| a.take());
+        if state().phase == "asking" {
+            announce(
+                app,
+                MeetingState {
+                    phase: "idle".to_string(),
+                    ..MeetingState::default()
+                },
+            );
+        }
+        asked
+    }
+
+    // SE-MEET-002
+    /// The user's answer on the bar: Yes records the app asked about; No
+    /// only closes the question (this call is not asked about again).
+    pub fn answer(app: &AppHandle, yes: bool) -> Result<(), String> {
+        match app_to_record(yes, end_ask(app)) {
+            Some(bundle_id) => start(app, Some(bundle_id)),
+            None => Ok(()),
+        }
+    }
+
+    /// Looks at the microphone every [`CALL_POLL`] while meeting notes are
+    /// on, and asks once when a call app starts holding it.
+    pub fn watch_calls(app: AppHandle) {
+        std::thread::spawn(move || {
+            let mut watch = CallWatch::default();
+            loop {
+                std::thread::sleep(CALL_POLL);
+                let settings = crate::settings::get_settings(&app);
+                if !crate::settings::app_audio_features_on(&settings) {
+                    watch = CallWatch::default();
+                    continue;
+                }
+                let holder = call_on_microphone(&crate::system_audio_tap::list_processes());
+                let busy = is_recording() || !matches!(state().phase.as_str(), "idle" | "asking");
+                match watch.see(holder, busy) {
+                    CallStep::Ask(bundle_id) => ask(&app, bundle_id),
+                    CallStep::CallEnded => {
+                        end_ask(&app);
+                    }
+                    CallStep::Nothing => {}
+                }
+            }
+        });
+    }
+
     /// Stops a recording meeting, or starts one with the app found running.
     /// Returns the error a start ran into.
     pub fn toggle(app: &AppHandle) -> Result<(), String> {
-        if is_recording() {
+        if state().phase == "asking" {
+            // The shortcut or the tray while asked: the same as Yes.
+            answer(app, true)
+        } else if is_recording() {
             stop();
             Ok(())
         } else if state().phase != "idle" {
@@ -887,7 +1054,7 @@ pub mod session {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use crate::system_audio_tap::RunningApp;
+    use crate::system_audio_tap::{AudioProcess, RunningApp};
 
     // SE-MEET-010
     #[test]
@@ -1005,6 +1172,94 @@ mod tests {
         assert_eq!(mixed.len(), 3);
         assert!((mixed[0] - 0.3).abs() < 1e-6);
         assert!((mixed[2] - 0.1).abs() < 1e-6);
+    }
+
+    fn process(bundle: &str, app: &str, recording: bool) -> AudioProcess {
+        AudioProcess {
+            pid: 1,
+            bundle_id: bundle.to_string(),
+            app_bundle_id: app.to_string(),
+            playing: true,
+            recording,
+        }
+    }
+
+    // SE-MEET-002
+    #[test]
+    fn only_a_call_app_holding_the_microphone_is_a_call() {
+        // Zoom only playing sound (media) is not a call.
+        assert_eq!(
+            call_on_microphone(&[process("us.zoom.xos", "", false)]),
+            None
+        );
+        // A call app's helper holding the microphone counts as its app.
+        let teams = process("com.microsoft.teams2.helper", "com.microsoft.teams2", true);
+        assert_eq!(
+            call_on_microphone(&[teams]).as_deref(),
+            Some("com.microsoft.teams2")
+        );
+        // A browser holding the microphone may be any site: never asks.
+        let chrome = process("com.google.Chrome.helper", "com.google.Chrome", true);
+        assert_eq!(call_on_microphone(&[chrome.clone()]), None);
+        // Several on the microphone: the first in the list wins.
+        let both = [
+            chrome,
+            process("com.hnc.Discord", "", true),
+            process("us.zoom.xos", "", true),
+        ];
+        assert_eq!(call_on_microphone(&both).as_deref(), Some("us.zoom.xos"));
+    }
+
+    // SE-MEET-002
+    #[test]
+    fn a_call_is_asked_about_once() {
+        let zoom = || Some("us.zoom.xos".to_string());
+        let mut watch = CallWatch::default();
+        assert_eq!(watch.see(None, false), CallStep::Nothing);
+        assert_eq!(
+            watch.see(zoom(), false),
+            CallStep::Ask("us.zoom.xos".into())
+        );
+        // The same call keeps the microphone: no second question.
+        assert_eq!(watch.see(zoom(), false), CallStep::Nothing);
+        // A short gap (muting, a device switch) is the same call.
+        for _ in 0..CALL_GAP_POLLS - 1 {
+            assert_eq!(watch.see(None, false), CallStep::Nothing);
+        }
+        assert_eq!(watch.see(zoom(), false), CallStep::Nothing);
+        // A long gap ends the call; the next one is asked about again.
+        for _ in 0..CALL_GAP_POLLS - 1 {
+            assert_eq!(watch.see(None, false), CallStep::Nothing);
+        }
+        assert_eq!(watch.see(None, false), CallStep::CallEnded);
+        assert_eq!(
+            watch.see(zoom(), false),
+            CallStep::Ask("us.zoom.xos".into())
+        );
+        // Another app taking the microphone is another call.
+        assert_eq!(
+            watch.see(Some("com.hnc.Discord".into()), false),
+            CallStep::Ask("com.hnc.Discord".into())
+        );
+    }
+
+    // SE-MEET-002
+    #[test]
+    fn a_call_that_starts_while_a_meeting_records_is_not_asked_about() {
+        let mut watch = CallWatch::default();
+        let zoom = || Some("us.zoom.xos".to_string());
+        assert_eq!(watch.see(zoom(), true), CallStep::Nothing);
+        // The recording stopped, the call goes on: still not asked.
+        assert_eq!(watch.see(zoom(), false), CallStep::Nothing);
+    }
+
+    // SE-MEET-002
+    #[test]
+    fn only_a_yes_starts_a_recording() {
+        let asked = || Some("us.zoom.xos".to_string());
+        assert_eq!(app_to_record(false, asked()), None);
+        assert_eq!(app_to_record(true, None), None);
+        assert_eq!(app_to_record(true, asked()).as_deref(), Some("us.zoom.xos"));
     }
 
     fn app(bundle: &str, playing: bool) -> RunningApp {

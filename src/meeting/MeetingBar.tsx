@@ -9,7 +9,8 @@ import "./MeetingBar.css";
 const STATE_EVENT = "meeting-state";
 
 // SE-MEET-004
-/** The meeting bar: the consent line, a timer and Stop while recording; what
+/** The meeting bar: the question when a call starts; the consent line, a
+ *  timer and Stop while recording; what
  *  is being done after the stop; an error until it is closed. */
 const MeetingBar: React.FC = () => {
   const { t } = useTranslation();
@@ -49,6 +50,31 @@ const MeetingBar: React.FC = () => {
           onClick={() => commands.closeMeetingBar()}
         >
           ×
+        </button>
+      </div>
+    );
+  }
+
+  // SE-MEET-002: a call app took the microphone. Only Yes records.
+  if (state.phase === "asking") {
+    return (
+      <div className="mb-bar mb-ask">
+        <span className="mb-text" role="status">
+          {t("meeting.ask.question", { app: state.app_name ?? "" })}
+        </span>
+        <button
+          type="button"
+          className="mb-no"
+          onClick={() => commands.answerMeetingAsk(false)}
+        >
+          {t("meeting.ask.no")}
+        </button>
+        <button
+          type="button"
+          className="mb-stop"
+          onClick={() => commands.answerMeetingAsk(true)}
+        >
+          {t("meeting.ask.yes")}
         </button>
       </div>
     );

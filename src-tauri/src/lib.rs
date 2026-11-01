@@ -966,6 +966,7 @@ pub fn run(cli_args: CliArgs) {
             commands::meetings::stop_meeting,
             commands::meetings::meeting_state,
             commands::meetings::close_meeting_bar,
+            commands::meetings::answer_meeting_ask,
             commands::meetings::get_meeting,
             commands::meetings::list_meetings,
             commands::meetings::rewrite_meeting_notes,
@@ -1153,6 +1154,9 @@ pub fn run(cli_args: CliArgs) {
                 });
                 return Ok(());
             }
+
+            // SE-MEET-002: ask once when a call app takes the microphone.
+            meeting::session::watch_calls(app.handle().clone());
 
             // Create main window programmatically so we can set data_directory
             // for portable mode (redirects WebView2 cache to portable Data dir)

@@ -1129,6 +1129,11 @@
     "notes": "Writing the notes…",
     "stop": "Stop",
     "close": "Close",
+    "ask": {
+      "question": "{{app}} is using the microphone. Take notes of this call?",
+      "yes": "Take notes",
+      "no": "Not now"
+    },
     "errors": {
       "unsupported": "Meeting notes need macOS 14.2 or later.",
       "no-app": "No meeting app is running. Open Zoom, Meet, Teams or another call app first.",

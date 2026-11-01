@@ -435,7 +435,7 @@ function handle(cmd: string, args: Json): unknown {
       return null;
     case "write_text_file":
       return null;
-    // `?meeting=recording|transcribing|notes|error` previews the meeting bar
+    // `?meeting=asking|recording|transcribing|notes|error` previews the meeting bar
     // (src/meeting/index.html).
     case "meeting_state": {
       const phase =
@@ -451,13 +451,14 @@ function handle(cmd: string, args: Json): unknown {
         : {
             phase,
             started_at: Math.floor(Date.now() / 1000) - 754,
-            app_name: "zoom.us",
+            app_name: phase === "asking" ? "Microsoft Teams" : "zoom.us",
             error: null,
             history_id: null,
           };
     }
     case "stop_meeting":
     case "close_meeting_bar":
+    case "answer_meeting_ask":
       return null;
     // `?subtitles` (Experimental on) also shows Meetings with these three.
     case "list_meetings":
