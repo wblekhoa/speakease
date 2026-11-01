@@ -39,7 +39,7 @@ relations:
 - Also included (phase 5): asking whether to take notes when a call app (or Google Meet in a browser) takes the
   microphone.
 - Also included (phase 4b): live help in a panel under the bar, at five levels.
-- Also included: recordings brought in from Files or a link become meetings too, with notes in the template AI
+- Also included: a recording brought in from Files or a link can become a meeting, with notes in the template AI
   guesses.
 - Not yet: saving as .docx. Dictation itself is `ux/dictation.md`.
 
@@ -87,10 +87,11 @@ relations:
   presses **Ask**; "Looking through the meeting…" shows while it runs. Each answer quotes the lines it used ("Line 3
   [Others] …"); clicking one opens the Transcript tab with those lines marked. "The meeting doesn't say." when it
   does not; "The AI named no lines. Check the transcript." when an answer cites none; with no AI the reason shows in place of the question box, before anything is typed. Questions stay while the app runs, per meeting.
-- **From Files**: with meeting notes on, a file or link transcribed on Files & links is also listed on the Meetings
-  page under its file name (no app, no Tôi / Người khác labels, one sentence a line), and its notes are written in the
-  background in the template AI guesses from the transcript (a lecture gets the lecture outline). The template menu
-  can change it, as for a call.
+- **From Files**: with meeting notes on, the result card on Files & links gains **Ghi chú cuộc họp** (Meeting notes).
+  Pressing it lists the file on the Meetings page under its title (no app, no Tôi / Người khác labels, the text as
+  Files wrote it) and writes its notes in the background in the template AI guesses from the transcript (a lecture
+  gets the lecture outline); the card then says "Đã thêm vào Cuộc họp, ghi chú đang được viết." with **Mở Cuộc họp**.
+  Nothing runs unless pressed. The template menu can change it, as for a call.
 - **Errors** (on the bar, with ×): macOS too old; no call app running; already recording; the microphone could not
   open; no speech model; the speech detector did not start.
 

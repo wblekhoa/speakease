@@ -1011,6 +1011,10 @@
     "translate": "Translate to…",
     "translatingInto": "Translating into {{language}}",
     "turnOnAi": "Turn on AI to rewrite and translate",
+    "meetingNotes": "Meeting notes",
+    "meetingNoted": "Added to Meetings; the notes are being written.",
+    "openMeetings": "Open Meetings",
+    "meetingFailed": "Could not add it to Meetings.",
     "openAi": "Open AI & Translate",
     "recent": "Recent files",
     "errors": {

@@ -379,8 +379,8 @@ const MEETINGS = [
     },
   },
   {
-    // A recording brought in from Files: no app, no speaker labels, one
-    // sentence a line; the notes as Apple Intelligence wrote them on 01/11.
+    // A recording brought in from Files ("Meeting notes" on its card): no
+    // app, no speaker labels; the notes as Apple Intelligence wrote them.
     title: "bai-giang-thue-vat.m4a",
     transcript:
       "Chào cả lớp, hôm nay chúng ta học về thuế giá trị gia tăng.\nThuế giá trị gia tăng là thuế tính trên phần giá trị tăng thêm của hàng hoá và dịch vụ.\nỞ Việt Nam, mức thuế phổ biến là mười phần trăm.\nMột số mặt hàng thiết yếu như nước sạch chỉ chịu năm phần trăm.\nVí dụ, một cửa hàng mua áo với giá một trăm nghìn và bán ra một trăm năm mươi nghìn.\nPhần giá trị tăng thêm là năm mươi nghìn, nên thuế phải nộp là năm nghìn đồng.\nDoanh nghiệp được khấu trừ thuế đầu vào khi có hoá đơn hợp lệ.\nTuần sau chúng ta sẽ học cách lập tờ khai thuế hằng tháng.\nCác em về nhà đọc chương ba và làm bài tập số hai.",
@@ -553,6 +553,11 @@ function handle(cmd: string, args: Json): unknown {
       return new URLSearchParams(location.search).has("noai") ? "ai_off" : null;
     case "ask_meeting":
       return mockAsk(String(args.question).toLowerCase());
+    case "note_file_as_meeting":
+      // As meeting.rs `note_file`: listed now, the notes written later.
+      return MEETINGS.some((m) => m.meeting.history_id === args.historyId)
+        ? Promise.reject("exists: already a meeting")
+        : null;
     case "rewrite_meeting_notes": {
       const found = MEETINGS.find(
         (m) => m.meeting.history_id === args.historyId,

@@ -967,35 +967,49 @@ pub mod session {
         transcribe_tracks(app, &[], &recording.others, &recording.dictations)
     }
 
-    /// Whether a recording brought in from Files becomes a meeting too: when
-    /// meeting notes are on (Experimental, macOS 14.2+).
-    pub fn notes_imports(app: &AppHandle) -> bool {
-        crate::settings::app_audio_features_on(&crate::settings::get_settings(app))
-    }
-
     // SE-MEET-008, SE-MEET-019
-    /// A recording brought in from Files or a link, while meeting notes are
-    /// on: listed on the Meetings page under its file name, with no speaker
-    /// labels, and its notes written in the background with the template AI
-    /// guesses from the transcript alone (there is no app to go on).
-    pub fn note_imported(
-        app: &AppHandle,
-        history_id: i64,
-        title: &str,
-        transcript: String,
-        duration_ms: i64,
-    ) {
-        let history = app.state::<Arc<HistoryManager>>().inner().clone();
-        let now = chrono::Utc::now().timestamp();
-        if let Err(e) = history.save_meeting(history_id, title, now, duration_ms) {
-            log::error!("Meeting notes: cannot list the file: {e}");
-            return;
+    /// "Take meeting notes" on a file brought in from Files or a link, while
+    /// meeting notes are on: the entry is listed on the Meetings page under
+    /// its title, with no speaker labels and its text as it is, and its notes
+    /// are written in the background with the template AI guesses from the
+    /// transcript alone (there is no app to go on). Only on the user's ask
+    /// (SE-FILE-002). Errors: "off", "missing: …", "exists".
+    pub async fn note_file(app: &AppHandle, history_id: i64) -> Result<(), String> {
+        if !crate::settings::app_audio_features_on(&crate::settings::get_settings(app)) {
+            return Err("off: meeting notes are off".to_string());
         }
+        let history = app.state::<Arc<HistoryManager>>().inner().clone();
+        if history
+            .get_meeting(history_id)
+            .map_err(|e| e.to_string())?
+            .is_some()
+        {
+            return Err("exists: already a meeting".to_string());
+        }
+        let entry = history
+            .get_entry_by_id(history_id)
+            .await
+            .map_err(|e| e.to_string())?
+            .ok_or_else(|| "missing: no such entry".to_string())?;
+        let duration_ms = hound::WavReader::open(history.get_audio_file_path(&entry.file_name))
+            .map(|wav| wav.duration() as i64 * 1000 / i64::from(wav.spec().sample_rate.max(1)))
+            .unwrap_or(0);
+        history
+            .save_meeting(history_id, &entry.title, entry.timestamp, duration_ms)
+            .map_err(|e| e.to_string())?;
         let _ = app.emit(NOTES_EVENT, history_id);
         let app = app.clone();
         std::thread::spawn(move || {
-            write_notes_for(&app, &history, history_id, &transcript, None, None);
+            write_notes_for(
+                &app,
+                &history,
+                history_id,
+                &entry.transcription_text,
+                None,
+                None,
+            );
         });
+        Ok(())
     }
 
     // SE-MEET-009, SE-MEET-012

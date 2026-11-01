@@ -148,6 +148,15 @@ pub fn rewrite_meeting_notes(app: AppHandle, history_id: i64, kind: String) -> R
     session::rewrite_notes(&app, history_id, kind)
 }
 
+// SE-MEET-019
+/// "Take meeting notes" on a Files entry: lists it as a meeting and writes
+/// its notes in the template AI guesses, in the background.
+#[tauri::command]
+#[specta::specta]
+pub async fn note_file_as_meeting(app: AppHandle, history_id: i64) -> Result<(), String> {
+    session::note_file(&app, history_id).await
+}
+
 // SE-MEET-014
 /// Why no AI can answer right now (`ai_off` / `nothing_available`), or
 /// `None`, so the Q&A says so before a question is typed.

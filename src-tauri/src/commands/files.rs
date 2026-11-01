@@ -494,23 +494,9 @@ pub async fn transcribe_media(
             audio_secs,
             started.elapsed().as_secs_f64()
         );
-        // SE-MEET-019: with meeting notes on, the file is also a meeting,
-        // kept one sentence a line so its lines can be cited.
-        let noted = crate::meeting::session::notes_imports(&app);
-        let text = if noted { sentence_lines(&text) } else { text };
-        let entry = history_manager
-            .save_titled_entry(file_name, title.clone(), text.clone())
-            .map_err(|e| e.to_string())?;
-        if noted {
-            crate::meeting::session::note_imported(
-                &app,
-                entry.id,
-                &title,
-                text,
-                (audio_secs * 1000.0) as i64,
-            );
-        }
-        Ok(entry)
+        history_manager
+            .save_titled_entry(file_name, title, text)
+            .map_err(|e| e.to_string())
     }
     .await;
     let _ = std::fs::remove_dir_all(&scratch);
@@ -668,15 +654,6 @@ pub fn split_for_ai(text: &str, max: usize) -> Vec<String> {
     pieces
 }
 
-/// One sentence a line, as a meeting's transcript is read and cited.
-pub fn sentence_lines(text: &str) -> String {
-    sentences(text)
-        .iter()
-        .map(|sentence| sentence.trim())
-        .collect::<Vec<_>>()
-        .join("\n")
-}
-
 fn sentences(text: &str) -> Vec<&str> {
     let mut out = Vec::new();
     let mut start = 0;
@@ -704,17 +681,6 @@ fn sentences(text: &str) -> Vec<&str> {
 #[cfg(test)]
 mod tests {
     use super::*;
-
-    // SE-MEET-019
-    #[test]
-    fn a_file_kept_as_a_meeting_has_one_sentence_a_line() {
-        let text = "Chào cả lớp. Hôm nay học về thuế VAT! Ai có câu hỏi? Số 3.5 vẫn giữ";
-        assert_eq!(
-            sentence_lines(text),
-            "Chào cả lớp.\nHôm nay học về thuế VAT!\nAi có câu hỏi?\nSố 3.5 vẫn giữ"
-        );
-        assert_eq!(sentence_lines("  một dòng  "), "một dòng");
-    }
 
     // SE-FILE-003
     #[test]

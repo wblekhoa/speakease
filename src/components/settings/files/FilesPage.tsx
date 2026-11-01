@@ -72,6 +72,11 @@ export const FilesPage: React.FC = () => {
   const [link, setLink] = useState("");
   const [dragging, setDragging] = useState(false);
   const [copied, setCopied] = useState(false);
+  // SE-MEET-019: "Meeting notes" on this entry, only when the user asks.
+  const [noted, setNoted] = useState<"idle" | "busy" | "done" | "failed">(
+    "idle",
+  );
+  useEffect(() => setNoted("idle"), [entry?.id]);
   const busy = progress !== null;
   // When the job, the phase and the last finished part began (SE-FILE-005).
   const timing = useRef({
@@ -546,6 +551,43 @@ export const FilesPage: React.FC = () => {
                 )
               }
             />
+            {settings?.experimental_enabled && noted !== "done" && (
+              <Button
+                variant="secondary"
+                size="sm"
+                disabled={busy || noted === "busy"}
+                onClick={async () => {
+                  if (!entry) return;
+                  setNoted("busy");
+                  const result = await commands.noteFileAsMeeting(entry.id);
+                  // Already a meeting counts as done.
+                  setNoted(
+                    result.status === "ok" || result.error.startsWith("exists")
+                      ? "done"
+                      : "failed",
+                  );
+                }}
+              >
+                {t("files.meetingNotes")}
+              </Button>
+            )}
+            {noted === "done" && (
+              <p className="text-xs text-mid-gray" role="status">
+                {t("files.meetingNoted")}{" "}
+                <button
+                  type="button"
+                  onClick={() => openSection("meetings")}
+                  className="text-logo-primary hover:underline cursor-pointer"
+                >
+                  {t("files.openMeetings")}
+                </button>
+              </p>
+            )}
+            {noted === "failed" && (
+              <p className="text-xs text-mid-gray" role="status">
+                {t("files.meetingFailed")}
+              </p>
+            )}
             {!aiOn && (
               <button
                 type="button"

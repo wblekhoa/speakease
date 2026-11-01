@@ -976,6 +976,7 @@ pub fn run(cli_args: CliArgs) {
             commands::meetings::get_meeting,
             commands::meetings::list_meetings,
             commands::meetings::rewrite_meeting_notes,
+            commands::meetings::note_file_as_meeting,
             commands::meetings::ask_meeting,
             commands::meetings::meeting_ai_missing,
             commands::files::write_text_file,

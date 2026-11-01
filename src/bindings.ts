@@ -1200,6 +1200,18 @@ async rewriteMeetingNotes(historyId: number, kind: string) : Promise<Result<null
 }
 },
 /**
+ * "Take meeting notes" on a Files entry: lists it as a meeting and writes
+ * its notes in the template AI guesses, in the background.
+ */
+async noteFileAsMeeting(historyId: number) : Promise<Result<null, string>> {
+    try {
+    return { status: "ok", data: await TAURI_INVOKE("note_file_as_meeting", { historyId }) };
+} catch (e) {
+    if(e instanceof Error) throw e;
+    else return { status: "error", error: e  as any };
+}
+},
+/**
  * One question about a meeting, answered only from its transcript and
  * notes, with the transcript lines it used. Errors: "missing: …", or
  * "no_ai:<reason>" when this Mac has no AI for it.

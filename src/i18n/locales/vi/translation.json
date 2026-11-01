@@ -1011,6 +1011,10 @@
     "translate": "Dịch sang…",
     "translatingInto": "Dịch sang {{language}}",
     "turnOnAi": "Bật AI để viết lại và dịch",
+    "meetingNotes": "Ghi chú cuộc họp",
+    "meetingNoted": "Đã thêm vào Cuộc họp, ghi chú đang được viết.",
+    "openMeetings": "Mở Cuộc họp",
+    "meetingFailed": "Không thêm được vào Cuộc họp.",
     "openAi": "Mở AI & Dịch",
     "recent": "File gần đây",
     "errors": {
