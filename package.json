@@ -20,6 +20,8 @@
     "test:playwright:ui": "playwright test --ui",
     "check:translations": "bun scripts/check-translations.ts",
     "check:model-languages": "bun scripts/check-model-language-coverage.ts",
+    "gate:fast": "npm run -s lint && npm run -s test:unit && npm run -s check:translations && npm run -s check:model-languages && tsc --noEmit -p .",
+    "gate": "npm run -s gate:fast",
     "postinstall": "bun scripts/check-nix-deps.ts"
   },
   "dependencies": {
