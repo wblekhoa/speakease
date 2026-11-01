@@ -524,7 +524,7 @@ pub mod session {
         };
         // SE-MEET-005: both tracks also feed the live panel.
         let (live, live_samples) = crate::meeting_live::session::feed();
-        let mut recorder = match open_microphone(app, Some(live.clone())) {
+        let mut recorder = match open_microphone(app, live.clone()) {
             Ok(recorder) => recorder,
             Err(e) => {
                 clear_running();
@@ -555,7 +555,7 @@ pub mod session {
         let app = app.clone();
         std::thread::spawn(move || {
             let result = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
-                let recording = record(&app, &stop, started, chunks, Some(&live));
+                let recording = record(&app, &stop, started, chunks, &live);
                 drop(tap);
                 crate::meeting_live::session::end(&app);
                 let me = recorder.stop().unwrap_or_default();
@@ -731,21 +731,18 @@ pub mod session {
     /// the whole meeting is kept.
     fn open_microphone(
         app: &AppHandle,
-        live: Option<crate::meeting_live::session::Feed>,
+        live: crate::meeting_live::session::Feed,
     ) -> Result<AudioRecorder, String> {
         let device = app
             .try_state::<Arc<crate::managers::audio::AudioRecordingManager>>()
             .and_then(|audio| audio.meeting_microphone());
-        let mut recorder = AudioRecorder::new().map_err(|e| format!("microphone: {e}"))?;
-        if let Some(live) = live {
-            // Only forwards: capture never waits on the live panel.
-            let live = Mutex::new(live);
-            recorder = recorder.with_audio_callback(move |frame| {
-                if let Ok(live) = live.lock() {
-                    let _ = live.send((true, frame.to_vec()));
-                }
+        // Only forwards (an unbounded channel): capture never waits on the
+        // live panel.
+        let mut recorder = AudioRecorder::new()
+            .map_err(|e| format!("microphone: {e}"))?
+            .with_audio_callback(move |frame| {
+                let _ = live.send((true, frame.to_vec()));
             });
-        }
         recorder
             .open(device)
             .map_err(|e| format!("microphone: {e}"))?;
@@ -768,7 +765,7 @@ pub mod session {
         stop: &AtomicBool,
         started: Instant,
         chunks: std::sync::mpsc::Receiver<crate::system_audio_tap::TapChunk>,
-        live: Option<&crate::meeting_live::session::Feed>,
+        live: &crate::meeting_live::session::Feed,
     ) -> Recording {
         let mut others: Vec<f32> = Vec::new();
         let mut resampler: Option<(f64, FrameResampler)> = None;
@@ -823,9 +820,7 @@ pub mod session {
                 .arrived
                 .saturating_duration_since(started)
                 .as_secs_f64();
-            if let Some(live) = live {
-                let _ = live.send((false, resampled.clone()));
-            }
+            let _ = live.send((false, resampled.clone()));
             place_chunk(&mut others, &resampled, (end * RATE as f64) as usize);
         }
         if let Some(from) = dictating_since {
@@ -954,7 +949,7 @@ pub mod session {
         // The live panel at level 2, so its lines can be measured too.
         let (live, live_samples) = crate::meeting_live::session::feed();
         crate::meeting_live::session::begin(app, started, 2, live_samples);
-        let recording = record(app, &stop, started, chunks, Some(&live));
+        let recording = record(app, &stop, started, chunks, &live);
         drop(tap);
         drop(live);
         // Lines still being recognised.
@@ -1148,6 +1143,14 @@ pub mod session {
             crate::meeting_notes::NoAiReason::AiOff => "ai_off",
             crate::meeting_notes::NoAiReason::NothingAvailable => "nothing_available",
         }
+    }
+
+    /// Why this Mac has no AI for meetings now ("ai_off" or
+    /// "nothing_available"), if it has none.
+    pub(crate) fn ai_missing(app: &AppHandle) -> Option<String> {
+        crate::meeting_notes::engine_for(app)
+            .err()
+            .map(|reason| no_ai_id(reason).to_string())
     }
 
     fn engine_label(engine: &crate::meeting_notes::NotesEngine) -> String {

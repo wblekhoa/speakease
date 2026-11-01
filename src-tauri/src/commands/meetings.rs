@@ -154,9 +154,7 @@ pub fn rewrite_meeting_notes(app: AppHandle, history_id: i64, kind: String) -> R
 #[tauri::command]
 #[specta::specta]
 pub fn meeting_ai_missing(app: AppHandle) -> Option<String> {
-    crate::meeting_notes::engine_for(&app)
-        .err()
-        .map(|reason| session::no_ai_id(reason).to_string())
+    session::ai_missing(&app)
 }
 
 /// One question about a meeting, answered only from its transcript and

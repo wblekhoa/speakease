@@ -60,12 +60,13 @@ relations:
   "Đang ghi âm. Nhớ báo cho mọi người biết nhé." (EN "Recording. Remember to tell everyone."), a timer and **Stop**.
   It asks macOS to keep it out of screen sharing (untested).
 - **Live help** (panel under the bar): **Trợ giúp** (Help) on the pill opens a panel below it, **Ẩn** (Hide) closes
-  it. Its top row picks the level for this meeting: Hẹn giờ (timer only), Lời nói (live transcript, "Tôi" / "Người
+  it. Its top row picks the level for this meeting: Chỉ ghi âm (recording only), Lời nói (live transcript, "Tôi" / "Người
   khác", newest line in view), Bỏ lỡ gì ("Tôi vừa bỏ lỡ gì?" answers from the last 5 minutes), Tóm tắt (a summary after
   the first lines, updated every 2 minutes), Gợi ý (cards: a question to ask, an action item, still open, a term or
-  name, said earlier, a possible answer; a new card shows alone at the top for 4 s). Cards are only shown, never
-  copied or sent. With no AI, levels 3-5 say why and the transcript still runs. The level a meeting starts at is set
-  on Recording ("Trợ giúp trực tiếp khi bắt đầu", Hẹn giờ by default). The consent line may take two lines so it is
+  name, said earlier, a possible answer; a new card shows alone at the top for 4 s, then in the list). Cards are only
+  shown, never copied or sent. With no AI, levels 3-5 say why from the start, "Tôi vừa bỏ lỡ gì?" is greyed out, no
+  summary is promised, and the transcript still runs. A long summary scrolls inside its own card. The level a meeting starts at is set
+  on Recording ("Trợ giúp trực tiếp khi bắt đầu", Chỉ ghi âm by default). The consent line may take two lines so it is
   never cut. After Stop the panel closes and the saved transcript is recognised again from the whole recording.
 - **During the meeting**: dictation works as usual; what is dictated stays in the meeting's transcript, marked.
 - **Ending**: the shortcut, the tray item or **Stop**. The bar then says "Đang chép lời cuộc họp…", then "Đang viết

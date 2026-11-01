@@ -1200,13 +1200,13 @@
       "hide": "Ẩn",
       "level": "Mức trợ giúp trực tiếp",
       "levels": {
-        "1": "Hẹn giờ",
+        "1": "Chỉ ghi âm",
         "2": "Lời nói",
         "3": "Bỏ lỡ gì",
         "4": "Tóm tắt",
         "5": "Gợi ý"
       },
-      "only": "Chỉ ghi âm. Chọn Lời nói trở lên để theo dõi cuộc họp ở đây.",
+      "only": "Chọn Lời nói trở lên để theo dõi cuộc họp ở đây.",
       "listening": "Đang nghe… lời nói hiện ở đây vài giây sau khi được nói.",
       "me": "Tôi",
       "others": "Người khác",

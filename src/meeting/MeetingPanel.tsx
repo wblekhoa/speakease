@@ -16,15 +16,21 @@ type Row =
   | { kind: "line"; at: number; line: LiveLine }
   | { kind: "card"; at: number; card: Suggestion };
 
-/** Lines and suggestion cards in the order they came. */
-const rows = (view: LiveView): Row[] => {
+const cardKey = (card: Suggestion) => `${card.at_ms}|${card.kind}|${card.text}`;
+
+/** Lines and suggestion cards in the order they came; `fresh` cards show
+ *  only at the top until they fold in. */
+const rows = (view: LiveView, fresh: Suggestion[]): Row[] => {
   const all: Row[] = view.lines.map((line) => ({
     kind: "line",
     at: line.at_ms,
     line,
   }));
   if (view.level >= 5) {
+    // Each live event carries new objects, so cards are matched by content.
+    const shown = new Set(fresh.map(cardKey));
     for (const card of view.suggestions) {
+      if (shown.has(cardKey(card))) continue;
       all.push({ kind: "card", at: card.at_ms, card });
     }
   }
@@ -42,17 +48,24 @@ export const MeetingPanel: React.FC<{ view: LiveView }> = ({ view }) => {
   const [catchUp, setCatchUp] = useState<string | null>(null);
   const [catching, setCatching] = useState(false);
   const [fresh, setFresh] = useState<Suggestion[]>([]);
-  const seen = useRef(view.suggestions.length);
+  const seen = useRef(new Set(view.suggestions.map(cardKey)));
 
   // A new suggestion first shows on its own, then folds into the list.
+  // Matched by content: the oldest cards drop off once 30 are kept.
   useEffect(() => {
-    const added = view.suggestions.slice(seen.current);
-    seen.current = view.suggestions.length;
-    if (level < 5 || added.length === 0) return;
-    setFresh(added);
+    const added = view.suggestions.filter(
+      (card) => !seen.current.has(cardKey(card)),
+    );
+    seen.current = new Set(view.suggestions.map(cardKey));
+    if (level >= 5 && added.length > 0) setFresh(added);
+  }, [view.suggestions, level]);
+
+  // Its own timer, so new lines arriving meanwhile do not keep it up.
+  useEffect(() => {
+    if (fresh.length === 0) return;
     const timer = window.setTimeout(() => setFresh([]), FRESH_MS);
     return () => window.clearTimeout(timer);
-  }, [view.suggestions, level]);
+  }, [fresh]);
 
   // The newest line stays in view unless the user scrolled back; the
   // panel opens at the newest line.
@@ -118,8 +131,8 @@ export const MeetingPanel: React.FC<{ view: LiveView }> = ({ view }) => {
         <p className="mp-note">{t(`meeting.live.noAi.${view.ai_missing}`)}</p>
       )}
 
-      {level >= 4 && (
-        <div className="mp-card">
+      {level >= 4 && !view.ai_missing && (
+        <div className="mp-card mp-summary">
           <h3 className="mp-card-title">{t("meeting.live.summary")}</h3>
           <p className="mp-card-text">
             {view.summary ?? t("meeting.live.summaryWaiting")}
@@ -132,7 +145,7 @@ export const MeetingPanel: React.FC<{ view: LiveView }> = ({ view }) => {
           <button
             type="button"
             className="mb-no"
-            disabled={catching}
+            disabled={catching || view.ai_missing != null}
             onClick={askCatchUp}
           >
             {t("meeting.live.catchUp")}
@@ -150,8 +163,8 @@ export const MeetingPanel: React.FC<{ view: LiveView }> = ({ view }) => {
 
       {level >= 5 && fresh.length > 0 && (
         <ul className="mp-fresh" aria-live="polite">
-          {fresh.map((card, i) => (
-            <li key={i} className="mp-suggestion mp-suggestion-new">
+          {fresh.map((card) => (
+            <li key={cardKey(card)} className="mp-suggestion mp-suggestion-new">
               <span className="mp-kind">
                 {t(`meeting.live.kinds.${card.kind}`)}
               </span>
@@ -166,16 +179,19 @@ export const MeetingPanel: React.FC<{ view: LiveView }> = ({ view }) => {
           {view.lines.length === 0 && (
             <li className="mp-note">{t("meeting.live.listening")}</li>
           )}
-          {rows(view).map((row, i) =>
+          {rows(view, fresh).map((row) =>
             row.kind === "line" ? (
-              <li key={i} className="mp-line">
+              <li
+                key={`l|${row.at}|${row.line.me}|${row.line.text}`}
+                className="mp-line"
+              >
                 <span className="mp-who">
                   {t(row.line.me ? "meeting.live.me" : "meeting.live.others")}
                 </span>{" "}
                 {row.line.text}
               </li>
             ) : (
-              <li key={i} className="mp-suggestion">
+              <li key={cardKey(row.card)} className="mp-suggestion">
                 <span className="mp-kind">
                   {t(`meeting.live.kinds.${row.card.kind}`)}
                 </span>

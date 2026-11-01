@@ -152,6 +152,7 @@ const KINDS: [&str; 6] = [
 /// Reads `kind: text` lines; anything else (unknown kinds, "none", chatter)
 /// is dropped.
 pub fn parse_suggestions(reply: &str, at_ms: u32) -> Vec<Suggestion> {
+    let mut seen = std::collections::HashSet::new();
     reply
         .lines()
         .filter_map(|line| {
@@ -169,6 +170,8 @@ pub fn parse_suggestions(reply: &str, at_ms: u32) -> Vec<Suggestion> {
                 at_ms,
             })
         })
+        // The same card twice in one reply is shown once.
+        .filter(|card| seen.insert((card.kind.clone(), card.text.clone())))
         .take(4)
         .collect()
 }
@@ -193,7 +196,7 @@ pub mod session {
     use crate::live_subtitles::{Segment, Segmenter, FRAME_SAMPLES};
     use crate::managers::transcription::TranscriptionManager;
     use crate::meeting_notes::{EngineAi, NotesAi};
-    use std::sync::atomic::{AtomicBool, AtomicU8, Ordering};
+    use std::sync::atomic::{AtomicU64, AtomicU8, Ordering};
     use std::sync::mpsc::{channel, Receiver, Sender};
     use std::sync::{Arc, Mutex};
     use std::time::{Duration, Instant};
@@ -201,7 +204,9 @@ pub mod session {
 
     static VIEW: Mutex<Option<LiveView>> = Mutex::new(None);
     static LEVEL: AtomicU8 = AtomicU8::new(MIN_LEVEL);
-    static RUNNING: AtomicBool = AtomicBool::new(false);
+    /// The meeting the live work belongs to; [`begin`] and [`end`] move it
+    /// on, so threads of an earlier meeting stop and never write here.
+    static MEETING: AtomicU64 = AtomicU64::new(0);
     static STARTED: Mutex<Option<Instant>> = Mutex::new(None);
 
     /// 16 kHz samples from one track: `true` for the microphone.
@@ -213,30 +218,44 @@ pub mod session {
         channel()
     }
 
+    fn empty_view() -> LiveView {
+        LiveView {
+            level: LEVEL.load(Ordering::Relaxed),
+            ..LiveView::default()
+        }
+    }
+
     /// The panel's state now.
     pub fn view() -> LiveView {
         VIEW.lock()
             .ok()
             .and_then(|v| v.clone())
-            .unwrap_or(LiveView {
-                level: LEVEL.load(Ordering::Relaxed),
-                ..LiveView::default()
-            })
+            .unwrap_or_else(empty_view)
     }
 
-    fn update(app: &AppHandle, change: impl FnOnce(&mut LiveView)) {
+    fn alive(meeting: u64) -> bool {
+        MEETING.load(Ordering::SeqCst) == meeting
+    }
+
+    /// Changes the panel's state, unless `meeting` has ended.
+    fn update(app: &AppHandle, meeting: u64, change: impl FnOnce(&mut LiveView)) {
         let view = {
             let Ok(mut slot) = VIEW.lock() else {
                 return;
             };
-            let view = slot.get_or_insert_with(|| LiveView {
-                level: LEVEL.load(Ordering::Relaxed),
-                ..LiveView::default()
-            });
+            // Checked under the lock [`end`] clears the view under.
+            if !alive(meeting) {
+                return;
+            }
+            let view = slot.get_or_insert_with(empty_view);
             change(view);
             view.clone()
         };
         let _ = app.emit(LIVE_EVENT, &view);
+    }
+
+    fn current() -> u64 {
+        MEETING.load(Ordering::SeqCst)
     }
 
     fn now_ms() -> u64 {
@@ -251,7 +270,7 @@ pub mod session {
     /// Starts the live work for a meeting that started at `started`, at the
     /// level set in Settings, reading both tracks from `samples`.
     pub fn begin(app: &AppHandle, started: Instant, level: u8, samples: Samples) {
-        RUNNING.store(true, Ordering::Relaxed);
+        let meeting = MEETING.fetch_add(1, Ordering::SeqCst) + 1;
         LEVEL.store(clamp_level(level), Ordering::Relaxed);
         if let Ok(mut s) = STARTED.lock() {
             *s = Some(started);
@@ -259,7 +278,12 @@ pub mod session {
         if let Ok(mut v) = VIEW.lock() {
             *v = None;
         }
-        update(app, |view| view.level = clamp_level(level));
+        // Levels 3-5 say why there is no AI before anything asks it.
+        let missing = crate::meeting::session::ai_missing(app);
+        update(app, meeting, |view| {
+            view.level = clamp_level(level);
+            view.ai_missing = missing;
+        });
         let (work, segments) = channel::<(bool, Segment)>();
 
         // Cuts both tracks into lines (VAD + the subtitle segmenter).
@@ -273,6 +297,9 @@ pub mod session {
         std::thread::spawn(move || {
             let mut tracks: Vec<Option<(SileroVad, Segmenter, Vec<f32>)>> = vec![None, None];
             for (me, chunk) in samples {
+                if !alive(meeting) {
+                    return;
+                }
                 let slot = &mut tracks[me as usize];
                 if LEVEL.load(Ordering::Relaxed) < 2 {
                     // Recording only: nothing is recognised live.
@@ -280,9 +307,16 @@ pub mod session {
                     continue;
                 }
                 if slot.is_none() {
-                    let Some(vad) = vad_path.as_ref().and_then(|p| SileroVad::new(p, 0.5).ok())
-                    else {
-                        continue;
+                    let vad = match vad_path.as_ref().map(|p| SileroVad::new(p, 0.5)) {
+                        Some(Ok(vad)) => vad,
+                        Some(Err(e)) => {
+                            log::error!("Live help: the speech detector did not start: {e}");
+                            return;
+                        }
+                        None => {
+                            log::error!("Live help: the speech detector's model is missing");
+                            return;
+                        }
                     };
                     *slot = Some((vad, Segmenter::new(), Vec::new()));
                 }
@@ -310,28 +344,36 @@ pub mod session {
         std::thread::spawn(move || {
             let tm = handle.state::<Arc<TranscriptionManager>>().inner().clone();
             let model_id = crate::settings::get_settings(&handle).selected_model;
+            if model_id.is_empty() {
+                log::warn!("Live help: no speech model selected, so no live text");
+                return;
+            }
             for (me, segment) in segments {
-                if !RUNNING.load(Ordering::Relaxed) {
+                if !alive(meeting) {
                     break;
                 }
-                if model_id.is_empty() {
-                    continue;
-                }
-                if !tm.is_model_loaded() && tm.load_model_with_device(&model_id, None).is_err() {
-                    continue;
+                if !tm.is_model_loaded() {
+                    if let Err(e) = tm.load_model_with_device(&model_id, None) {
+                        log::error!("Live help: the speech model did not load: {e}");
+                        continue;
+                    }
                 }
                 let audio_ms = (segment.samples.len() as u64 * 1000) / 16_000;
                 let ended =
                     now_ms().saturating_sub(segment.speech_end.elapsed().as_millis() as u64);
-                let Ok(text) = tm.transcribe(segment.samples) else {
-                    continue;
+                let text = match tm.transcribe(segment.samples) {
+                    Ok(text) => text,
+                    Err(e) => {
+                        log::warn!("Live help: a line was not recognised: {e}");
+                        continue;
+                    }
                 };
                 let text = text.trim().to_string();
                 if text.is_empty() {
                     continue;
                 }
                 let at_ms = ended.saturating_sub(audio_ms) as u32;
-                update(&handle, |view| {
+                update(&handle, meeting, |view| {
                     let line = LiveLine { at_ms, me, text };
                     let place = view.lines.partition_point(|l| l.at_ms <= at_ms);
                     view.lines.insert(place, line);
@@ -344,9 +386,16 @@ pub mod session {
         std::thread::spawn(move || {
             let mut last: Option<u64> = None;
             let mut seen = 0usize;
-            while RUNNING.load(Ordering::Relaxed) {
+            while alive(meeting) {
                 std::thread::sleep(Duration::from_secs(5));
                 let level = LEVEL.load(Ordering::Relaxed);
+                // AI turned on mid-meeting brings "What did I miss?" back.
+                if level >= 3
+                    && view().ai_missing.is_some()
+                    && crate::meeting::session::ai_missing(&handle).is_none()
+                {
+                    update(&handle, meeting, |view| view.ai_missing = None);
+                }
                 if level < 4 {
                     continue;
                 }
@@ -357,20 +406,25 @@ pub mod session {
                 }
                 last = Some(now);
                 seen = lines.len();
-                let summary =
-                    tauri::async_runtime::block_on(write(&handle, &lines, summary_instructions));
+                let summary = tauri::async_runtime::block_on(ask_ai(
+                    &handle,
+                    meeting,
+                    &lines,
+                    summary_instructions,
+                ));
                 if let Ok(summary) = summary {
-                    update(&handle, |view| view.summary = Some(summary));
+                    update(&handle, meeting, |view| view.summary = Some(summary));
                 }
                 if LEVEL.load(Ordering::Relaxed) >= 5 {
-                    let reply = tauri::async_runtime::block_on(write(
+                    let reply = tauri::async_runtime::block_on(ask_ai(
                         &handle,
+                        meeting,
                         &lines,
                         suggestion_instructions,
                     ));
                     if let Ok(reply) = reply {
                         let cards = parse_suggestions(&reply, now as u32);
-                        update(&handle, |view| {
+                        update(&handle, meeting, |view| {
                             view.suggestions.extend(cards);
                             let extra = view.suggestions.len().saturating_sub(MAX_SUGGESTIONS);
                             view.suggestions.drain(..extra);
@@ -382,8 +436,9 @@ pub mod session {
     }
 
     /// Asks the notes engine about `lines`; records why when there is no AI.
-    async fn write(
+    async fn ask_ai(
         app: &AppHandle,
+        meeting: u64,
         lines: &[LiveLine],
         instructions: fn(Lang) -> String,
     ) -> Result<String, String> {
@@ -391,10 +446,13 @@ pub mod session {
             Ok(engine) => engine,
             Err(reason) => {
                 let id = crate::meeting::session::no_ai_id(reason).to_string();
-                update(app, |view| view.ai_missing = Some(id.clone()));
+                update(app, meeting, |view| view.ai_missing = Some(id.clone()));
                 return Err(format!("no_ai:{id}"));
             }
         };
+        if view().ai_missing.is_some() {
+            update(app, meeting, |view| view.ai_missing = None);
+        }
         let labels = crate::meeting::labels(&crate::settings::get_settings(app).app_language);
         let text = lines_text(lines, labels.me, labels.others, LIVE_WORDS);
         let ai = EngineAi {
@@ -414,27 +472,27 @@ pub mod session {
         if recent.is_empty() {
             return Err("empty: nothing said yet".to_string());
         }
-        write(app, &recent, catch_up_instructions).await
+        ask_ai(app, current(), &recent, catch_up_instructions).await
     }
 
     /// The pill's level buttons: for this meeting only.
     pub fn set_level(app: &AppHandle, level: u8) {
         let level = clamp_level(level);
         LEVEL.store(level, Ordering::Relaxed);
-        update(app, |view| view.level = level);
+        update(app, current(), |view| view.level = level);
     }
 
     // SE-MEET-016
     /// Opens or closes the panel under the pill.
     pub fn set_panel(app: &AppHandle, open: bool) {
-        update(app, |view| view.panel_open = open);
+        update(app, current(), |view| view.panel_open = open);
         crate::meeting_window::set_panel(app, open);
     }
 
     /// The meeting stopped: live work ends and the panel closes; the
     /// accurate transcript comes from the whole recording.
     pub fn end(app: &AppHandle) {
-        RUNNING.store(false, Ordering::Relaxed);
+        MEETING.fetch_add(1, Ordering::SeqCst);
         crate::meeting_window::set_panel(app, false);
         if let Ok(mut v) = VIEW.lock() {
             *v = None;
@@ -525,6 +583,8 @@ mod tests {
         assert!(parse_suggestions("none", 0).is_empty());
         let many = "question: a\nquestion: b\nquestion: c\nquestion: d\nquestion: e";
         assert_eq!(parse_suggestions(many, 0).len(), 4);
+        let twice = "question: a\n- question: a\naction: a";
+        assert_eq!(parse_suggestions(twice, 0).len(), 2);
     }
 
     #[test]

@@ -16,25 +16,33 @@ repo; each cites its source.
 
 ## 2026-11-01 · Meeting notes phase 4b: live help under the bar, choices made by AI under the owner's overnight delegation
 
-- **Context**: SE-MEET-005 (levels 2-5), 007 and 016; the owner's "Tiếp tục hoàn thiện app nhé", relayed 01/11.
+- **Context**: SE-MEET-005 (levels 2-5), 006, 007 and 016; the owner's "Tiếp tục hoàn thiện app nhé", relayed 01/11.
 - **Chosen by AI under the owner's overnight delegation**:
   - The panel is the meeting bar's own window grown to 540 x 504, not a second window: it keeps the bar's no-focus
     behaviour and its screen-sharing exclusion (SE-MEET-017) with no new code.
-  - **(Differs from the spec's "fast model while live")**: live text uses the model the user selected, as live
-    subtitles do. The app loads one recognition model at a time, and loading a second, fast one would unload the
-    dictation model mid-meeting. After the stop the whole recording is recognised again and that transcript is saved.
   - Lines are cut with the live subtitles' segmenter (short lines at pauses); VAD and recognition run on their own
     threads fed by a channel, so the recording loop and the microphone callback only forward samples.
   - Level 1 is the default in Settings (no live recognition, no AI), so nothing heavier runs until the user picks it.
   - "What did I miss?" covers 5 minutes; the summary waits for 4 lines, then is written again every 2 minutes when
     something new was said; suggestions follow each summary at level 5, at most 4 at a time, 30 kept.
   - Levels 3-5 use the notes engine order (Apple Intelligence → key → on-device) with the meeting fenced as data.
+- **Departure from a DECIDED spec row, waiting for the owner** (not a delegated choice): the spec says "Fast model
+  while live; the accurate model re-runs the whole recording after it ends". Built instead: live text uses the model
+  the user selected, as live subtitles do, because the app loads one recognition model at a time and a second, fast
+  one would unload the dictation model mid-meeting; the re-run after the stop also uses the selected model, not the
+  SE-REC-006 Vietnamese pick. SE-MEET-006 stays `not built` until the owner accepts this or a two-model build lands.
 - **Evidence**: `src-tauri/src/meeting_live.rs` tests; a muted `--meeting-probe` on a 41 s Vietnamese file gave 11
   live lines, every word right; the panel at 540 x 504 in the browser preview.
-- **Not measured**: levels 3-5 with a real engine; heat and battery over an hour at levels 2, 4 and 5; dictation
-  speed while live recognition shares the model; the panel in the running app.
-- **Reverse**: set the default level to 1 and drop the Help button; `meeting_live::session::begin` then never
-  recognises anything.
+- **Not measured**: levels 3-5 with a real engine; heat and battery over an hour at levels 2, 4 and 5; live delay
+  and Vietnamese word error rate of the live text against the re-run (spec Acceptance); dictation speed while live
+  recognition shares the model; the panel in the running app.
+- **Known limits** (shared with live subtitles and the re-run after the stop, which recognise the same way): each line
+  goes through the dictation pipeline, so the language it came out in becomes the next dictation's first try, "unload
+  immediately" reloads the model for every line, translate-to-English and custom words apply, and a dictation waits
+  behind a line being recognised (up to 6 s). A line's time is about half a second early. A meeting's live threads
+  stop working at Stop (they close with the recording) and can never write into the next meeting's panel.
+- **Reverse**: drop the Help button and the "Live help at the start" setting; with the level stuck at 1,
+  `meeting_live::session::begin` never recognises anything and never calls the AI.
 
 ## 2026-11-01 · Meeting notes phase 5: asking when a call starts, choices made by AI under the owner's overnight delegation
 

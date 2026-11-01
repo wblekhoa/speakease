@@ -380,9 +380,7 @@ const MEETINGS = [
   },
 ];
 
-// As meeting_ask.rs, after a moment: an answer with the lines it used;
-// "ngân sách" is not in the meeting, "tắt" is AI switched off, "dòng" an
-// answer that cites no line.
+// As meeting_live.rs: the live panel at `?level=`, with AI off under `?noai`.
 function mockLive() {
   const params = new URLSearchParams(location.search);
   const level = Number(params.get("level") ?? "2");
@@ -407,16 +405,18 @@ function mockLive() {
     ],
     [29800, true, "Nhưng mình chưa chốt việc này, tuần sau bàn tiếp."],
   ].map(([at_ms, me, text]) => ({ at_ms, me, text }));
+  // With no AI there is no summary and there are no suggestions.
+  const ai = !params.has("noai");
   return {
     level,
     panel_open: params.has("panel"),
     lines,
     summary:
-      level >= 4
+      ai && level >= 4
         ? "- Ra mắt 15/11.\n- Thiết kế xong màn đăng ký; thanh toán cần thêm một tuần.\n- Giảm giá 20% chưa chốt."
         : null,
     suggestions:
-      level >= 5
+      ai && level >= 5
         ? [
             {
               kind: "question",
@@ -430,10 +430,13 @@ function mockLive() {
             },
           ]
         : [],
-    ai_missing: params.has("noai") ? "ai_off" : null,
+    ai_missing: ai ? null : "ai_off",
   };
 }
 
+// As meeting_ask.rs, after a moment: an answer with the lines it used;
+// "ngân sách" is not in the meeting, "tắt" is AI switched off, "dòng" an
+// answer that cites no line.
 async function mockAsk(question: string) {
   await new Promise((resolve) => setTimeout(resolve, 1200));
   if (question.includes("tắt")) throw "no_ai:ai_off";

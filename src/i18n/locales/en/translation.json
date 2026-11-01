@@ -1200,13 +1200,13 @@
       "hide": "Hide",
       "level": "Live help level",
       "levels": {
-        "1": "Timer",
+        "1": "Record only",
         "2": "Transcript",
         "3": "Catch up",
         "4": "Summary",
         "5": "Suggestions"
       },
-      "only": "Recording only. Choose Transcript or higher to follow the meeting here.",
+      "only": "Choose Transcript or higher to follow the meeting here.",
       "listening": "Listening… lines show here a few seconds after they are said.",
       "me": "Me",
       "others": "Others",
