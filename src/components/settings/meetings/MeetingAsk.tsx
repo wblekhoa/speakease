@@ -28,7 +28,8 @@ export const MeetingAsk: React.FC<{
   const { t } = useTranslation();
   const [question, setQuestion] = useState("");
   const [asking, setAsking] = useState(false);
-  // The newest answer (or the "looking" line) stays in view.
+  // Beside the meeting the list scrolls on its own; the newest answer (or the
+  // "looking" line) stays in view. Stacked, the page scrolls instead.
   const list = useRef<HTMLOListElement>(null);
   useEffect(() => {
     list.current?.scrollTo({ top: list.current.scrollHeight });
@@ -59,7 +60,10 @@ export const MeetingAsk: React.FC<{
     <aside className="w-full flex-none space-y-3 @5xl:w-72">
       <h3 className="text-sm font-semibold">{t("meeting.page.ask.title")}</h3>
       <p className="text-sm text-mid-gray">{t("meeting.page.ask.hint")}</p>
-      <ol ref={list} className="max-h-[60vh] space-y-3 overflow-y-auto">
+      <ol
+        ref={list}
+        className="space-y-3 @5xl:max-h-[60vh] @5xl:overflow-y-auto"
+      >
         {exchanges.map((exchange, i) => (
           <li
             key={i}

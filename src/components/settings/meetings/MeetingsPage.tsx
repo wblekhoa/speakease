@@ -139,17 +139,16 @@ export const MeetingsPage: React.FC = () => {
             historyId={entry.meeting.history_id}
             transcript={entry.transcript}
             exchanges={chats[entry.meeting.history_id] ?? []}
-            onExchanges={(update) =>
-              setChats((all) => {
-                askedSoFar = {
-                  ...all,
-                  [entry.meeting.history_id]: update(
-                    all[entry.meeting.history_id] ?? [],
-                  ),
-                };
-                return askedSoFar;
-              })
-            }
+            onExchanges={(update) => {
+              // Written here, not in a state updater: an answer that arrives
+              // after the page closed must still be kept.
+              const id = entry.meeting.history_id;
+              askedSoFar = {
+                ...askedSoFar,
+                [id]: update(askedSoFar[id] ?? []),
+              };
+              setChats(askedSoFar);
+            }}
             onShowLines={(lines, line) => {
               setCited({ lines, line });
               setTab("transcript");
