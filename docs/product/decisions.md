@@ -14,6 +14,25 @@ tags: [area/docs]
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
 
+## 2026-11-01 · Meeting notes: recordings from Files, choices made by AI under the owner's overnight delegation
+
+- **Context**: SE-MEET-008, 010 and 019 ("File: AI guesses the kind and uses its template"); the spec decides the
+  template, not when a file becomes a meeting. The owner's "Tiếp tục hoàn thiện app nhé", relayed 01/11.
+- **Chosen by AI under the owner's overnight delegation**:
+  - Every file or link transcribed on Files & links becomes a meeting too while meeting notes are on (Experimental,
+    macOS 14.2+), as a call becomes one after Stop; no extra button. Links count, as they are the same job.
+  - It is listed under its file name (stored as the meeting's app name, so nothing is translated in the database);
+    the guess gets no app, only the transcript.
+  - Its text is kept one sentence a line (Files only, with meeting notes on), so the transcript tab and answers to
+    questions can cite lines; a long file otherwise comes out as one paragraph.
+  - The notes are written on a thread of their own after the entry is saved, so Files returns as before; a quit
+    while they are written is settled at the next start, as for a call.
+- **Evidence**: `src-tauri/src/commands/files.rs` (`a_file_kept_as_a_meeting_has_one_sentence_a_line`);
+  `handy --meeting-notes` with no app (Apple Intelligence) guessed a Vietnamese lecture and an interview right and
+  wrote each template; the file meeting on the Meetings page in the browser preview.
+- **Not measured**: a real file through Files & links in the running app; a long file (over an hour).
+- **Reverse**: make `meeting::session::notes_imports` return false; Files then saves as before.
+
 ## 2026-11-01 · Meeting notes phase 4b: live help under the bar, choices made by AI under the owner's overnight delegation
 
 - **Context**: SE-MEET-005 (levels 2-5), 006, 007 and 016; the owner's "Tiếp tục hoàn thiện app nhé", relayed 01/11.

@@ -378,6 +378,24 @@ const MEETINGS = [
       notes_engine: "apple",
     },
   },
+  {
+    // A recording brought in from Files: no app, no speaker labels, one
+    // sentence a line; the notes as Apple Intelligence wrote them on 01/11.
+    title: "bai-giang-thue-vat.m4a",
+    transcript:
+      "Chào cả lớp, hôm nay chúng ta học về thuế giá trị gia tăng.\nThuế giá trị gia tăng là thuế tính trên phần giá trị tăng thêm của hàng hoá và dịch vụ.\nỞ Việt Nam, mức thuế phổ biến là mười phần trăm.\nMột số mặt hàng thiết yếu như nước sạch chỉ chịu năm phần trăm.\nVí dụ, một cửa hàng mua áo với giá một trăm nghìn và bán ra một trăm năm mươi nghìn.\nPhần giá trị tăng thêm là năm mươi nghìn, nên thuế phải nộp là năm nghìn đồng.\nDoanh nghiệp được khấu trừ thuế đầu vào khi có hoá đơn hợp lệ.\nTuần sau chúng ta sẽ học cách lập tờ khai thuế hằng tháng.\nCác em về nhà đọc chương ba và làm bài tập số hai.",
+    meeting: {
+      history_id: 37,
+      app_name: "bai-giang-thue-vat.m4a",
+      started_at: localSeconds(2026, 10, 27, 9, 0),
+      duration_ms: 3 * 60_000,
+      kind: "lecture",
+      notes:
+        "## Dàn ý theo chủ đề\n\n## Khái niệm và định nghĩa\n- Thuế giá trị gia tăng: thuế tính trên phần giá trị tăng thêm của hàng hoá và dịch vụ.\n- Mức thuế phổ biến ở Việt Nam: mười phần trăm.\n- Mặt hàng thiết yếu như nước sạch: chịu năm phần trăm.\n\n## Ví dụ được nêu\n- Cửa hàng mua áo giá một trăm nghìn, bán ra một trăm năm mươi nghìn; phần giá trị tăng thêm là năm mươi nghìn, thuế nộp là năm nghìn đồng.\n\n## Câu hỏi ôn tập\n- Làm thế nào để tính thuế giá trị gia tăng?\n- Phần giá trị tăng thêm được tính dựa trên giá mua và giá bán; thuế nộp bằng phần giá trị tăng thêm nhân với mức thuế.",
+      notes_state: "done",
+      notes_engine: "apple",
+    },
+  },
 ];
 
 // As meeting_live.rs: the live panel at `?level=`, with AI off under `?noai`.

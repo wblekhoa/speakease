@@ -2,7 +2,7 @@
 status: executing
 owner: Lê Khoa
 started: 2026-10-31
-current-phase: 4b
+current-phase: files
 summary: "Build meeting notes (SE-MEET-001…019) in five phases, starting with a testable notes pipeline and a hidden CLI that turns a recording or transcript into notes."
 tags: [area/ai, area/audio, area/capture, stack/rust]
 ---
@@ -112,6 +112,6 @@ Chosen by AI under the owner's overnight delegation (31/10) - for the owner to r
 
 ## Next safe step
 
-Phases 1-3, 4a and 5 are on `main` (185cc1d #2, 48eae09 #3, da9b198 #4, eac9dda #5, c11999b #6, all
-wblekhoa/speakease). Phase 4b (the live panel) on branch `claude/meeting-notes-p4b`; then recordings from Files with
-the template AI guesses.
+Phases 1-5 are on `main` (185cc1d #2, 48eae09 #3, da9b198 #4, eac9dda #5, c11999b #6, b8733f0 #7, all
+wblekhoa/speakease); recordings from Files on branch `claude/meeting-notes-files`. Left for the owner: .docx (a new
+dependency), the SE-MEET-006 departure (selected model while live), a real call to measure, releases.

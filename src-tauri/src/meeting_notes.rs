@@ -913,6 +913,9 @@ mod tests {
             }
         }
         assert!(guess_instructions(Some("Zoom")).contains(NO_OBEY_EN));
+        // A file brought in has no app: the guess reads the transcript only.
+        assert!(guess_instructions(Some("Zoom")).contains("<app>Zoom</app>"));
+        assert!(!guess_instructions(None).contains("<app>"));
         assert_eq!(fence("notes", " a "), "<notes>\na\n</notes>");
     }
 

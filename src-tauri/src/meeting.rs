@@ -967,6 +967,37 @@ pub mod session {
         transcribe_tracks(app, &[], &recording.others, &recording.dictations)
     }
 
+    /// Whether a recording brought in from Files becomes a meeting too: when
+    /// meeting notes are on (Experimental, macOS 14.2+).
+    pub fn notes_imports(app: &AppHandle) -> bool {
+        crate::settings::app_audio_features_on(&crate::settings::get_settings(app))
+    }
+
+    // SE-MEET-008, SE-MEET-019
+    /// A recording brought in from Files or a link, while meeting notes are
+    /// on: listed on the Meetings page under its file name, with no speaker
+    /// labels, and its notes written in the background with the template AI
+    /// guesses from the transcript alone (there is no app to go on).
+    pub fn note_imported(
+        app: &AppHandle,
+        history_id: i64,
+        title: &str,
+        transcript: String,
+        duration_ms: i64,
+    ) {
+        let history = app.state::<Arc<HistoryManager>>().inner().clone();
+        let now = chrono::Utc::now().timestamp();
+        if let Err(e) = history.save_meeting(history_id, title, now, duration_ms) {
+            log::error!("Meeting notes: cannot list the file: {e}");
+            return;
+        }
+        let _ = app.emit(NOTES_EVENT, history_id);
+        let app = app.clone();
+        std::thread::spawn(move || {
+            write_notes_for(&app, &history, history_id, &transcript, None, None);
+        });
+    }
+
     // SE-MEET-009, SE-MEET-012
     /// Writes a meeting's notes with the engine this Mac has and stores them;
     /// `kind` None lets the AI pick the template.
