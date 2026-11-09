@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — Files (UX)"
 status: active
-updated: 2026-10-15
+updated: 2026-11-10
 summary: "How a user turns an audio or video file, or a link, into text and then rewrites or translates it on the Files & links page, with progress that never stalls."
 tags: [area/audio, area/data-import, area/translation, stack/react]
 relations:
@@ -61,12 +61,12 @@ relations:
 
 ## Screens and states
 
-| Screen        | States                                                                       | Entry                      | Exit / next                            |
-| ------------- | ---------------------------------------------------------------------------- | -------------------------- | -------------------------------------- |
-| Drop area     | empty (large) · with a result (short band) · file dragged over (highlighted) | sidebar › Files            | a file or link starts a job            |
-| Progress card | downloading · reading · transcribing (parts) · AI (parts)                    | a job starts               | result · error toast · Cancel          |
-| Result card   | original only · AI version + original · AI off (menus greyed)                | job done, or a recent file | Copy · Save .txt · Rewrite · Translate |
-| History card  | folded (6 lines) · expanded                                                  | sidebar › History          | Show all / Show less                   |
+| Screen        | State ID | States                                                                       | Entry                      | Exit / next                            |
+| ------------- |---| ---------------------------------------------------------------------------- | -------------------------- | -------------------------------------- |
+| Drop area     | state:files/empty · state:files/with-result · state:files/drag-over | empty (large) · with a result (short band) · file dragged over (highlighted) | sidebar › Files            | a file or link starts a job            |
+| Progress card | state:files/downloading · state:files/reading · state:files/transcribing · state:files/ai | downloading · reading · transcribing (parts) · AI (parts)                    | a job starts               | result · error toast · Cancel          |
+| Result card   | state:files/result-original · state:files/result-ai · state:files/result-ai-off | original only · AI version + original · AI off (menus greyed)                | job done, or a recent file | Copy · Save .txt · Rewrite · Translate |
+| History card  | state:history/card-folded · state:history/card-expanded | folded (6 lines) · expanded                                                  | sidebar › History          | Show all / Show less                   |
 
 ## Flow
 
@@ -98,3 +98,4 @@ flowchart LR
 - 2026-10-15: drop on any page, a line of files, refused AI pieces kept with a notice.
 - 2026-10-14: progress keeps moving and shows elapsed time and time left.
 - 2026-10-14: created with the first version of Files.
+- 2026-11-10: "State ID" column cites the state registry.

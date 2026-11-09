@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — App shell (UX)"
 status: active
-updated: 2026-10-14
+updated: 2026-11-10
 summary: "The window around the features: the side column (sections, fold and resize by drag, language menu), the App page, tray and app-menu entries, updates and first launch."
 tags: [area/layout, area/updater, area/i18n, surface/macos]
 relations:
@@ -70,13 +70,13 @@ relations:
 
 ## Screens and states
 
-| Screen                | States                                                                 | Entry                           | Exit / next                        |
-| --------------------- | ---------------------------------------------------------------------- | ------------------------------- | ---------------------------------- |
-| Side column           | open (180-320 px) · folded rail · dragging · rubber band               | always shown with the window    | a section                          |
-| App page              | experimental off · experimental on (extra rows)                        | sidebar › App                   | another section                    |
-| Footer update control | idle · checking · up to date · update available · downloading · failed | launch check, menu, tray        | relaunch into the new version      |
-| Permissions step      | waiting · Accessibility granted · Microphone granted · both granted    | first launch; a permission lost | model step (new) / app (returning) |
-| Model step            | choosing · download started                                            | first launch after permissions  | Speak page                         |
+| Screen                | State ID | States                                                                 | Entry                           | Exit / next                        |
+| --------------------- |---| ---------------------------------------------------------------------- | ------------------------------- | ---------------------------------- |
+| Side column           | state:shell/open · state:shell/folded · state:shell/dragging · state:shell/rubber-band | open (180-320 px) · folded rail · dragging · rubber band               | always shown with the window    | a section                          |
+| App page              | state:app/experimental-off · state:app/experimental-on | experimental off · experimental on (extra rows)                        | sidebar › App                   | another section                    |
+| Footer update control | state:shell/update-idle · state:shell/update-checking · state:shell/update-current · state:shell/update-available · state:shell/update-downloading · state:shell/update-failed | idle · checking · up to date · update available · downloading · failed | launch check, menu, tray        | relaunch into the new version      |
+| Permissions step      | state:onboarding/permissions-waiting · state:onboarding/permissions-accessibility · state:onboarding/permissions-microphone · state:onboarding/permissions-granted | waiting · Accessibility granted · Microphone granted · both granted    | first launch; a permission lost | model step (new) / app (returning) |
+| Model step            | state:onboarding/model-choosing · state:onboarding/model-download-started | choosing · download started                                            | first launch after permissions  | Speak page                         |
 
 ## Flow
 
@@ -108,3 +108,4 @@ flowchart LR
 - 2026-10-13: Check for Updates… by hand now works with automatic checks off.
 - 2026-10-13: created, covering the side column (fold and resize by drag, 10/10), the App page, tray and app menu
   entries, updates and first launch.
+- 2026-11-10: "State ID" column cites the state registry.

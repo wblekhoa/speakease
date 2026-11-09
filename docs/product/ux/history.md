@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — History (UX)"
 status: active
-updated: 2026-10-14
+updated: 2026-11-10
 summary: "How past dictations and files are found and reused: search, counters, cards with the original under the AI version, playback, rewrite or translate, storage."
 tags: [area/search, area/storage, stack/react]
 relations:
@@ -44,11 +44,11 @@ relations:
 
 ## Screens and states
 
-| Screen  | States                                                                                      | Entry             | Exit / next         |
-| ------- | ------------------------------------------------------------------------------------------- | ----------------- | ------------------- |
-| History | loading · empty ("No transcriptions yet…") · list · search with results · no matches        | sidebar › History | another section     |
-| Card    | plain · with AI version + Original · re-transcribing · transcription failed (retry) · saved | History list      | actions on the card |
-| Storage | history limit · recording retention period                                                  | History › Storage | back to the list    |
+| Screen  | State ID | States                                                                                      | Entry             | Exit / next         |
+| ------- |---| ------------------------------------------------------------------------------------------- | ----------------- | ------------------- |
+| History | state:history/loading · state:history/empty · state:history/list · state:history/search-results · state:history/no-matches | loading · empty ("No transcriptions yet…") · list · search with results · no matches        | sidebar › History | another section     |
+| Card    | state:history/card-plain · state:history/card-ai · state:history/card-retranscribing · state:history/card-failed · state:history/card-saved | plain · with AI version + Original · re-transcribing · transcription failed (retry) · saved | History list      | actions on the card |
+| Storage | state:history/storage | history limit · recording retention period                                                  | History › Storage | back to the list    |
 
 ## Flow
 
@@ -73,3 +73,4 @@ flowchart LR
 
 - 2026-10-14: Rewrite or translate on every card; file entries show their name and fold to six lines.
 - 2026-10-11: created (doc-engine rollout).
+- 2026-11-10: "State ID" column cites the state registry.

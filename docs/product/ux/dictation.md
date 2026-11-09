@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — Dictation (UX)"
 status: active
-updated: 2026-10-11
+updated: 2026-11-10
 summary: "How a user dictates: the shortcut, the Speak page, the listening language, model suggestions by language, the recording pill and the error messages."
 tags: [area/audio, area/hotkeys, stack/react, surface/macos]
 relations:
@@ -55,13 +55,13 @@ relations:
 
 ## Screens and states
 
-| Screen                          | States                                                                                         | Entry                                  | Exit / next                       |
-| ------------------------------- | ---------------------------------------------------------------------------------------------- | -------------------------------------- | --------------------------------- |
-| Overlay (while recording)       | recording · transcribing · cancelled                                                           | a dictation shortcut                   | text pasted, or nothing on cancel |
-| Speak page                      | idle · listening · transcribing · result ("You just said") · no model                          | sidebar › Speak; tray › Open SpeakEase | another section                   |
-| Quick choices (Speak page)      | microphone · model · Listen for (Auto shows the "tries both" hint) · AI cleanup · Translate to | Speak page                             | choice saved at once              |
-| Recognition › model suggestions | language chosen (best / balanced / live / light) · "all" (no suggestions)                      | sidebar › Recognition                  | download or select a model        |
-| Error toast                     | no model ready · could not make out speech · paste failed · microphone denied                  | a failed dictation                     | action opens the relevant section |
+| Screen                          | State ID | States                                                                                         | Entry                                  | Exit / next                       |
+| ------------------------------- |---| ---------------------------------------------------------------------------------------------- | -------------------------------------- | --------------------------------- |
+| Overlay (while recording)       | state:overlay/recording · state:overlay/transcribing · state:overlay/cancelled | recording · transcribing · cancelled                                                           | a dictation shortcut                   | text pasted, or nothing on cancel |
+| Speak page                      | state:speak/idle · state:speak/listening · state:speak/transcribing · state:speak/result · state:speak/no-model | idle · listening · transcribing · result ("You just said") · no model                          | sidebar › Speak; tray › Open SpeakEase | another section                   |
+| Quick choices (Speak page)      | — | microphone · model · Listen for (Auto shows the "tries both" hint) · AI cleanup · Translate to | Speak page                             | choice saved at once              |
+| Recognition › model suggestions | state:recognition/language-chosen · state:recognition/all-models | language chosen (best / balanced / live / light) · "all" (no suggestions)                      | sidebar › Recognition                  | download or select a model        |
+| Error toast                     | state:speak/error-no-model · state:speak/error-no-speech · state:speak/error-paste · state:speak/error-microphone-denied | no model ready · could not make out speech · paste failed · microphone denied                  | a failed dictation                     | action opens the relevant section |
 
 ## Flow
 
@@ -92,3 +92,4 @@ flowchart LR
 ## Change log
 
 - 2026-10-11: created (doc-engine rollout).
+- 2026-11-10: "State ID" column cites the state registry.
