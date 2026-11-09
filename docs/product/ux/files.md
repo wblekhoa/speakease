@@ -61,12 +61,12 @@ relations:
 
 ## Screens and states
 
-| Screen        | State ID | States                                                                       | Entry                      | Exit / next                            |
-| ------------- |---| ---------------------------------------------------------------------------- | -------------------------- | -------------------------------------- |
-| Drop area     | state:files/empty · state:files/with-result · state:files/drag-over | empty (large) · with a result (short band) · file dragged over (highlighted) | sidebar › Files            | a file or link starts a job            |
+| Screen        | State ID                                                                                  | States                                                                       | Entry                      | Exit / next                            |
+| ------------- | ----------------------------------------------------------------------------------------- | ---------------------------------------------------------------------------- | -------------------------- | -------------------------------------- |
+| Drop area     | state:files/empty · state:files/with-result · state:files/drag-over                       | empty (large) · with a result (short band) · file dragged over (highlighted) | sidebar › Files            | a file or link starts a job            |
 | Progress card | state:files/downloading · state:files/reading · state:files/transcribing · state:files/ai | downloading · reading · transcribing (parts) · AI (parts)                    | a job starts               | result · error toast · Cancel          |
-| Result card   | state:files/result-original · state:files/result-ai · state:files/result-ai-off | original only · AI version + original · AI off (menus greyed)                | job done, or a recent file | Copy · Save .txt · Rewrite · Translate |
-| History card  | state:history/card-folded · state:history/card-expanded | folded (6 lines) · expanded                                                  | sidebar › History          | Show all / Show less                   |
+| Result card   | state:files/result-original · state:files/result-ai · state:files/result-ai-off           | original only · AI version + original · AI off (menus greyed)                | job done, or a recent file | Copy · Save .txt · Rewrite · Translate |
+| History card  | state:history/card-folded · state:history/card-expanded                                   | folded (6 lines) · expanded                                                  | sidebar › History          | Show all / Show less                   |
 
 ## Flow
 

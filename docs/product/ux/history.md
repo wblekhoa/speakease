@@ -44,11 +44,11 @@ relations:
 
 ## Screens and states
 
-| Screen  | State ID | States                                                                                      | Entry             | Exit / next         |
-| ------- |---| ------------------------------------------------------------------------------------------- | ----------------- | ------------------- |
-| History | state:history/loading · state:history/empty · state:history/list · state:history/search-results · state:history/no-matches | loading · empty ("No transcriptions yet…") · list · search with results · no matches        | sidebar › History | another section     |
+| Screen  | State ID                                                                                                                                    | States                                                                                      | Entry             | Exit / next         |
+| ------- | ------------------------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------- | ----------------- | ------------------- |
+| History | state:history/loading · state:history/empty · state:history/list · state:history/search-results · state:history/no-matches                  | loading · empty ("No transcriptions yet…") · list · search with results · no matches        | sidebar › History | another section     |
 | Card    | state:history/card-plain · state:history/card-ai · state:history/card-retranscribing · state:history/card-failed · state:history/card-saved | plain · with AI version + Original · re-transcribing · transcription failed (retry) · saved | History list      | actions on the card |
-| Storage | state:history/storage | history limit · recording retention period                                                  | History › Storage | back to the list    |
+| Storage | —                                                                                                                                           | history limit · recording retention period                                                  | History › Storage | back to the list    |
 
 ## Flow
 

@@ -64,13 +64,13 @@ relations:
 
 ## Screens and states
 
-| Screen                    | State ID | States                                                                                          | Entry                                  | Exit / next                   |
-| ------------------------- |---| ----------------------------------------------------------------------------------------------- | -------------------------------------- | ----------------------------- |
-| Speak page › AI cleanup   | state:speak/cleanup-prompt · state:speak/cleanup-none · state:speak/cleanup-ai-off | a prompt · No cleanup · AI off (Turn on AI)                                                     | Speak page                             | choice saved at once          |
+| Screen                    | State ID                                                                                   | States                                                                                          | Entry                                  | Exit / next                   |
+| ------------------------- | ------------------------------------------------------------------------------------------ | ----------------------------------------------------------------------------------------------- | -------------------------------------- | ----------------------------- |
+| Speak page › AI cleanup   | state:speak/cleanup-prompt · state:speak/cleanup-none · state:speak/cleanup-ai-off         | a prompt · No cleanup · AI off (Turn on AI)                                                     | Speak page                             | choice saved at once          |
 | Speak page › Translate to | state:speak/translate-language · state:speak/translate-none · state:speak/translate-ai-off | a language (searchable) · No translation · AI off                                               | Speak page                             | choice saved at once          |
-| AI & Translate            | state:ai/use-on · state:ai/use-off | Use AI on/off · engine (Apple Intelligence / service + key) · prompts list · translate language | sidebar › AI & Translate               | another section               |
-| Tray menu                 | state:tray/open | AI cleanup submenu · translation submenu · listening language · model                           | menu bar icon                          | choice applied                |
-| "AI didn't run" toast     | state:speak/ai-skipped-toast | shown after a skipped step                                                                      | a dictation whose AI step gave nothing | Check AI opens AI & Translate |
+| AI & Translate            | state:ai/use-on · state:ai/use-off                                                         | Use AI on/off · engine (Apple Intelligence / service + key) · prompts list · translate language | sidebar › AI & Translate               | another section               |
+| Tray menu                 | —                                                                                          | AI cleanup submenu · translation submenu · listening language · model                           | menu bar icon                          | choice applied                |
+| "AI didn't run" toast     | state:speak/ai-skipped-toast                                                               | shown after a skipped step                                                                      | a dictation whose AI step gave nothing | Check AI opens AI & Translate |
 
 ## Flow
 

@@ -1,0 +1,268 @@
+{
+  "version": 1,
+  "flow": [
+    {
+      "screen": "onboarding",
+      "label": { "vi": "Thiết lập đầu", "en": "First launch" },
+      "next": ["speak"]
+    },
+    {
+      "screen": "shell",
+      "label": { "vi": "Khung ứng dụng", "en": "App shell" },
+      "next": ["speak", "files", "history", "recognition", "ai", "app"]
+    },
+    {
+      "screen": "speak",
+      "label": { "vi": "Nói", "en": "Speak" },
+      "next": ["overlay", "ai", "recognition"]
+    },
+    {
+      "screen": "overlay",
+      "label": { "vi": "Lớp phủ khi ghi", "en": "Recording overlay" },
+      "next": []
+    },
+    { "screen": "files", "label": { "vi": "Tệp", "en": "Files" }, "next": [] },
+    {
+      "screen": "history",
+      "label": { "vi": "Lịch sử", "en": "History" },
+      "next": []
+    },
+    {
+      "screen": "recognition",
+      "label": { "vi": "Nhận dạng", "en": "Recognition" },
+      "next": []
+    },
+    {
+      "screen": "ai",
+      "label": { "vi": "AI và dịch", "en": "AI & Translate" },
+      "next": []
+    },
+    { "screen": "app", "label": { "vi": "Ứng dụng", "en": "App" }, "next": [] },
+    {
+      "screen": "tray",
+      "label": { "vi": "Menu khay", "en": "Tray menu" },
+      "next": ["speak", "history", "shell"]
+    }
+  ],
+  "states": [
+    {
+      "id": "onboarding/permissions-waiting",
+      "label": { "vi": "Chờ cấp quyền", "en": "Waiting for permissions" }
+    },
+    {
+      "id": "onboarding/permissions-accessibility",
+      "label": { "vi": "Đã cấp Trợ năng", "en": "Accessibility granted" }
+    },
+    {
+      "id": "onboarding/permissions-microphone",
+      "label": { "vi": "Đã cấp micro", "en": "Microphone granted" }
+    },
+    {
+      "id": "onboarding/permissions-granted",
+      "label": { "vi": "Đủ hai quyền", "en": "Both granted" }
+    },
+    {
+      "id": "onboarding/model-choosing",
+      "label": { "vi": "Chọn mô hình", "en": "Choosing a model" }
+    },
+    {
+      "id": "onboarding/model-download-started",
+      "label": { "vi": "Bắt đầu tải mô hình", "en": "Download started" }
+    },
+    {
+      "id": "shell/open",
+      "label": { "vi": "Cột bên mở", "en": "Side column open" }
+    },
+    {
+      "id": "shell/folded",
+      "label": { "vi": "Cột bên gập", "en": "Folded rail" }
+    },
+    {
+      "id": "shell/dragging",
+      "label": { "vi": "Đang kéo cột", "en": "Dragging" }
+    },
+    {
+      "id": "shell/rubber-band",
+      "label": { "vi": "Kéo quá giới hạn", "en": "Rubber band" }
+    },
+    {
+      "id": "shell/update-idle",
+      "label": { "vi": "Cập nhật: chờ", "en": "Update idle" }
+    },
+    {
+      "id": "shell/update-checking",
+      "label": { "vi": "Đang kiểm tra", "en": "Checking" }
+    },
+    {
+      "id": "shell/update-current",
+      "label": { "vi": "Đã mới nhất", "en": "Up to date" }
+    },
+    {
+      "id": "shell/update-available",
+      "label": { "vi": "Có bản mới", "en": "Update available" }
+    },
+    {
+      "id": "shell/update-downloading",
+      "label": { "vi": "Đang tải bản mới", "en": "Downloading" }
+    },
+    {
+      "id": "shell/update-failed",
+      "label": { "vi": "Cập nhật lỗi", "en": "Update failed" }
+    },
+    { "id": "speak/idle", "label": { "vi": "Chờ", "en": "Idle" } },
+    {
+      "id": "speak/listening",
+      "label": { "vi": "Đang nghe", "en": "Listening" }
+    },
+    {
+      "id": "speak/transcribing",
+      "label": { "vi": "Đang chép", "en": "Transcribing" }
+    },
+    { "id": "speak/result", "label": { "vi": "Có kết quả", "en": "Result" } },
+    {
+      "id": "speak/no-model",
+      "label": { "vi": "Chưa có mô hình", "en": "No model" }
+    },
+    {
+      "id": "speak/error-no-model",
+      "label": { "vi": "Lỗi: chưa có mô hình", "en": "No model ready" }
+    },
+    {
+      "id": "speak/error-no-speech",
+      "label": { "vi": "Lỗi: không nghe rõ", "en": "Could not make out speech" }
+    },
+    {
+      "id": "speak/error-paste",
+      "label": { "vi": "Lỗi: không dán được", "en": "Paste failed" }
+    },
+    {
+      "id": "speak/error-microphone-denied",
+      "label": { "vi": "Lỗi: bị từ chối micro", "en": "Microphone denied" }
+    },
+    {
+      "id": "speak/cleanup-prompt",
+      "label": { "vi": "Có prompt làm sạch", "en": "A cleanup prompt" }
+    },
+    {
+      "id": "speak/cleanup-none",
+      "label": { "vi": "Không làm sạch", "en": "No cleanup" }
+    },
+    {
+      "id": "speak/cleanup-ai-off",
+      "label": { "vi": "Làm sạch: AI tắt", "en": "Cleanup, AI off" }
+    },
+    {
+      "id": "speak/translate-language",
+      "label": { "vi": "Có ngôn ngữ dịch", "en": "A language" }
+    },
+    {
+      "id": "speak/translate-none",
+      "label": { "vi": "Không dịch", "en": "No translation" }
+    },
+    {
+      "id": "speak/translate-ai-off",
+      "label": { "vi": "Dịch: AI tắt", "en": "Translate, AI off" }
+    },
+    {
+      "id": "speak/ai-skipped-toast",
+      "label": { "vi": "Báo AI không chạy", "en": "AI didn't run" }
+    },
+    {
+      "id": "overlay/recording",
+      "label": { "vi": "Đang ghi", "en": "Recording" }
+    },
+    {
+      "id": "overlay/transcribing",
+      "label": { "vi": "Đang chép", "en": "Transcribing" }
+    },
+    {
+      "id": "overlay/cancelled",
+      "label": { "vi": "Đã huỷ", "en": "Cancelled" }
+    },
+    { "id": "files/empty", "label": { "vi": "Vùng thả trống", "en": "Empty" } },
+    {
+      "id": "files/with-result",
+      "label": { "vi": "Có kết quả", "en": "With a result" }
+    },
+    {
+      "id": "files/drag-over",
+      "label": { "vi": "Đang kéo tệp vào", "en": "File dragged over" }
+    },
+    {
+      "id": "files/downloading",
+      "label": { "vi": "Đang tải", "en": "Downloading" }
+    },
+    { "id": "files/reading", "label": { "vi": "Đang đọc", "en": "Reading" } },
+    {
+      "id": "files/transcribing",
+      "label": { "vi": "Đang chép từng phần", "en": "Transcribing parts" }
+    },
+    { "id": "files/ai", "label": { "vi": "AI đang xử lý", "en": "AI parts" } },
+    {
+      "id": "files/result-original",
+      "label": { "vi": "Chỉ bản gốc", "en": "Original only" }
+    },
+    {
+      "id": "files/result-ai",
+      "label": { "vi": "Bản AI và bản gốc", "en": "AI version and original" }
+    },
+    {
+      "id": "files/result-ai-off",
+      "label": { "vi": "AI tắt", "en": "AI off" }
+    },
+    { "id": "history/loading", "label": { "vi": "Đang tải", "en": "Loading" } },
+    { "id": "history/empty", "label": { "vi": "Trống", "en": "Empty" } },
+    { "id": "history/list", "label": { "vi": "Danh sách", "en": "List" } },
+    {
+      "id": "history/search-results",
+      "label": { "vi": "Có kết quả tìm", "en": "Search with results" }
+    },
+    {
+      "id": "history/no-matches",
+      "label": { "vi": "Không có kết quả", "en": "No matches" }
+    },
+    {
+      "id": "history/card-plain",
+      "label": { "vi": "Thẻ thường", "en": "Plain card" }
+    },
+    {
+      "id": "history/card-ai",
+      "label": { "vi": "Thẻ có bản AI", "en": "With AI version" }
+    },
+    {
+      "id": "history/card-retranscribing",
+      "label": { "vi": "Đang chép lại", "en": "Re-transcribing" }
+    },
+    {
+      "id": "history/card-failed",
+      "label": { "vi": "Chép lỗi, thử lại", "en": "Transcription failed" }
+    },
+    { "id": "history/card-saved", "label": { "vi": "Đã lưu", "en": "Saved" } },
+    {
+      "id": "history/card-folded",
+      "label": { "vi": "Thẻ gập", "en": "Folded card" }
+    },
+    {
+      "id": "history/card-expanded",
+      "label": { "vi": "Thẻ mở", "en": "Expanded card" }
+    },
+    {
+      "id": "recognition/language-chosen",
+      "label": { "vi": "Đã chọn ngôn ngữ", "en": "Language chosen" }
+    },
+    {
+      "id": "recognition/all-models",
+      "label": { "vi": "Tất cả mô hình", "en": "All models" }
+    },
+    { "id": "ai/use-on", "label": { "vi": "Bật AI", "en": "AI on" } },
+    { "id": "ai/use-off", "label": { "vi": "Tắt AI", "en": "AI off" } },
+    {
+      "id": "app/experimental-off",
+      "label": { "vi": "Tắt thử nghiệm", "en": "Experimental off" }
+    },
+    {
+      "id": "app/experimental-on",
+      "label": { "vi": "Bật thử nghiệm", "en": "Experimental on" }
+    }
+  ]
+}

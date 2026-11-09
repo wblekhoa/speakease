@@ -70,13 +70,13 @@ relations:
 
 ## Screens and states
 
-| Screen                | State ID | States                                                                 | Entry                           | Exit / next                        |
-| --------------------- |---| ---------------------------------------------------------------------- | ------------------------------- | ---------------------------------- |
-| Side column           | state:shell/open · state:shell/folded · state:shell/dragging · state:shell/rubber-band | open (180-320 px) · folded rail · dragging · rubber band               | always shown with the window    | a section                          |
-| App page              | state:app/experimental-off · state:app/experimental-on | experimental off · experimental on (extra rows)                        | sidebar › App                   | another section                    |
+| Screen                | State ID                                                                                                                                                                       | States                                                                 | Entry                           | Exit / next                        |
+| --------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ---------------------------------------------------------------------- | ------------------------------- | ---------------------------------- |
+| Side column           | state:shell/open · state:shell/folded · state:shell/dragging · state:shell/rubber-band                                                                                         | open (180-320 px) · folded rail · dragging · rubber band               | always shown with the window    | a section                          |
+| App page              | state:app/experimental-off · state:app/experimental-on                                                                                                                         | experimental off · experimental on (extra rows)                        | sidebar › App                   | another section                    |
 | Footer update control | state:shell/update-idle · state:shell/update-checking · state:shell/update-current · state:shell/update-available · state:shell/update-downloading · state:shell/update-failed | idle · checking · up to date · update available · downloading · failed | launch check, menu, tray        | relaunch into the new version      |
-| Permissions step      | state:onboarding/permissions-waiting · state:onboarding/permissions-accessibility · state:onboarding/permissions-microphone · state:onboarding/permissions-granted | waiting · Accessibility granted · Microphone granted · both granted    | first launch; a permission lost | model step (new) / app (returning) |
-| Model step            | state:onboarding/model-choosing · state:onboarding/model-download-started | choosing · download started                                            | first launch after permissions  | Speak page                         |
+| Permissions step      | state:onboarding/permissions-waiting · state:onboarding/permissions-accessibility · state:onboarding/permissions-microphone · state:onboarding/permissions-granted             | waiting · Accessibility granted · Microphone granted · both granted    | first launch; a permission lost | model step (new) / app (returning) |
+| Model step            | state:onboarding/model-choosing · state:onboarding/model-download-started                                                                                                      | choosing · download started                                            | first launch after permissions  | Speak page                         |
 
 ## Flow
 
