@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — AI cleanup and translation (UX)"
 status: active
-updated: 2026-10-21
+updated: 2026-11-10
 summary: "How AI cleanup and translation look to the user: prompts, the translate language, quick choices on the Speak page, the tray and the recording pill."
 tags: [area/ai, area/translation, stack/react]
 relations:
@@ -52,6 +52,8 @@ relations:
   chosen). Twelve targets: English, Vietnamese, Japanese, Korean, Chinese (Simplified), French, German, Spanish, Thai,
   Indonesian, Russian, Portuguese. Anything other than English goes through English first.
 - **Dictate with AI (⌥ ⇧ Space)** rewrites with the prompt selected in AI & Translate.
+- **Your own instruction** (History card, Rewrite menu): type what to change and the AI rewrites the transcript
+  with it, on whichever provider is chosen - for a word misheard all through it, or to say the idea better.
 - **Tray menu**: AI cleanup and translation can be changed without opening the window.
 - **Recording pill**: two icon buttons sit inside the pill, beside cancel - ✦ the cleanup prompt (each click moves to the
   next: none, then each prompt) and 文A translation (on/off into the translate language). Pink means on. A click shows
@@ -99,6 +101,7 @@ flowchart LR
 
 ## Change log
 
+- 2026-11-10: the user's own rewrite instruction on History cards (owner form).
 - 2026-10-21: an "On-device model" provider; the AI page lists on-device models like the speech models (owner).
 - 2026-10-15: output choices inside the recording pill.
 - 2026-10-15: output chips on the recording pill.

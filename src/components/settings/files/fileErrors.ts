@@ -12,6 +12,7 @@ const KNOWN = [
   "no model",
   "ai off",
   "ai failed",
+  "empty instruction",
 ];
 
 export const fileErrorKey = (error: string) => {

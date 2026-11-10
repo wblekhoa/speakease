@@ -584,7 +584,12 @@
       "showLess": "Thu gọn",
       "aiMenu": "Viết lại hoặc dịch",
       "rewriteWith": "Viết lại:",
-      "translateInto": "Dịch sang:"
+      "translateInto": "Dịch sang:",
+      "instructionLabel": "Lệnh của bạn cho AI",
+      "instructionPlaceholder": "Lệnh của bạn, ví dụ: thay “ri ác” bằng React",
+      "instructionRun": "Viết lại",
+      "instructionRecent": "Gần đây:",
+      "instructionForget": "Xóa “{{text}}”"
     },
     "debug": {
       "title": "Gỡ lỗi",
@@ -1029,7 +1034,8 @@
       "no_model": "Chưa có mô hình nhận dạng. Tải một mô hình trong Nhận dạng.",
       "ai_off": "AI đang tắt. Bật AI trong AI & Dịch để viết lại và dịch.",
       "ai_failed": "AI không trả lời. Kiểm tra AI & Dịch rồi thử lại.",
-      "other": "Có lỗi khi xử lý file. Thử lại."
+      "other": "Có lỗi khi xử lý file. Thử lại.",
+      "empty_instruction": "Hãy gõ lệnh trước."
     },
     "etaSeconds": "còn khoảng {{count}} giây",
     "etaMinutes": "còn khoảng {{count}} phút",

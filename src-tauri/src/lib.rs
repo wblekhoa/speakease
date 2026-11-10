@@ -571,6 +571,18 @@ fn run_headless_transcription(app: &AppHandle, args: &CliArgs) -> i32 {
         return code;
     }
 
+    // SpeakEase: rewrite a text file with an instruction (SE-AI-013).
+    if let Some(path) = args.rewrite_probe.as_deref() {
+        let code = commands::files::rewrite_probe(
+            app,
+            path,
+            args.instruction.as_deref(),
+            args.rewrite_provider.as_deref(),
+        );
+        local_ai::stop_server();
+        return code;
+    }
+
     // --list-devices: print registered compute devices (with indices) and exit.
     // Useful on multi-GPU machines to discover the index for --device-index.
     if args.list_devices {
@@ -1009,7 +1021,8 @@ pub fn run(cli_args: CliArgs) {
         || cli_args.live_subtitle_probe.is_some()
         || cli_args.meeting_notes.is_some()
         || cli_args.meeting_probe.is_some()
-        || cli_args.meeting_ask.is_some();
+        || cli_args.meeting_ask.is_some()
+        || cli_args.rewrite_probe.is_some();
 
     #[allow(unused_mut)]
     let mut builder = tauri::Builder::default()

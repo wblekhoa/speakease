@@ -1463,7 +1463,11 @@ export type Enhancement =
 /**
  * A translate target, as on the Speak page ("English", "Japanese"…).
  */
-{ kind: "translate"; value: string }
+{ kind: "translate"; value: string } | 
+/**
+ * The user's own instruction, typed on the card ("replace X with Y").
+ */
+{ kind: "instruction"; value: string }
 export type GpuDeviceOption = { id: string; name: string; total_vram_mb: number }
 export type HistoryEntry = { id: number; file_name: string; timestamp: number; saved: boolean; title: string; transcription_text: string; post_processed_text: string | null; post_process_prompt: string | null; post_process_requested: boolean }
 /**

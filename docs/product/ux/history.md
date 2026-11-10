@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — History (UX)"
 status: active
-updated: 2026-10-14
+updated: 2026-11-10
 summary: "How past dictations and files are found and reused: search, counters, cards with the original under the AI version, playback, rewrite or translate, storage."
 tags: [area/search, area/storage, stack/react]
 relations:
@@ -40,6 +40,10 @@ relations:
 - Per card: **Play back** the recording, **Copy**, **Save** (kept beyond the limit), **Rewrite or translate** (the AI
   & Translate prompts and the Speak page's languages, shown in the card; `logic/files.md` SE-FILE-003), **Delete**, **Re-transcribe**
   (useful after switching model or language).
+- **Your own instruction**: the Rewrite menu also has a box for a free instruction ("replace “ri ác” with React",
+  "write it as a short message to the team"); **Rewrite** or Enter runs it on the text the card shows, and the
+  Original stays under it. The last five instructions sit under the box as buttons to run again, each with a ✕ to
+  remove it (`logic/ai-cleanup.md` SE-AI-013).
 - **Storage** sets how many dictations are kept and when recordings are deleted. Everything stays on the Mac.
 
 ## Screens and states
@@ -71,5 +75,6 @@ flowchart LR
 
 ## Change log
 
+- 2026-11-10: a box for the user's own rewrite instruction, with the last five kept (owner form).
 - 2026-10-14: Rewrite or translate on every card; file entries show their name and fold to six lines.
 - 2026-10-11: created (doc-engine rollout).

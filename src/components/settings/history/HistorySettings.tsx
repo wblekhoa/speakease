@@ -32,6 +32,13 @@ import {
 } from "@/lib/translateTargets";
 import { openSection } from "@/lib/navigation";
 import { fileErrorKey } from "../files/fileErrors";
+import CancelIcon from "../../icons/CancelIcon";
+import {
+  forgetInstruction,
+  loadInstructions,
+  rememberInstruction,
+  saveInstructions,
+} from "@/lib/recentInstructions";
 import { AudioPlayer, AudioPlayerGroup } from "../../ui/AudioPlayer";
 import { Button } from "../../ui/Button";
 import { IconTip } from "../../ui/IconTip";
@@ -485,8 +492,25 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   const prompts = (settings?.post_process_prompts ?? []).filter(
     (prompt) => prompt.id !== TRANSLATE_PROMPT_ID,
   );
+  // SE-AI-013: the user's own instruction, and the last few they typed.
+  const [instruction, setInstruction] = useState("");
+  const [recent, setRecent] = useState<string[]>([]);
+  useEffect(() => {
+    if (aiMenu) setRecent(loadInstructions());
+  }, [aiMenu]);
+  const keepRecent = (next: string[]) => {
+    setRecent(next);
+    saveInstructions(next);
+  };
+  const runInstruction = (text: string) => {
+    const trimmed = text.trim();
+    if (!trimmed) return;
+    keepRecent(rememberInstruction(loadInstructions(), trimmed));
+    setInstruction("");
+    void runAi({ kind: "instruction", value: trimmed });
+  };
   const runAi = async (enhancement: {
-    kind: "prompt" | "translate";
+    kind: "prompt" | "translate" | "instruction";
     value: string;
   }) => {
     setAiMenu(false);
@@ -727,6 +751,74 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
                   ))}
                 </div>
               )}
+              <form
+                className="space-y-1.5"
+                onSubmit={(event) => {
+                  event.preventDefault();
+                  runInstruction(instruction);
+                }}
+              >
+                <div className="flex items-center gap-1.5">
+                  <label className="flex-1 min-w-0 flex items-center h-8 px-3 rounded-xl border border-hairline bg-row focus-within:border-logo-primary">
+                    <input
+                      type="text"
+                      value={instruction}
+                      maxLength={1000}
+                      onChange={(event) => setInstruction(event.target.value)}
+                      placeholder={t("settings.history.instructionPlaceholder")}
+                      aria-label={t("settings.history.instructionLabel")}
+                      className="flex-1 min-w-0 bg-transparent text-sm outline-none"
+                    />
+                  </label>
+                  <Button
+                    type="submit"
+                    variant="primary"
+                    size="sm"
+                    className="h-8 whitespace-nowrap shrink-0"
+                    disabled={!instruction.trim()}
+                  >
+                    {t("settings.history.instructionRun")}
+                  </Button>
+                </div>
+                {recent.length > 0 && (
+                  <div className="flex flex-wrap items-center gap-1.5">
+                    <span className="text-xs text-mid-gray me-1">
+                      {t("settings.history.instructionRecent")}
+                    </span>
+                    {recent.map((text) => (
+                      <span
+                        key={text}
+                        className="inline-flex items-center max-w-full rounded-full bg-row hover:bg-logo-primary/15 transition-colors"
+                      >
+                        <button
+                          type="button"
+                          onClick={() => runInstruction(text)}
+                          title={text}
+                          className="text-xs ps-2.5 pe-1 py-1 truncate max-w-[16rem] rounded-s-full hover:text-logo-primary cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary"
+                        >
+                          {text}
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() =>
+                            keepRecent(forgetInstruction(recent, text))
+                          }
+                          aria-label={t("settings.history.instructionForget", {
+                            text,
+                          })}
+                          className="p-1.5 rounded-e-full text-mid-gray hover:text-logo-primary cursor-pointer transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary"
+                        >
+                          <CancelIcon
+                            width={14}
+                            height={14}
+                            color="currentColor"
+                          />
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
+              </form>
               <div className="flex flex-wrap items-center gap-1.5">
                 <span className="text-xs text-mid-gray me-1">
                   {t("settings.history.translateInto")}

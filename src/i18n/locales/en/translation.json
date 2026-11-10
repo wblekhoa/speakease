@@ -584,7 +584,12 @@
       "showLess": "Show less",
       "aiMenu": "Rewrite or translate",
       "rewriteWith": "Rewrite:",
-      "translateInto": "Translate into:"
+      "translateInto": "Translate into:",
+      "instructionLabel": "Your instruction for the AI",
+      "instructionPlaceholder": "Your instruction, e.g. replace “ri ác” with React",
+      "instructionRun": "Rewrite",
+      "instructionRecent": "Recent:",
+      "instructionForget": "Remove “{{text}}”"
     },
     "debug": {
       "title": "Debug",
@@ -1029,7 +1034,8 @@
       "no_model": "No speech model yet. Download one in Recognition.",
       "ai_off": "AI is off. Turn it on in AI & Translate to rewrite and translate.",
       "ai_failed": "The AI didn't answer. Check AI & Translate and try again.",
-      "other": "Something went wrong with the file. Try again."
+      "other": "Something went wrong with the file. Try again.",
+      "empty_instruction": "Type an instruction first."
     },
     "etaSeconds": "about {{count}} s left",
     "etaMinutes": "about {{count}} min left",

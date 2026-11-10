@@ -130,4 +130,19 @@ pub struct CliArgs {
     /// The question for --meeting-ask.
     #[arg(long, value_name = "TEXT", hide = true)]
     pub question: Option<String>,
+
+    /// SpeakEase: rewrite this text file with --instruction through the
+    /// History card's pipeline (SE-AI-013), print the result as JSON and exit.
+    /// Saves nothing and never writes settings.
+    #[arg(long, value_name = "TEXT_FILE", hide = true)]
+    pub rewrite_probe: Option<PathBuf>,
+
+    /// The instruction for --rewrite-probe.
+    #[arg(long, value_name = "TEXT", hide = true)]
+    pub instruction: Option<String>,
+
+    /// Provider for --rewrite-probe instead of the one in settings: "apple",
+    /// "local" (the on-device model in use) or a provider id with a key.
+    #[arg(long, value_name = "PROVIDER", hide = true)]
+    pub rewrite_provider: Option<String>,
 }

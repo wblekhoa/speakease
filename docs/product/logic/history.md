@@ -4,7 +4,7 @@ type: logic
 product: speakease
 title: "SpeakEase — History (logic)"
 status: active
-updated: 2026-11-01
+updated: 2026-11-10
 summary: "Rules for History: Vietnamese case-insensitive search across both texts, counters on the delivered text, and the original always shown (SE-HIST)."
 tags: [area/search, area/storage, stack/sqlite]
 reqPrefix: SE-HIST
@@ -55,6 +55,7 @@ or code named in Evidence.
 
 ## Change log
 
+- 2026-11-10: reviewed after the card's Rewrite menu got a box for the user's own instruction (SE-AI-013); SE-HIST rules unchanged - the original still shows under the AI version.
 - 2026-10-20: reviewed after `save_subtitle_entry` was added for live subtitles (one entry per session, no audio, `file-` prefix; rule SE-LIVE-009); SE-HIST rules unchanged.
 - 2026-10-14: reviewed after file entries and the card's Rewrite or translate button (SE-FILE-002/003); SE-HIST-001…003 unchanged - the original still shows under any AI version.
 - 2026-10-11: created; REQ-IDs added as one-line comments next to the evidence in the same commit.

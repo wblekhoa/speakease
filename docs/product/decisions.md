@@ -14,6 +14,23 @@ tags: [area/docs]
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
 
+## 2026-11-10 · Rewrite a transcript with the user's own instruction (owner form)
+
+- **Context**: the owner, dictated: "custom prompt khi rewrite transcript sau khi nói … AI không nghe rõ … từ tiếng
+  Anh phát âm không đúng nên nó nghe sai hàng loạt … hoặc cho nó viết lại cho đúng với cái idea … một lần nữa". Two
+  needs: fix a word misheard all through a transcript, and rewrite the text closer to the idea. History cards already
+  had Rewrite (stored prompts) and Translate (SE-FILE-003); Recognition already has Custom words.
+- **Owner's decisions** (form 10/11, "Theo đề xuất" on every question):
+  - The instruction box lives in the History card's Rewrite menu, beside the stored prompts.
+  - The last 5 instructions are remembered as buttons to run again, each removable.
+  - The instruction rewrites the text the card shows (the AI version when there is one, else the original); the
+    original is always kept and shown under it.
+  - No link to Custom words this time: free instructions only.
+- **Not chosen**: a box on the Speak page or on the recording pill after paste (the pill would take keys from the app
+  being typed into), a shortcut that opens the box, saving an instruction as a named prompt, an "add to Custom words"
+  button, a deterministic "X → Y" replacement list (a separate idea, not started).
+- **Reverse**: drop the `instruction` enhancement and the box; stored prompts and Translate are unchanged.
+
 ## 2026-11-01 · Meeting notes: recordings from Files, choices made by AI under the owner's overnight delegation
 
 - **Context**: SE-MEET-008, 010 and 019 ("File: AI guesses the kind and uses its template"); the spec decides the
