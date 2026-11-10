@@ -1445,6 +1445,14 @@ export type ChineseScript =
 "as_transcribed" | "simplified" | "traditional"
 export type ClipboardHandling = "dont_modify" | "copy_to_clipboard"
 export type CustomSounds = { start: boolean; stop: boolean }
+/**
+ * One local calendar day of dictation.
+ */
+export type DayStats = { 
+/**
+ * The local date, `YYYY-MM-DD`.
+ */
+date: string; entries: number; words: number; minutes_saved: number }
 export type EngineType = 
 /**
  * Any GGML/GGUF model loaded through transcribe-cpp (Whisper, Parakeet,
@@ -1478,7 +1486,11 @@ export type HistoryStats = { entries: number; words: number;
  * Minutes of typing the dictation replaced, estimated at 40 words a
  * minute typed against 150 spoken.
  */
-minutes_saved: number }
+minutes_saved: number; 
+/**
+ * The last [`STATS_DAYS`] local days, oldest first; the last one is today.
+ */
+days: DayStats[] }
 export type HistoryUpdatePayload = { action: "added"; entry: HistoryEntry } | { action: "updated"; entry: HistoryEntry } | { action: "deleted"; id: number } | { action: "toggled"; id: number }
 /**
  * Result of changing keyboard implementation

@@ -844,6 +844,27 @@ pub struct HistoryStats {
     /// Minutes of typing the dictation replaced, estimated at 40 words a
     /// minute typed against 150 spoken.
     pub minutes_saved: f64,
+    /// The last [`STATS_DAYS`] local days, oldest first; the last one is today.
+    pub days: Vec<DayStats>,
+}
+
+/// One local calendar day of dictation.
+#[derive(Clone, Debug, Default, PartialEq, Serialize, Deserialize, Type)]
+pub struct DayStats {
+    /// The local date, `YYYY-MM-DD`.
+    pub date: String,
+    pub entries: i64,
+    pub words: i64,
+    pub minutes_saved: f64,
+}
+
+/// How many days the history page charts.
+pub const STATS_DAYS: usize = 14;
+
+/// Typing at 40 words a minute against speaking at 150, rounded to 0.1.
+fn minutes_saved(words: i64) -> f64 {
+    let minutes = words as f64 / 40.0 - words as f64 / 150.0;
+    (minutes * 10.0).round() / 10.0
 }
 
 const SELECT_ENTRY: &str = "SELECT id, file_name, timestamp, saved, title, transcription_text, post_processed_text, post_process_prompt, post_process_requested
@@ -883,19 +904,50 @@ fn search_in(conn: &Connection, query: &str) -> Result<Vec<HistoryEntry>> {
 }
 
 fn stats_in(conn: &Connection) -> Result<HistoryStats> {
+    let today = Local::now().date_naive();
+    stats_on(conn, today, |timestamp| {
+        DateTime::from_timestamp(timestamp, 0).map(|utc| utc.with_timezone(&Local).date_naive())
+    })
+}
+
+/// Totals plus one bucket per day for the [`STATS_DAYS`] days ending `today`,
+/// with `local_day` turning an entry's timestamp into its local date.
+fn stats_on(
+    conn: &Connection,
+    today: chrono::NaiveDate,
+    local_day: impl Fn(i64) -> Option<chrono::NaiveDate>,
+) -> Result<HistoryStats> {
     let mut stmt = conn.prepare(SELECT_ENTRY)?;
     let entries = stmt
         .query_map([], HistoryManager::map_history_entry)?
         .collect::<std::result::Result<Vec<_>, _>>()?;
-    let words: i64 = entries
-        .iter()
-        .map(|entry| shown_text(entry).split_whitespace().count() as i64)
-        .sum();
-    let minutes_saved = words as f64 / 40.0 - words as f64 / 150.0;
+    let mut days = vec![DayStats::default(); STATS_DAYS];
+    let mut words = 0;
+    for entry in &entries {
+        let count = shown_text(entry).split_whitespace().count() as i64;
+        words += count;
+        let Some(day) = local_day(entry.timestamp) else {
+            continue;
+        };
+        let back = (today - day).num_days();
+        if (0..STATS_DAYS as i64).contains(&back) {
+            let bucket = &mut days[STATS_DAYS - 1 - back as usize];
+            bucket.entries += 1;
+            bucket.words += count;
+        }
+    }
+    for (index, day) in days.iter_mut().enumerate() {
+        let back = (STATS_DAYS - 1 - index) as u64;
+        if let Some(date) = today.checked_sub_days(chrono::Days::new(back)) {
+            day.date = date.format("%Y-%m-%d").to_string();
+        }
+        day.minutes_saved = minutes_saved(day.words);
+    }
     Ok(HistoryStats {
         entries: entries.len() as i64,
         words,
-        minutes_saved: (minutes_saved * 10.0).round() / 10.0,
+        minutes_saved: minutes_saved(words),
+        days,
     })
 }
 
@@ -961,6 +1013,48 @@ mod speakease_tests {
         assert_eq!(stats.entries, 2);
         assert_eq!(stats.words, 5);
         assert_eq!(stats.minutes_saved, 0.1);
+    }
+
+    // SE-HIST-004
+    #[test]
+    fn stats_bucket_the_last_fourteen_local_days() {
+        let words_80 = vec!["từ"; 80].join(" ");
+        let conn = conn_with(&[
+            ("một hai ba", None),
+            ("bốn", None),
+            (words_80.as_str(), None),
+            ("tương lai", None),
+        ]);
+        // conn_with stores timestamps 0, 1, 2, 3; pretend they fell on these days.
+        let today = chrono::NaiveDate::from_ymd_opt(2026, 11, 10).unwrap();
+        let day_of = |timestamp: i64| match timestamp {
+            0 => today.checked_sub_days(chrono::Days::new(14)), // outside the window
+            1 => today.checked_sub_days(chrono::Days::new(13)), // first bar
+            2 => Some(today),
+            _ => today.checked_add_days(chrono::Days::new(1)), // clock skew: totals only
+        };
+        let stats = stats_on(&conn, today, day_of).unwrap();
+        assert_eq!(stats.entries, 4);
+        assert_eq!(stats.words, 86);
+        assert_eq!(stats.days.len(), STATS_DAYS);
+        let first = &stats.days[0];
+        assert_eq!(
+            (first.date.as_str(), first.entries, first.words),
+            ("2026-10-28", 1, 1)
+        );
+        let last = &stats.days[STATS_DAYS - 1];
+        assert_eq!(
+            (last.date.as_str(), last.entries, last.words),
+            ("2026-11-10", 1, 80)
+        );
+        assert_eq!(last.minutes_saved, 1.5);
+        assert_eq!(
+            stats.days[1..STATS_DAYS - 1]
+                .iter()
+                .map(|d| d.entries)
+                .sum::<i64>(),
+            0
+        );
     }
 }
 

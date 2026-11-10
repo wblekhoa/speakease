@@ -32,6 +32,7 @@ import {
 } from "@/lib/translateTargets";
 import { openSection } from "@/lib/navigation";
 import { fileErrorKey } from "../files/fileErrors";
+import { HistoryStatsPanel } from "./HistoryStatsPanel";
 import CancelIcon from "../../icons/CancelIcon";
 import {
   forgetInstruction,
@@ -125,8 +126,11 @@ export const HistorySettings: React.FC = () => {
     if (result.status === "ok") setStats(result.data);
   }, []);
 
+  // Reload on focus too, so "today" and the day bars move on after midnight.
   useEffect(() => {
     loadStats();
+    window.addEventListener("focus", loadStats);
+    return () => window.removeEventListener("focus", loadStats);
   }, [loadStats]);
 
   // Search runs on the whole history (server side), a beat after typing stops.
@@ -409,23 +413,7 @@ export const HistorySettings: React.FC = () => {
       )}
 
       {stats && stats.entries > 0 && !results && (
-        <dl className="grid grid-cols-3 gap-2">
-          {[
-            [stats.entries, t("settings.history.statEntries")],
-            [stats.words, t("settings.history.statWords")],
-            [stats.minutes_saved, t("settings.history.statMinutes")],
-          ].map(([value, label]) => (
-            <div
-              key={String(label)}
-              className="rounded-2xl border border-hairline bg-surface px-4 py-3"
-            >
-              <dd className="font-display text-xl font-semibold tabular-nums">
-                {Number(value).toLocaleString(i18n.language)}
-              </dd>
-              <dt className="text-xs text-mid-gray">{label}</dt>
-            </div>
-          ))}
-        </dl>
+        <HistoryStatsPanel stats={stats} />
       )}
 
       {content}

@@ -707,10 +707,27 @@ function handle(cmd: string, args: Json): unknown {
         (n, e) => n + words(e.post_processed_text ?? e.transcription_text),
         0,
       );
+      const saved = (n: number) => Math.round((n / 40 - n / 150) * 10) / 10;
+      const dayOf = (ts: number) => new Date(ts * 1000).toDateString();
+      const days = Array.from({ length: 14 }, (_, i) => {
+        const day = new Date();
+        day.setDate(day.getDate() - (13 - i));
+        const on = history.filter(
+          (e) => dayOf(e.timestamp) === day.toDateString(),
+        );
+        const n = on.reduce(
+          (sum, e) =>
+            sum + words(e.post_processed_text ?? e.transcription_text),
+          0,
+        );
+        const date = `${day.getFullYear()}-${String(day.getMonth() + 1).padStart(2, "0")}-${String(day.getDate()).padStart(2, "0")}`;
+        return { date, entries: on.length, words: n, minutes_saved: saved(n) };
+      });
       return {
         entries: history.length,
         words: total,
-        minutes_saved: Math.round((total / 40 - total / 150) * 10) / 10,
+        minutes_saved: saved(total),
+        days,
       };
     }
     case "get_available_microphones":
