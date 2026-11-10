@@ -28,11 +28,12 @@ relations:
 Status column: `live`, `not built`, or `blocked`. A live rule has its REQ-ID as a one-line comment next to the test
 or code named in Evidence.
 
-| REQ-ID      | Rule (behaviour-changing)                                                                                                                                                                     | Status (live / not built / blocked) | Evidence (code path or test)                                                              |
-| ----------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- | ----------------------------------- | ----------------------------------------------------------------------------------------- |
-| SE-HIST-001 | Search ignores case, including Vietnamese capitals ("Đ" matches "đ"), requires every typed word to appear, and searches both the original and the AI version.                                 | live                                | `src-tauri/src/managers/history.rs` (`search_folds_vietnamese_case_and_needs_every_word`) |
-| SE-HIST-002 | Counters count dictations and the words of the text the user got (the AI version when there is one); minutes saved = words / 40 − words / 150 (typing versus speaking speed), rounded to 0.1. | live                                | `src-tauri/src/managers/history.rs` (`stats_count_the_text_the_user_got`)                 |
-| SE-HIST-003 | A card with an AI version also shows the original transcript under it.                                                                                                                        | live                                | `src/components/settings/history/HistorySettings.tsx` (`endsOnOriginal`)                  |
+| REQ-ID      | Rule (behaviour-changing)                                                                                                                                                                        | Status (live / not built / blocked) | Evidence (code path or test)                                                              |
+| ----------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ | ----------------------------------- | ----------------------------------------------------------------------------------------- |
+| SE-HIST-001 | Search ignores case, including Vietnamese capitals ("Đ" matches "đ"), requires every typed word to appear, and searches both the original and the AI version.                                    | live                                | `src-tauri/src/managers/history.rs` (`search_folds_vietnamese_case_and_needs_every_word`) |
+| SE-HIST-002 | Counters count dictations and the words of the text the user got (the AI version when there is one); minutes saved = words / 40 − words / 150 (typing versus speaking speed), rounded to 0.1.    | live                                | `src-tauri/src/managers/history.rs` (`stats_count_the_text_the_user_got`)                 |
+| SE-HIST-003 | A card with an AI version also shows the original transcript under it.                                                                                                                           | live                                | `src/components/settings/history/HistorySettings.tsx` (`endsOnOriginal`)                  |
+| SE-HIST-004 | Counters also give one bucket per local calendar day for the last 14 days, oldest first and today last; entries older than that count only in the totals. The chart draws minutes saved per day. | live                                | `src-tauri/src/managers/history.rs` (`stats_bucket_the_last_fourteen_local_days`)         |
 
 ## States and transitions
 
@@ -55,6 +56,7 @@ or code named in Evidence.
 
 ## Change log
 
+- 2026-11-10: SE-HIST-004 added - per-day counters for the 14-day chart above History.
 - 2026-11-10: reviewed after the card's Rewrite menu got a box for the user's own instruction (SE-AI-013); SE-HIST rules unchanged - the original still shows under the AI version.
 - 2026-10-20: reviewed after `save_subtitle_entry` was added for live subtitles (one entry per session, no audio, `file-` prefix; rule SE-LIVE-009); SE-HIST rules unchanged.
 - 2026-10-14: reviewed after file entries and the card's Rewrite or translate button (SE-FILE-002/003); SE-HIST-001…003 unchanged - the original still shows under any AI version.

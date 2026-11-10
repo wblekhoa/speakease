@@ -34,7 +34,8 @@ relations:
 
 - **Search** ("Search what you said") matches every word typed, in any case - "đà NẴNG" finds "Đà Nẵng" - in both
   the original and the AI version. No match shows "No matches".
-- **Counters** at the top: dictations, words, and about how many minutes of typing were saved.
+- **Counters** at the top: dictations and words, each with an icon and how many were added today, and the minutes of
+  typing saved beside one bar per day for the last 14 days (today is the solid bar, days without dictation are grey stubs, hover a bar for its date and minutes; screen readers get the same list). The counters reload when the window regains focus, so "today" moves on after midnight.
 - **One card per dictation**, grouped by Today / Yesterday / date. A card with an AI version shows it first, with an
   **AI** or **Translated** badge, and the **Original** in an inset box under it.
 - Per card: **Play back** the recording, **Copy**, **Save** (kept beyond the limit), **Rewrite or translate** (the AI
@@ -75,6 +76,7 @@ flowchart LR
 
 ## Change log
 
+- 2026-11-10: counters got icons, today's additions and a 14-day bar chart of minutes saved (owner picked A + B).
 - 2026-11-10: a box for the user's own rewrite instruction, with the last five kept (owner form).
 - 2026-10-14: Rewrite or translate on every card; file entries show their name and fold to six lines.
 - 2026-10-11: created (doc-engine rollout).
