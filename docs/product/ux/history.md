@@ -40,7 +40,7 @@ relations:
 - Per card: **Play back** the recording, **Copy**, **Save** (kept beyond the limit), **Rewrite or translate** (the AI
   & Translate prompts and the Speak page's languages, shown in the card; `logic/files.md` SE-FILE-003), **Delete**, **Re-transcribe**
   (useful after switching model or language).
-- **Your own instruction**: the Rewrite menu also has a box for a free instruction ("replace “ri ác” with React",
+- **Your own instruction**: the Rewrite menu also has a box for a free instruction ("replace “diu tub” with YouTube",
   "write it as a short message to the team"); **Rewrite** or Enter runs it on the text the card shows, and the
   Original stays under it. The last five instructions sit under the box as buttons to run again, each with a ✕ to
   remove it (`logic/ai-cleanup.md` SE-AI-013).

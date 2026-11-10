@@ -586,7 +586,7 @@
       "rewriteWith": "Rewrite:",
       "translateInto": "Translate into:",
       "instructionLabel": "Your instruction for the AI",
-      "instructionPlaceholder": "Your instruction, e.g. replace “ri ác” with React",
+      "instructionPlaceholder": "Your instruction, e.g. replace “diu tub” with YouTube",
       "instructionRun": "Rewrite",
       "instructionRecent": "Recent:",
       "instructionForget": "Remove “{{text}}”"

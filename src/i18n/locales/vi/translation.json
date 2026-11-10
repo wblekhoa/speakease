@@ -586,7 +586,7 @@
       "rewriteWith": "Viết lại:",
       "translateInto": "Dịch sang:",
       "instructionLabel": "Lệnh của bạn cho AI",
-      "instructionPlaceholder": "Lệnh của bạn, ví dụ: thay “ri ác” bằng React",
+      "instructionPlaceholder": "Lệnh của bạn, ví dụ: thay “diu tub” bằng YouTube",
       "instructionRun": "Viết lại",
       "instructionRecent": "Gần đây:",
       "instructionForget": "Xóa “{{text}}”"
