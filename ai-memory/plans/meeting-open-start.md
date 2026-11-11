@@ -2,7 +2,7 @@
 status: done
 owner: Lê Khoa
 started: 2026-11-11
-current-phase: both lanes merged (#12 25cf367, #13 92031f5); race follow-up in review
+current-phase: lanes 1-3 merged (#12 25cf367, #13 92031f5, #14 8a23225); lane 4 (ask switch, hardening) in review before 0.1.2
 summary: "Let the user open a meeting by hand anywhere: microphone-only recording when no call app runs, a Start control with a source menu on the Meetings page, and meeting notes out of Experimental, in two sequenced lanes."
 tags: [area/audio, area/capture, stack/rust, stack/react]
 ---
@@ -106,8 +106,8 @@ Frozen by lane 1 (SE-MEET-020). Rust in `src-tauri/src/meeting.rs` and `commands
 
 - Nothing in meeting notes has run in the installed app. Lanes prove unit tests and the browser preview only; the
   first real run is the owner's two-minute microphone-only meeting.
-- With the gate gone the "Take notes of this call?" question reaches every user and has no off switch (owner to
-  decide before lane 2 ends).
+- With the gate gone the "Take notes of this call?" question reaches every user. Lane 4 adds an off switch, on by
+  default (SE-MEET-023, decided by the coordinator under the owner's delegation of 2026-11-12).
 - The meeting shortcut (⌃⌥⌘M) becomes registered for every user on 14.2+.
 
 ## After merge
@@ -120,3 +120,10 @@ Frozen by lane 1 (SE-MEET-020). Rust in `src-tauri/src/meeting.rs` and `commands
 - Still unverified: nothing in meeting notes has run in the installed app (the installed 0.1.1 predates both PRs);
   the session code around `Bar` (events shown, `try_start`) has no unit test. Open owner decisions: an off switch
   for the question, a local test build, releases.
+- Lane 3 (#14) merged by rebase at `8a23225`. A test build from it was installed on 2026-11-11 and starts cleanly; no
+  meeting has run in it yet.
+- Lane 4 (branch `claude/meeting-ask-switch-2280af`, the last code change before 0.1.2): the "Ask when a call
+  starts" switch on Recording (SE-MEET-023; `CallWatch::look` counts a call seen while off as seen and closes an
+  open question), the panic guard armed in `start` and `answer` before anything can panic while the claim is held,
+  `with_bar` made infallible, the Start/Stop button keeping focus while pending, the Meetings list saying when it
+  cannot be read, and the stale docs from the #14 gate.

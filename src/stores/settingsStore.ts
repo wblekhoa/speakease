@@ -144,6 +144,8 @@ const settingUpdaters: {
     commands.changeSpeakeaseEnhancePromptIdSetting((value as string) || null),
   meeting_live_level: (value) =>
     commands.changeMeetingLiveLevelSetting(value as number),
+  meeting_ask_on_call: (value) =>
+    commands.changeMeetingAskOnCallSetting(value as boolean),
   live_subtitle_translator: (value) =>
     commands.changeLiveSubtitleTranslatorSetting((value as string) || "auto"),
   speakease_translate_target: (value) =>

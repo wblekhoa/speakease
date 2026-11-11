@@ -93,6 +93,17 @@ pub fn change_meeting_live_level_setting(app: AppHandle, level: u8) {
     crate::settings::write_settings(&app, settings);
 }
 
+// SE-MEET-023
+/// Whether a call app starting to use the microphone asks "Take notes of
+/// this call?". Off closes an open question within one poll.
+#[tauri::command]
+#[specta::specta]
+pub fn change_meeting_ask_on_call_setting(app: AppHandle, enabled: bool) {
+    let mut settings = crate::settings::get_settings(&app);
+    settings.meeting_ask_on_call = enabled;
+    crate::settings::write_settings(&app, settings);
+}
+
 // SE-MEET-002
 /// The meeting bar's answer to "take notes of this call?": only a yes
 /// records. Returns the error a start ran into.

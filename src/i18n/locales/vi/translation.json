@@ -768,6 +768,10 @@
       "meetingLive": {
         "title": "Trợ giúp trực tiếp khi bắt đầu",
         "description": "Cuộc họp hiện bao nhiêu trong khung dưới thanh cuộc họp. Nút Trợ giúp trên thanh đổi mức cho từng cuộc họp. Mức cao dùng nhiều sức máy hơn."
+      },
+      "meetingAsk": {
+        "title": "Hỏi khi có cuộc gọi",
+        "description": "Khi một ứng dụng gọi bắt đầu dùng micro, thanh cuộc họp hỏi \"Ghi chú cuộc gọi này?\". Tắt đi nếu bạn chỉ muốn tự bắt đầu cuộc họp."
       }
     },
     "recognition": {
@@ -1178,6 +1182,7 @@
     },
     "page": {
       "empty": "Chưa có cuộc họp nào. Bấm Bắt đầu ghi để mở một cuộc, hoặc dùng khay hệ thống hay phím tắt Ghi chú cuộc họp ở trang Ghi âm.",
+      "loadFailed": "Không tải được danh sách cuộc họp. Hãy mở lại trang này để thử lại.",
       "notesTab": "Ghi chú",
       "transcriptTab": "Bản ghi lời",
       "check": "AI viết ghi chú này. Hãy đối chiếu tên và con số với bản ghi lời.",

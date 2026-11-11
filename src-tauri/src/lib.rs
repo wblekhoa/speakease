@@ -986,6 +986,7 @@ pub fn run(cli_args: CliArgs) {
             commands::meetings::set_meeting_panel,
             commands::meetings::meeting_catch_up,
             commands::meetings::change_meeting_live_level_setting,
+            commands::meetings::change_meeting_ask_on_call_setting,
             commands::meetings::get_meeting,
             commands::meetings::list_meetings,
             commands::meetings::rewrite_meeting_notes,

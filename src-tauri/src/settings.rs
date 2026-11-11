@@ -571,6 +571,11 @@ pub struct AppSettings {
     /// 1 recording + timer … 5 live suggestions).
     #[serde(default = "default_meeting_live_level")]
     pub meeting_live_level: u8,
+    /// Meeting notes: ask "Take notes of this call?" when a call app starts
+    /// using the microphone (SE-MEET-023). On by default, so settings saved
+    /// before the switch existed keep asking.
+    #[serde(default = "default_meeting_ask_on_call")]
+    pub meeting_ask_on_call: bool,
     #[serde(default)]
     pub mute_while_recording: bool,
     #[serde(default)]
@@ -642,6 +647,10 @@ const CURRENT_SETTINGS_SCHEMA_VERSION: u32 = 2;
 
 fn default_meeting_live_level() -> u8 {
     1
+}
+
+fn default_meeting_ask_on_call() -> bool {
+    true
 }
 
 fn default_settings_schema_version() -> u32 {
@@ -1252,6 +1261,7 @@ pub fn get_default_settings() -> AppSettings {
         live_subtitle_translator: None,
         meeting_app: None,
         meeting_live_level: default_meeting_live_level(),
+        meeting_ask_on_call: default_meeting_ask_on_call(),
         speakease_last_spoken_language: None,
         mute_while_recording: false,
         append_trailing_space: false,
@@ -1654,6 +1664,19 @@ mod tests {
     }
 
     use super::*;
+
+    // SE-MEET-023
+    #[test]
+    fn the_call_question_is_on_by_default_and_for_settings_saved_without_the_switch() {
+        assert!(get_default_settings().meeting_ask_on_call);
+        let mut stored = serde_json::to_value(get_default_settings()).unwrap();
+        stored
+            .as_object_mut()
+            .unwrap()
+            .remove("meeting_ask_on_call");
+        let old: AppSettings = serde_json::from_value(stored).unwrap();
+        assert!(old.meeting_ask_on_call);
+    }
 
     // SE-MEET-022
     #[test]

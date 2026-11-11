@@ -4,7 +4,7 @@ type: decision
 product: speakease
 title: "SpeakEase — Decisions"
 status: active
-updated: 2026-11-11
+updated: 2026-11-12
 summary: "Append-only record of SpeakEase's product and engineering decisions, newest first, each with its context, evidence and how to reverse it."
 tags: [area/docs]
 ---
@@ -13,6 +13,22 @@ tags: [area/docs]
 
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
+
+## 2026-11-12 · A switch for "Take notes of this call?", on by default (coordinator, under the owner's delegation)
+
+- **Context**: since SE-MEET-022 meeting notes are open to every Mac on macOS 14.2+, so from the next release the
+  meeting bar asks "Take notes of this call?" whenever a call app takes the microphone, and nothing turned that
+  question off. The plan of 2026-11-11 left the switch as an open owner decision.
+- **Decision**: a switch "Ask when a call starts" (VI "Hỏi khi có cuộc gọi") on the Recording page, beside the
+  live-help setting, shown wherever meeting notes are (SE-MEET-023). It is on by default, and settings saved before it
+  existed read as on, so nothing changes for anyone who leaves it alone. Off, the watcher never asks and an open
+  question closes; a call seen while off is not asked about after switching on. Starting by hand is unchanged.
+- **Who decided**: the coordinator session, under the owner's delegation of 2026-11-12 ("continue the strategy,
+  finish, then release"). The owner did not confirm this item by item.
+- **Evidence**: unit tests in `src-tauri/src/meeting.rs` and `src-tauri/src/settings.rs` named in SE-MEET-023; the
+  switch seen in the browser preview with the mock. Not yet seen in the installed app.
+- **Reverse**: remove the switch and `meeting_ask_on_call` (the watcher then always asks, as before), or flip the
+  default to off if the owner prefers a quiet first run.
 
 ## 2026-11-11 · Meetings the user opens by hand: microphone only, a Start button, out of Experimental (owner form)
 

@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — Meeting notes (UX)"
 status: active
-updated: 2026-11-11
+updated: 2026-11-12
 summary: "Beta open to every Mac on macOS 14.2+: a Start button on the Meetings page, a shortcut or the tray records the meeting app and the microphone, a bar at the top of the screen shows the consent line, a timer and Stop, and the meeting lands in History and on the Meetings page, where its notes are read and questions about it answered."
 tags: [area/ai, area/audio, area/capture, surface/macos, stack/react]
 relations:
@@ -65,9 +65,13 @@ relations:
   the microphone-only form) and the menu button is greyed out; while it is transcribed or its notes written the button is
   greyed out and the line shows the bar's phase text. When the meeting is saved the list refreshes and the control
   is idle again. While the bar asks about a call, Start answers it: the question closes and the recording starts (never refused as already recording because of the question), on
-  the app asked about for Automatic (the line and the Automatic row name it as the question does, so a browser call reads "Google Meet") or on the source picked. Start
+  the app asked about for Automatic (the line and the Automatic row name it as the question does, so a browser call reads "Google Meet") or on the source picked. A second
+  Start pressed while the first is still on its way is refused ("Đang có một cuộc họp được ghi âm."); the first shows
+  its own outcome. Start
   errors show under the button with the bar's texts; if a named app has gone, the choice goes
-  back to Automatic after the error. There is no switch for the "Take notes of this call?" question (owner to decide).
+  back to Automatic after the error. While a start or a stop has not answered, Start/Stop is greyed out but keeps
+  keyboard focus. If the list of meetings cannot be read, the list column says so ("Không tải được danh sách cuộc
+  họp. Hãy mở lại trang này để thử lại.") instead of staying empty; the Start control still shows.
 - **Asked when a call starts**: when Zoom, Teams, Zalo, Messenger, FaceTime, Slack or Discord starts using the
   microphone, or a browser does while its front tab is Google Meet, the bar asks on two lines "Microsoft Teams đang
   dùng micro." / "Ghi chú cuộc gọi này?" (EN "Microsoft Teams is using the mic." / "Take notes of this call?")
@@ -76,6 +80,10 @@ relations:
   the microphone; leaving a Meet tab for over a minute counts as an end too). Sound alone (a video) never asks, nor
   does a browser on another site. No question while a meeting
   records or is being finished, while a start is on its way, or over an error not yet closed. Since SE-MEET-022 it reaches every user on macOS 14.2+.
+  The question can be turned off on Recording, beside the live-help setting: **Hỏi khi có cuộc gọi** (EN "Ask when a
+  call starts"), on by default (SE-MEET-023). Off, no call asks and a question already on the bar closes within a few
+  seconds; the shortcut, the tray item and the Meetings page's Start still record. Turning it back on during a call
+  does not ask about that call; the next call is asked about.
 - **Meeting bar**: a pill at the top centre of the screen that never takes focus from the call: a pulsing red dot,
   "Đang ghi âm. Nhớ báo cho mọi người biết nhé." (EN "Recording. Remember to tell everyone."), a timer and **Stop**.
   It asks macOS to keep it out of screen sharing (untested).
