@@ -25,7 +25,8 @@ cd "$root"
 env_file="${SPEAKEASE_ENV_FILE:-}"
 if [[ -n "$env_file" ]]; then
   [[ -f "$env_file" ]] || { echo "NO_ENV_FILE: $env_file" >&2; exit 1; }
-  # Not exported: the file may hold other secrets the build has no use for.
+  # Plain NAME=value lines are not exported: the file may hold other
+  # secrets the build has no use for.
   # shellcheck disable=SC1090
   source "$env_file"
 fi
@@ -46,6 +47,13 @@ echo "==> SpeakEase $version"
 if [[ "$publish" == "1" ]] && gh release view "$tag" -R "$repo" >/dev/null 2>&1; then
   echo "RELEASE_EXISTS: $tag is already published; bump the version first" >&2
   exit 1
+fi
+# A published tag names the commit that was built: nothing uncommitted, and
+# a commit GitHub's main already has.
+if [[ "$publish" == "1" ]]; then
+  [[ -z "$(git status --porcelain)" ]] || { echo "DIRTY_TREE: commit or remove local changes before publishing" >&2; exit 1; }
+  git fetch --quiet origin main
+  git merge-base --is-ancestor HEAD origin/main || { echo "NOT_ON_MAIN: HEAD is not on origin/main" >&2; exit 1; }
 fi
 
 echo "==> building the on-device AI server"

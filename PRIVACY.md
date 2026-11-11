@@ -20,11 +20,11 @@ SpeakEase được làm để lời bạn nói ở lại trên máy bạn. Trang
 | --- | --- | --- |
 | Bạn bấm tải một mô hình | Yêu cầu tải tệp mô hình | Hugging Face hoặc máy chủ tệp của Handy |
 | Bạn bấm tải một mô hình AI chạy trên máy | Yêu cầu tải tệp mô hình | Hugging Face |
-| AI sửa câu / dịch bằng **Apple Intelligence** (mặc định trên máy hỗ trợ) hoặc **mô hình trên máy**; phụ đề trực tiếp | Không gì cả — chạy trên máy | — |
-| AI sửa câu / dịch bằng **dịch vụ bạn tự thêm khoá** (OpenAI, Anthropic, OpenRouter, Groq…) | **Chữ** đã nhận dạng và lời dặn của mẫu — không bao giờ gửi âm thanh. Khi liệt kê mô hình của một dịch vụ, khoá của bạn được gửi tới dịch vụ đó | Thẳng tới dịch vụ đó, bằng khoá của bạn |
-| **Ghi chú cuộc họp, câu hỏi về cuộc họp và trợ giúp trực tiếp** (mức 4 và 5 tự gửi các dòng mới nhất vài phút một lần trong lúc ghi) | Máy có Apple Intelligence: không gì cả. Máy không có: **chữ** của cuộc họp được gửi tới dịch vụ bạn đã lưu khoá (dịch vụ đang chọn ở AI & dịch trước, không thì dịch vụ khác có khoá và mô hình), kể cả khi bạn đã chọn mô hình trên máy. Không lưu khoá nào: không gì cả, mô hình trên máy Qwen3.5-4B viết ghi chú. Không bao giờ gửi âm thanh | Dịch vụ đó, bằng khoá của bạn |
+| AI sửa câu / dịch / viết lại bằng **Apple Intelligence** (mặc định trên máy hỗ trợ) hoặc **mô hình trên máy**; phụ đề trực tiếp | Không gì cả — chạy trên máy | — |
+| AI sửa câu / dịch / viết lại bằng **dịch vụ bạn tự thêm khoá** (OpenAI, Anthropic, OpenRouter, Groq…) | **Chữ** đã nhận dạng và lời dặn của mẫu — không bao giờ gửi âm thanh. Khi liệt kê mô hình của một dịch vụ, khoá của bạn được gửi tới dịch vụ đó | Thẳng tới dịch vụ đó, bằng khoá của bạn |
+| **Ghi chú cuộc họp, câu hỏi về cuộc họp và trợ giúp trực tiếp** (mức 4 và 5 tự gửi các dòng mới nhất vài phút một lần trong lúc ghi) | Máy có Apple Intelligence: không gì cả. Máy không có: **chữ** của cuộc họp được gửi tới dịch vụ bạn đã lưu khoá (dịch vụ đang chọn ở AI & dịch trước, không thì dịch vụ khác có khoá và mô hình), kể cả khi bạn đã chọn mô hình trên máy. Không lưu khoá nào: không gì cả, mô hình trên máy Qwen3.5-4B viết ghi chú nếu đã tải; chưa tải thì ghi chú chính là lời chép. Không bao giờ gửi âm thanh | Dịch vụ đó, bằng khoá của bạn |
 | Bạn dán một liên kết vào **Tệp/liên kết** | Yêu cầu tải trang hoặc tệp đó (liên kết YouTube và tương tự đi qua yt-dlp, do bạn tự cài) | Trang của liên kết |
-| Ứng dụng mở lên, hoặc bạn bảo nó kiểm tra cập nhật (menu ứng dụng, thanh menu hoặc thanh bên) | Yêu cầu đọc số phiên bản mới nhất; tệp cập nhật chỉ được tải khi bạn đồng ý | Trang phát hành của SpeakEase trên GitHub |
+| Ứng dụng mở lên, hoặc bạn bảo nó kiểm tra cập nhật (menu ứng dụng, thanh menu hoặc trang **Ứng dụng**) | Yêu cầu đọc số phiên bản mới nhất; tệp cập nhật chỉ được tải khi bạn đồng ý | Trang phát hành của SpeakEase trên GitHub |
 
 Ngoài ra SpeakEase **không** gửi gì: không tài khoản, không quảng cáo, không đo lường sử dụng, không báo lỗi tự động. Việc tự kiểm tra bản cập nhật tắt được ở trang **Ứng dụng**.
 
@@ -46,11 +46,11 @@ Tắt AI (**AI & dịch › Dùng AI**) thì không bước AI nào chạy, kể
 | --- | --- | --- |
 | You download a model | A request for the model file | Hugging Face, or Handy's file server |
 | You download an on-device AI model | A request for the model file | Hugging Face |
-| AI cleanup and translation with **Apple Intelligence** (the default on supported Macs) or **an on-device model**; live subtitles | Nothing — it runs on your Mac | — |
-| AI cleanup and translation with **a service you added a key for** (OpenAI, Anthropic, OpenRouter, Groq…) | The recognised **text** and the prompt's instructions — never audio. Listing a service's models sends it your key | Straight to that service, with your key |
-| **Meeting notes, questions about a meeting and live help** (levels 4 and 5 send the latest lines by themselves every few minutes while you record) | With Apple Intelligence on the Mac: nothing. Without it: the meeting's **text** goes to a service you saved a key for (the one picked in AI & Translate first, else any other with a key and a model), even when you picked an on-device model. With no key saved: nothing, the on-device model Qwen3.5-4B writes them. Never audio | That service, with your key |
+| AI cleanup, translation and rewrites with **Apple Intelligence** (the default on supported Macs) or **an on-device model**; live subtitles | Nothing — it runs on your Mac | — |
+| AI cleanup, translation and rewrites with **a service you added a key for** (OpenAI, Anthropic, OpenRouter, Groq…) | The recognised **text** and the prompt's instructions — never audio. Listing a service's models sends it your key | Straight to that service, with your key |
+| **Meeting notes, questions about a meeting and live help** (levels 4 and 5 send the latest lines by themselves every few minutes while you record) | With Apple Intelligence on the Mac: nothing. Without it: the meeting's **text** goes to a service you saved a key for (the one picked in AI & Translate first, else any other with a key and a model), even when you picked an on-device model. With no key saved: nothing, the on-device model Qwen3.5-4B writes them if it is downloaded; otherwise the notes are the transcript. Never audio | That service, with your key |
 | You paste a link in **Files & links** | A request for that page or file (YouTube and similar links go through yt-dlp, which you install yourself) | The link's site |
-| The app starts, or you ask it to check for updates (app menu, menu bar or sidebar) | A request for the newest version number; the update itself is downloaded only when you accept it | SpeakEase's releases on GitHub |
+| The app starts, or you ask it to check for updates (app menu, menu bar or the **App** page) | A request for the newest version number; the update itself is downloaded only when you accept it | SpeakEase's releases on GitHub |
 
 Beyond that SpeakEase sends **nothing**: no account, no ads, no usage tracking, no automatic crash reports. The automatic update check can be switched off on the **App** page.
 
