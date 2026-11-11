@@ -976,6 +976,7 @@ pub fn run(cli_args: CliArgs) {
             commands::live_subtitles::has_local_ai_model,
             commands::live_subtitles::show_live_subtitles_panel,
             commands::meetings::start_meeting,
+            commands::meetings::meeting_sources,
             commands::meetings::stop_meeting,
             commands::meetings::meeting_state,
             commands::meetings::close_meeting_bar,

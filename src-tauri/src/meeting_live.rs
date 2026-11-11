@@ -59,6 +59,10 @@ pub struct LiveView {
     pub suggestions: Vec<Suggestion>,
     /// Why levels 3-5 cannot run ("ai_off" / "nothing_available").
     pub ai_missing: Option<String>,
+    /// A microphone-only meeting (SE-MEET-020): every line is the
+    /// microphone, which hears the whole room, so lines carry no Me / Others
+    /// label.
+    pub microphone_only: bool,
 }
 
 /// A level from the pill or Settings, kept within 1-5.
@@ -73,9 +77,10 @@ pub fn last_minutes(lines: &[LiveLine], now_ms: u64, minutes: u64) -> &[LiveLine
     &lines[first..]
 }
 
-/// Lines as the AI reads them, "[Tôi] …" / "[Người khác] …", keeping only
-/// the newest `max_words`.
-pub fn lines_text(lines: &[LiveLine], me: &str, others: &str, max_words: usize) -> String {
+/// Lines as the AI reads them, "[Tôi] …" / "[Người khác] …" (or bare lines
+/// when `labels` is None: a microphone-only meeting), keeping only the
+/// newest `max_words`.
+pub fn lines_text(lines: &[LiveLine], labels: Option<(&str, &str)>, max_words: usize) -> String {
     let mut kept: Vec<String> = Vec::new();
     let mut words = 0;
     for line in lines.iter().rev() {
@@ -83,8 +88,13 @@ pub fn lines_text(lines: &[LiveLine], me: &str, others: &str, max_words: usize) 
         if words > max_words && !kept.is_empty() {
             break;
         }
-        let who = if line.me { me } else { others };
-        kept.push(format!("[{who}] {}", line.text.trim()));
+        kept.push(match labels {
+            Some((me, others)) => {
+                let who = if line.me { me } else { others };
+                format!("[{who}] {}", line.text.trim())
+            }
+            None => line.text.trim().to_string(),
+        });
     }
     kept.reverse();
     kept.join("\n")
@@ -268,8 +278,15 @@ pub mod session {
     }
 
     /// Starts the live work for a meeting that started at `started`, at the
-    /// level set in Settings, reading both tracks from `samples`.
-    pub fn begin(app: &AppHandle, started: Instant, level: u8, samples: Samples) {
+    /// level set in Settings, reading both tracks (or the microphone alone,
+    /// `microphone_only`) from `samples`.
+    pub fn begin(
+        app: &AppHandle,
+        started: Instant,
+        level: u8,
+        samples: Samples,
+        microphone_only: bool,
+    ) {
         let meeting = MEETING.fetch_add(1, Ordering::SeqCst) + 1;
         LEVEL.store(clamp_level(level), Ordering::Relaxed);
         if let Ok(mut s) = STARTED.lock() {
@@ -283,6 +300,7 @@ pub mod session {
         update(app, meeting, |view| {
             view.level = clamp_level(level);
             view.ai_missing = missing;
+            view.microphone_only = microphone_only;
         });
         let (work, segments) = channel::<(bool, Segment)>();
 
@@ -454,7 +472,9 @@ pub mod session {
             update(app, meeting, |view| view.ai_missing = None);
         }
         let labels = crate::meeting::labels(&crate::settings::get_settings(app).app_language);
-        let text = lines_text(lines, labels.me, labels.others, LIVE_WORDS);
+        // SE-MEET-020: no labels for a microphone-only meeting.
+        let speakers = (!view().microphone_only).then_some((labels.me, labels.others));
+        let text = lines_text(lines, speakers, LIVE_WORDS);
         let ai = EngineAi {
             app: app.clone(),
             engine,
@@ -547,18 +567,25 @@ mod tests {
             line(2, false, "bảy tám"),
         ];
         assert_eq!(
-            lines_text(&lines, "Tôi", "Người khác", 100),
+            lines_text(&lines, Some(("Tôi", "Người khác")), 100),
             "[Người khác] một hai ba bốn\n[Tôi] năm sáu\n[Người khác] bảy tám"
         );
         // Over the limit, the oldest lines go first; the newest always stays.
         assert_eq!(
-            lines_text(&lines, "Tôi", "Người khác", 4),
+            lines_text(&lines, Some(("Tôi", "Người khác")), 4),
             "[Tôi] năm sáu\n[Người khác] bảy tám"
         );
         assert_eq!(
-            lines_text(&lines, "Tôi", "Người khác", 1),
+            lines_text(&lines, Some(("Tôi", "Người khác")), 1),
             "[Người khác] bảy tám"
         );
+    }
+
+    // SE-MEET-020
+    #[test]
+    fn a_microphone_only_meeting_reaches_the_ai_without_labels() {
+        let lines = [line(0, true, "một hai ba"), line(1, true, "bốn năm")];
+        assert_eq!(lines_text(&lines, None, 100), "một hai ba\nbốn năm");
     }
 
     // SE-MEET-005 level 4

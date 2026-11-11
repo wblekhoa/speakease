@@ -1099,16 +1099,26 @@ async showLiveSubtitlesPanel() : Promise<void> {
     await TAURI_INVOKE("show_live_subtitles_panel");
 },
 /**
- * Starts recording a meeting with `bundle_id` as "Others", or with the
- * meeting app found running when it is None.
+ * Starts recording a meeting from `source`: Automatic (the app found
+ * running, else the microphone only), the microphone only, or a named app.
+ * Errors: "unsupported: …", "no-app: …" (the named app is not running),
+ * "running: …", "microphone: …".
  */
-async startMeeting(bundleId: string | null) : Promise<Result<null, string>> {
+async startMeeting(source: MeetingSource) : Promise<Result<null, string>> {
     try {
-    return { status: "ok", data: await TAURI_INVOKE("start_meeting", { bundleId }) };
+    return { status: "ok", data: await TAURI_INVOKE("start_meeting", { source }) };
 } catch (e) {
     if(e instanceof Error) throw e;
     else return { status: "error", error: e  as any };
 }
+},
+/**
+ * What a source menu offers now: what Automatic would record (None: the
+ * microphone only) and each running call app or browser. "Microphone
+ * only" is always offered and is not listed.
+ */
+async meetingSources() : Promise<MeetingSources> {
+    return await TAURI_INVOKE("meeting_sources");
 },
 async stopMeeting() : Promise<void> {
     await TAURI_INVOKE("stop_meeting");
@@ -1526,7 +1536,13 @@ export type LiveView = { level: number; panel_open: boolean; lines: LiveLine[]; 
 /**
  * Why levels 3-5 cannot run ("ai_off" / "nothing_available").
  */
-ai_missing: string | null }
+ai_missing: string | null; 
+/**
+ * A microphone-only meeting (SE-MEET-020): every line is the
+ * microphone, which hears the whole room, so lines carry no Me / Others
+ * label.
+ */
+microphone_only: boolean }
 export type LogLevel = "trace" | "debug" | "info" | "warn" | "error"
 /**
  * What the Files page hands over: a file on disk, or a link.
@@ -1537,7 +1553,9 @@ export type MediaSource = { kind: "path"; value: string } | { kind: "url"; value
  */
 export type Meeting = { history_id: number; 
 /**
- * The app whose sound was the "Others" track.
+ * The app whose sound was the "Others" track; empty for a
+ * microphone-only meeting (SE-MEET-020); a recording from Files keeps
+ * its title here.
  */
 app_name: string; started_at: number; duration_ms: number; 
 /**
@@ -1563,6 +1581,36 @@ export type MeetingAnswer = { text: string; lines: number[]; found: boolean }
  * Meetings page (SE-MEET-018).
  */
 export type MeetingEntry = { meeting: Meeting; title: string; transcript: string }
+/**
+ * Where a meeting's sound comes from (SE-MEET-020).
+ */
+export type MeetingSource = 
+/**
+ * The app [`pick_meeting_app`] finds, else the microphone only.
+ */
+{ kind: "automatic" } | 
+/**
+ * The microphone only: one track, no speaker labels.
+ */
+{ kind: "microphone" } | 
+/**
+ * This app's sound as "Others" (a bundle id); an error when it is not
+ * running.
+ */
+{ kind: "app"; value: string }
+/**
+ * What a source menu offers (SE-MEET-020, SE-MEET-021). "Microphone only"
+ * is always offered and is not listed.
+ */
+export type MeetingSources = { 
+/**
+ * What Automatic would record now; `None` means the microphone only.
+ */
+automatic: RunningApp | null; 
+/**
+ * Each running call app or browser, in the order Automatic ranks them.
+ */
+apps: RunningApp[] }
 /**
  * Where a meeting stands, for the meeting bar and the window.
  */

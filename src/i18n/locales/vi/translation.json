@@ -1156,7 +1156,7 @@
     },
     "errors": {
       "unsupported": "Ghi chú cuộc họp cần macOS 14.2 trở lên.",
-      "no-app": "Chưa có ứng dụng họp nào đang chạy. Hãy mở Zoom, Meet, Teams hoặc ứng dụng gọi khác trước.",
+      "no-app": "Ứng dụng đã chọn không còn chạy. Hãy mở lại ứng dụng đó, hoặc chỉ ghi micro.",
       "running": "Đang có một cuộc họp được ghi âm.",
       "microphone": "Không mở được micro.",
       "no-model": "Hãy chọn mô hình nhận giọng nói ở trang Mô hình trước.",

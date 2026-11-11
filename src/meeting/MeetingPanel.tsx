@@ -185,9 +185,16 @@ export const MeetingPanel: React.FC<{ view: LiveView }> = ({ view }) => {
                 key={`l|${row.at}|${row.line.me}|${row.line.text}`}
                 className="mp-line"
               >
-                <span className="mp-who">
-                  {t(row.line.me ? "meeting.live.me" : "meeting.live.others")}
-                </span>{" "}
+                {/* SE-MEET-020: a microphone-only meeting has no labels. */}
+                {!view.microphone_only && (
+                  <>
+                    <span className="mp-who">
+                      {t(
+                        row.line.me ? "meeting.live.me" : "meeting.live.others",
+                      )}
+                    </span>{" "}
+                  </>
+                )}
                 {row.line.text}
               </li>
             ) : (

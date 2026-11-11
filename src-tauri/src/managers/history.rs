@@ -51,7 +51,9 @@ static MIGRATIONS: &[M] = &[
 #[derive(Clone, Debug, Serialize, Deserialize, Type, PartialEq)]
 pub struct Meeting {
     pub history_id: i64,
-    /// The app whose sound was the "Others" track.
+    /// The app whose sound was the "Others" track; empty for a
+    /// microphone-only meeting (SE-MEET-020); a recording from Files keeps
+    /// its title here.
     pub app_name: String,
     pub started_at: i64,
     pub duration_ms: i64,
