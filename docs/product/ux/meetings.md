@@ -64,7 +64,7 @@ relations:
   records, however it was started, the button reads **Dừng** (Stop), the line reads "Đang ghi: <app> và micro" (or
   the microphone-only form) and the menu button is greyed out; while it is transcribed or its notes written the button is
   greyed out and the line shows the bar's phase text. When the meeting is saved the list refreshes and the control
-  is idle again. While the bar asks about a call, Start answers it: the question closes and the recording starts, on
+  is idle again. While the bar asks about a call, Start answers it: the question closes and the recording starts (never refused as already recording because of the question), on
   the app asked about for Automatic (the line and the Automatic row name it as the question does, so a browser call reads "Google Meet") or on the source picked. Start
   errors show under the button with the bar's texts; if a named app has gone, the choice goes
   back to Automatic after the error. There is no switch for the "Take notes of this call?" question (owner to decide).
@@ -75,7 +75,7 @@ relations:
   **Lúc khác** or × closes it, and that call is not asked about again (a call ends after a minute with no call app on
   the microphone; leaving a Meet tab for over a minute counts as an end too). Sound alone (a video) never asks, nor
   does a browser on another site. No question while a meeting
-  records or is being finished, or over an error not yet closed. Since SE-MEET-022 it reaches every user on macOS 14.2+.
+  records or is being finished, while a start is on its way, or over an error not yet closed. Since SE-MEET-022 it reaches every user on macOS 14.2+.
 - **Meeting bar**: a pill at the top centre of the screen that never takes focus from the call: a pulsing red dot,
   "Đang ghi âm. Nhớ báo cho mọi người biết nhé." (EN "Recording. Remember to tell everyone."), a timer and **Stop**.
   It asks macOS to keep it out of screen sharing (untested).

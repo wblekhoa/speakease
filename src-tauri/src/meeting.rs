@@ -502,6 +502,160 @@ pub fn source_when_asked(source: MeetingSource, asked: Option<String>) -> Meetin
     }
 }
 
+// SE-MEET-002, SE-MEET-021
+/// What the meeting bar shows, the call it asks about, and whether a start
+/// is claiming the session: one value under one lock, so each step below is
+/// a single critical section and a question and a start never interleave.
+/// Kept true by every step: `asked` is set exactly while the phase is
+/// "asking", and no question opens while `claimed`.
+pub struct Bar {
+    shown: Option<MeetingState>,
+    asked: Option<String>,
+    /// A start has closed any question and is on its way to recording (or
+    /// to its error); held until [`Bar::started`] or [`Bar::failed`].
+    claimed: bool,
+}
+
+impl Default for Bar {
+    fn default() -> Self {
+        Self::new()
+    }
+}
+
+impl Bar {
+    pub const fn new() -> Self {
+        Bar {
+            shown: None,
+            asked: None,
+            claimed: false,
+        }
+    }
+
+    /// The state the bar shows now ("idle" before anything was shown).
+    pub fn now(&self) -> MeetingState {
+        self.shown.clone().unwrap_or_else(|| MeetingState {
+            phase: "idle".to_string(),
+            ..MeetingState::default()
+        })
+    }
+
+    /// Shows `state`; leaving "asking" this way forgets the asked app.
+    pub fn set(&mut self, state: MeetingState) {
+        if state.phase != "asking" {
+            self.asked = None;
+        }
+        self.shown = Some(state);
+    }
+
+    /// The watcher's question about `bundle_id`: opens only on an idle bar
+    /// with no open error and no start claiming the session, and remembers
+    /// the app in the same step. Returns the state to show.
+    pub fn ask(&mut self, bundle_id: String, app_name: Option<String>) -> Option<MeetingState> {
+        let now = self.now();
+        if self.claimed || now.phase != "idle" || now.error.is_some() {
+            return None;
+        }
+        let state = MeetingState {
+            phase: "asking".to_string(),
+            app_name,
+            ..MeetingState::default()
+        };
+        self.asked = Some(bundle_id);
+        self.shown = Some(state.clone());
+        Some(state)
+    }
+
+    /// Closes the question if one is open, returning the app it asked
+    /// about; with no question open it takes nothing and changes nothing.
+    pub fn end_ask(&mut self) -> Option<String> {
+        if self.now().phase != "asking" {
+            return None;
+        }
+        let asked = self.asked.take();
+        self.set(MeetingState {
+            phase: "idle".to_string(),
+            ..MeetingState::default()
+        });
+        asked
+    }
+
+    /// A start (the page, the shortcut, the tray) claims the session: it
+    /// closes an open question in the same step (Automatic then records the
+    /// asked app) and keeps the watcher from asking until it ends. Refused
+    /// only while another start is claiming.
+    pub fn claim(&mut self, source: MeetingSource) -> Result<MeetingSource, String> {
+        if self.claimed {
+            return Err("running: a meeting is already recording".to_string());
+        }
+        let source = source_when_asked(source, self.end_ask());
+        self.claimed = true;
+        Ok(source)
+    }
+
+    /// The user's answer on the bar, in one step: closes the question; a
+    /// Yes also claims the session for the app asked about, so no other
+    /// question can open (and be closed) before its start.
+    pub fn answer(&mut self, yes: bool) -> Option<String> {
+        let app = app_to_record(yes, self.end_ask())?;
+        if self.claimed {
+            return None;
+        }
+        self.claimed = true;
+        Some(app)
+    }
+
+    /// Whether a call that starts now counts as seen without a question: a
+    /// meeting is recording, being finished, or a start is on its way.
+    pub fn busy(&self) -> bool {
+        self.claimed || !matches!(self.now().phase.as_str(), "idle" | "asking")
+    }
+
+    /// The bar's × on an idle bar: clears its error; on any other phase
+    /// (a question that opened meanwhile included) changes nothing.
+    pub fn clear_error(&mut self) -> Option<MeetingState> {
+        let now = self.now();
+        if now.phase != "idle" {
+            return None;
+        }
+        let state = MeetingState { error: None, ..now };
+        self.set(state.clone());
+        Some(state)
+    }
+
+    /// Lets a claim go without showing anything (a start that panicked).
+    pub fn release(&mut self) {
+        self.claimed = false;
+    }
+
+    /// The claimed start is recording: shows it and lets the claim go.
+    pub fn started(&mut self, state: MeetingState) {
+        self.set(state);
+        self.claimed = false;
+    }
+
+    /// The claimed start failed: lets the claim go and, unless a meeting is
+    /// still recording or being finished, shows the error on an idle bar.
+    pub fn failed(&mut self, error: String, recording: bool) -> Option<MeetingState> {
+        self.claimed = false;
+        if recording || self.now().phase != "idle" {
+            return None;
+        }
+        let state = MeetingState {
+            phase: "idle".to_string(),
+            error: Some(error),
+            ..MeetingState::default()
+        };
+        self.set(state.clone());
+        Some(state)
+    }
+}
+
+/// Why a start that reached the recording step is refused, if it is: a
+/// meeting still recording, or one being transcribed or noted.
+pub fn start_refused(running: bool, phase: &str) -> Option<String> {
+    (running || phase != "idle").then(|| "running: a meeting is already recording".to_string())
+}
+
 /// Where a meeting stands, for the meeting bar and the window.
 #[derive(Debug, Clone, Default, Serialize, Type)]
 pub struct MeetingState {
@@ -534,7 +688,10 @@ pub mod session {
     }
 
     static RUNNING: Mutex<Option<Running>> = Mutex::new(None);
-    static STATE: Mutex<Option<MeetingState>> = Mutex::new(None);
+    /// The bar, the call it asks about and a start's claim, under one lock.
+    /// Lock order: RUNNING before STATE (try_start holds RUNNING while it
+    /// reads the phase); nothing takes RUNNING while holding STATE.
+    static STATE: Mutex<Bar> = Mutex::new(Bar::new());
 
     /// The event the meeting bar and the window listen to.
     pub const STATE_EVENT: &str = "meeting-state";
@@ -543,12 +700,14 @@ pub mod session {
     pub fn state() -> MeetingState {
         STATE
             .lock()
-            .ok()
-            .and_then(|s| s.clone())
-            .unwrap_or_else(|| MeetingState {
-                phase: "idle".to_string(),
-                ..MeetingState::default()
-            })
+            .map(|bar| bar.now())
+            .unwrap_or_else(|_| Bar::new().now())
+    }
+
+    /// One step on the bar, under its lock.
+    fn with_bar<T>(step: impl FnOnce(&mut Bar) -> T) -> Result<T, String> {
+        let mut bar = STATE.lock().map_err(|e| e.to_string())?;
+        Ok(step(&mut bar))
     }
 
     /// Whether a meeting is recording now.
@@ -557,35 +716,8 @@ pub mod session {
     }
 
     fn announce(app: &AppHandle, state: MeetingState) {
-        if let Ok(mut slot) = STATE.lock() {
-            *slot = Some(state.clone());
-        }
+        let _ = with_bar(|bar| bar.set(state.clone()));
         show(app, &state);
-    }
-
-    /// Like [`announce`], only while `when` holds for the state now, checked
-    /// and written under one lock: the call watch and a start from the
-    /// shortcut never overwrite each other's phase.
-    fn announce_if(
-        app: &AppHandle,
-        when: impl Fn(&MeetingState) -> bool,
-        state: MeetingState,
-    ) -> bool {
-        {
-            let Ok(mut slot) = STATE.lock() else {
-                return false;
-            };
-            let now = slot.clone().unwrap_or_else(|| MeetingState {
-                phase: "idle".to_string(),
-                ..MeetingState::default()
-            });
-            if !when(&now) {
-                return false;
-            }
-            *slot = Some(state.clone());
-        }
-        show(app, &state);
-        true
     }
 
     fn show(app: &AppHandle, state: &MeetingState) {
@@ -598,24 +730,48 @@ pub mod session {
     /// Starts recording a meeting from `source`: an app's sound as "Others"
     /// with the microphone as "Me", or the microphone alone. Never starts a
     /// dictation. A start that fails shows why on the meeting bar, with its ×.
-    /// A start while the bar asks about a call closes that question first
-    /// (SE-MEET-021): the Meetings page's Start is then an answer, like the
-    /// shortcut, and never refused as "running". After [`answer`] the
-    /// question is already closed and this changes nothing.
+    /// A start while the bar asks about a call closes that question in the
+    /// same step that claims the session (SE-MEET-021, [`Bar::claim`]): the
+    /// Meetings page's Start is then an answer, like the shortcut, and no
+    /// question opens until the start records or fails, so a question never
+    /// makes it "running".
     pub fn start(app: &AppHandle, source: MeetingSource) -> Result<(), String> {
-        let source = source_when_asked(source, end_ask(app));
+        let (claimed, closed) = with_bar(|bar| {
+            let asking = bar.now().phase == "asking";
+            let claimed = bar.claim(source);
+            let closed = (asking && claimed.is_ok()).then(|| bar.now());
+            (claimed, closed)
+        })?;
+        if let Some(state) = closed {
+            show(app, &state);
+        }
+        // Refused only while another start is claiming: that start shows
+        // its own outcome on the bar.
+        let source = claimed.inspect_err(|e| log::warn!("Meeting: {e}"))?;
+        start_claimed(app, source)
+    }
+
+    /// Runs a start that holds the claim, and lets the claim go: on success
+    /// with "recording", on failure with the error on an idle bar, with
+    /// its × (a meeting still recording or being finished keeps its bar).
+    fn start_claimed(app: &AppHandle, source: MeetingSource) -> Result<(), String> {
+        // A panic inside try_start must not keep the session claimed (no
+        // start or question would work until relaunch). Only on a panic:
+        // after a normal return a newer start may hold the claim.
+        struct ReleaseOnPanic;
+        impl Drop for ReleaseOnPanic {
+            fn drop(&mut self) {
+                if std::thread::panicking() {
+                    let _ = with_bar(Bar::release);
+                }
+            }
+        }
+        let _guard = ReleaseOnPanic;
         try_start(app, source).inspect_err(|e| {
             log::warn!("Meeting: {e}");
-            // A meeting still recording or being finished keeps its bar.
-            if !is_recording() && state().phase == "idle" {
-                announce(
-                    app,
-                    MeetingState {
-                        phase: "idle".to_string(),
-                        error: Some(e.clone()),
-                        ..MeetingState::default()
-                    },
-                );
+            let recording = is_recording();
+            if let Ok(Some(state)) = with_bar(|bar| bar.failed(e.clone(), recording)) {
+                show(app, &state);
             }
         })
     }
@@ -642,8 +798,8 @@ pub mod session {
             let mut running = RUNNING.lock().map_err(|e| e.to_string())?;
             // The last meeting is still being transcribed or noted: its
             // thread owns the bar until it is idle again.
-            if running.is_some() || state().phase != "idle" {
-                return Err("running: a meeting is already recording".to_string());
+            if let Some(refused) = start_refused(running.is_some(), &state().phase) {
+                return Err(refused);
             }
             *running = Some(Running { stop: stop.clone() });
         }
@@ -687,15 +843,14 @@ pub mod session {
             live_samples,
             bundle_id.is_none(),
         );
-        announce(
-            app,
-            MeetingState {
-                phase: "recording".to_string(),
-                started_at: Some(started_at),
-                app_name: app_name.clone(),
-                ..MeetingState::default()
-            },
-        );
+        let recording = MeetingState {
+            phase: "recording".to_string(),
+            started_at: Some(started_at),
+            app_name: app_name.clone(),
+            ..MeetingState::default()
+        };
+        let _ = with_bar(|bar| bar.started(recording.clone()));
+        show(app, &recording);
         match &bundle_id {
             Some(bundle_id) => log::info!("Meeting: recording {bundle_id} and the microphone"),
             None => log::info!("Meeting: recording the microphone only"),
@@ -762,7 +917,11 @@ pub mod session {
     pub fn dismiss(app: &AppHandle) {
         let now = state();
         match now.phase.as_str() {
-            "idle" => announce(app, MeetingState { error: None, ..now }),
+            "idle" => {
+                if let Ok(Some(state)) = with_bar(Bar::clear_error) {
+                    show(app, &state);
+                }
+            }
             "asking" => {
                 end_ask(app);
             }
@@ -771,56 +930,47 @@ pub mod session {
         }
     }
 
-    /// The call app the bar is asking about (SE-MEET-002).
-    static ASKED: Mutex<Option<String>> = Mutex::new(None);
-
     // SE-MEET-002
     /// Puts the question on the meeting bar: "<app> is using the microphone.
     /// Take notes of this call?" Nothing records until [`answer`]. Never over
-    /// a meeting or an error the user has not closed. A start that slips in
-    /// after the check still announces "recording" last, so it wins.
+    /// a meeting, an error the user has not closed, or a start on its way:
+    /// the app and the question are stored in one step ([`Bar::ask`]).
     fn ask(app: &AppHandle, bundle_id: String) {
-        // RUNNING before STATE, never inside it: try_start takes them in
-        // that order.
+        // RUNNING alone, before STATE (see STATE).
         if is_recording() {
             return;
         }
         let app_name = call_app_name(&bundle_id).map(str::to_string);
-        if let Ok(mut asked) = ASKED.lock() {
-            *asked = Some(bundle_id);
+        if let Ok(Some(state)) = with_bar(|bar| bar.ask(bundle_id, app_name)) {
+            show(app, &state);
         }
-        announce_if(
-            app,
-            |now| now.phase == "idle" && now.error.is_none(),
-            MeetingState {
-                phase: "asking".to_string(),
-                app_name,
-                ..MeetingState::default()
-            },
-        );
     }
 
     /// Takes the question off the bar if it is still there, and returns the
     /// app it asked about.
     fn end_ask(app: &AppHandle) -> Option<String> {
-        let asked = ASKED.lock().ok().and_then(|mut a| a.take());
-        let ended = announce_if(
-            app,
-            |now| now.phase == "asking",
-            MeetingState {
-                phase: "idle".to_string(),
-                ..MeetingState::default()
-            },
-        );
-        asked.filter(|_| ended)
+        let (asked, state) = with_bar(|bar| bar.end_ask().map(|asked| (asked, bar.now())))
+            .ok()
+            .flatten()?;
+        show(app, &state);
+        Some(asked)
     }
 
     // SE-MEET-002
     /// The user's answer on the bar: Yes records the app asked about; No
-    /// only closes the question (this call is not asked about again).
+    /// only closes the question (this call is not asked about again). The
+    /// question is closed once, in the same step that claims the start.
     pub fn answer(app: &AppHandle, yes: bool) -> Result<(), String> {
-        match app_to_record(yes, end_ask(app)) {
-            Some(bundle_id) => start(app, MeetingSource::App(bundle_id)),
+        let (record, closed) = with_bar(|bar| {
+            let asking = bar.now().phase == "asking";
+            let record = bar.answer(yes);
+            (record, asking.then(|| bar.now()))
+        })?;
+        if let Some(state) = closed {
+            show(app, &state);
+        }
+        match record {
+            Some(bundle_id) => start_claimed(app, MeetingSource::App(bundle_id)),
             None => Ok(()),
         }
     }
@@ -843,7 +993,8 @@ pub mod session {
                         is_meet_title(&crate::system_audio_tap::app_context(browser).window_title)
                     })
                 });
-                let busy = is_recording() || !matches!(state().phase.as_str(), "idle" | "asking");
+                // RUNNING, then STATE: never nested.
+                let busy = is_recording() || with_bar(|bar| bar.busy()).unwrap_or(true);
                 match watch.see(holder, busy) {
                     CallStep::Ask(bundle_id) => ask(&app, bundle_id),
                     CallStep::CallEnded => {
@@ -1831,5 +1982,229 @@ mod tests {
         );
         let back: MeetingSource = serde_json::from_str(r#"{"kind":"microphone"}"#).unwrap();
         assert_eq!(back, MeetingSource::Microphone);
+    }
+
+    fn zoom() -> String {
+        "us.zoom.xos".to_string()
+    }
+
+    fn phase(bar: &Bar) -> String {
+        bar.now().phase
+    }
+
+    fn recording(app_name: &str) -> MeetingState {
+        MeetingState {
+            phase: "recording".to_string(),
+            app_name: Some(app_name.to_string()),
+            ..MeetingState::default()
+        }
+    }
+
+    fn finishing(phase: &str) -> MeetingState {
+        MeetingState {
+            phase: phase.to_string(),
+            ..MeetingState::default()
+        }
+    }
+
+    // SE-MEET-021 (race 1): the asked app and the question are one step, so
+    // a start lands either before the question or after it, never between.
+    #[test]
+    fn a_start_and_the_watchers_question_never_leave_an_empty_question() {
+        // The start first: no question opens while it claims the session.
+        let mut bar = Bar::default();
+        assert_eq!(
+            bar.claim(MeetingSource::Automatic),
+            Ok(MeetingSource::Automatic)
+        );
+        assert!(bar.ask(zoom(), Some("Zoom".into())).is_none());
+        assert_eq!(phase(&bar), "idle");
+        assert_eq!(start_refused(false, &phase(&bar)), None);
+        // The question first: the start takes the asked app and closes it.
+        let mut bar = Bar::default();
+        assert!(bar.ask(zoom(), Some("Zoom".into())).is_some());
+        assert_eq!(
+            bar.claim(MeetingSource::Automatic),
+            Ok(MeetingSource::App(zoom()))
+        );
+        assert_eq!(phase(&bar), "idle");
+        assert_eq!(start_refused(false, &phase(&bar)), None);
+        // A question on the bar always names the app a Yes records.
+        let mut bar = Bar::default();
+        bar.ask(zoom(), Some("Zoom".into()));
+        assert_eq!(bar.answer(true), Some(zoom()));
+        // Closing a question that is not open takes nothing.
+        let mut bar = Bar::default();
+        assert_eq!(bar.end_ask(), None);
+    }
+
+    // SE-MEET-021 (race 2)
+    #[test]
+    fn a_start_from_idle_is_not_refused_when_a_call_starts_while_it_looks_for_apps() {
+        let mut bar = Bar::default();
+        let source = bar.claim(MeetingSource::Automatic).unwrap();
+        assert_eq!(source, MeetingSource::Automatic);
+        // While try_start lists the running apps, a call takes the microphone.
+        assert!(bar.ask(zoom(), Some("Zoom".into())).is_none());
+        assert_eq!(start_refused(false, &phase(&bar)), None);
+        bar.started(recording("zoom.us"));
+        // Recording: still no question.
+        assert!(bar.ask(zoom(), Some("Zoom".into())).is_none());
+        assert_eq!(phase(&bar), "recording");
+    }
+
+    // SE-MEET-002 (race 3)
+    #[test]
+    fn a_yes_closes_only_the_question_it_answers() {
+        let mut bar = Bar::default();
+        bar.ask(zoom(), Some("Zoom".into()));
+        // The Yes closes Zoom's question and claims the start in one step.
+        assert_eq!(bar.answer(true), Some(zoom()));
+        // A second call before that start records: no question opens, so
+        // none is closed silently.
+        assert!(bar
+            .ask("com.hnc.Discord".into(), Some("Discord".into()))
+            .is_none());
+        assert_eq!(start_refused(false, &phase(&bar)), None);
+        bar.started(recording("zoom.us"));
+        assert_eq!(phase(&bar), "recording");
+        // After a No nothing is claimed: the next call's question opens and
+        // stays open until its own answer.
+        let mut bar = Bar::default();
+        bar.ask(zoom(), Some("Zoom".into()));
+        assert_eq!(bar.answer(false), None);
+        assert!(bar
+            .ask("com.hnc.Discord".into(), Some("Discord".into()))
+            .is_some());
+        assert_eq!(phase(&bar), "asking");
+        assert_eq!(bar.answer(true).as_deref(), Some("com.hnc.Discord"));
+    }
+
+    // SE-MEET-021
+    #[test]
+    fn a_start_while_asked_closes_the_question_and_records_the_asked_app_or_the_pick() {
+        let teams = || MeetingSource::App("com.microsoft.teams2".to_string());
+        for (picked, records) in [
+            (MeetingSource::Automatic, MeetingSource::App(zoom())),
+            (MeetingSource::Microphone, MeetingSource::Microphone),
+            (teams(), teams()),
+        ] {
+            let mut bar = Bar::default();
+            bar.ask(zoom(), Some("Zoom".into()));
+            assert_eq!(bar.claim(picked), Ok(records));
+            assert_eq!(phase(&bar), "idle");
+            // Nothing left to answer: a late Yes records nothing.
+            assert_eq!(bar.answer(true), None);
+        }
+        // A second start while one is on its way is the only refusal here.
+        let mut bar = Bar::default();
+        bar.claim(MeetingSource::Automatic).unwrap();
+        assert!(bar
+            .claim(MeetingSource::Microphone)
+            .unwrap_err()
+            .starts_with("running"));
+    }
+
+    // SE-MEET-002
+    #[test]
+    fn an_answered_call_is_not_asked_about_again() {
+        let call = || Some(zoom());
+        for answer in ["yes", "no", "start"] {
+            let mut watch = CallWatch::default();
+            let mut bar = Bar::default();
+            let CallStep::Ask(id) = watch.see(call(), false) else {
+                panic!("not asked");
+            };
+            bar.ask(id, Some("Zoom".into()));
+            match answer {
+                "yes" => assert!(bar.answer(true).is_some()),
+                "no" => assert!(bar.answer(false).is_none()),
+                _ => assert!(bar.claim(MeetingSource::Automatic).is_ok()),
+            }
+            if answer != "no" {
+                // The meeting records, is finished, and the bar is idle.
+                bar.started(recording("zoom.us"));
+                bar.set(finishing("idle"));
+            }
+            // The same call goes on with an idle bar: no second question.
+            for _ in 0..3 {
+                assert_eq!(watch.see(call(), false), CallStep::Nothing, "{answer}");
+            }
+            assert_eq!(phase(&bar), "idle");
+        }
+    }
+
+    // SE-MEET-002
+    #[test]
+    fn a_call_that_starts_while_a_start_is_on_its_way_counts_as_seen() {
+        let mut watch = CallWatch::default();
+        let mut bar = Bar::default();
+        assert!(!bar.busy());
+        bar.claim(MeetingSource::Microphone).unwrap();
+        assert!(bar.busy());
+        assert_eq!(watch.see(Some(zoom()), bar.busy()), CallStep::Nothing);
+        // The start fails: like a call seen while recording, not asked later.
+        bar.failed("microphone: busy".into(), false);
+        assert!(!bar.busy());
+        assert_eq!(watch.see(Some(zoom()), bar.busy()), CallStep::Nothing);
+    }
+
+    // SE-MEET-002
+    #[test]
+    fn the_bars_close_clears_an_error_but_never_a_question() {
+        let mut bar = Bar::default();
+        bar.claim(MeetingSource::Automatic).unwrap();
+        bar.failed("no-app: gone".into(), false);
+        let cleared = bar.clear_error().expect("cleared");
+        assert_eq!((cleared.phase.as_str(), cleared.error), ("idle", None));
+        // A question that opened before the × lands stays with its app.
+        bar.ask(zoom(), Some("Zoom".into()));
+        assert!(bar.clear_error().is_none());
+        assert_eq!(phase(&bar), "asking");
+        assert_eq!(bar.answer(true), Some(zoom()));
+    }
+
+    // SE-MEET-021
+    #[test]
+    fn transcribing_and_notes_refuse_a_start_and_keep_their_bar() {
+        for phase_now in ["transcribing", "notes"] {
+            let mut bar = Bar::default();
+            bar.set(finishing(phase_now));
+            assert!(bar.ask(zoom(), None).is_none());
+            let source = bar.claim(MeetingSource::Automatic).unwrap();
+            assert_eq!(source, MeetingSource::Automatic);
+            let refused = start_refused(false, &phase(&bar)).expect("refused");
+            assert!(refused.starts_with("running"));
+            // The refusal lets the claim go and leaves the bar as it was.
+            assert!(bar.failed(refused, false).is_none());
+            assert_eq!(phase(&bar), phase_now);
+            assert!(bar.claim(MeetingSource::Automatic).is_ok());
+        }
+        assert!(start_refused(true, "idle").is_some());
+        assert_eq!(start_refused(false, "idle"), None);
+    }
+
+    // SE-MEET-001, SE-MEET-021
+    #[test]
+    fn a_failed_start_shows_its_error_on_an_idle_bar_and_lets_the_claim_go() {
+        let mut bar = Bar::default();
+        bar.ask(zoom(), Some("Zoom".into()));
+        bar.claim(MeetingSource::Automatic).unwrap();
+        let shown = bar.failed("no-app: gone".into(), false).expect("shown");
+        assert_eq!(shown.phase, "idle");
+        assert_eq!(shown.error.as_deref(), Some("no-app: gone"));
+        // The open error keeps the next question away until its ×.
+        assert!(bar.ask("com.hnc.Discord".into(), None).is_none());
+        bar.set(MeetingState {
+            error: None,
+            ..bar.now()
+        });
+        assert!(bar.ask("com.hnc.Discord".into(), None).is_some());
+        // A failure while a meeting records leaves its bar alone.
+        let mut bar = Bar::default();
+        bar.started(recording("zoom.us"));
+        bar.claim(MeetingSource::Automatic).unwrap();
+        assert!(bar.failed("running: x".into(), true).is_none());
+        assert_eq!(phase(&bar), "recording");
     }
 }

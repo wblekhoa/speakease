@@ -1,8 +1,8 @@
 ---
-status: executing
+status: done
 owner: Lê Khoa
 started: 2026-11-11
-current-phase: lane-2 (PR open)
+current-phase: both lanes merged (#12 25cf367, #13 92031f5); race follow-up in review
 summary: "Let the user open a meeting by hand anywhere: microphone-only recording when no call app runs, a Start control with a source menu on the Meetings page, and meeting notes out of Experimental, in two sequenced lanes."
 tags: [area/audio, area/capture, stack/rust, stack/react]
 ---
@@ -109,3 +109,14 @@ Frozen by lane 1 (SE-MEET-020). Rust in `src-tauri/src/meeting.rs` and `commands
 - With the gate gone the "Take notes of this call?" question reaches every user and has no off switch (owner to
   decide before lane 2 ends).
 - The meeting shortcut (⌃⌥⌘M) becomes registered for every user on 14.2+.
+
+## After merge
+
+- Both lanes are on `main`: lane 1 (#12) at `25cf367`, lane 2 (#13) at `92031f5`.
+- Follow-up (lane 3, branch `claude/meeting-ask-races-30a4da`): the three races the Opus gate noted on #13 around
+  "Take notes of this call?" (a start between storing the asked app and showing the question; a question opening
+  while a start lists apps; `answer` closing the question twice). Fixed by keeping the bar, the asked app and a
+  start's claim in one value under one lock (`Bar` in `src-tauri/src/meeting.rs`), with unit tests as ordered calls.
+- Still unverified: nothing in meeting notes has run in the installed app (the installed 0.1.1 predates both PRs);
+  the session code around `Bar` (events shown, `try_start`) has no unit test. Open owner decisions: an off switch
+  for the question, a local test build, releases.
