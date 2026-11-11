@@ -112,7 +112,12 @@ console.log("meeting.test.ts (page): ok");
     plannedApp({ kind: "app", value: "com.google.Chrome" }, some),
     "Chrome",
   );
-  // A named app that has gone is not listed.
+  // A named app that has gone keeps the name it was picked under, so the
+  // line does not claim the microphone only while Start would fail.
+  assert.equal(
+    plannedApp({ kind: "app", value: "gone" }, some, "Slack"),
+    "Slack",
+  );
   assert.equal(plannedApp({ kind: "app", value: "gone" }, some), null);
 
   // The line under the button: four forms.
