@@ -50,10 +50,14 @@ if [[ "$publish" == "1" ]] && gh release view "$tag" -R "$repo" >/dev/null 2>&1;
 fi
 # A published tag names the commit that was built: nothing uncommitted, and
 # a commit GitHub's main already has.
+built_sha=""
 if [[ "$publish" == "1" ]]; then
-  [[ -z "$(git status --porcelain)" ]] || { echo "DIRTY_TREE: commit or remove local changes before publishing" >&2; exit 1; }
+  dirty="$(git status --porcelain)"
+  [[ -z "$dirty" ]] || { echo "DIRTY_TREE: commit or remove local changes before publishing" >&2; exit 1; }
   git fetch --quiet origin main
   git merge-base --is-ancestor HEAD origin/main || { echo "NOT_ON_MAIN: HEAD is not on origin/main" >&2; exit 1; }
+  # Read once, here: HEAD may move while the build runs.
+  built_sha="$(git rev-parse HEAD)"
 fi
 
 echo "==> building the on-device AI server"
@@ -143,7 +147,7 @@ ls -1 "$out" | sed 's/^/    /'
 if [[ "$publish" == "1" ]]; then
   echo "==> publishing $tag"
   # The tag goes on the commit that was built, which must be on GitHub.
-  gh release create "$tag" -R "$repo" --target "$(git rev-parse HEAD)" \
+  gh release create "$tag" -R "$repo" --target "$built_sha" \
     --title "SpeakEase $version" --notes "$notes" \
     "$out/$base.dmg" "$out/$base.zip" "$out/$base.app.tar.gz" "$out/latest.json"
   # The updater reads latest.json from the newest release; prove it answers.
