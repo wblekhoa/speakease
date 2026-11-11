@@ -10,7 +10,8 @@
 #
 # The updater archive is made HERE, from the stapled app - not by
 # `tauri build`, which would sign the bundle before notarization (the same
-# choice as ReadEase). Secrets come from Apps/.env and are never printed:
+# choice as ReadEase). Secrets come from the environment, or from the file
+# SPEAKEASE_ENV_FILE names (sourced, never printed):
 #   SPEAKEASE_UPDATER_KEY_PATH, TAURI_SIGNING_PRIVATE_KEY_PASSWORD_SPEAKEASE
 # Notarization uses the keychain profile SPEAKEASE_NOTARY_PROFILE
 # (default: readease-notary - the same developer account).
@@ -21,8 +22,9 @@ publish=0
 
 root="$(cd "$(dirname "$0")/.." && pwd)"
 cd "$root"
-env_file="${SPEAKEASE_ENV_FILE:-$HOME/Library/CloudStorage/GoogleDrive-wblekhoa@gmail.com/My Drive/JAK/Work - Design/Code/Apps/.env}"
-if [[ -f "$env_file" ]]; then
+env_file="${SPEAKEASE_ENV_FILE:-}"
+if [[ -n "$env_file" ]]; then
+  [[ -f "$env_file" ]] || { echo "NO_ENV_FILE: $env_file" >&2; exit 1; }
   set -a
   # shellcheck disable=SC1090
   source "$env_file"
@@ -32,7 +34,7 @@ updater_key="${SPEAKEASE_UPDATER_KEY_PATH:-$HOME/.tauri/speakease-updater.key}"
 updater_password="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD_SPEAKEASE:-}"
 notary_profile="${SPEAKEASE_NOTARY_PROFILE:-readease-notary}"
 [[ -f "$updater_key" ]] || { echo "NO_UPDATER_KEY: $updater_key" >&2; exit 1; }
-[[ -n "$updater_password" ]] || { echo "NO_UPDATER_PASSWORD: set TAURI_SIGNING_PRIVATE_KEY_PASSWORD_SPEAKEASE" >&2; exit 1; }
+[[ -n "$updater_password" ]] || { echo "NO_UPDATER_PASSWORD: set TAURI_SIGNING_PRIVATE_KEY_PASSWORD_SPEAKEASE, or SPEAKEASE_ENV_FILE to a file that does" >&2; exit 1; }
 
 version="$(python3 -c 'import json;print(json.load(open("src-tauri/tauri.conf.json"))["version"])')"
 tag="v$version"
