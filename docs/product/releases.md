@@ -22,17 +22,17 @@ Source of truth for details: `CHANGELOG.md` (repo root) and `gh release list -R 
   live help; notes in a template with the transcript, questions about a meeting, and a switch for the "Take notes of
   this call?" question. On-device AI models downloaded inside the app. Live subtitles (beta, behind Experimental).
   History: rewrite with your own instruction, today and the last 14 days. Updates and the version moved to the
-  sidebar and the App page; new app icon. Users of 0.1.0 and 0.1.1 get it through the in-app updater.
-- **REQ-IDs shipped**: SE-MEET-001…023, SE-LIVE-001…015, SE-AI-012…013, SE-HIST-004; all earlier rules unchanged.
+  sidebar and the App page; new app icon. 0.1.0 and 0.1.1 are offered it by the in-app updater (same key, same feed).
+- **REQ-IDs shipped**: SE-MEET-001…023, SE-LIVE-001…015, SE-AI-012…013, SE-HIST-004.
 - **Channel**: GitHub release `v0.1.2` (tag on `31e422e`, 102 commits past 0.1.1) - `.dmg` / `.zip` (Developer ID
   signed, notarized, stapled), the updater archive with its signature, and `latest.json`. Built from `main`'s tip with
-  `scripts/release-mac.sh` after CI was green on that commit, installed and started once, then published by hand with
-  the script's own `gh release create` line and `--target` on that commit. Checked after publishing: the tag's commit
-  through the API, the served `latest.json` (0.1.2, identical to the built one) and the served updater archive
-  (same SHA-256 as the built one, signature valid against the key 0.1.1 trusts).
+  `scripts/release-mac.sh` (no `--publish`), installed and started once, then - with CI green on that commit -
+  published by hand with the script's own `gh release create` line and `--target` on that commit. Checked after
+  publishing: the tag's commit through the API, the served `latest.json` (0.1.2, identical to the built one) and the
+  served updater archive (same SHA-256 as the built one, signature valid against the key 0.1.0 and 0.1.1 trust).
 - **Not seen before release**: no meeting, call question, switch or live-subtitles session was run in the installed
   build; the only run was a hidden start (process alive, no error line, shortcuts registered, old settings loaded
-  with the new switch on).
+  with the new switch on). No update from an installed 0.1.1 to 0.1.2 was watched either.
 - **Shown in**: https://github.com/wblekhoa/speakease/releases/tag/v0.1.2
 
 ## 0.1.1 — 2026-10-15
