@@ -241,7 +241,7 @@ pub fn resolve_source(
     }
 }
 
-/// What a source menu offers (SE-MEET-020, SE-MEET-021). "Microphone only"
+/// What a source menu offers (SE-MEET-020). "Microphone only"
 /// is always offered and is not listed.
 #[derive(Debug, Clone, Serialize, Type)]
 pub struct MeetingSources {
@@ -300,20 +300,16 @@ pub fn saved_as(app_name: Option<&str>, when: &str, labels: &Labels) -> SavedAs 
     }
 }
 
-// SE-MEET-010, SE-MEET-020
-/// The app a stored meeting names to the kind guess: none for a
-/// microphone-only meeting (an empty `app_name`).
-pub fn guess_app_of_row(app_name: &str) -> Option<&str> {
-    Some(app_name).filter(|name| !name.trim().is_empty())
-}
-
-/// The two tracks as one, for the History entry's audio. A
-/// microphone-only meeting has no app track: its audio is the microphone
-/// as recorded, not halved.
-pub fn mix(me: &[f32], others: &[f32]) -> Vec<f32> {
-    if others.is_empty() {
+// SE-MEET-020
+/// The two tracks as one, for the History entry's audio. `others` is
+/// `None` for a microphone-only meeting, which has no app track: its audio
+/// is the microphone as recorded, not halved. An app track that stayed
+/// silent is still mixed, so a meeting's level never depends on whether
+/// the other side spoke.
+pub fn mix(me: &[f32], others: Option<&[f32]>) -> Vec<f32> {
+    let Some(others) = others else {
         return me.iter().map(|s| s.clamp(-1.0, 1.0)).collect();
-    }
+    };
     let len = me.len().max(others.len());
     (0..len)
         .map(|i| {
@@ -1010,7 +1006,7 @@ pub mod session {
         let history = app.state::<Arc<HistoryManager>>().inner().clone();
         let file_name = format!("file-meeting-{}.wav", done.started_at);
         let wav = history.recordings_dir().join(&file_name);
-        let mixed = mix(&done.me, &done.others);
+        let mixed = mix(&done.me, speaker_labels.then_some(done.others.as_slice()));
         if let Err(e) = crate::audio_toolkit::save_wav_file(&wav, &mixed) {
             log::warn!("Meeting: cannot keep the audio: {e}");
         }
@@ -1321,7 +1317,7 @@ pub mod session {
                 Ok(Some(entry)) => Some(notes_for(
                     &app,
                     &entry.transcription_text,
-                    guess_app_of_row(&meeting.app_name),
+                    Some(&meeting.app_name),
                     Some(kind),
                 )),
                 _ => None,
@@ -1499,12 +1495,11 @@ mod tests {
             transcript(&turns, &labels("en"), false),
             "alo mọi người\nmình bắt đầu nhé\n[dictation] gửi email cho chị Lan"
         );
-        // With no app track, the echo check has nothing to drop.
-        assert_eq!(drop_echo(turns.clone()), turns);
-        // The notes' word count reads past the dictation mark as past a label.
-        assert!(!crate::meeting_notes::has_substance(
-            "[đọc chính tả] một hai"
-        ));
+        // The notes' word count skips the dictation mark as it skips a label.
+        assert_eq!(
+            crate::meeting_notes::substantive_words("[đọc chính tả] một hai"),
+            2
+        );
     }
 
     // SE-MEET-020
@@ -1522,15 +1517,14 @@ mod tests {
         assert_eq!(zoom.title, "Zoom · 11/11 09:30");
         assert_eq!(zoom.row_app, "Zoom");
         assert_eq!(zoom.guess_app.as_deref(), Some("Zoom"));
-        // A template switch later: a stored empty app is no app.
-        assert_eq!(guess_app_of_row(""), None);
-        assert_eq!(guess_app_of_row("Zoom"), Some("Zoom"));
     }
 
     // SE-MEET-020
     #[test]
     fn the_microphone_alone_is_kept_as_recorded() {
-        assert_eq!(mix(&[0.4, -0.2], &[]), vec![0.4, -0.2]);
+        assert_eq!(mix(&[0.4, -0.2], None), vec![0.4, -0.2]);
+        // An app track that stayed silent is still a second track.
+        assert_eq!(mix(&[0.4, -0.2], Some(&[])), vec![0.2, -0.1]);
     }
 
     #[test]
@@ -1550,7 +1544,7 @@ mod tests {
 
     #[test]
     fn the_mix_is_as_long_as_the_longer_track() {
-        let mixed = mix(&[0.4, 0.4], &[0.2, 0.2, 0.2]);
+        let mixed = mix(&[0.4, 0.4], Some(&[0.2, 0.2, 0.2]));
         assert_eq!(mixed.len(), 3);
         assert!((mixed[0] - 0.3).abs() < 1e-6);
         assert!((mixed[2] - 0.1).abs() < 1e-6);
