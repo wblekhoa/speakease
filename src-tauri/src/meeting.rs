@@ -514,6 +514,8 @@ pub struct Bar {
     /// A start has closed any question and is on its way to recording (or
     /// to its error); held until [`Bar::started`] or [`Bar::failed`].
     claimed: bool,
+    /// Counts claims, so a start lets go only of its own.
+    claim_id: u64,
 }
 
 impl Default for Bar {
@@ -528,6 +530,7 @@ impl Bar {
             shown: None,
             asked: None,
             claimed: false,
+            claim_id: 0,
         }
     }
 
@@ -588,7 +591,7 @@ impl Bar {
             return Err("running: a meeting is already recording".to_string());
         }
         let source = source_when_asked(source, self.end_ask());
-        self.claimed = true;
+        self.take_claim();
         Ok(source)
     }
 
@@ -596,12 +599,23 @@ impl Bar {
     /// Yes also claims the session for the app asked about, so no other
     /// question can open (and be closed) before its start.
     pub fn answer(&mut self, yes: bool) -> Option<String> {
-        let app = app_to_record(yes, self.end_ask())?;
+        // No question is open while a start claims (ask refuses then).
         if self.claimed {
             return None;
         }
-        self.claimed = true;
+        let app = app_to_record(yes, self.end_ask())?;
+        self.take_claim();
         Some(app)
+    }
+
+    fn take_claim(&mut self) {
+        self.claimed = true;
+        self.claim_id = self.claim_id.wrapping_add(1);
+    }
+
+    /// The claim taken last (by [`Bar::claim`] or a Yes).
+    pub fn claim_id(&self) -> u64 {
+        self.claim_id
     }
 
     /// Whether a call that starts now counts as seen without a question: a
@@ -622,9 +636,12 @@ impl Bar {
         Some(state)
     }
 
-    /// Lets a claim go without showing anything (a start that panicked).
-    pub fn release(&mut self) {
-        self.claimed = false;
+    /// Lets claim `id` go without showing anything (a start that
+    /// panicked); a newer start's claim is left alone.
+    pub fn release(&mut self, id: u64) {
+        if self.claim_id == id {
+            self.claimed = false;
+        }
     }
 
     /// The claimed start is recording: shows it and lets the claim go.
@@ -698,16 +715,20 @@ pub mod session {
 
     /// The meeting's state now.
     pub fn state() -> MeetingState {
+        lock_bar().now()
+    }
+
+    /// The bar, also after a panic elsewhere held its lock (each step
+    /// leaves it whole).
+    fn lock_bar() -> std::sync::MutexGuard<'static, Bar> {
         STATE
             .lock()
-            .map(|bar| bar.now())
-            .unwrap_or_else(|_| Bar::new().now())
+            .unwrap_or_else(std::sync::PoisonError::into_inner)
     }
 
     /// One step on the bar, under its lock.
     fn with_bar<T>(step: impl FnOnce(&mut Bar) -> T) -> Result<T, String> {
-        let mut bar = STATE.lock().map_err(|e| e.to_string())?;
-        Ok(step(&mut bar))
+        Ok(step(&mut lock_bar()))
     }
 
     /// Whether a meeting is recording now.
@@ -738,7 +759,7 @@ pub mod session {
     pub fn start(app: &AppHandle, source: MeetingSource) -> Result<(), String> {
         let (claimed, closed) = with_bar(|bar| {
             let asking = bar.now().phase == "asking";
-            let claimed = bar.claim(source);
+            let claimed = bar.claim(source).map(|source| (source, bar.claim_id()));
             let closed = (asking && claimed.is_ok()).then(|| bar.now());
             (claimed, closed)
         })?;
@@ -747,26 +768,28 @@ pub mod session {
         }
         // Refused only while another start is claiming: that start shows
         // its own outcome on the bar.
-        let source = claimed.inspect_err(|e| log::warn!("Meeting: {e}"))?;
-        start_claimed(app, source)
+        let (source, claim) = claimed.inspect_err(|e| log::warn!("Meeting: {e}"))?;
+        start_claimed(app, source, claim)
     }
 
     /// Runs a start that holds the claim, and lets the claim go: on success
     /// with "recording", on failure with the error on an idle bar, with
     /// its × (a meeting still recording or being finished keeps its bar).
-    fn start_claimed(app: &AppHandle, source: MeetingSource) -> Result<(), String> {
-        // A panic inside try_start must not keep the session claimed (no
-        // start or question would work until relaunch). Only on a panic:
-        // after a normal return a newer start may hold the claim.
-        struct ReleaseOnPanic;
+    fn start_claimed(app: &AppHandle, source: MeetingSource, claim: u64) -> Result<(), String> {
+        // A panic inside try_start must not keep this start's claim (no
+        // start or question would work until relaunch); a newer start's
+        // claim is left alone. It does not clear RUNNING: a panic after
+        // RUNNING is set still leaves "running" until relaunch, as before.
+        struct ReleaseOnPanic(u64);
         impl Drop for ReleaseOnPanic {
             fn drop(&mut self) {
                 if std::thread::panicking() {
-                    let _ = with_bar(Bar::release);
+                    let id = self.0;
+                    let _ = with_bar(|bar| bar.release(id));
                 }
             }
         }
-        let _guard = ReleaseOnPanic;
+        let _guard = ReleaseOnPanic(claim);
         try_start(app, source).inspect_err(|e| {
             log::warn!("Meeting: {e}");
             let recording = is_recording();
@@ -963,14 +986,14 @@ pub mod session {
     pub fn answer(app: &AppHandle, yes: bool) -> Result<(), String> {
         let (record, closed) = with_bar(|bar| {
             let asking = bar.now().phase == "asking";
-            let record = bar.answer(yes);
+            let record = bar.answer(yes).map(|id| (id, bar.claim_id()));
             (record, asking.then(|| bar.now()))
         })?;
         if let Some(state) = closed {
             show(app, &state);
         }
         match record {
-            Some(bundle_id) => start_claimed(app, MeetingSource::App(bundle_id)),
+            Some((bundle_id, claim)) => start_claimed(app, MeetingSource::App(bundle_id), claim),
             None => Ok(()),
         }
     }
@@ -994,7 +1017,7 @@ pub mod session {
                     })
                 });
                 // RUNNING, then STATE: never nested.
-                let busy = is_recording() || with_bar(|bar| bar.busy()).unwrap_or(true);
+                let busy = is_recording() || lock_bar().busy();
                 match watch.see(holder, busy) {
                     CallStep::Ask(bundle_id) => ask(&app, bundle_id),
                     CallStep::CallEnded => {
@@ -2112,7 +2135,7 @@ mod tests {
         for answer in ["yes", "no", "start"] {
             let mut watch = CallWatch::default();
             let mut bar = Bar::default();
-            let CallStep::Ask(id) = watch.see(call(), false) else {
+            let CallStep::Ask(id) = watch.see(call(), bar.busy()) else {
                 panic!("not asked");
             };
             bar.ask(id, Some("Zoom".into()));
@@ -2127,10 +2150,11 @@ mod tests {
                 bar.set(finishing("idle"));
             }
             // The same call goes on with an idle bar: no second question.
-            for _ in 0..3 {
-                assert_eq!(watch.see(call(), false), CallStep::Nothing, "{answer}");
-            }
             assert_eq!(phase(&bar), "idle");
+            assert!(!bar.busy());
+            for _ in 0..3 {
+                assert_eq!(watch.see(call(), bar.busy()), CallStep::Nothing, "{answer}");
+            }
         }
     }
 
@@ -2147,6 +2171,22 @@ mod tests {
         bar.failed("microphone: busy".into(), false);
         assert!(!bar.busy());
         assert_eq!(watch.see(Some(zoom()), bar.busy()), CallStep::Nothing);
+    }
+
+    // SE-MEET-021
+    #[test]
+    fn a_panicked_start_lets_go_of_its_own_claim_only() {
+        let mut bar = Bar::default();
+        bar.claim(MeetingSource::Automatic).unwrap();
+        let first = bar.claim_id();
+        bar.started(recording("zoom.us"));
+        bar.claim(MeetingSource::Microphone).unwrap();
+        // The first start panics after it recorded: the second keeps its claim.
+        bar.release(first);
+        assert!(bar.busy());
+        assert!(bar.ask(zoom(), None).is_none());
+        bar.release(bar.claim_id());
+        assert!(bar.claim(MeetingSource::Automatic).is_ok());
     }
 
     // SE-MEET-002
