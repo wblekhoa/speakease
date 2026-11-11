@@ -67,8 +67,8 @@ struct MenuInputs {
     /// Live subtitles (beta): None when hidden (Experimental off or the Mac
     /// cannot tap an app), else whether they are on.
     subtitles: Option<bool>,
-    /// Meeting notes (beta): None when hidden, as subtitles, else whether a
-    /// meeting is recording.
+    /// Meeting notes (beta): None when the Mac cannot tap an app (Experimental
+    /// does not matter, SE-MEET-022), else whether a meeting is recording.
     meeting: Option<bool>,
 }
 
@@ -383,9 +383,9 @@ fn compute_desired(app: &AppHandle, icon_state: TrayIconState) -> TrayDesired {
             warning,
             model_loaded,
             quick: QuickInputs::from_settings(&settings),
-            subtitles: crate::settings::app_audio_features_on(&settings)
+            subtitles: crate::settings::live_subtitles_on(&settings)
                 .then(crate::live_subtitles::session::is_running),
-            meeting: crate::settings::app_audio_features_on(&settings)
+            meeting: crate::settings::meeting_notes_on()
                 .then(crate::meeting::session::is_recording),
             selected_model: settings.selected_model,
             downloaded_models,
