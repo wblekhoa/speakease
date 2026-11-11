@@ -1599,7 +1599,7 @@ export type MeetingSource =
  */
 { kind: "app"; value: string }
 /**
- * What a source menu offers (SE-MEET-020, SE-MEET-021). "Microphone only"
+ * What a source menu offers (SE-MEET-020). "Microphone only"
  * is always offered and is not listed.
  */
 export type MeetingSources = { 
