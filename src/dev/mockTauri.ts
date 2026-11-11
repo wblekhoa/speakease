@@ -325,6 +325,24 @@ const localSeconds = (
 
 const MEETINGS: MeetingEntry[] = [
   {
+    // SE-MEET-020: a microphone-only meeting: no app in its row, no speaker
+    // labels, a dictation still marked.
+    title: "Micro · 11/11 08:45",
+    transcript:
+      "Sáng nay mình rà lại danh sách việc của tuần.\nBản thiết kế trang giá cần xong trước thứ Năm.\n[đọc chính tả] nhắc anh Minh gửi bảng giá mới",
+    meeting: {
+      history_id: 42,
+      app_name: "",
+      started_at: localSeconds(2026, 11, 11, 8, 45),
+      duration_ms: 6 * 60_000,
+      kind: "meeting",
+      notes:
+        "## Tóm tắt ngắn\nRà lại việc trong tuần; trang giá cần xong trước thứ Năm.\n\n## Quyết định\nKhông có\n\n## Đề xuất chưa chốt\nKhông có\n\n## Việc cần làm\n- [ ] gửi bảng giá mới — Anh Minh",
+      notes_state: "done",
+      notes_engine: "apple",
+    },
+  },
+  {
     title: "zoom.us · 31/10 09:30",
     transcript:
       "[Người khác] Chào mọi người, hôm nay mình họp nhanh về kế hoạch ra mắt ứng dụng trong tháng mười một.\n[Tôi] Bên thiết kế đã xong màn hình đăng ký, còn trang thanh toán cần thêm một tuần.\n[Người khác] Chúng ta thống nhất ngày ra mắt là 15 tháng 11. Anh Minh chuẩn bị bài đăng giới thiệu trước ngày 12.\n[Tôi (đọc chính tả)] nhắc chị Lan kiểm tra giá gói năm\n[Người khác] Có đề xuất giảm giá 20 phần trăm cho người dùng đầu tiên, tuần sau bàn tiếp.",
@@ -428,6 +446,10 @@ function mockLive() {
     ],
     [29800, true, "Nhưng mình chưa chốt việc này, tuần sau bàn tiếp."],
   ].map(([at_ms, me, text]) => ({ at_ms, me, text }));
+  // `?mic`: a microphone-only meeting (SE-MEET-020), every line the
+  // microphone's, shown with no labels.
+  const microphoneOnly = params.has("mic");
+  if (microphoneOnly) lines.forEach((line) => (line.me = true));
   // With no AI there is no summary and there are no suggestions.
   const ai = !params.has("noai");
   return {
@@ -454,7 +476,32 @@ function mockLive() {
           ]
         : [],
     ai_missing: ai ? null : "ai_off",
+    microphone_only: microphoneOnly,
   };
+}
+
+// As meeting.rs `meeting_sources`: `?sources=none|one|several` (several by
+// default) is what is running; Automatic is the first call app, else the
+// microphone only (null).
+function mockMeetingSources() {
+  const app = (bundle_id: string, name: string, playing: boolean) => ({
+    bundle_id,
+    name,
+    playing,
+  });
+  const which =
+    new URLSearchParams(location.search).get("sources") ?? "several";
+  const apps =
+    which === "none"
+      ? []
+      : which === "one"
+        ? [app("us.zoom.xos", "zoom.us", true)]
+        : [
+            app("us.zoom.xos", "zoom.us", false),
+            app("com.microsoft.teams2", "Microsoft Teams", false),
+            app("com.google.Chrome", "Google Chrome", true),
+          ];
+  return { automatic: apps[0] ?? null, apps };
 }
 
 // As meeting_ask.rs, after a moment: an answer with the lines it used;
@@ -522,13 +569,19 @@ function handle(cmd: string, args: Json): unknown {
             phase: "idle",
             started_at: null,
             app_name: null,
-            error: "no-app: no meeting app is running",
+            error: "no-app: com.hnc.Discord is not running",
             history_id: null,
           }
         : {
             phase,
             started_at: Math.floor(Date.now() / 1000) - 754,
-            app_name: phase === "asking" ? "Microsoft Teams" : "zoom.us",
+            // `&mic`: a microphone-only meeting names no app.
+            app_name:
+              phase === "asking"
+                ? "Microsoft Teams"
+                : new URLSearchParams(location.search).has("mic")
+                  ? null
+                  : "zoom.us",
             error: null,
             history_id: null,
           };
@@ -545,6 +598,32 @@ function handle(cmd: string, args: Json): unknown {
         () =>
           "- Ngày ra mắt chốt 15/11.\n- Anh Minh gửi bài giới thiệu trước ngày 12.\n- Giảm giá 20% chưa chốt, tuần sau bàn tiếp.",
       );
+    case "meeting_sources":
+      return mockMeetingSources();
+    case "start_meeting": {
+      // As meeting.rs `start`: Automatic falls back to the microphone only;
+      // a named app must be running.
+      const source = args.source as { kind: string; value?: string };
+      const sources = mockMeetingSources();
+      const named = sources.apps.find((a) => a.bundle_id === source.value);
+      if (source.kind === "app" && !named) {
+        return Promise.reject(`no-app: ${source.value} is not running`);
+      }
+      const recorded =
+        source.kind === "app"
+          ? named
+          : source.kind === "automatic"
+            ? sources.automatic
+            : null;
+      emit("meeting-state", {
+        phase: "recording",
+        started_at: Math.floor(Date.now() / 1000),
+        app_name: recorded?.name ?? null,
+        error: null,
+        history_id: null,
+      });
+      return null;
+    }
     case "stop_meeting":
     case "close_meeting_bar":
     case "answer_meeting_ask":

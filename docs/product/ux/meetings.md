@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — Meeting notes (UX)"
 status: active
-updated: 2026-11-01
+updated: 2026-11-11
 summary: "Beta behind Experimental: a shortcut or the tray records the meeting app and the microphone, a bar at the top of the screen shows the consent line, a timer and Stop, and the meeting lands in History and on the Meetings page, where its notes are read and questions about it answered."
 tags: [area/ai, area/audio, area/capture, surface/macos, stack/react]
 relations:
@@ -49,7 +49,9 @@ relations:
   (⌃⌥⌘M by default) and the tray gains a **Meeting notes** item with a tick while a meeting records.
 - **Starting**: the shortcut or tray item records the call app that is running (Zoom, Teams, Zalo, Messenger,
   FaceTime, Slack, Discord), playing sound first, else the app used last time, else a browser playing sound; and the
-  microphone picked for dictation, as its own stream. No dictation starts.
+  microphone picked for dictation, as its own stream. With none of these running it records the microphone only
+  (SE-MEET-020) instead of failing. No dictation starts. The backend can also start with a source chosen by the user
+  (Automatic, Microphone only, or a named app); the control for it on the Meetings page is not built yet.
 - **Asked when a call starts**: when Zoom, Teams, Zalo, Messenger, FaceTime, Slack or Discord starts using the
   microphone, or a browser does while its front tab is Google Meet, the bar asks on two lines "Microsoft Teams đang
   dùng micro." / "Ghi chú cuộc gọi này?" (EN "Microsoft Teams is using the mic." / "Take notes of this call?")
@@ -63,7 +65,7 @@ relations:
   It asks macOS to keep it out of screen sharing (untested).
 - **Live help** (panel under the bar): **Trợ giúp** (Help) on the pill opens a panel below it, **Ẩn** (Hide) closes
   it. Its top row picks the level for this meeting: Chỉ ghi âm (recording only), Lời nói (live transcript, "Tôi" / "Người
-  khác", newest line in view), Bỏ lỡ gì ("Tôi vừa bỏ lỡ gì?" answers from the last 5 minutes), Tóm tắt (a summary after
+  khác", newest line in view; no labels for a microphone-only meeting), Bỏ lỡ gì ("Tôi vừa bỏ lỡ gì?" answers from the last 5 minutes), Tóm tắt (a summary after
   the first lines, updated every 2 minutes), Gợi ý (cards: a question to ask, an action item, still open, a term or
   name, said earlier, a possible answer; a new card shows alone at the top for 4 s, then in the list). Cards are only
   shown, never copied or sent. With no AI, levels 3-5 say why from the start, "Tôi vừa bỏ lỡ gì?" is greyed out, no
@@ -74,9 +76,11 @@ relations:
 - **Ending**: the shortcut, the tray item or **Stop**. The bar then says "Đang chép lời cuộc họp…", then "Đang viết
   ghi chú…", and hides when the meeting is saved.
 - **Result**: one History entry titled "<app> · dd/mm HH:MM" with the transcript (Tôi / Người khác, in time order)
-  and the mixed audio; its notes are stored beside it.
+  and the mixed audio; its notes are stored beside it. A microphone-only meeting is titled "Micro · dd/mm HH:MM" (EN
+  "Microphone · dd/mm HH:MM"), its transcript has no speaker labels (a dictation is still marked "[đọc chính tả]"),
+  its audio is the microphone as recorded, and its notes' kind is guessed from the transcript alone.
 - **Meetings page**: with Experimental on, the side column gains **Meetings** under Live subtitles. Left: meetings,
-  newest first, each with its app, "dd/mm HH:MM" and length. Right: the meeting's title with **Copy**, **Save .md**
+  newest first, each with its app (a microphone-only meeting shows its title), "dd/mm HH:MM" and length. Right: the meeting's title with **Copy**, **Save .md**
   and **Save .txt**; then **Notes** / **Transcript** and the template menu (Meeting, Call, Lecture, Interview) -
   choosing another writes the notes again in the background ("Writing the notes…" above the old ones, which stay if it fails). Notes open with "AI wrote these notes. Check names and
   numbers against the transcript." and a link to the transcript. With no AI the page says why (AI off, or nothing
@@ -92,7 +96,8 @@ relations:
   Files wrote it) and writes its notes in the background in the template AI guesses from the transcript (a lecture
   gets the lecture outline); the card then says "Đã thêm vào Cuộc họp, ghi chú đang được viết." with **Mở Cuộc họp**.
   Nothing runs unless pressed. The template menu can change it, as for a call.
-- **Errors** (on the bar, with ×): macOS too old; no call app running; already recording; the microphone could not
+- **Errors** (on the bar, with ×): macOS too old; the app chosen as the source is not running ("Ứng dụng đã chọn không
+  còn chạy. Hãy mở lại ứng dụng đó, hoặc chỉ ghi micro."); already recording; the microphone could not
   open; no speech model; the speech detector did not start.
 
 ## Screens and states

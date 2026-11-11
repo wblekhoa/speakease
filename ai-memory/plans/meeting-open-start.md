@@ -2,7 +2,7 @@
 status: executing
 owner: Lê Khoa
 started: 2026-11-11
-current-phase: lane-1
+current-phase: lane-1 (PR open)
 summary: "Let the user open a meeting by hand anywhere: microphone-only recording when no call app runs, a Start control with a source menu on the Meetings page, and meeting notes out of Experimental, in two sequenced lanes."
 tags: [area/audio, area/capture, stack/rust, stack/react]
 ---
@@ -68,7 +68,38 @@ Opus review through `jak-hq:reviewer` (Standards and Spec), fixes, PR, CI, merge
 
 ## Interface for lane 2
 
-_Lane 1 writes this section before its PR._
+Frozen by lane 1 (SE-MEET-020). Rust in `src-tauri/src/meeting.rs` and `commands/meetings.rs`; TS in `src/bindings.ts`.
+
+- **Start**: `commands.startMeeting(source: MeetingSource): Promise<Result<null, string>>` (Tauri `start_meeting`,
+  argument `source`). It replaced the old `startMeeting(bundleId)`; nothing in the UI called that one. Errors use the
+  existing codes in `src/lib/meeting.ts`: `unsupported`, `no-app` (only when a named app is not running; the text in
+  `meeting.error.no-app` was reworded for that), `running`, `microphone`, `no-model`, `vad`. On success the state
+  arrives on the `meeting-state` event as before.
+- **Sources**: `commands.meetingSources(): Promise<MeetingSources>` (Tauri `meeting_sources`, no argument, never fails).
+  Call it when the menu opens; the list is a snapshot.
+- **Types** (as specta writes them):
+  - `MeetingSource = { kind: "automatic" } | { kind: "microphone" } | { kind: "app"; value: string }` (`value` is a
+    bundle id from `RunningApp.bundle_id`).
+  - `MeetingSources = { automatic: RunningApp | null; apps: RunningApp[] }`. `automatic` is what Automatic would record
+    now, resolved by the same `resolve_source` a start uses; `null` means the microphone only. `apps` is every running
+    call app or browser, call apps first, in `MEETING_APPS` order. "Microphone only" is always available and is not
+    listed: the menu adds it itself. `automatic` can be an app missing from `apps` (an app the user recorded last time
+    that is not a call app or browser).
+  - `RunningApp = { bundle_id: string; name: string; playing: boolean }` (unchanged, also used by live subtitles).
+  - `LiveView.microphone_only: boolean` (new): the live panel hides the Me / Others label when true.
+  - `Meeting.app_name` is `""` for a microphone-only meeting. Only the Meetings list reads it; it shows the entry's
+    `title` instead (`MeetingsPage.tsx`, `m.meeting.app_name || m.title`). `MeetingState.app_name` is `null` while a
+    microphone-only meeting records.
+- **Shortcut, tray, call question**: unchanged entry points; they start on Automatic (or the asked app).
+- **i18n keys added**: none. Changed: `meeting.error.no-app` (vi, en). The menu labels (Automatic, Microphone only,
+  the Start button) are lane 2's to add.
+- **Mock** (`src/dev/mockTauri.ts`): `meeting_sources` follows `?sources=none|one|several` (several by default);
+  `start_meeting` emits `meeting-state` "recording" (app name `null` for the microphone only) and rejects a named app
+  not in the list with `no-app`; `?meeting=recording&mic` and `?mic` on the live panel preview a microphone-only
+  meeting; the Meetings list has a microphone-only entry "Micro · 11/11 08:45".
+- **Known behaviour lane 2 should show, not change**: Automatic prefers the app recorded last time whenever it is
+  running, even a silent browser, so with Chrome open after a Chrome meeting Automatic is not the microphone only;
+  a call that starts during a microphone-only meeting is not asked about.
 
 ## Open risks
 

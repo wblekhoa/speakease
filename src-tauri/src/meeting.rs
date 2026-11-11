@@ -7,7 +7,7 @@
 //! 004, 006, 008, 013 in `docs/product/logic/meetings.md`.
 
 use crate::live_subtitles::{Cuts, Segmenter, FRAME_SAMPLES};
-use serde::Serialize;
+use serde::{Deserialize, Serialize};
 use specta::Type;
 use std::time::{Duration, Instant};
 
@@ -155,6 +155,8 @@ pub struct Labels {
     pub me: &'static str,
     pub others: &'static str,
     pub dictation: &'static str,
+    /// The title of a microphone-only meeting, before its date (SE-MEET-020).
+    pub microphone: &'static str,
 }
 
 /// Vietnamese labels for a Vietnamese interface, English otherwise.
@@ -164,38 +166,154 @@ pub fn labels(app_language: &str) -> Labels {
             me: "Tôi",
             others: "Người khác",
             dictation: "đọc chính tả",
+            microphone: "Micro",
         }
     } else {
         Labels {
             me: "Me",
             others: "Others",
             dictation: "dictation",
+            microphone: "Microphone",
         }
     }
 }
 
-// SE-MEET-001, SE-MEET-008
+// SE-MEET-001, SE-MEET-008, SE-MEET-020
 /// One line per turn in time order: `[Tôi] …`, `[Người khác] …`, and a
-/// dictation as `[Tôi · đọc chính tả] …`.
-pub fn transcript(turns: &[Turn], labels: &Labels) -> String {
+/// dictation as `[Tôi · đọc chính tả] …`. With `speaker_labels` false (a
+/// microphone-only meeting: the microphone hears everyone in the room) a
+/// line has no label and a dictation is `[đọc chính tả] …`.
+pub fn transcript(turns: &[Turn], labels: &Labels, speaker_labels: bool) -> String {
     let mut ordered: Vec<&Turn> = turns.iter().filter(|t| !t.text.trim().is_empty()).collect();
     ordered.sort_by_key(|t| (t.start_ms, t.speaker == Speaker::Others));
     ordered
         .iter()
         .map(|turn| {
-            let who = match (turn.speaker, turn.dictation) {
-                (Speaker::Me, true) => format!("{} · {}", labels.me, labels.dictation),
-                (Speaker::Me, false) => labels.me.to_string(),
-                (Speaker::Others, _) => labels.others.to_string(),
+            let who = match (speaker_labels, turn.speaker, turn.dictation) {
+                (false, _, true) => Some(labels.dictation.to_string()),
+                (false, _, false) => None,
+                (true, Speaker::Me, true) => Some(format!("{} · {}", labels.me, labels.dictation)),
+                (true, Speaker::Me, false) => Some(labels.me.to_string()),
+                (true, Speaker::Others, _) => Some(labels.others.to_string()),
             };
-            format!("[{who}] {}", turn.text.trim())
+            match who {
+                Some(who) => format!("[{who}] {}", turn.text.trim()),
+                None => turn.text.trim().to_string(),
+            }
         })
         .collect::<Vec<_>>()
         .join("\n")
 }
 
-/// The two tracks as one, for the History entry's audio.
+/// Where a meeting's sound comes from (SE-MEET-020).
+#[derive(Debug, Clone, PartialEq, Eq, Serialize, Deserialize, Type)]
+#[serde(tag = "kind", content = "value", rename_all = "camelCase")]
+pub enum MeetingSource {
+    /// The app [`pick_meeting_app`] finds, else the microphone only.
+    Automatic,
+    /// The microphone only: one track, no speaker labels.
+    Microphone,
+    /// This app's sound as "Others" (a bundle id); an error when it is not
+    /// running.
+    App(String),
+}
+
+// SE-MEET-020
+/// The app whose sound a meeting from `source` records as "Others", or
+/// `None` for the microphone only. Automatic never fails: with no app to
+/// pick it records the microphone only. A named app must be running
+/// (error "no-app: …").
+pub fn resolve_source(
+    source: &MeetingSource,
+    running: &[crate::system_audio_tap::RunningApp],
+    remembered: Option<&str>,
+) -> Result<Option<String>, String> {
+    match source {
+        MeetingSource::Automatic => Ok(pick_meeting_app(running, remembered)),
+        MeetingSource::Microphone => Ok(None),
+        MeetingSource::App(bundle_id) => {
+            if running.iter().any(|app| app.bundle_id == *bundle_id) {
+                Ok(Some(bundle_id.clone()))
+            } else {
+                Err(format!("no-app: {bundle_id} is not running"))
+            }
+        }
+    }
+}
+
+/// What a source menu offers (SE-MEET-020, SE-MEET-021). "Microphone only"
+/// is always offered and is not listed.
+#[derive(Debug, Clone, Serialize, Type)]
+pub struct MeetingSources {
+    /// What Automatic would record now; `None` means the microphone only.
+    pub automatic: Option<crate::system_audio_tap::RunningApp>,
+    /// Each running call app or browser, in the order Automatic ranks them.
+    pub apps: Vec<crate::system_audio_tap::RunningApp>,
+}
+
+// SE-MEET-020
+/// The source menu's choices now, with Automatic resolved exactly as a
+/// start resolves it.
+pub fn meeting_sources(
+    running: &[crate::system_audio_tap::RunningApp],
+    remembered: Option<&str>,
+) -> MeetingSources {
+    let automatic = resolve_source(&MeetingSource::Automatic, running, remembered)
+        .ok()
+        .flatten()
+        .and_then(|id| running.iter().find(|app| app.bundle_id == id).cloned());
+    let mut apps: Vec<_> = running
+        .iter()
+        .filter_map(|app| {
+            MEETING_APPS
+                .iter()
+                .position(|known| *known == app.bundle_id)
+                .map(|rank| (rank, app.clone()))
+        })
+        .collect();
+    apps.sort_by_key(|(rank, _)| *rank);
+    MeetingSources {
+        automatic,
+        apps: apps.into_iter().map(|(_, app)| app).collect(),
+    }
+}
+
+/// What a finished meeting is saved as.
+#[derive(Debug, PartialEq, Eq)]
+pub struct SavedAs {
+    /// The History entry's title.
+    pub title: String,
+    /// The `meetings` row's `app_name`: empty for a microphone-only meeting.
+    pub row_app: String,
+    /// The app named to the kind guess.
+    pub guess_app: Option<String>,
+}
+
+// SE-MEET-013, SE-MEET-020
+/// `app_name` is the recorded app's name, `None` for the microphone only;
+/// `when` is the start as "dd/mm HH:MM".
+pub fn saved_as(app_name: Option<&str>, when: &str, labels: &Labels) -> SavedAs {
+    SavedAs {
+        title: format!("{} · {when}", app_name.unwrap_or(labels.microphone)),
+        row_app: app_name.unwrap_or_default().to_string(),
+        guess_app: app_name.map(str::to_string),
+    }
+}
+
+// SE-MEET-010, SE-MEET-020
+/// The app a stored meeting names to the kind guess: none for a
+/// microphone-only meeting (an empty `app_name`).
+pub fn guess_app_of_row(app_name: &str) -> Option<&str> {
+    Some(app_name).filter(|name| !name.trim().is_empty())
+}
+
+/// The two tracks as one, for the History entry's audio. A
+/// microphone-only meeting has no app track: its audio is the microphone
+/// as recorded, not halved.
 pub fn mix(me: &[f32], others: &[f32]) -> Vec<f32> {
+    if others.is_empty() {
+        return me.iter().map(|s| s.clamp(-1.0, 1.0)).collect();
+    }
     let len = me.len().max(others.len());
     (0..len)
         .map(|i| {
@@ -469,12 +587,12 @@ pub mod session {
         crate::tray::update_tray_menu(app);
     }
 
-    // SE-MEET-001
-    /// Starts recording a meeting with `bundle_id` as "Others" (or the app
-    /// [`pick_meeting_app`] finds). Never starts a dictation.
-    /// A start that fails shows why on the meeting bar, with its ×.
-    pub fn start(app: &AppHandle, bundle_id: Option<String>) -> Result<(), String> {
-        try_start(app, bundle_id).inspect_err(|e| {
+    // SE-MEET-001, SE-MEET-020
+    /// Starts recording a meeting from `source`: an app's sound as "Others"
+    /// with the microphone as "Me", or the microphone alone. Never starts a
+    /// dictation. A start that fails shows why on the meeting bar, with its ×.
+    pub fn start(app: &AppHandle, source: MeetingSource) -> Result<(), String> {
+        try_start(app, source).inspect_err(|e| {
             log::warn!("Meeting: {e}");
             // A meeting still recording or being finished keeps its bar.
             if !is_recording() && state().phase == "idle" {
@@ -490,21 +608,23 @@ pub mod session {
         })
     }
 
-    fn try_start(app: &AppHandle, bundle_id: Option<String>) -> Result<(), String> {
-        // SE-MEET-003: hidden without the process tap (macOS 14.2+).
+    fn try_start(app: &AppHandle, source: MeetingSource) -> Result<(), String> {
+        // SE-MEET-003: hidden without the process tap (macOS 14.2+), also
+        // for the microphone only (owner 11/11: unchanged below 14.2).
         if !crate::system_audio_tap::available() {
             return Err("unsupported: meeting notes need macOS 14.2".to_string());
         }
         let settings = crate::settings::get_settings(app);
         let running_apps = crate::system_audio_tap::list_apps();
-        let bundle_id = bundle_id
-            .or_else(|| pick_meeting_app(&running_apps, settings.meeting_app.as_deref()))
-            .ok_or_else(|| "no-app: no meeting app is running".to_string())?;
-        let app_name = running_apps
-            .iter()
-            .find(|a| a.bundle_id == bundle_id)
-            .map(|a| a.name.clone())
-            .unwrap_or_else(|| bundle_id.clone());
+        // SE-MEET-020: None records the microphone only.
+        let bundle_id = resolve_source(&source, &running_apps, settings.meeting_app.as_deref())?;
+        let app_name = bundle_id.as_ref().map(|bundle_id| {
+            running_apps
+                .iter()
+                .find(|a| a.bundle_id == *bundle_id)
+                .map(|a| a.name.clone())
+                .unwrap_or_else(|| bundle_id.clone())
+        });
         let stop = Arc::new(AtomicBool::new(false));
         {
             let mut running = RUNNING.lock().map_err(|e| e.to_string())?;
@@ -515,14 +635,19 @@ pub mod session {
             }
             *running = Some(Running { stop: stop.clone() });
         }
-        let (tap, chunks) = match crate::system_audio_tap::start(&bundle_id, false) {
-            Ok(tap) => tap,
-            Err(e) => {
+        let (tap, chunks) = match bundle_id
+            .as_deref()
+            .map(|id| crate::system_audio_tap::start(id, false))
+        {
+            Some(Ok((tap, chunks))) => (Some(tap), Some(chunks)),
+            Some(Err(e)) => {
                 clear_running();
                 return Err(e);
             }
+            None => (None, None),
         };
-        // SE-MEET-005: both tracks also feed the live panel.
+        // SE-MEET-005: both tracks (or the microphone alone) also feed the
+        // live panel.
         let (live, live_samples) = crate::meeting_live::session::feed();
         let mut recorder = match open_microphone(app, live.clone()) {
             Ok(recorder) => recorder,
@@ -533,24 +658,36 @@ pub mod session {
         };
         // Read again: opening the microphone can take seconds, and a change
         // made meanwhile must not be written over.
+        // A microphone-only meeting leaves the remembered app as it was.
         let mut settings = crate::settings::get_settings(app);
-        settings.meeting_app = Some(bundle_id.clone());
         let live_level = settings.meeting_live_level;
-        crate::settings::write_settings(app, settings);
+        if let Some(bundle_id) = &bundle_id {
+            settings.meeting_app = Some(bundle_id.clone());
+            crate::settings::write_settings(app, settings);
+        }
 
         let started = Instant::now();
         let started_at = chrono::Utc::now().timestamp();
-        crate::meeting_live::session::begin(app, started, live_level, live_samples);
+        crate::meeting_live::session::begin(
+            app,
+            started,
+            live_level,
+            live_samples,
+            bundle_id.is_none(),
+        );
         announce(
             app,
             MeetingState {
                 phase: "recording".to_string(),
                 started_at: Some(started_at),
-                app_name: Some(app_name.clone()),
+                app_name: app_name.clone(),
                 ..MeetingState::default()
             },
         );
-        log::info!("Meeting: recording {bundle_id} and the microphone");
+        match &bundle_id {
+            Some(bundle_id) => log::info!("Meeting: recording {bundle_id} and the microphone"),
+            None => log::info!("Meeting: recording the microphone only"),
+        }
 
         let app = app.clone();
         std::thread::spawn(move || {
@@ -568,7 +705,7 @@ pub mod session {
                         me,
                         others: recording.others,
                         dictations: recording.dictations,
-                        app_name: app_name.clone(),
+                        app_name,
                         started_at,
                         duration_ms,
                     },
@@ -671,7 +808,7 @@ pub mod session {
     /// only closes the question (this call is not asked about again).
     pub fn answer(app: &AppHandle, yes: bool) -> Result<(), String> {
         match app_to_record(yes, end_ask(app)) {
-            Some(bundle_id) => start(app, Some(bundle_id)),
+            Some(bundle_id) => start(app, MeetingSource::App(bundle_id)),
             None => Ok(()),
         }
     }
@@ -722,7 +859,8 @@ pub mod session {
             crate::meeting_window::follow(app, &state());
             Ok(())
         } else {
-            start(app, None)
+            // SE-MEET-020: the shortcut and the tray start on Automatic.
+            start(app, MeetingSource::Automatic)
         }
     }
 
@@ -760,11 +898,13 @@ pub mod session {
     }
 
     /// Reads the app's sound until stopped, and notes when a dictation runs.
+    /// With no app (`chunks` None, the microphone only) it only waits for
+    /// the stop and [`TAIL`], so the microphone keeps the last second too.
     fn record(
         app: &AppHandle,
         stop: &AtomicBool,
         started: Instant,
-        chunks: std::sync::mpsc::Receiver<crate::system_audio_tap::TapChunk>,
+        chunks: Option<std::sync::mpsc::Receiver<crate::system_audio_tap::TapChunk>>,
         live: &crate::meeting_live::session::Feed,
     ) -> Recording {
         let mut others: Vec<f32> = Vec::new();
@@ -795,6 +935,10 @@ pub mod session {
                 }
                 _ => {}
             }
+            let Some(chunks) = chunks.as_ref() else {
+                std::thread::sleep(Duration::from_millis(100));
+                continue;
+            };
             let chunk = match chunks.recv_timeout(Duration::from_millis(100)) {
                 Ok(chunk) => chunk,
                 Err(std::sync::mpsc::RecvTimeoutError::Timeout) if stopped_at.is_none() => continue,
@@ -833,7 +977,8 @@ pub mod session {
         me: Vec<f32>,
         others: Vec<f32>,
         dictations: Vec<(u64, u64)>,
-        app_name: String,
+        /// The recorded app's name; None for the microphone only.
+        app_name: Option<String>,
         started_at: i64,
         duration_ms: i64,
     }
@@ -847,12 +992,21 @@ pub mod session {
         announce(app, state);
     }
 
-    // SE-MEET-006
-    /// After the stop: recognise both tracks with the selected (accurate)
-    /// model, save the meeting, then write its notes.
+    // SE-MEET-006, SE-MEET-020
+    /// After the stop: recognise the tracks with the selected (accurate)
+    /// model, save the meeting, then write its notes. Whether there are
+    /// speaker labels follows the source (an app recorded or not), never
+    /// whether a track happens to be silent.
     fn finish(app: &AppHandle, done: Finished) -> Result<(), String> {
         set_phase(app, "transcribing", None);
-        let text = transcribe_tracks(app, &done.me, &done.others, &done.dictations)?;
+        let speaker_labels = done.app_name.is_some();
+        let text = transcribe_tracks(
+            app,
+            &done.me,
+            &done.others,
+            &done.dictations,
+            speaker_labels,
+        )?;
         let history = app.state::<Arc<HistoryManager>>().inner().clone();
         let file_name = format!("file-meeting-{}.wav", done.started_at);
         let wav = history.recordings_dir().join(&file_name);
@@ -860,36 +1014,47 @@ pub mod session {
         if let Err(e) = crate::audio_toolkit::save_wav_file(&wav, &mixed) {
             log::warn!("Meeting: cannot keep the audio: {e}");
         }
-        let title = format!(
-            "{} · {}",
-            done.app_name,
-            chrono::DateTime::from_timestamp(done.started_at, 0)
-                .map(|t| {
-                    t.with_timezone(&chrono::Local)
-                        .format("%d/%m %H:%M")
-                        .to_string()
-                })
-                .unwrap_or_default()
+        let when = chrono::DateTime::from_timestamp(done.started_at, 0)
+            .map(|t| {
+                t.with_timezone(&chrono::Local)
+                    .format("%d/%m %H:%M")
+                    .to_string()
+            })
+            .unwrap_or_default();
+        let settings = crate::settings::get_settings(app);
+        let saved = saved_as(
+            done.app_name.as_deref(),
+            &when,
+            &labels(&settings.app_language),
         );
         let entry = history
-            .save_titled_entry(file_name, title, text.clone())
+            .save_titled_entry(file_name, saved.title, text.clone())
             .map_err(|e| e.to_string())?;
         history
-            .save_meeting(entry.id, &done.app_name, done.started_at, done.duration_ms)
+            .save_meeting(entry.id, &saved.row_app, done.started_at, done.duration_ms)
             .map_err(|e| e.to_string())?;
         set_phase(app, "notes", Some(entry.id));
-        write_notes_for(app, &history, entry.id, &text, Some(&done.app_name), None);
+        write_notes_for(
+            app,
+            &history,
+            entry.id,
+            &text,
+            saved.guess_app.as_deref(),
+            None,
+        );
         Ok(())
     }
 
-    /// Both tracks as one labelled transcript, recognised span by span with
-    /// the selected model. An empty transcript is still a meeting: its notes
-    /// say so (SE-MEET-009).
+    /// The tracks as one transcript, recognised span by span with the
+    /// selected model; labelled Me / Others when `speaker_labels`, else
+    /// the microphone's lines without labels (SE-MEET-020). An empty
+    /// transcript is still a meeting: its notes say so (SE-MEET-009).
     fn transcribe_tracks(
         app: &AppHandle,
         me: &[f32],
         others: &[f32],
         dictations: &[(u64, u64)],
+        speaker_labels: bool,
     ) -> Result<String, String> {
         let settings = crate::settings::get_settings(app);
         let tm = app.state::<Arc<TranscriptionManager>>().inner().clone();
@@ -926,7 +1091,11 @@ pub mod session {
             }
         }
         let turns = drop_echo(turns);
-        Ok(transcript(&turns, &labels(&settings.app_language)))
+        Ok(transcript(
+            &turns,
+            &labels(&settings.app_language),
+            speaker_labels,
+        ))
     }
 
     /// `handy --meeting-probe <bundle id | pid>`: taps one app for `seconds`
@@ -948,8 +1117,8 @@ pub mod session {
         let started = Instant::now();
         // The live panel at level 2, so its lines can be measured too.
         let (live, live_samples) = crate::meeting_live::session::feed();
-        crate::meeting_live::session::begin(app, started, 2, live_samples);
-        let recording = record(app, &stop, started, chunks, &live);
+        crate::meeting_live::session::begin(app, started, 2, live_samples, false);
+        let recording = record(app, &stop, started, Some(chunks), &live);
         drop(tap);
         drop(live);
         // Lines still being recognised.
@@ -964,7 +1133,7 @@ pub mod session {
             "Meeting probe: {:.1} s of app sound",
             recording.others.len() as f64 / RATE as f64
         );
-        transcribe_tracks(app, &[], &recording.others, &recording.dictations)
+        transcribe_tracks(app, &[], &recording.others, &recording.dictations, true)
     }
 
     // SE-MEET-008, SE-MEET-019
@@ -1152,7 +1321,7 @@ pub mod session {
                 Ok(Some(entry)) => Some(notes_for(
                     &app,
                     &entry.transcription_text,
-                    Some(&meeting.app_name),
+                    guess_app_of_row(&meeting.app_name),
                     Some(kind),
                 )),
                 _ => None,
@@ -1306,10 +1475,62 @@ mod tests {
             turn(12_000, Speaker::Me, "  "),
         ];
         assert_eq!(
-            transcript(&turns, &labels("vi")),
+            transcript(&turns, &labels("vi"), true),
             "[Tôi] alo mọi người\n[Người khác] mình bắt đầu nhé\n[Tôi · đọc chính tả] gửi email cho chị Lan"
         );
-        assert!(transcript(&turns, &labels("en")).starts_with("[Me] alo"));
+        assert!(transcript(&turns, &labels("en"), true).starts_with("[Me] alo"));
+    }
+
+    // SE-MEET-020
+    #[test]
+    fn a_one_track_transcript_has_no_labels_and_keeps_dictation_marks() {
+        let mut dictated = turn(9_000, Speaker::Me, "gửi email cho chị Lan");
+        dictated.dictation = true;
+        let turns = vec![
+            turn(5_000, Speaker::Me, "mình bắt đầu nhé"),
+            turn(1_000, Speaker::Me, "alo mọi người"),
+            dictated,
+        ];
+        assert_eq!(
+            transcript(&turns, &labels("vi"), false),
+            "alo mọi người\nmình bắt đầu nhé\n[đọc chính tả] gửi email cho chị Lan"
+        );
+        assert_eq!(
+            transcript(&turns, &labels("en"), false),
+            "alo mọi người\nmình bắt đầu nhé\n[dictation] gửi email cho chị Lan"
+        );
+        // With no app track, the echo check has nothing to drop.
+        assert_eq!(drop_echo(turns.clone()), turns);
+        // The notes' word count reads past the dictation mark as past a label.
+        assert!(!crate::meeting_notes::has_substance(
+            "[đọc chính tả] một hai"
+        ));
+    }
+
+    // SE-MEET-020
+    #[test]
+    fn a_microphone_only_meeting_names_no_app() {
+        let mic = saved_as(None, "11/11 09:30", &labels("vi"));
+        assert_eq!(mic.title, "Micro · 11/11 09:30");
+        assert_eq!(mic.row_app, "");
+        assert_eq!(mic.guess_app, None);
+        assert_eq!(
+            saved_as(None, "11/11 09:30", &labels("en")).title,
+            "Microphone · 11/11 09:30"
+        );
+        let zoom = saved_as(Some("Zoom"), "11/11 09:30", &labels("vi"));
+        assert_eq!(zoom.title, "Zoom · 11/11 09:30");
+        assert_eq!(zoom.row_app, "Zoom");
+        assert_eq!(zoom.guess_app.as_deref(), Some("Zoom"));
+        // A template switch later: a stored empty app is no app.
+        assert_eq!(guess_app_of_row(""), None);
+        assert_eq!(guess_app_of_row("Zoom"), Some("Zoom"));
+    }
+
+    // SE-MEET-020
+    #[test]
+    fn the_microphone_alone_is_kept_as_recorded() {
+        assert_eq!(mix(&[0.4, -0.2], &[]), vec![0.4, -0.2]);
     }
 
     #[test]
@@ -1493,10 +1714,85 @@ mod tests {
             Some("us.zoom.xos")
         );
         let running = [app("com.example.Custom", false)];
+        assert_eq!(pick_meeting_app(&[], None), None);
         assert_eq!(
             pick_meeting_app(&running, Some("com.example.Custom")).as_deref(),
             Some("com.example.Custom")
         );
         assert_eq!(pick_meeting_app(&running, Some("us.zoom.xos")), None);
+    }
+
+    // SE-MEET-020
+    #[test]
+    fn an_empty_pick_records_the_microphone_only() {
+        let running = [app("com.spotify.client", true)];
+        assert_eq!(
+            resolve_source(&MeetingSource::Automatic, &running, None),
+            Ok(None)
+        );
+        assert_eq!(
+            resolve_source(&MeetingSource::Automatic, &[], None),
+            Ok(None)
+        );
+        // Automatic still picks a call app when one runs.
+        let running = [app("us.zoom.xos", false)];
+        assert_eq!(
+            resolve_source(&MeetingSource::Automatic, &running, None),
+            Ok(Some("us.zoom.xos".to_string()))
+        );
+        // Microphone only, even with a call app running.
+        assert_eq!(
+            resolve_source(&MeetingSource::Microphone, &running, None),
+            Ok(None)
+        );
+    }
+
+    // SE-MEET-020
+    #[test]
+    fn a_named_source_wins_and_must_be_running() {
+        let running = [app("us.zoom.xos", true), app("com.google.Chrome", true)];
+        let chrome = MeetingSource::App("com.google.Chrome".to_string());
+        assert_eq!(
+            resolve_source(&chrome, &running, None),
+            Ok(Some("com.google.Chrome".to_string()))
+        );
+        let gone = MeetingSource::App("com.hnc.Discord".to_string());
+        let error = resolve_source(&gone, &running, None).unwrap_err();
+        assert!(error.starts_with("no-app:"), "{error}");
+    }
+
+    // SE-MEET-020
+    #[test]
+    fn the_source_menu_lists_meeting_apps_and_what_automatic_records() {
+        let running = [
+            app("com.google.Chrome", false),
+            app("com.spotify.client", true),
+            app("us.zoom.xos", false),
+        ];
+        let sources = meeting_sources(&running, None);
+        assert_eq!(
+            sources.automatic.map(|a| a.bundle_id).as_deref(),
+            Some("us.zoom.xos")
+        );
+        let listed: Vec<_> = sources.apps.iter().map(|a| a.bundle_id.as_str()).collect();
+        assert_eq!(listed, ["us.zoom.xos", "com.google.Chrome"]);
+        // Nothing to pick: Automatic is the microphone only.
+        let quiet = meeting_sources(&[app("com.spotify.client", true)], None);
+        assert!(quiet.automatic.is_none());
+        assert!(quiet.apps.is_empty());
+    }
+
+    // SE-MEET-020
+    #[test]
+    fn a_source_reaches_the_page_as_kind_and_value() {
+        let json = |source: &MeetingSource| serde_json::to_string(source).unwrap();
+        assert_eq!(json(&MeetingSource::Automatic), r#"{"kind":"automatic"}"#);
+        assert_eq!(json(&MeetingSource::Microphone), r#"{"kind":"microphone"}"#);
+        assert_eq!(
+            json(&MeetingSource::App("us.zoom.xos".into())),
+            r#"{"kind":"app","value":"us.zoom.xos"}"#
+        );
+        let back: MeetingSource = serde_json::from_str(r#"{"kind":"microphone"}"#).unwrap();
+        assert_eq!(back, MeetingSource::Microphone);
     }
 }

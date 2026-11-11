@@ -115,7 +115,8 @@ export const MeetingsPage: React.FC = () => {
                   }`}
                 >
                   <span className="block truncate text-sm font-medium">
-                    {m.meeting.app_name}
+                    {/* SE-MEET-020: a microphone-only meeting stores no app. */}
+                    {m.meeting.app_name || m.title}
                   </span>
                   <span className="block whitespace-nowrap text-sm text-mid-gray tabular-nums">
                     {startedAt(m.meeting.started_at)} ·{" "}

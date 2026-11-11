@@ -2,18 +2,35 @@
 //! bar's state, and the stored meetings. The work is `meeting::session`.
 
 use crate::managers::history::{HistoryManager, Meeting};
-use crate::meeting::{session, MeetingState};
+use crate::meeting::{session, MeetingSource, MeetingSources, MeetingState};
 use serde::Serialize;
 use specta::Type;
 use std::sync::Arc;
 use tauri::{AppHandle, State};
 
-/// Starts recording a meeting with `bundle_id` as "Others", or with the
-/// meeting app found running when it is None.
+// SE-MEET-020
+/// Starts recording a meeting from `source`: Automatic (the app found
+/// running, else the microphone only), the microphone only, or a named app.
+/// Errors: "unsupported: …", "no-app: …" (the named app is not running),
+/// "running: …", "microphone: …".
 #[tauri::command]
 #[specta::specta]
-pub fn start_meeting(app: AppHandle, bundle_id: Option<String>) -> Result<(), String> {
-    session::start(&app, bundle_id)
+pub fn start_meeting(app: AppHandle, source: MeetingSource) -> Result<(), String> {
+    session::start(&app, source)
+}
+
+// SE-MEET-020
+/// What a source menu offers now: what Automatic would record (None: the
+/// microphone only) and each running call app or browser. "Microphone
+/// only" is always offered and is not listed.
+#[tauri::command]
+#[specta::specta]
+pub fn meeting_sources(app: AppHandle) -> MeetingSources {
+    let settings = crate::settings::get_settings(&app);
+    crate::meeting::meeting_sources(
+        &crate::system_audio_tap::list_apps(),
+        settings.meeting_app.as_deref(),
+    )
 }
 
 #[tauri::command]

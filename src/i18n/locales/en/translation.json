@@ -1156,7 +1156,7 @@
     },
     "errors": {
       "unsupported": "Meeting notes need macOS 14.2 or later.",
-      "no-app": "No meeting app is running. Open Zoom, Meet, Teams or another call app first.",
+      "no-app": "The app you chose is no longer running. Open it again, or record the microphone only.",
       "running": "A meeting is already recording.",
       "microphone": "The microphone could not be opened.",
       "no-model": "Choose a speech model on the Models page first.",
