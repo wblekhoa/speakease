@@ -1,7 +1,7 @@
 ---
 type: session-brief
 last_updated: 2026-11-12
-updated_by: claude (meeting lane 4, ask switch)
+updated_by: claude (coordinator, release 0.1.2)
 summary: "Open threads for SpeakEase: meeting notes built through phase 5 and Files; what waits for the owner."
 ---
 
@@ -10,12 +10,14 @@ summary: "Open threads for SpeakEase: meeting notes built through phase 5 and Fi
 ## Open threads
 
 - **Meeting notes** (spec `docs/product/specs/2026-10-28-meeting-notes.md` on `origin/speakease`, plans
-  `ai-memory/plans/meeting-notes-build.md`, `ai-memory/plans/meeting-open-start.md`): phases 1-5 and Files, the
-  microphone-only meeting (#12, SE-MEET-020), the Meetings page's Start control with notes out of Experimental
-  (#13, SE-MEET-021/022) and the three "Take notes of this call?" races (#14) are on `main` at `8a23225`. A test
-  build from `8a23225` was installed on 2026-11-11 and starts cleanly; no meeting has been run in it. Lane 4 PR
-  (branch `claude/meeting-ask-switch-2280af`): the "Ask when a call starts" switch (SE-MEET-023, on by default,
-  decided by the coordinator under the owner's delegation), the panic guard armed before `show()`, the Start/Stop
-  focus fix and the list's load error. Unverified: no real call or file in the installed app; levels 3-5 with a real
-  AI; heat and battery. Waiting for the owner: the `.docx` dependency, a real call to measure, release 0.1.2. Next:
-  merge lane 4, then release 0.1.2 and the owner's two-minute microphone-only meeting.
+  `ai-memory/plans/meeting-notes-build.md`, `ai-memory/plans/meeting-open-start.md`): everything through lane 4
+  (#12, #13, #14, #16: SE-MEET-020…023) is on `main` and shipped in **0.1.2** (GitHub release `v0.1.2`, tag on
+  `31e422e`, 2026-11-12; `docs/product/releases.md`). The installed app is that build; it has only been started
+  hidden. Unverified: no meeting, call question, switch or live-subtitles session in an installed build; levels 3-5
+  with a real AI; heat and battery; `src/bindings.ts` is hand-written and was not compared with tauri-specta's output.
+  Waiting for the owner: the two-minute microphone-only meeting; whether meeting text may go to a saved-key service
+  when an on-device model is picked (SE-MEET-012, disclosed in PRIVACY); a release-notes file for the What's New
+  window (`src/content/release-notes/` has only Handy's); the `.docx` dependency; a real call to measure. Small
+  open items from the #16 gate: a greyed Start/Stop still darkens on hover; the load-error text says "open this page
+  again" although the list reloads by itself; Yes pressed within 3 s of switching the question off records nothing.
+  Next: the owner's first real meeting in 0.1.2, then fix what it shows.

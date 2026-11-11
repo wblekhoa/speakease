@@ -2,7 +2,7 @@
 status: active
 owner: Lê Khoa
 started: 2026-11-11
-current-phase: lanes 1-3 merged (#12 25cf367, #13 92031f5, #14 8a23225); lane 4 (ask switch, hardening) in review before 0.1.2
+current-phase: lanes 1-4 merged (#12 25cf367, #13 92031f5, #14 8a23225, #16 9cd4c1a) and released in 0.1.2 (tag on 31e422e); waiting for the owner's first real meeting
 summary: "Let the user open a meeting by hand anywhere: microphone-only recording when no call app runs, a Start control with a source menu on the Meetings page, and meeting notes out of Experimental, in two sequenced lanes."
 tags: [area/audio, area/capture, stack/rust, stack/react]
 ---
@@ -117,7 +117,7 @@ Frozen by lane 1 (SE-MEET-020). Rust in `src-tauri/src/meeting.rs` and `commands
   "Take notes of this call?" (a start between storing the asked app and showing the question; a question opening
   while a start lists apps; `answer` closing the question twice). Fixed by keeping the bar, the asked app and a
   start's claim in one value under one lock (`Bar` in `src-tauri/src/meeting.rs`), with unit tests as ordered calls.
-- Still unverified: nothing in meeting notes has run in the installed app (the installed 0.1.1 predates both PRs);
+- Still unverified: no meeting has run in an installed app (the 0.1.1 installed then predated both PRs);
   the session code around `Bar` (events shown, `try_start`) has no unit test. Open owner decisions then: an off switch
   for the question (since decided, lane 4 below), a local test build (done 2026-11-11), releases.
 - Lane 3 (#14) merged by rebase at `8a23225`. A test build from it was installed on 2026-11-11 and starts cleanly; no
@@ -127,3 +127,5 @@ Frozen by lane 1 (SE-MEET-020). Rust in `src-tauri/src/meeting.rs` and `commands
   open question), the panic guard armed in `start` and `answer` before anything can panic while the claim is held,
   `with_bar` made infallible, the Start/Stop button keeping focus while pending, the Meetings list saying when it
   cannot be read, and the stale docs from the #14 gate.
+- Lane 4 (#16) merged by rebase at `9cd4c1a`; 0.1.2 was published from `31e422e` on 2026-11-12. The installed app
+  is that build. Still not seen in it: a meeting, the call question, the switch.
