@@ -1,5 +1,5 @@
 ---
-status: done
+status: active
 owner: Lê Khoa
 started: 2026-11-11
 current-phase: lanes 1-3 merged (#12 25cf367, #13 92031f5, #14 8a23225); lane 4 (ask switch, hardening) in review before 0.1.2
@@ -118,8 +118,8 @@ Frozen by lane 1 (SE-MEET-020). Rust in `src-tauri/src/meeting.rs` and `commands
   while a start lists apps; `answer` closing the question twice). Fixed by keeping the bar, the asked app and a
   start's claim in one value under one lock (`Bar` in `src-tauri/src/meeting.rs`), with unit tests as ordered calls.
 - Still unverified: nothing in meeting notes has run in the installed app (the installed 0.1.1 predates both PRs);
-  the session code around `Bar` (events shown, `try_start`) has no unit test. Open owner decisions: an off switch
-  for the question, a local test build, releases.
+  the session code around `Bar` (events shown, `try_start`) has no unit test. Open owner decisions then: an off switch
+  for the question (since decided, lane 4 below), a local test build (done 2026-11-11), releases.
 - Lane 3 (#14) merged by rebase at `8a23225`. A test build from it was installed on 2026-11-11 and starts cleanly; no
   meeting has run in it yet.
 - Lane 4 (branch `claude/meeting-ask-switch-2280af`, the last code change before 0.1.2): the "Ask when a call

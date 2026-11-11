@@ -75,7 +75,8 @@ export const MeetingsPage: React.FC = () => {
   }, [refresh, t]);
 
   // Null until the list arrives, and for good when it cannot be read: the
-  // Start control shows either way (SE-MEET-021), the list area stays empty.
+  // Start control shows either way (SE-MEET-021); the list area then says
+  // the list could not be read (loadFailed).
   const list = meetings ?? [];
   // Undefined while there are no meetings yet: the Start control then stands
   // alone beside the empty text, which points to it (SE-MEET-021). The
@@ -166,7 +167,7 @@ export const MeetingsPage: React.FC = () => {
           </div>
         ) : loadFailed && meetings === null ? (
           <p
-            className="min-w-0 flex-1 self-start text-sm text-error"
+            className="min-w-0 flex-1 self-start text-xs text-error"
             role="alert"
           >
             {t("meeting.page.loadFailed")}

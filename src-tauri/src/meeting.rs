@@ -1037,7 +1037,12 @@ pub mod session {
                         is_meet_title(&crate::system_audio_tap::app_context(browser).window_title)
                     })
                 });
-                let ask_on_call = crate::settings::get_settings(&app).meeting_ask_on_call;
+                // A settings read that panics must not end the watcher for
+                // good: that look then asks as by default.
+                let ask_on_call = std::panic::catch_unwind(std::panic::AssertUnwindSafe(|| {
+                    crate::settings::get_settings(&app).meeting_ask_on_call
+                }))
+                .unwrap_or(true);
                 // RUNNING, then STATE: never nested.
                 let busy = is_recording() || lock_bar().busy();
                 match watch.look(holder, busy, ask_on_call) {

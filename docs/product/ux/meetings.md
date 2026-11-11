@@ -69,8 +69,8 @@ relations:
   Start pressed while the first is still on its way is refused ("Đang có một cuộc họp được ghi âm."); the first shows
   its own outcome. Start
   errors show under the button with the bar's texts; if a named app has gone, the choice goes
-  back to Automatic after the error. While a start or a stop has not answered, Start/Stop is greyed out but keeps
-  keyboard focus. If the list of meetings cannot be read, the list column says so ("Không tải được danh sách cuộc
+  back to Automatic after the error. While a start or a stop has not answered, and while a meeting is finished, the
+  greyed-out Start/Stop keeps keyboard focus. If the list of meetings cannot be read, the list column says so ("Không tải được danh sách cuộc
   họp. Hãy mở lại trang này để thử lại.") instead of staying empty; the Start control still shows.
 - **Asked when a call starts**: when Zoom, Teams, Zalo, Messenger, FaceTime, Slack or Discord starts using the
   microphone, or a browser does while its front tab is Google Meet, the bar asks on two lines "Microsoft Teams đang
