@@ -2,7 +2,7 @@
 status: executing
 owner: Lê Khoa
 started: 2026-11-11
-current-phase: lane-1 (PR open)
+current-phase: lane-2 (PR open)
 summary: "Let the user open a meeting by hand anywhere: microphone-only recording when no call app runs, a Start control with a source menu on the Meetings page, and meeting notes out of Experimental, in two sequenced lanes."
 tags: [area/audio, area/capture, stack/rust, stack/react]
 ---

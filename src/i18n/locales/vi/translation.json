@@ -1147,6 +1147,19 @@
     "notes": "Đang viết ghi chú…",
     "stop": "Dừng",
     "close": "Đóng",
+    "start": {
+      "button": "Bắt đầu ghi",
+      "chooseSource": "Chọn nguồn âm thanh",
+      "automatic": "Tự chọn",
+      "automaticApp": "Bây giờ: {{app}} và micro",
+      "automaticMic": "Bây giờ: chỉ micro",
+      "microphoneOnly": "Chỉ micro",
+      "microphoneLabel": "Micro",
+      "willApp": "Sẽ ghi: {{app}} và micro",
+      "willMic": "Sẽ ghi: chỉ micro",
+      "recordingApp": "Đang ghi: {{app}} và micro",
+      "recordingMic": "Đang ghi: chỉ micro"
+    },
     "ask": {
       "using": "{{app}} đang dùng micro.",
       "question": "Ghi chú cuộc gọi này?",
@@ -1164,7 +1177,7 @@
       "other": "Không ghi âm hoặc lưu được cuộc họp."
     },
     "page": {
-      "empty": "Chưa có cuộc họp nào. Bắt đầu từ khay hệ thống, hoặc bằng phím tắt Ghi chú cuộc họp ở trang Ghi âm.",
+      "empty": "Chưa có cuộc họp nào. Bấm Bắt đầu ghi để mở một cuộc, hoặc dùng khay hệ thống hay phím tắt Ghi chú cuộc họp ở trang Ghi âm.",
       "notesTab": "Ghi chú",
       "transcriptTab": "Bản ghi lời",
       "check": "AI viết ghi chú này. Hãy đối chiếu tên và con số với bản ghi lời.",

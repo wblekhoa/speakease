@@ -18,6 +18,7 @@ import { Dropdown } from "../../ui/Dropdown";
 import { MarkdownContent } from "../../whats-new/MarkdownContent";
 import { copyToClipboard } from "../history/clipboard";
 import { MeetingAsk, type Exchange } from "./MeetingAsk";
+import { MeetingStart } from "./MeetingStart";
 
 /** Events that change the list (meeting.rs NOTES_EVENT and STATE_EVENT). */
 const NOTES_EVENT = "meeting-notes-updated";
@@ -72,10 +73,16 @@ export const MeetingsPage: React.FC = () => {
   if (meetings === null) return null;
   if (meetings.length === 0) {
     return (
-      <div className="max-w-3xl w-full mx-auto">
-        <p className="rounded-2xl border border-hairline bg-surface px-5 py-4 text-sm">
-          {t("meeting.page.empty")}
-        </p>
+      // The Start control is what the empty state points to (SE-MEET-021).
+      <div className="@container w-full mx-auto min-h-0">
+        <div className="flex flex-col gap-4 @2xl:flex-row">
+          <div className="w-full flex-none @2xl:w-56">
+            <MeetingStart />
+          </div>
+          <p className="min-w-0 flex-1 self-start rounded-2xl border border-hairline bg-surface px-5 py-4 text-sm">
+            {t("meeting.page.empty")}
+          </p>
+        </div>
       </div>
     );
   }
@@ -94,39 +101,44 @@ export const MeetingsPage: React.FC = () => {
     // enough for them (container queries, as the side column may fold).
     <div className="@container w-full mx-auto min-h-0">
       <div className="flex flex-col gap-4 @2xl:flex-row">
-        <ul
-          className="max-h-48 w-full flex-none space-y-1 overflow-y-auto @2xl:max-h-none @2xl:w-56 @2xl:overflow-visible"
-          aria-label={t("sidebar.meetings")}
-        >
-          {meetings.map((m) => {
-            const active = m.meeting.history_id === entry.meeting.history_id;
-            return (
-              <li key={m.meeting.history_id}>
-                <button
-                  type="button"
-                  aria-current={active ? "true" : undefined}
-                  onClick={() => {
-                    setChosen(m.meeting.history_id);
-                    setTab("notes");
-                    setCited({ lines: [], line: 0 });
-                  }}
-                  className={`w-full rounded-xl px-3 py-2 text-start transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary ${
-                    active ? "bg-glass-chosen" : "hover:bg-glass-hover"
-                  }`}
-                >
-                  <span className="block truncate text-sm font-medium">
-                    {/* SE-MEET-020: a microphone-only meeting stores no app. */}
-                    {m.meeting.app_name || m.title}
-                  </span>
-                  <span className="block whitespace-nowrap text-sm text-mid-gray tabular-nums">
-                    {startedAt(m.meeting.started_at)} ·{" "}
-                    {duration(m.meeting.duration_ms)}
-                  </span>
-                </button>
-              </li>
-            );
-          })}
-        </ul>
+        <div className="flex w-full flex-none flex-col gap-3 @2xl:w-56">
+          <MeetingStart />
+          <ul
+            className="max-h-48 w-full space-y-1 overflow-y-auto @2xl:max-h-none @2xl:overflow-visible"
+            aria-label={t("sidebar.meetings")}
+          >
+            {meetings.map((m) => {
+              const active = m.meeting.history_id === entry.meeting.history_id;
+              return (
+                <li key={m.meeting.history_id}>
+                  <button
+                    type="button"
+                    aria-current={active ? "true" : undefined}
+                    onClick={() => {
+                      setChosen(m.meeting.history_id);
+                      setTab("notes");
+                      setCited({ lines: [], line: 0 });
+                    }}
+                    className={`w-full rounded-xl px-3 py-2 text-start transition-colors focus-visible:outline-2 focus-visible:outline-logo-primary ${
+                      active ? "bg-glass-chosen" : "hover:bg-glass-hover"
+                    }`}
+                  >
+                    <span className="block truncate text-sm font-medium">
+                      {/* SE-MEET-020/021: a microphone-only meeting stores no
+                        app; the label stands in its place, so the date shows
+                        once (its title carries it too). */}
+                      {m.meeting.app_name || t("meeting.start.microphoneLabel")}
+                    </span>
+                    <span className="block whitespace-nowrap text-sm text-mid-gray tabular-nums">
+                      {startedAt(m.meeting.started_at)} ·{" "}
+                      {duration(m.meeting.duration_ms)}
+                    </span>
+                  </button>
+                </li>
+              );
+            })}
+          </ul>
+        </div>
         <div className="flex min-w-0 flex-1 flex-col gap-6 @5xl:flex-row @5xl:gap-4">
           <MeetingDetail
             key={entry.meeting.history_id}

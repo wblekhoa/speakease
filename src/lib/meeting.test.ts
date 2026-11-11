@@ -9,6 +9,13 @@ import {
   copyText,
   askError,
   transcriptLine,
+  AUTOMATIC,
+  controlMode,
+  fallsBackToAutomatic,
+  plannedApp,
+  recordLine,
+  sameSource,
+  sourceItems,
 } from "./meeting";
 
 // The timer counts from the start, and shows hours only past an hour.
@@ -85,3 +92,79 @@ assert.equal(askError("missing: gone"), "meeting.page.ask.failed");
 assert.equal(askError(""), "meeting.page.ask.failed");
 
 console.log("meeting.test.ts (page): ok");
+
+// SE-MEET-021: the Start control.
+{
+  const zoom = { bundle_id: "us.zoom.xos", name: "zoom.us", playing: true };
+  const chrome = {
+    bundle_id: "com.google.Chrome",
+    name: "Chrome",
+    playing: false,
+  };
+  const some = { automatic: zoom, apps: [zoom, chrome] };
+  const none = { automatic: null, apps: [] };
+
+  // What a start would record.
+  assert.equal(plannedApp(AUTOMATIC, some), "zoom.us");
+  assert.equal(plannedApp(AUTOMATIC, none), null);
+  assert.equal(plannedApp({ kind: "microphone" }, some), null);
+  assert.equal(
+    plannedApp({ kind: "app", value: "com.google.Chrome" }, some),
+    "Chrome",
+  );
+  // A named app that has gone is not listed.
+  assert.equal(plannedApp({ kind: "app", value: "gone" }, some), null);
+
+  // The line under the button: four forms.
+  assert.deepEqual(recordLine(false, "zoom.us"), {
+    key: "meeting.start.willApp",
+    app: "zoom.us",
+  });
+  assert.deepEqual(recordLine(false, null), { key: "meeting.start.willMic" });
+  assert.deepEqual(recordLine(true, "Chrome"), {
+    key: "meeting.start.recordingApp",
+    app: "Chrome",
+  });
+  assert.deepEqual(recordLine(true, null), {
+    key: "meeting.start.recordingMic",
+  });
+
+  // Idle starts, recording stops, finishing waits.
+  assert.equal(controlMode("idle"), "idle");
+  assert.equal(controlMode("asking"), "idle");
+  assert.equal(controlMode("recording"), "recording");
+  assert.equal(controlMode("transcribing"), "busy");
+  assert.equal(controlMode("notes"), "busy");
+
+  // The menu: Automatic, the microphone, then each app; one tick.
+  const items = sourceItems(AUTOMATIC, some);
+  assert.deepEqual(
+    items.map((i) => i.id),
+    ["automatic", "microphone", "us.zoom.xos", "com.google.Chrome"],
+  );
+  assert.deepEqual(
+    items.map((i) => i.ticked),
+    [true, false, false, false],
+  );
+  assert.equal(items[0].hint, "zoom.us");
+  assert.equal(sourceItems(AUTOMATIC, none)[0].hint, null);
+  assert.equal(sourceItems(AUTOMATIC, none).length, 2);
+  const chosenApp = sourceItems(
+    { kind: "app", value: "com.google.Chrome" },
+    some,
+  );
+  assert.deepEqual(
+    chosenApp.map((i) => i.ticked),
+    [false, false, false, true],
+  );
+  assert.equal(sourceItems({ kind: "microphone" }, some)[1].ticked, true);
+  assert.equal(
+    sameSource({ kind: "app", value: "a" }, { kind: "app", value: "b" }),
+    false,
+  );
+
+  // Only a missing app resets the choice.
+  assert.equal(fallsBackToAutomatic("no-app: gone"), true);
+  assert.equal(fallsBackToAutomatic("microphone: busy"), false);
+  console.log("meeting.test.ts: start control ok");
+}

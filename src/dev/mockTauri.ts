@@ -604,6 +604,9 @@ function handle(cmd: string, args: Json): unknown {
       // As meeting.rs `start`: Automatic falls back to the microphone only;
       // a named app must be running.
       const source = args.source as { kind: string; value?: string };
+      // `?fail=no-app|microphone|no-model|…` makes every start fail with that code.
+      const fail = new URLSearchParams(location.search).get("fail");
+      if (fail) return Promise.reject(`${fail}: preview`);
       const sources = mockMeetingSources();
       const named = sources.apps.find((a) => a.bundle_id === source.value);
       if (source.kind === "app" && !named) {

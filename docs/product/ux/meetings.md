@@ -5,7 +5,7 @@ product: speakease
 title: "SpeakEase — Meeting notes (UX)"
 status: active
 updated: 2026-11-11
-summary: "Beta behind Experimental: a shortcut or the tray records the meeting app and the microphone, a bar at the top of the screen shows the consent line, a timer and Stop, and the meeting lands in History and on the Meetings page, where its notes are read and questions about it answered."
+summary: "Beta open to every Mac on macOS 14.2+: a Start button on the Meetings page, a shortcut or the tray records the meeting app and the microphone, a bar at the top of the screen shows the consent line, a timer and Stop, and the meeting lands in History and on the Meetings page, where its notes are read and questions about it answered."
 tags: [area/ai, area/audio, area/capture, surface/macos, stack/react]
 relations:
   specifies:
@@ -27,7 +27,7 @@ relations:
 ## Purpose
 
 - Problem: after a call, lecture or interview the user has to remember or rewrite what was said, decided and promised.
-- Audience: the owner first, then anyone who turns on App › Experimental (beta).
+- Audience: the owner first, then anyone on macOS 14.2+ (beta; open to everyone since 2026-11-11, no Experimental switch).
 - Success signal: one shortcut at the start of a call, one at the end, and the notes are in History minutes later, with
   nothing invented for a call that had nothing in it.
 
@@ -45,13 +45,27 @@ relations:
 
 ## Current truth
 
-- **Where it lives**: with App › Experimental on (macOS 14.2+), Recording lists a **Meeting notes** shortcut
+- **Where it lives**: on macOS 14.2+, with no Experimental switch needed (SE-MEET-022; live subtitles keep it), the
+  side column has **Meetings**, Files & links has **Meeting notes**, Recording lists a **Meeting notes** shortcut
   (⌃⌥⌘M by default) and the tray gains a **Meeting notes** item with a tick while a meeting records.
 - **Starting**: the shortcut or tray item records the call app that is running (Zoom, Teams, Zalo, Messenger,
   FaceTime, Slack, Discord), playing sound first, else the app used last time, else a browser playing sound; and the
   microphone picked for dictation, as its own stream. With none of these running it records the microphone only
   (SE-MEET-020) instead of failing. No dictation starts. The backend can also start with a source chosen by the user
-  (Automatic, Microphone only, or a named app); the control for it on the Meetings page is not built yet.
+  (Automatic, Microphone only, or a named app); the Meetings page's Start control picks it (below).
+- **Start control** (top of the Meetings page's list column, above the list, full width of the column; with no
+  meetings yet the empty text points to it): a primary **Bắt đầu ghi** (EN **Start recording**) with a small chevron
+  menu button joined to it (aria-label "Chọn nguồn âm thanh" / "Choose the sound source"), and one muted line under
+  them: "Sẽ ghi: <app> và micro" / "Will record: <app> and the microphone", or "Sẽ ghi: chỉ micro" / "Will record:
+  the microphone only". The chevron opens a menu, asked afresh each time it opens: **Tự chọn** (Automatic, hint "Bây giờ:
+  <app> và micro" or "Bây giờ: chỉ micro"), **Chỉ micro** (Microphone only), then each running call app or browser by
+  name. Picking one ticks it and changes the line; it does not start. The choice lasts while the page is open and is
+  not stored; Automatic is the default. Both buttons take Tab; the menu takes arrows, Enter and Escape. While a meeting
+  records, however it was started, the button reads **Dừng** (Stop), the line reads "Đang ghi: <app> và micro" (or
+  the microphone-only form) and the menu button is greyed out; while it is transcribed or its notes written the button is
+  greyed out and the line shows the bar's phase text. When the meeting is saved the list refreshes and the control
+  is idle again. Start errors show under the button with the bar's texts; if a named app has gone, the choice goes
+  back to Automatic after the error. There is no switch for the "Take notes of this call?" question (owner to decide).
 - **Asked when a call starts**: when Zoom, Teams, Zalo, Messenger, FaceTime, Slack or Discord starts using the
   microphone, or a browser does while its front tab is Google Meet, the bar asks on two lines "Microsoft Teams đang
   dùng micro." / "Ghi chú cuộc gọi này?" (EN "Microsoft Teams is using the mic." / "Take notes of this call?")
@@ -59,7 +73,7 @@ relations:
   **Lúc khác** or × closes it, and that call is not asked about again (a call ends after a minute with no call app on
   the microphone; leaving a Meet tab for over a minute counts as an end too). Sound alone (a video) never asks, nor
   does a browser on another site. No question while a meeting
-  records or is being finished, or over an error not yet closed; turning Experimental off takes it away.
+  records or is being finished, or over an error not yet closed. Since SE-MEET-022 it reaches every user on macOS 14.2+.
 - **Meeting bar**: a pill at the top centre of the screen that never takes focus from the call: a pulsing red dot,
   "Đang ghi âm. Nhớ báo cho mọi người biết nhé." (EN "Recording. Remember to tell everyone."), a timer and **Stop**.
   It asks macOS to keep it out of screen sharing (untested).
@@ -79,8 +93,8 @@ relations:
   and the mixed audio; its notes are stored beside it. A microphone-only meeting is titled "Micro · dd/mm HH:MM" (EN
   "Microphone · dd/mm HH:MM"), its transcript has no speaker labels (a dictation is still marked "[đọc chính tả]"),
   its audio is the microphone as recorded, and its notes' kind is guessed from the transcript alone.
-- **Meetings page**: with Experimental on, the side column gains **Meetings** under Live subtitles. Left: meetings,
-  newest first, each with its app (a microphone-only meeting shows its title), "dd/mm HH:MM" and length. Right: the meeting's title with **Copy**, **Save .md**
+- **Meetings page**: the side column has **Meetings** under Live subtitles (macOS 14.2+). Left: meetings,
+  newest first, each with its app (a microphone-only meeting shows "Micro" / "Microphone" in its place, so the date shows once), "dd/mm HH:MM" and length. Right: the meeting's title with **Copy**, **Save .md**
   and **Save .txt**; then **Notes** / **Transcript** and the template menu (Meeting, Call, Lecture, Interview) -
   choosing another writes the notes again in the background ("Writing the notes…" above the old ones, which stay if it fails). Notes open with "AI wrote these notes. Check names and
   numbers against the transcript." and a link to the transcript. With no AI the page says why (AI off, or nothing
@@ -105,12 +119,13 @@ relations:
 | Screen        | States                                                                                | Entry                                      | Exit / next                                                  |
 | ------------- | ------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------ |
 | Meeting bar   | asking · recording (panel closed / open at levels 1-5) · transcribing · notes · error | call app on the microphone, shortcut, tray | Take notes / Not now / ×; Stop / shortcut / tray; × on error |
-| Tray item     | hidden · off · on (ticked)                                                            | tray menu (Experimental on)                | starts or stops                                              |
-| Meetings page | none yet · notes · writing · empty · no AI · failed; Notes / Transcript tab           | side column (Experimental on)              | another meeting, template menu, copy, save                   |
+| Tray item     | hidden · off · on (ticked)                                                            | tray menu (macOS 14.2+)                    | starts or stops                                              |
+| Meetings page | none yet · notes · writing · empty · no AI · failed; Notes / Transcript tab           | side column (macOS 14.2+)                  | another meeting, template menu, copy, save                   |
+| Start control | idle (Automatic / Microphone only / app) · menu open · recording · finishing · error  | top of the Meetings list                   | Start, Stop, pick a source                                   |
 
 ## Flow
 
-1. The user joins a call and presses ⌃⌥⌘M (or ticks the tray item).
+1. The user joins a call and presses ⌃⌥⌘M, ticks the tray item or presses Start recording on the Meetings page.
 2. The bar appears with the consent line; the user tells the others they are recording.
 3. At the end the user presses Stop; the bar shows the background work, then hides.
 4. The meeting is in History and on the Meetings page; with no AI available the page says why and the transcript is
