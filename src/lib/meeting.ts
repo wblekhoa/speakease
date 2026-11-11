@@ -124,13 +124,17 @@ export const sameSource = (a: SourceChoice, b: SourceChoice): boolean =>
 
 /** The app a start on `source` would record, by name; null for the
  *  microphone only. A named app that is no longer listed keeps the name it
- *  was picked under (`pickedName`): the start reports it gone. */
+ *  was picked under (`pickedName`): the start reports it gone. While the bar
+ *  asks about a call (`asked`, that app's name), Automatic records that app
+ *  (meeting.rs `source_when_asked`). */
 export const plannedApp = (
   source: SourceChoice,
   sources: MeetingSources,
   pickedName: string | null = null,
+  asked: string | null = null,
 ): string | null => {
-  if (source.kind === "automatic") return sources.automatic?.name ?? null;
+  if (source.kind === "automatic")
+    return asked ?? sources.automatic?.name ?? null;
   if (source.kind === "microphone") return null;
   return (
     sources.apps.find((a) => a.bundle_id === source.value)?.name ?? pickedName
@@ -149,7 +153,8 @@ export const recordLine = (
 };
 
 /** What the start control does for a meeting phase: "idle" starts, "recording"
- *  stops, anything else (transcribing, writing notes) is waiting. */
+ *  stops, transcribing and writing notes wait. "asking" starts too: a Start
+ *  while the bar asks about a call answers it (meeting.rs `session::start`). */
 export const controlMode = (phase: string): "idle" | "recording" | "busy" =>
   phase === "recording"
     ? "recording"
@@ -169,18 +174,20 @@ export type SourceItem = {
   ticked: boolean;
 };
 
-/** The menu: Automatic (with what it would record now), the microphone
- *  only, then each running app. The chosen one is ticked, unless it is an
- *  app that has gone (no row to tick; the start then resets the choice). */
+/** The menu: Automatic (with what it would record now: the app the bar asks
+ *  about, `asked`, when there is one), the microphone only, then each
+ *  running app. The chosen one is ticked, unless it is an app that has gone
+ *  (no row to tick; the start then resets the choice). */
 export const sourceItems = (
   chosen: SourceChoice,
   sources: MeetingSources,
+  asked: string | null = null,
 ): SourceItem[] => [
   {
     id: "automatic",
     source: AUTOMATIC,
     kind: "automatic",
-    hint: sources.automatic?.name ?? null,
+    hint: asked ?? sources.automatic?.name ?? null,
     ticked: sameSource(chosen, AUTOMATIC),
   },
   {

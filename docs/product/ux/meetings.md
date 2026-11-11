@@ -64,12 +64,14 @@ relations:
   records, however it was started, the button reads **Dừng** (Stop), the line reads "Đang ghi: <app> và micro" (or
   the microphone-only form) and the menu button is greyed out; while it is transcribed or its notes written the button is
   greyed out and the line shows the bar's phase text. When the meeting is saved the list refreshes and the control
-  is idle again. Start errors show under the button with the bar's texts; if a named app has gone, the choice goes
+  is idle again. While the bar asks about a call, Start answers it: the question closes and the recording starts, on
+  the app asked about for Automatic (the line and the Automatic row name it as the question does, so a browser call reads "Google Meet") or on the source picked. Start
+  errors show under the button with the bar's texts; if a named app has gone, the choice goes
   back to Automatic after the error. There is no switch for the "Take notes of this call?" question (owner to decide).
 - **Asked when a call starts**: when Zoom, Teams, Zalo, Messenger, FaceTime, Slack or Discord starts using the
   microphone, or a browser does while its front tab is Google Meet, the bar asks on two lines "Microsoft Teams đang
   dùng micro." / "Ghi chú cuộc gọi này?" (EN "Microsoft Teams is using the mic." / "Take notes of this call?")
-  with **Lúc khác** (Not now), **Ghi chú** (Take notes) and ×. Only **Ghi chú**, the shortcut or the tray item records;
+  with **Lúc khác** (Not now), **Ghi chú** (Take notes) and ×. Only **Ghi chú**, the shortcut, the tray item or the Meetings page's Start records;
   **Lúc khác** or × closes it, and that call is not asked about again (a call ends after a minute with no call app on
   the microphone; leaving a Meet tab for over a minute counts as an end too). Sound alone (a video) never asks, nor
   does a browser on another site. No question while a meeting
@@ -116,12 +118,12 @@ relations:
 
 ## Screens and states
 
-| Screen        | States                                                                                | Entry                                      | Exit / next                                                  |
-| ------------- | ------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------ |
-| Meeting bar   | asking · recording (panel closed / open at levels 1-5) · transcribing · notes · error | call app on the microphone, shortcut, tray | Take notes / Not now / ×; Stop / shortcut / tray; × on error |
-| Tray item     | hidden · off · on (ticked)                                                            | tray menu (macOS 14.2+)                    | starts or stops                                              |
-| Meetings page | none yet · notes · writing · empty · no AI · failed; Notes / Transcript tab           | side column (macOS 14.2+)                  | another meeting, template menu, copy, save                   |
-| Start control | idle (Automatic / Microphone only / app) · menu open · recording · finishing · error  | top of the Meetings list                   | Start, Stop, pick a source                                   |
+| Screen        | States                                                                                                                    | Entry                                      | Exit / next                                                  |
+| ------------- | ------------------------------------------------------------------------------------------------------------------------- | ------------------------------------------ | ------------------------------------------------------------ |
+| Meeting bar   | asking · recording (panel closed / open at levels 1-5) · transcribing · notes · error                                     | call app on the microphone, shortcut, tray | Take notes / Not now / ×; Stop / shortcut / tray; × on error |
+| Tray item     | hidden · off · on (ticked)                                                                                                | tray menu (macOS 14.2+)                    | starts or stops                                              |
+| Meetings page | none yet · notes · writing · empty · no AI · failed; Notes / Transcript tab                                               | side column (macOS 14.2+)                  | another meeting, template menu, copy, save                   |
+| Start control | idle (Automatic / Microphone only / app) · asked (Start answers the question) · menu open · recording · finishing · error | top of the Meetings list                   | Start, Stop, pick a source                                   |
 
 ## Flow
 

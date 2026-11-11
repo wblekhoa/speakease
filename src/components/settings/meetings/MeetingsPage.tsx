@@ -70,14 +70,15 @@ export const MeetingsPage: React.FC = () => {
     };
   }, [refresh, t]);
 
-  if (meetings === null) return null;
-
+  // Null until the list arrives, and for good when it cannot be read: the
+  // Start control shows either way (SE-MEET-021), the list area stays empty.
+  const list = meetings ?? [];
   // Undefined while there are no meetings yet: the Start control then stands
   // alone beside the empty text, which points to it (SE-MEET-021). The
   // control is mounted in one place, so its source choice survives the first
   // meeting landing in the list.
   const entry: MeetingEntry | undefined =
-    meetings.find((m) => m.meeting.history_id === chosen) ?? meetings[0];
+    list.find((m) => m.meeting.history_id === chosen) ?? list[0];
   // dd/mm HH:MM, as in the meeting's History title (meeting.rs).
   const startedAt = (seconds: number) => {
     const at = new Date(seconds * 1000);
@@ -95,9 +96,9 @@ export const MeetingsPage: React.FC = () => {
           <ul
             className="max-h-48 w-full space-y-1 overflow-y-auto @2xl:max-h-none @2xl:overflow-visible"
             aria-label={t("sidebar.meetings")}
-            hidden={meetings.length === 0}
+            hidden={list.length === 0}
           >
-            {meetings.map((m) => {
+            {list.map((m) => {
               const active = m.meeting.history_id === entry?.meeting.history_id;
               return (
                 <li key={m.meeting.history_id}>
@@ -160,9 +161,12 @@ export const MeetingsPage: React.FC = () => {
             />
           </div>
         ) : (
-          <p className="min-w-0 flex-1 self-start rounded-2xl border border-hairline bg-surface px-5 py-4 text-sm">
-            {t("meeting.page.empty")}
-          </p>
+          // "No meetings yet" only once the list has said so.
+          meetings !== null && (
+            <p className="min-w-0 flex-1 self-start rounded-2xl border border-hairline bg-surface px-5 py-4 text-sm">
+              {t("meeting.page.empty")}
+            </p>
+          )
         )}
       </div>
     </div>

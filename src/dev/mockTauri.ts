@@ -612,11 +612,17 @@ function handle(cmd: string, args: Json): unknown {
       if (source.kind === "app" && !named) {
         return Promise.reject(`no-app: ${source.value} is not running`);
       }
+      // `?meeting=asking`: Automatic records the app the bar asks about
+      // (meeting.rs `source_when_asked`).
+      const asking =
+        new URLSearchParams(location.search).get("meeting") === "asking";
       const recorded =
         source.kind === "app"
           ? named
           : source.kind === "automatic"
-            ? sources.automatic
+            ? asking
+              ? { name: "Microsoft Teams" }
+              : sources.automatic
             : null;
       emit("meeting-state", {
         phase: "recording",
