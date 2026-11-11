@@ -4,7 +4,7 @@ type: decision
 product: speakease
 title: "SpeakEase — Decisions"
 status: active
-updated: 2026-11-01
+updated: 2026-11-11
 summary: "Append-only record of SpeakEase's product and engineering decisions, newest first, each with its context, evidence and how to reverse it."
 tags: [area/docs]
 ---
@@ -13,6 +13,37 @@ tags: [area/docs]
 
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
+
+## 2026-11-11 · Meetings the user opens by hand: microphone only, a Start button, out of Experimental (owner form)
+
+- **Context**: the owner: "Tôi muốn tối ưu thêm cho tính năng meeting, user có thể chủ động mở phiên thu âm dạng
+  meeting nếu muốn." The shortcut and the tray item already start a meeting by hand, but `try_start` fails with
+  `no-app` when no call app or playing browser is found, nothing in the settings window calls `start_meeting`, its
+  `bundle_id` choice is offered nowhere, and the feature sits behind Experimental.
+- **Owner's decisions** (form 11/11, one answer per question):
+  - With no call app running, a meeting records the microphone only ("Chỉ ghi micro").
+  - A Start control is added on the Meetings page ("Trang Cuộc họp"); the shortcut and the tray item stay.
+  - The app picks the source itself and a menu beside the button changes it ("Tự chọn, có menu đổi cạnh nút").
+  - A microphone-only recording has no speaker labels ("Không ghi tên người nói"), like a recording from Files.
+  - It starts at once and AI guesses the kind, as now ("Ghi ngay, AI đoán loại").
+  - Meeting notes leave Experimental ("Mở cho mọi người"). The AI had proposed keeping the gate until the owner's
+    first real run; the owner chose otherwise. It reaches users only with a release, which still waits for the owner.
+  - The coordinating session merges a lane's PR once CI is green and the Opus reviewer passes it, then reports
+    ("Phiên điều phối tự gộp"). Releases are not covered by this.
+- **Not chosen**: microphone plus every sound of the Mac; asking for the source on every start; keeping the error;
+  a Start control on Recording, on the dictation pill or at the top of the side column; always asking before
+  recording; "Tôi" on every line; telling speakers apart with AI (a new model); choosing the kind or a name before
+  recording; waiting for the owner on each PR.
+- **AI defaults, not owner-confirmed**: a microphone-only meeting is titled "Micro · dd/mm HH:MM" (EN "Microphone ·
+  …"); the consent line is unchanged; choosing "microphone only" in the menu applies to that start and is not
+  remembered; macOS below 14.2 keeps the feature hidden this round (a microphone-only meeting needs no app tap, so
+  this can be lifted later).
+- **Open for the owner**: with the gate gone, the "Take notes of this call?" question shows to every user when a
+  call app takes the microphone, and there is no setting that turns it off.
+- **Unverified**: no meeting has run in the installed app yet. A two-minute microphone-only meeting is the first
+  real run this work asks of the owner.
+- **Reverse**: restore the `no-app` error for an empty pick, remove the Start control and its menu, and put
+  `settings.experimental_enabled` back in the meeting gate. Build order: `ai-memory/plans/meeting-open-start.md`.
 
 ## 2026-11-10 · Rewrite a transcript with the user's own instruction (owner form)
 
