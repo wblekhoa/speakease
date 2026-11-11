@@ -491,6 +491,17 @@ pub fn app_to_record(yes: bool, asked: Option<String>) -> Option<String> {
     asked.filter(|_| yes)
 }
 
+// SE-MEET-021
+/// The source a start records when it closes the question about `asked`:
+/// Automatic means the app asked about, as a Yes does; the microphone only
+/// or a named app stays what the user picked. With no question, unchanged.
+pub fn source_when_asked(source: MeetingSource, asked: Option<String>) -> MeetingSource {
+    match (source, asked) {
+        (MeetingSource::Automatic, Some(bundle_id)) => MeetingSource::App(bundle_id),
+        (source, _) => source,
+    }
+}
+
 /// Where a meeting stands, for the meeting bar and the window.
 #[derive(Debug, Clone, Default, Serialize, Type)]
 pub struct MeetingState {
@@ -587,7 +598,12 @@ pub mod session {
     /// Starts recording a meeting from `source`: an app's sound as "Others"
     /// with the microphone as "Me", or the microphone alone. Never starts a
     /// dictation. A start that fails shows why on the meeting bar, with its ×.
+    /// A start while the bar asks about a call closes that question first
+    /// (SE-MEET-021): the Meetings page's Start is then an answer, like the
+    /// shortcut, and never refused as "running". After [`answer`] the
+    /// question is already closed and this changes nothing.
     pub fn start(app: &AppHandle, source: MeetingSource) -> Result<(), String> {
+        let source = source_when_asked(source, end_ask(app));
         try_start(app, source).inspect_err(|e| {
             log::warn!("Meeting: {e}");
             // A meeting still recording or being finished keeps its bar.
@@ -1665,6 +1681,34 @@ mod tests {
         assert_eq!(app_to_record(false, asked()), None);
         assert_eq!(app_to_record(true, None), None);
         assert_eq!(app_to_record(true, asked()).as_deref(), Some("us.zoom.xos"));
+    }
+
+    // SE-MEET-021
+    #[test]
+    fn a_start_while_asked_records_the_asked_app_unless_a_source_was_picked() {
+        let asked = || Some("us.zoom.xos".to_string());
+        let teams = || MeetingSource::App("com.microsoft.teams2".to_string());
+        // Automatic is a Yes: the app the question named.
+        assert_eq!(
+            source_when_asked(MeetingSource::Automatic, asked()),
+            MeetingSource::App("us.zoom.xos".to_string())
+        );
+        // A picked source is recorded as picked.
+        assert_eq!(
+            source_when_asked(MeetingSource::Microphone, asked()),
+            MeetingSource::Microphone
+        );
+        assert_eq!(source_when_asked(teams(), asked()), teams());
+        // No question open: unchanged.
+        assert_eq!(
+            source_when_asked(MeetingSource::Automatic, None),
+            MeetingSource::Automatic
+        );
+        assert_eq!(
+            source_when_asked(MeetingSource::Microphone, None),
+            MeetingSource::Microphone
+        );
+        assert_eq!(source_when_asked(teams(), None), teams());
     }
 
     fn app(bundle: &str, playing: bool) -> RunningApp {

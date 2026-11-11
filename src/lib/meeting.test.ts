@@ -119,6 +119,29 @@ console.log("meeting.test.ts (page): ok");
     "Slack",
   );
   assert.equal(plannedApp({ kind: "app", value: "gone" }, some), null);
+  // While the bar asks about a call, Automatic is a Yes to that app, whatever
+  // it would have guessed; a picked source stays as picked.
+  assert.equal(
+    plannedApp(AUTOMATIC, some, null, "Microsoft Teams"),
+    "Microsoft Teams",
+  );
+  assert.equal(
+    plannedApp(AUTOMATIC, none, null, "Microsoft Teams"),
+    "Microsoft Teams",
+  );
+  assert.equal(
+    plannedApp({ kind: "microphone" }, some, null, "Microsoft Teams"),
+    null,
+  );
+  assert.equal(
+    plannedApp(
+      { kind: "app", value: "com.google.Chrome" },
+      some,
+      null,
+      "Microsoft Teams",
+    ),
+    "Chrome",
+  );
 
   // The line under the button: four forms.
   assert.deepEqual(recordLine(false, "zoom.us"), {
@@ -134,7 +157,8 @@ console.log("meeting.test.ts (page): ok");
     key: "meeting.start.recordingMic",
   });
 
-  // Idle starts, recording stops, finishing waits.
+  // Idle starts, recording stops, finishing waits. Asked about a call, Start
+  // still starts: the backend takes it as the answer.
   assert.equal(controlMode("idle"), "idle");
   assert.equal(controlMode("asking"), "idle");
   assert.equal(controlMode("recording"), "recording");
@@ -153,6 +177,11 @@ console.log("meeting.test.ts (page): ok");
   );
   assert.equal(items[0].hint, "zoom.us");
   assert.equal(sourceItems(AUTOMATIC, none)[0].hint, null);
+  // The Automatic row names the app asked about, as the line does.
+  assert.equal(
+    sourceItems(AUTOMATIC, some, "Microsoft Teams")[0].hint,
+    "Microsoft Teams",
+  );
   assert.equal(sourceItems(AUTOMATIC, none).length, 2);
   const chosenApp = sourceItems(
     { kind: "app", value: "com.google.Chrome" },

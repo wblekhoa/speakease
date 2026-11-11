@@ -40,7 +40,8 @@ export const MeetingStart: React.FC = () => {
   const [sources, setSources] = useState<MeetingSources>(NO_SOURCES);
   const [state, setState] = useState<MeetingState | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [starting, setStarting] = useState(false);
+  // A start or a stop that has not answered yet: no second one meanwhile.
+  const [pending, setPending] = useState(false);
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
   // Button takes no ref (React 18): the chevron is found by its popup role.
@@ -134,7 +135,7 @@ export const MeetingStart: React.FC = () => {
 
   const start = async () => {
     setError(null);
-    setStarting(true);
+    setPending(true);
     try {
       const result = await commands.startMeeting(source);
       if (result.status === "ok") return;
@@ -148,13 +149,28 @@ export const MeetingStart: React.FC = () => {
       // A command that threw: shown as the generic error, never a stuck button.
       setError(String(e));
     } finally {
-      setStarting(false);
+      setPending(false);
     }
   };
 
+  const stop = async () => {
+    setPending(true);
+    try {
+      await commands.stopMeeting();
+    } catch (e) {
+      setError(String(e));
+    } finally {
+      setPending(false);
+    }
+  };
+
+  // While the bar asks about a call, Automatic records that app: Start is
+  // then a Yes (meeting.rs source_when_asked).
+  const asked = state?.phase === "asking" ? state.app_name : null;
+
   const appName =
     mode === "idle"
-      ? plannedApp(source, sources, pickedName)
+      ? plannedApp(source, sources, pickedName, asked)
       : (state?.app_name ?? null);
   const line = recordLine(mode === "recording", appName);
   const phaseText =
@@ -164,7 +180,7 @@ export const MeetingStart: React.FC = () => {
         ? t("meeting.notes")
         : null;
 
-  const items = sourceItems(source, sources);
+  const items = sourceItems(source, sources, asked);
 
   return (
     <div ref={wrap} className="space-y-2">
@@ -173,12 +189,8 @@ export const MeetingStart: React.FC = () => {
           variant="primary"
           size="md"
           className="min-w-0 flex-1 rounded-e-none"
-          disabled={mode === "busy" || starting}
-          onClick={
-            mode === "recording"
-              ? () => commands.stopMeeting().catch((e) => setError(String(e)))
-              : start
-          }
+          disabled={mode === "busy" || pending}
+          onClick={mode === "recording" ? stop : start}
         >
           {mode === "recording" ? t("meeting.stop") : t("meeting.start.button")}
         </Button>
@@ -189,7 +201,7 @@ export const MeetingStart: React.FC = () => {
           aria-haspopup="menu"
           aria-expanded={open}
           className="flex-none rounded-s-none border-s-hairline px-2"
-          disabled={mode !== "idle" || starting}
+          disabled={mode !== "idle" || pending}
           onClick={toggleMenu}
         >
           <ChevronDown
