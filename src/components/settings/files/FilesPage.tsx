@@ -560,7 +560,7 @@ export const FilesPage: React.FC = () => {
                 )
               }
             />
-            {settings?.experimental_enabled && canTap && noted !== "done" && (
+            {canTap && noted !== "done" && (
               <Button
                 variant="secondary"
                 size="md"

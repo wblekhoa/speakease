@@ -27,12 +27,15 @@ export const RecordingSettings: React.FC = () => {
   const aiEnabled = getSetting("post_process_enabled") ?? false;
   const experimental = getSetting("experimental_enabled") ?? false;
   // Live subtitles and meeting notes hear another app: macOS 14.2+ only
-  // (settings.rs app_audio_features_on).
+  // (settings.rs live_subtitles_on, meeting_notes_on).
   const [canTapApps, setCanTapApps] = useState(false);
   useEffect(() => {
     commands.liveSubtitlesSupported().then(setCanTapApps);
   }, []);
-  const appAudio = experimental && !isLinux && canTapApps;
+  const heardApps = !isLinux && canTapApps;
+  const subtitlesOn = experimental && heardApps;
+  // SE-MEET-022: meeting notes no longer need Experimental.
+  const meetingsOn = heardApps;
 
   return (
     <div className="max-w-3xl w-full mx-auto space-y-6">
@@ -57,22 +60,22 @@ export const RecordingSettings: React.FC = () => {
           />
         )}
         {/* Live subtitles (beta) register only with Experimental on. */}
-        {appAudio && (
+        {subtitlesOn && (
           <ShortcutInput
             shortcutId="live_subtitles"
             descriptionMode="inline"
             grouped
           />
         )}
-        {/* Meeting notes (beta), the same way. */}
-        {appAudio && (
+        {/* Meeting notes (beta): on without Experimental (SE-MEET-022). */}
+        {meetingsOn && (
           <ShortcutInput
             shortcutId="meeting_notes"
             descriptionMode="inline"
             grouped
           />
         )}
-        {appAudio && <MeetingLiveLevel descriptionMode="tooltip" grouped />}
+        {meetingsOn && <MeetingLiveLevel descriptionMode="tooltip" grouped />}
         {/* Cancel shortcut remains hidden on Linux because of dynamic shortcut instability. */}
         {!isLinux && (
           <ShortcutInput shortcutId="cancel" descriptionMode="inline" grouped />

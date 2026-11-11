@@ -816,8 +816,7 @@ pub mod session {
             let mut watch = CallWatch::default();
             loop {
                 std::thread::sleep(CALL_POLL);
-                let settings = crate::settings::get_settings(&app);
-                if !crate::settings::app_audio_features_on(&settings) {
+                if !crate::settings::meeting_notes_on() {
                     watch = CallWatch::default();
                     end_ask(&app);
                     continue;
@@ -1140,7 +1139,7 @@ pub mod session {
     /// transcript alone (there is no app to go on). Only on the user's ask
     /// (SE-FILE-002). Errors: "off", "missing: …", "exists".
     pub async fn note_file(app: &AppHandle, history_id: i64) -> Result<(), String> {
-        if !crate::settings::app_audio_features_on(&crate::settings::get_settings(app)) {
+        if !crate::settings::meeting_notes_on() {
             return Err("off: meeting notes are off".to_string());
         }
         let history = app.state::<Arc<HistoryManager>>().inner().clone();

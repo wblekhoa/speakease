@@ -1,4 +1,4 @@
-import React, { useRef, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { FlaskConical } from "lucide-react";
 import {
@@ -17,6 +17,7 @@ import HandyTextLogo from "./icons/HandyTextLogo";
 import { IconTip } from "./ui/IconTip";
 import { LanguageMenu } from "./LanguageMenu";
 import UpdateChecker from "./update-checker";
+import { commands } from "@/bindings";
 import { useSettings } from "../hooks/useSettings";
 import { SIDEBAR_FOLDED_WIDTH, sidebarDrag } from "../lib/utils/sidebarWidth";
 import {
@@ -46,7 +47,8 @@ interface SectionConfig {
   labelKey: string;
   icon: React.ComponentType<IconProps>;
   component: React.ComponentType;
-  enabled: (settings: any) => boolean;
+  /** `canTapApps`: the Mac can hear another app (macOS 14.2+). */
+  enabled: (settings: any, canTapApps: boolean) => boolean;
   /** Sections under the "Settings" caption; the rest are for using the app. */
   settings?: boolean;
 }
@@ -75,12 +77,13 @@ export const SECTIONS_CONFIG = {
     component: LiveSubtitlesPage,
     enabled: (settings) => settings?.experimental_enabled ?? false,
   },
-  // Meeting notes (beta): recorded meetings and their notes, the same way.
+  // Meeting notes (beta): recorded meetings and their notes. Open to every
+  // Mac that can hear an app, Experimental or not (SE-MEET-022).
   meetings: {
     labelKey: "sidebar.meetings",
     icon: PeopleIcon,
     component: MeetingsPage,
-    enabled: (settings) => settings?.experimental_enabled ?? false,
+    enabled: (_settings, canTapApps) => canTapApps,
   },
   history: {
     labelKey: "sidebar.history",
@@ -159,6 +162,10 @@ export const Sidebar: React.FC<SidebarProps> = ({
 }) => {
   const { t } = useTranslation();
   const { settings } = useSettings();
+  const [canTapApps, setCanTapApps] = useState(false);
+  useEffect(() => {
+    commands.liveSubtitlesSupported().then(setCanTapApps);
+  }, []);
 
   /* The edge as a handle, as ReadEase has it: a strip over the hairline,
      pointer-captured so the drag survives leaving it, the width reported
@@ -209,7 +216,7 @@ export const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const availableSections = Object.entries(SECTIONS_CONFIG)
-    .filter(([_, config]) => config.enabled(settings))
+    .filter(([_, config]) => config.enabled(settings, canTapApps))
     .map(([id, config]) => ({ id: id as SidebarSection, ...config }));
 
   const toggleLabel = collapsed

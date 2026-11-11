@@ -33,21 +33,38 @@ pub fn is_post_process_binding(id: &str) -> bool {
 /// and the Mac can tap an app, so it never takes the keys from anyone else.
 pub const LIVE_SUBTITLES_BINDING_ID: &str = "live_subtitles";
 
-/// Meeting notes (beta) start/stop, behind Experimental like live subtitles.
+/// Meeting notes start/stop. Open to everyone on macOS 14.2+ (SE-MEET-022).
 pub const MEETING_BINDING_ID: &str = "meeting_notes";
 
-// SE-LIVE-001
+// SE-LIVE-001, SE-MEET-022
 /// Whether a shortcut stays unregistered with these settings.
 pub fn binding_switched_off(id: &str, settings: &AppSettings) -> bool {
-    (is_post_process_binding(id) && !settings.post_process_enabled)
-        || ((id == LIVE_SUBTITLES_BINDING_ID || id == MEETING_BINDING_ID)
-            && !app_audio_features_on(settings))
+    binding_off(id, settings, crate::system_audio_tap::available())
 }
 
-/// Live subtitles and meeting notes (betas that hear another app) show only
-/// with Experimental on and a Mac that can tap an app (macOS 14.2+).
-pub fn app_audio_features_on(settings: &AppSettings) -> bool {
-    settings.experimental_enabled && crate::system_audio_tap::available()
+/// [`binding_switched_off`] with the Mac's ability to tap an app given, so a
+/// test does not depend on the machine it runs on.
+fn binding_off(id: &str, settings: &AppSettings, can_tap: bool) -> bool {
+    (is_post_process_binding(id) && !settings.post_process_enabled)
+        || (id == LIVE_SUBTITLES_BINDING_ID && !live_subtitles_allowed(settings, can_tap))
+        || (id == MEETING_BINDING_ID && !can_tap)
+}
+
+fn live_subtitles_allowed(settings: &AppSettings, can_tap: bool) -> bool {
+    settings.experimental_enabled && can_tap
+}
+
+/// Live subtitles (beta) show only with Experimental on and a Mac that can
+/// tap an app (macOS 14.2+).
+pub fn live_subtitles_on(settings: &AppSettings) -> bool {
+    live_subtitles_allowed(settings, crate::system_audio_tap::available())
+}
+
+/// Meeting notes (the shortcut, the tray item, the question when a call
+/// starts, the Meetings page, the Files button) need only a Mac that can tap
+/// an app (macOS 14.2+); Experimental no longer matters (SE-MEET-022).
+pub fn meeting_notes_on() -> bool {
+    crate::system_audio_tap::available()
 }
 
 #[derive(Serialize, Debug, Clone, Copy, PartialEq, Eq, Type)]
@@ -1637,6 +1654,24 @@ mod tests {
     }
 
     use super::*;
+
+    // SE-MEET-022
+    #[test]
+    fn meeting_notes_are_on_without_experimental_and_live_subtitles_are_not() {
+        let mut settings = get_default_settings();
+        settings.experimental_enabled = false;
+        // A Mac that can tap an app.
+        assert!(!binding_off(MEETING_BINDING_ID, &settings, true));
+        assert!(binding_off(LIVE_SUBTITLES_BINDING_ID, &settings, true));
+        assert!(!live_subtitles_allowed(&settings, true));
+        // Experimental on turns subtitles on, and changes nothing for meetings.
+        settings.experimental_enabled = true;
+        assert!(!binding_off(MEETING_BINDING_ID, &settings, true));
+        assert!(!binding_off(LIVE_SUBTITLES_BINDING_ID, &settings, true));
+        // A Mac that cannot tap an app gets neither.
+        assert!(binding_off(MEETING_BINDING_ID, &settings, false));
+        assert!(binding_off(LIVE_SUBTITLES_BINDING_ID, &settings, false));
+    }
 
     /// A store written by Handy, before SpeakEase's prompts existed.
     fn handy_era_settings() -> AppSettings {
