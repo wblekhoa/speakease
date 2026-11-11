@@ -20,7 +20,8 @@ Source of truth for details: `CHANGELOG.md` (repo root) and `gh release list -R 
 - **What changed for users**: meeting notes (beta, macOS 14.2+): Start recording on the new Meetings page, a shortcut
   or the menu bar records the meeting app and the microphone, or the microphone alone; a bar with a timer, Stop and
   live help; notes in a template with the transcript, questions about a meeting, and a switch for the "Take notes of
-  this call?" question. On-device AI models downloaded inside the app. Live subtitles (beta, behind Experimental).
+  this call?" question. On-device AI models (Apple silicon) downloaded inside the app. Live subtitles (beta, behind
+  Experimental).
   History: rewrite with your own instruction, today and the last 14 days. Updates and the version moved to the
   sidebar and the App page; new app icon. 0.1.0 and 0.1.1 are offered it by the in-app updater (same key, same feed).
 - **REQ-IDs shipped**: SE-MEET-001…023, SE-LIVE-001…015, SE-AI-012…013, SE-HIST-004.
