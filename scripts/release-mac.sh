@@ -25,10 +25,9 @@ cd "$root"
 env_file="${SPEAKEASE_ENV_FILE:-}"
 if [[ -n "$env_file" ]]; then
   [[ -f "$env_file" ]] || { echo "NO_ENV_FILE: $env_file" >&2; exit 1; }
-  set -a
+  # Not exported: the file may hold other secrets the build has no use for.
   # shellcheck disable=SC1090
   source "$env_file"
-  set +a
 fi
 updater_key="${SPEAKEASE_UPDATER_KEY_PATH:-$HOME/.tauri/speakease-updater.key}"
 updater_password="${TAURI_SIGNING_PRIVATE_KEY_PASSWORD_SPEAKEASE:-}"
@@ -135,7 +134,9 @@ ls -1 "$out" | sed 's/^/    /'
 
 if [[ "$publish" == "1" ]]; then
   echo "==> publishing $tag"
-  gh release create "$tag" -R "$repo" --title "SpeakEase $version" --notes "$notes" \
+  # The tag goes on the commit that was built, which must be on GitHub.
+  gh release create "$tag" -R "$repo" --target "$(git rev-parse HEAD)" \
+    --title "SpeakEase $version" --notes "$notes" \
     "$out/$base.dmg" "$out/$base.zip" "$out/$base.app.tar.gz" "$out/latest.json"
   # The updater reads latest.json from the newest release; prove it answers.
   curl -fsSL "https://github.com/$repo/releases/latest/download/latest.json" \
