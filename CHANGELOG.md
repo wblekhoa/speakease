@@ -3,15 +3,33 @@
 All notable changes to SpeakEase. SpeakEase is built on Handy; changes that
 come from merging Handy are summarised, not repeated.
 
-## Unreleased — 0.1.2
+## 0.1.2 — 2026-11-12
 
+- **Meeting notes (beta)**, on macOS 14.2 and later: press **Start recording**
+  on the new Meetings page (or ⌃⌥⌘M, or the menu bar) and SpeakEase records the
+  app you are meeting in and your microphone - or the microphone alone when no
+  call app is running, for a talk in the room. A bar at the top of the screen
+  shows a timer, Stop and a reminder to tell everyone. When you stop, the notes
+  write themselves: a short summary, decisions, proposals, action items and the
+  full transcript, in a template that fits a meeting, a call, a lecture or an
+  interview. Ask questions about a meeting and get answers that point to the
+  lines they used; copy the notes or save them as .md or .txt. A menu beside
+  Start picks what to record. When a call app takes the microphone the bar asks
+  whether to take notes; a switch in Settings turns that question off. A
+  recording brought in through Files & links can become a meeting too.
+- **On-device AI models**: on an Apple silicon Mac the AI steps can run on a
+  model you download inside the app, with no key and no Apple Intelligence.
+  Pick it under AI & Translate like a speech model.
 - **Live subtitles (beta)**, under App › Experimental: pick an app (a browser,
   Zoom, a podcast or video player), the language it speaks and the one you
-  read, and a floating bar subtitles it as it plays, translated on the Mac with
-  Apple Intelligence. It reads what is playing (a video's title, a file's name)
-  so names and terms come out right, fixes a sentence once it is complete, and
-  saves the session to History. Needs macOS 14.2+ and asks once to record
-  system audio.
+  read, and a floating bar subtitles it as it plays, translated on the Mac.
+  It reads what is playing (a video's title, a file's name) so names and terms
+  come out right, fixes a sentence once it is complete, and saves the session
+  to History. Needs macOS 14.2+ and asks once to record system audio.
+- **History**: rewrite a transcript with your own instruction, and see today's
+  additions and the last 14 days above the list.
+- **Updates and the version moved** from the footer to the sidebar and the App
+  page.
 - **New app icon** that macOS 26 and later show whole, instead of inside a grey
   box: the pink speech bubble now sits, in white, on a pink rounded square.
 
