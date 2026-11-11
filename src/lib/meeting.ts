@@ -1,6 +1,8 @@
 // SpeakEase meeting notes (beta): what the meeting bar shows, kept apart
 // from React so it can be tested (meeting.test.ts).
 
+import type { MeetingSource, MeetingSources } from "@/bindings";
+
 /** Error codes the backend puts before ":" (meeting.rs). */
 const KNOWN_ERRORS = [
   "unsupported",
@@ -110,3 +112,90 @@ export const askError = (error: string): string => {
 /** Line `n` (1-based) of a transcript, trimmed; "" past its end. */
 export const transcriptLine = (transcript: string, n: number): string =>
   (transcript.split("\n")[n - 1] ?? "").trim();
+
+// SE-MEET-021
+/** Where the sound comes from: what `commands.startMeeting` takes. */
+export type SourceChoice = MeetingSource;
+export const AUTOMATIC: SourceChoice = { kind: "automatic" };
+
+export const sameSource = (a: SourceChoice, b: SourceChoice): boolean =>
+  a.kind === b.kind &&
+  (a.kind !== "app" || (b.kind === "app" && a.value === b.value));
+
+/** The app a start on `source` would record, by name; null for the
+ *  microphone only (and for a named app that is no longer listed). */
+export const plannedApp = (
+  source: SourceChoice,
+  sources: MeetingSources,
+): string | null => {
+  if (source.kind === "automatic") return sources.automatic?.name ?? null;
+  if (source.kind === "microphone") return null;
+  return sources.apps.find((a) => a.bundle_id === source.value)?.name ?? null;
+};
+
+/** The muted line under the button: its i18n key and the app it names. The
+ *  "will record" forms while idle, the "recording" forms during a meeting
+ *  (`app` is then the name the backend reports, null for the microphone). */
+export const recordLine = (
+  recording: boolean,
+  app: string | null,
+): { key: string; app?: string } => {
+  const base = recording ? "meeting.start.recording" : "meeting.start.will";
+  return app === null ? { key: `${base}Mic` } : { key: `${base}App`, app };
+};
+
+/** What the start control does for a meeting phase: "idle" starts, "recording"
+ *  stops, anything else (transcribing, writing notes) is waiting. */
+export const controlMode = (phase: string): "idle" | "recording" | "busy" =>
+  phase === "recording"
+    ? "recording"
+    : phase === "transcribing" || phase === "notes"
+      ? "busy"
+      : "idle";
+
+/** One row of the source menu. */
+export type SourceItem = {
+  id: string;
+  source: SourceChoice;
+  kind: "automatic" | "microphone" | "app";
+  /** The app's name, for an app row. */
+  name?: string;
+  /** For Automatic: the app it would record now, null for the microphone. */
+  hint?: string | null;
+  ticked: boolean;
+};
+
+/** The menu: Automatic (with what it would record now), the microphone
+ *  only, then each running app. Exactly the chosen one is ticked. */
+export const sourceItems = (
+  chosen: SourceChoice,
+  sources: MeetingSources,
+): SourceItem[] => [
+  {
+    id: "automatic",
+    source: AUTOMATIC,
+    kind: "automatic",
+    hint: sources.automatic?.name ?? null,
+    ticked: sameSource(chosen, AUTOMATIC),
+  },
+  {
+    id: "microphone",
+    source: { kind: "microphone" },
+    kind: "microphone",
+    ticked: sameSource(chosen, { kind: "microphone" }),
+  },
+  ...sources.apps.map((a): SourceItem => {
+    const source: SourceChoice = { kind: "app", value: a.bundle_id };
+    return {
+      id: a.bundle_id,
+      source,
+      kind: "app",
+      name: a.name,
+      ticked: sameSource(chosen, source),
+    };
+  }),
+];
+
+/** A named app that has gone: show the error, then choose Automatic again. */
+export const fallsBackToAutomatic = (error: string): boolean =>
+  meetingErrorKey(error) === "no-app";

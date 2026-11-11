@@ -1147,6 +1147,19 @@
     "notes": "Writing the notes…",
     "stop": "Stop",
     "close": "Close",
+    "start": {
+      "button": "Start recording",
+      "chooseSource": "Choose the sound source",
+      "automatic": "Automatic",
+      "automaticApp": "Now: {{app}} and the microphone",
+      "automaticMic": "Now: the microphone only",
+      "microphoneOnly": "Microphone only",
+      "microphoneLabel": "Microphone",
+      "willApp": "Will record: {{app}} and the microphone",
+      "willMic": "Will record: the microphone only",
+      "recordingApp": "Recording: {{app}} and the microphone",
+      "recordingMic": "Recording: the microphone only"
+    },
     "ask": {
       "using": "{{app}} is using the mic.",
       "question": "Take notes of this call?",
@@ -1164,7 +1177,7 @@
       "other": "The meeting could not be recorded or saved."
     },
     "page": {
-      "empty": "No meetings yet. Start one from the tray, or with the Meeting notes shortcut on the Recording page.",
+      "empty": "No meetings yet. Press Start recording to open one, or use the tray or the Meeting notes shortcut on the Recording page.",
       "notesTab": "Notes",
       "transcriptTab": "Transcript",
       "check": "AI wrote these notes. Check names and numbers against the transcript.",

@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — App shell (UX)"
 status: active
-updated: 2026-10-21
+updated: 2026-11-11
 summary: "The window around the features: the side column (sections, fold and resize by drag, language menu), the App page, tray and app-menu entries, updates and first launch."
 tags: [area/layout, area/updater, area/i18n, surface/macos]
 relations:
@@ -42,7 +42,7 @@ relations:
 ## Current truth
 
 - **Side column**, flush with the window's left edge with the Mac's window buttons in its top corner. **Speak**,
-  **Files & links**, **Live subtitles** (only with App › Experimental on) and **History** come first; under a **Settings** caption follow **Recording**, **Recognition**, **AI & Translate** and
+  **Files & links**, **Live subtitles** (only with App › Experimental on), **Meetings** (macOS 14.2+) and **History** come first; under a **Settings** caption follow **Recording**, **Recognition**, **AI & Translate** and
   **App** - the order a dictation goes through. **Debug** appears only in debug mode (⌘⇧D).
 - **Interface language** sits at the foot of the column: a globe with the current language (Tiếng Việt / English);
   click it for a menu with each language in its own name, the current one ticked. Folded, it is a square key with a
@@ -103,6 +103,8 @@ flowchart LR
 | `decisions.md`       | why the updater is SpeakEase's own |
 
 ## Change log
+
+- 2026-11-11: Meetings joins the side column for every Mac on macOS 14.2+ (no Experimental switch; SE-MEET-022); the tray's Meeting notes item follows.
 
 - 2026-10-21: the footer is gone: the update notice sits at the bottom of the sidebar only when there is one; the version and "Check for updates" are in App → About; models are switched from the Speak page (owner).
 
