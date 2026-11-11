@@ -34,7 +34,8 @@ come from merging Handy are summarised, not repeated.
 - **History**: rewrite a transcript with your own instruction, and see today's
   additions and the last 14 days above the list.
 - **Updates and the version moved** from the footer to the sidebar and the App
-  page; models are picked on the Speak page only.
+  page. The footer's model picker is gone: pick a model on the Speak page, the
+  Recognition page or the menu bar.
 - **New app icon** that macOS 26 and later show whole, instead of inside a grey
   box: the pink speech bubble now sits, in white, on a pink rounded square.
 
