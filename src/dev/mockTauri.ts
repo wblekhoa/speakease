@@ -639,9 +639,13 @@ function handle(cmd: string, args: Json): unknown {
       return null;
     // Meetings shows without Experimental (SE-MEET-022), with these entries.
     case "list_meetings":
-      // `?meetings=none` previews the page before the first meeting.
+      // `?meetings=none` previews the page before the first meeting;
+      // `?meetings=fail` a list that cannot be read.
       if (new URLSearchParams(location.search).get("meetings") === "none") {
         return [];
+      }
+      if (new URLSearchParams(location.search).get("meetings") === "fail") {
+        return Promise.reject("database: preview");
       }
       // A fresh copy each time, as the backend sends.
       return structuredClone(MEETINGS);

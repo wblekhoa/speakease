@@ -768,6 +768,10 @@
       "meetingLive": {
         "title": "Live help at the start",
         "description": "How much a meeting shows live in the panel under the meeting bar. The bar's Help button changes it for one meeting. Higher levels use more of this Mac's power."
+      },
+      "meetingAsk": {
+        "title": "Ask when a call starts",
+        "description": "When a call app starts using the microphone, the meeting bar asks \"Take notes of this call?\". Turn this off to start meetings only yourself."
       }
     },
     "recognition": {
@@ -1178,6 +1182,7 @@
     },
     "page": {
       "empty": "No meetings yet. Press Start recording to open one, or use the tray or the Meeting notes shortcut on the Recording page.",
+      "loadFailed": "The meetings could not be loaded. Open this page again to try once more.",
       "notesTab": "Notes",
       "transcriptTab": "Transcript",
       "check": "AI wrote these notes. Check names and numbers against the transcript.",

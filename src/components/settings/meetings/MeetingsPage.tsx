@@ -39,6 +39,8 @@ type Cited = { lines: number[]; line: number };
 export const MeetingsPage: React.FC = () => {
   const { t } = useTranslation();
   const [meetings, setMeetings] = useState<MeetingEntry[] | null>(null);
+  // The list could not be read: said inline instead of an empty page.
+  const [loadFailed, setLoadFailed] = useState(false);
   const [chosen, setChosen] = useState<number | null>(null);
   const [tab, setTab] = useState<Tab>("notes");
   // Questions asked per meeting, kept while the app runs (SE-MEET-014).
@@ -47,13 +49,15 @@ export const MeetingsPage: React.FC = () => {
   const [cited, setCited] = useState<Cited>({ lines: [], line: 0 });
 
   const refresh = useCallback(() => {
+    const failed = () => setLoadFailed(true);
     commands.listMeetings().then((result) => {
-      if (result.status !== "ok") return;
+      if (result.status !== "ok") return failed();
+      setLoadFailed(false);
       setMeetings(result.data);
       setChosen(
         (current) => current ?? result.data[0]?.meeting.history_id ?? null,
       );
-    });
+    }, failed);
   }, []);
 
   useEffect(() => {
@@ -160,6 +164,13 @@ export const MeetingsPage: React.FC = () => {
               }}
             />
           </div>
+        ) : loadFailed && meetings === null ? (
+          <p
+            className="min-w-0 flex-1 self-start text-sm text-error"
+            role="alert"
+          >
+            {t("meeting.page.loadFailed")}
+          </p>
         ) : (
           // "No meetings yet" only once the list has said so.
           meetings !== null && (

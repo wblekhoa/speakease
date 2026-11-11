@@ -188,9 +188,12 @@ export const MeetingStart: React.FC = () => {
         <Button
           variant="primary"
           size="md"
-          className="min-w-0 flex-1 rounded-e-none"
-          disabled={mode === "busy" || pending}
-          onClick={mode === "recording" ? stop : start}
+          className="min-w-0 flex-1 rounded-e-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+          // Pending keeps the button focusable (aria-disabled, not disabled),
+          // so keyboard focus is not dropped to the page meanwhile.
+          disabled={mode === "busy"}
+          aria-disabled={pending || undefined}
+          onClick={pending ? undefined : mode === "recording" ? stop : start}
         >
           {mode === "recording" ? t("meeting.stop") : t("meeting.start.button")}
         </Button>

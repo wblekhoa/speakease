@@ -1178,6 +1178,13 @@ async meetingCatchUp() : Promise<Result<string, string>> {
 async changeMeetingLiveLevelSetting(level: number) : Promise<void> {
     await TAURI_INVOKE("change_meeting_live_level_setting", { level });
 },
+/**
+ * Whether a call app starting to use the microphone asks "Take notes of
+ * this call?". Off closes an open question within one poll.
+ */
+async changeMeetingAskOnCallSetting(enabled: boolean) : Promise<void> {
+    await TAURI_INVOKE("change_meeting_ask_on_call_setting", { enabled });
+},
 async getMeeting(historyId: number) : Promise<Result<MeetingEntry | null, string>> {
     try {
     return { status: "ok", data: await TAURI_INVOKE("get_meeting", { historyId }) };
@@ -1412,7 +1419,13 @@ meeting_app?: string | null;
  * Meeting notes (beta): the live level a meeting starts at (SE-MEET-005,
  * 1 recording + timer … 5 live suggestions).
  */
-meeting_live_level?: number; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
+meeting_live_level?: number; 
+/**
+ * Meeting notes: ask "Take notes of this call?" when a call app starts
+ * using the microphone (SE-MEET-023). On by default, so settings saved
+ * before the switch existed keep asking.
+ */
+meeting_ask_on_call?: boolean; mute_while_recording?: boolean; append_trailing_space?: boolean; app_language?: string; theme?: Theme; experimental_enabled?: boolean; lazy_stream_close?: boolean; keyboard_implementation?: KeyboardImplementation; show_tray_icon?: boolean; paste_delay_ms?: number; paste_delay_after_ms?: number; 
 /**
  * Debug-gated ("beta") receipt-sequenced paste: restore the clipboard only
  * after the target app actually reads the transcript, instead of after a
