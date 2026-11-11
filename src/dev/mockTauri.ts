@@ -631,8 +631,12 @@ function handle(cmd: string, args: Json): unknown {
     case "close_meeting_bar":
     case "answer_meeting_ask":
       return null;
-    // `?subtitles` (Experimental on) also shows Meetings with these three.
+    // Meetings shows without Experimental (SE-MEET-022), with these entries.
     case "list_meetings":
+      // `?meetings=none` previews the page before the first meeting.
+      if (new URLSearchParams(location.search).get("meetings") === "none") {
+        return [];
+      }
       // A fresh copy each time, as the backend sends.
       return structuredClone(MEETINGS);
     case "meeting_ai_missing":

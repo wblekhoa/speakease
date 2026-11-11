@@ -71,23 +71,12 @@ export const MeetingsPage: React.FC = () => {
   }, [refresh, t]);
 
   if (meetings === null) return null;
-  if (meetings.length === 0) {
-    return (
-      // The Start control is what the empty state points to (SE-MEET-021).
-      <div className="@container w-full mx-auto min-h-0">
-        <div className="flex flex-col gap-4 @2xl:flex-row">
-          <div className="w-full flex-none @2xl:w-56">
-            <MeetingStart />
-          </div>
-          <p className="min-w-0 flex-1 self-start rounded-2xl border border-hairline bg-surface px-5 py-4 text-sm">
-            {t("meeting.page.empty")}
-          </p>
-        </div>
-      </div>
-    );
-  }
 
-  const entry =
+  // Undefined while there are no meetings yet: the Start control then stands
+  // alone beside the empty text, which points to it (SE-MEET-021). The
+  // control is mounted in one place, so its source choice survives the first
+  // meeting landing in the list.
+  const entry: MeetingEntry | undefined =
     meetings.find((m) => m.meeting.history_id === chosen) ?? meetings[0];
   // dd/mm HH:MM, as in the meeting's History title (meeting.rs).
   const startedAt = (seconds: number) => {
@@ -106,9 +95,10 @@ export const MeetingsPage: React.FC = () => {
           <ul
             className="max-h-48 w-full space-y-1 overflow-y-auto @2xl:max-h-none @2xl:overflow-visible"
             aria-label={t("sidebar.meetings")}
+            hidden={meetings.length === 0}
           >
             {meetings.map((m) => {
-              const active = m.meeting.history_id === entry.meeting.history_id;
+              const active = m.meeting.history_id === entry?.meeting.history_id;
               return (
                 <li key={m.meeting.history_id}>
                   <button
@@ -139,35 +129,41 @@ export const MeetingsPage: React.FC = () => {
             })}
           </ul>
         </div>
-        <div className="flex min-w-0 flex-1 flex-col gap-6 @5xl:flex-row @5xl:gap-4">
-          <MeetingDetail
-            key={entry.meeting.history_id}
-            entry={entry}
-            tab={tab}
-            onTab={setTab}
-            cited={cited}
-          />
-          <MeetingAsk
-            key={`ask-${entry.meeting.history_id}`}
-            historyId={entry.meeting.history_id}
-            transcript={entry.transcript}
-            exchanges={chats[entry.meeting.history_id] ?? []}
-            onExchanges={(update) => {
-              // Written here, not in a state updater: an answer that arrives
-              // after the page closed must still be kept.
-              const id = entry.meeting.history_id;
-              askedSoFar = {
-                ...askedSoFar,
-                [id]: update(askedSoFar[id] ?? []),
-              };
-              setChats(askedSoFar);
-            }}
-            onShowLines={(lines, line) => {
-              setCited({ lines, line });
-              setTab("transcript");
-            }}
-          />
-        </div>
+        {entry ? (
+          <div className="flex min-w-0 flex-1 flex-col gap-6 @5xl:flex-row @5xl:gap-4">
+            <MeetingDetail
+              key={entry.meeting.history_id}
+              entry={entry}
+              tab={tab}
+              onTab={setTab}
+              cited={cited}
+            />
+            <MeetingAsk
+              key={`ask-${entry.meeting.history_id}`}
+              historyId={entry.meeting.history_id}
+              transcript={entry.transcript}
+              exchanges={chats[entry.meeting.history_id] ?? []}
+              onExchanges={(update) => {
+                // Written here, not in a state updater: an answer that arrives
+                // after the page closed must still be kept.
+                const id = entry.meeting.history_id;
+                askedSoFar = {
+                  ...askedSoFar,
+                  [id]: update(askedSoFar[id] ?? []),
+                };
+                setChats(askedSoFar);
+              }}
+              onShowLines={(lines, line) => {
+                setCited({ lines, line });
+                setTab("transcript");
+              }}
+            />
+          </div>
+        ) : (
+          <p className="min-w-0 flex-1 self-start rounded-2xl border border-hairline bg-surface px-5 py-4 text-sm">
+            {t("meeting.page.empty")}
+          </p>
+        )}
       </div>
     </div>
   );

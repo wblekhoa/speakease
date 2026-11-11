@@ -34,6 +34,9 @@ const NO_SOURCES: MeetingSources = { automatic: null, apps: [] };
 export const MeetingStart: React.FC = () => {
   const { t } = useTranslation();
   const [source, setSource] = useState<SourceChoice>(AUTOMATIC);
+  // The chosen app's name, kept so the line still names it if the app has
+  // gone by the time Start reports it.
+  const [pickedName, setPickedName] = useState<string | null>(null);
   const [sources, setSources] = useState<MeetingSources>(NO_SOURCES);
   const [state, setState] = useState<MeetingState | null>(null);
   const [error, setError] = useState<string | null>(null);
@@ -107,6 +110,7 @@ export const MeetingStart: React.FC = () => {
       focusChevron();
     } else if (event.key === "Tab") {
       setOpen(false);
+      focusChevron();
     } else if (event.key === "ArrowDown" || event.key === "ArrowUp") {
       const rows = Array.from(
         menu.current?.querySelectorAll<HTMLButtonElement>("button") ?? [],
@@ -119,8 +123,11 @@ export const MeetingStart: React.FC = () => {
     }
   };
 
-  const pick = (choice: SourceChoice) => {
+  const pick = (choice: SourceChoice, name?: string) => {
     setSource(choice);
+    setPickedName(name ?? null);
+    // An error belongs to the start it came from, not to the new choice.
+    setError(null);
     setOpen(false);
     focusChevron();
   };
@@ -128,20 +135,27 @@ export const MeetingStart: React.FC = () => {
   const start = async () => {
     setError(null);
     setStarting(true);
-    const result = await commands.startMeeting(source);
-    setStarting(false);
-    if (result.status === "ok") return;
-    setError(result.error);
-    if (fallsBackToAutomatic(result.error)) {
-      setSource(AUTOMATIC);
-      loadSources();
+    try {
+      const result = await commands.startMeeting(source);
+      if (result.status === "ok") return;
+      setError(result.error);
+      if (fallsBackToAutomatic(result.error)) {
+        setSource(AUTOMATIC);
+        setPickedName(null);
+        loadSources();
+      }
+    } catch (e) {
+      // A command that threw: shown as the generic error, never a stuck button.
+      setError(String(e));
+    } finally {
+      setStarting(false);
     }
   };
 
   const appName =
-    mode === "idle" ? plannedApp(source, sources) : (state?.app_name ?? null);
-  // A named app missing from the list while idle reads as gone: the line
-  // follows Automatic until the start reports it.
+    mode === "idle"
+      ? plannedApp(source, sources, pickedName)
+      : (state?.app_name ?? null);
   const line = recordLine(mode === "recording", appName);
   const phaseText =
     state?.phase === "transcribing"
@@ -160,7 +174,11 @@ export const MeetingStart: React.FC = () => {
           size="md"
           className="min-w-0 flex-1 rounded-e-none"
           disabled={mode === "busy" || starting}
-          onClick={mode === "recording" ? () => commands.stopMeeting() : start}
+          onClick={
+            mode === "recording"
+              ? () => commands.stopMeeting().catch((e) => setError(String(e)))
+              : start
+          }
         >
           {mode === "recording" ? t("meeting.stop") : t("meeting.start.button")}
         </Button>
@@ -175,7 +193,7 @@ export const MeetingStart: React.FC = () => {
           onClick={toggleMenu}
         >
           <ChevronDown
-            className={`h-4 w-4 transition-transform duration-200 ${
+            className={`h-4 w-4 transition-transform duration-200 motion-reduce:transition-none ${
               open ? "rotate-180" : ""
             }`}
             aria-hidden="true"
@@ -186,7 +204,7 @@ export const MeetingStart: React.FC = () => {
             ref={menu}
             role="menu"
             aria-label={t("meeting.start.chooseSource")}
-            className={`${selectMenu} start-0 end-0`}
+            className={`${selectMenu} start-0 end-0 max-h-60 overflow-y-auto`}
             onKeyDown={onMenuKey}
           >
             {items.map((item) => (
@@ -195,7 +213,7 @@ export const MeetingStart: React.FC = () => {
                 type="button"
                 role="menuitemradio"
                 aria-checked={item.ticked}
-                onClick={() => pick(item.source)}
+                onClick={() => pick(item.source, item.name)}
                 className={`${selectOption} flex items-start gap-2 focus-visible:outline-2 focus-visible:outline-logo-primary ${
                   item.ticked ? selectOptionChosen : ""
                 }`}

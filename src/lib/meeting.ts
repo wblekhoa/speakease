@@ -123,14 +123,18 @@ export const sameSource = (a: SourceChoice, b: SourceChoice): boolean =>
   (a.kind !== "app" || (b.kind === "app" && a.value === b.value));
 
 /** The app a start on `source` would record, by name; null for the
- *  microphone only (and for a named app that is no longer listed). */
+ *  microphone only. A named app that is no longer listed keeps the name it
+ *  was picked under (`pickedName`): the start reports it gone. */
 export const plannedApp = (
   source: SourceChoice,
   sources: MeetingSources,
+  pickedName: string | null = null,
 ): string | null => {
   if (source.kind === "automatic") return sources.automatic?.name ?? null;
   if (source.kind === "microphone") return null;
-  return sources.apps.find((a) => a.bundle_id === source.value)?.name ?? null;
+  return (
+    sources.apps.find((a) => a.bundle_id === source.value)?.name ?? pickedName
+  );
 };
 
 /** The muted line under the button: its i18n key and the app it names. The
@@ -166,7 +170,8 @@ export type SourceItem = {
 };
 
 /** The menu: Automatic (with what it would record now), the microphone
- *  only, then each running app. Exactly the chosen one is ticked. */
+ *  only, then each running app. The chosen one is ticked, unless it is an
+ *  app that has gone (no row to tick; the start then resets the choice). */
 export const sourceItems = (
   chosen: SourceChoice,
   sources: MeetingSources,

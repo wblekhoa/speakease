@@ -87,8 +87,9 @@ Frozen by lane 1 (SE-MEET-020). Rust in `src-tauri/src/meeting.rs` and `commands
     that is not a call app or browser).
   - `RunningApp = { bundle_id: string; name: string; playing: boolean }` (unchanged, also used by live subtitles).
   - `LiveView.microphone_only: boolean` (new): the live panel hides the Me / Others label when true.
-  - `Meeting.app_name` is `""` for a microphone-only meeting. Only the Meetings list reads it; it shows the entry's
-    `title` instead (`MeetingsPage.tsx`, `m.meeting.app_name || m.title`). `MeetingState.app_name` is `null` while a
+  - `Meeting.app_name` is `""` for a microphone-only meeting. Only the Meetings list reads it; lane 1 showed the
+    entry's `title` instead, and lane 2 (task brief, SE-MEET-021) shows the localized microphone label there so the
+    date appears once (`MeetingsPage.tsx`). `MeetingState.app_name` is `null` while a
     microphone-only meeting records.
 - **Shortcut, tray, call question**: unchanged entry points; they start on Automatic (or the asked app).
 - **i18n keys added**: none. Changed: `meeting.error.no-app` (vi, en). The menu labels (Automatic, Microphone only,
