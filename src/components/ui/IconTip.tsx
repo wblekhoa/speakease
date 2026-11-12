@@ -4,7 +4,8 @@ import React from "react";
  * Names an icon-only control the moment the pointer or the keyboard reaches
  * it - a native `title` takes a second to appear and looks foreign. Wrap the
  * button; the label is shown above it (or where `side` says) and is also
- * the button's accessible name, so pass the same text as its aria-label.
+ * the button's accessible name, so pass the same text as its aria-label, or
+ * a longer one that starts with it ("Xóa" → "Xóa <title>").
  */
 export const IconTip: React.FC<{
   label: string;

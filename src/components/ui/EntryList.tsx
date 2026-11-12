@@ -20,6 +20,13 @@ export const entryNotice =
 export const entryActions =
   "flex items-center opacity-60 group-hover:opacity-100 focus-within:opacity-100 transition-opacity";
 
+/** An entry's time of day (seconds), in the app language's own form. */
+export const entryTime = (timestamp: number, language: string) =>
+  new Date(timestamp * 1000).toLocaleTimeString(language, {
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+
 /** Calendar day of an entry (seconds), for grouping. */
 export const dayKey = (timestamp: number) =>
   new Date(timestamp * 1000).toDateString();

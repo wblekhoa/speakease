@@ -154,7 +154,7 @@ relations:
 | Meeting bar    | asking · recording (panel closed / open at levels 1-5) · transcribing · notes · error                                     | call app on the microphone, shortcut, tray | Take notes / Not now / ×; Stop / shortcut / tray; × on error |
 | Tray item      | hidden · off · on (ticked)                                                                                                | tray menu (macOS 14.2+)                    | starts or stops                                              |
 | Meetings list  | loading · none yet · list · no match · load failed · delete asked                                                         | side column (macOS 14.2+), Back            | a meeting's detail, search, filter, delete                   |
-| Meeting detail | notes · writing · empty · no AI · failed; Notes / Transcript / Ask tab; three-dot menu open                               | a row of the list                          | Back, template menu, copy, save, ask                         |
+| Meeting detail | notes · writing · empty · no AI · failed; Notes / Transcript / Ask tab; three-dot menu open                               | a card of the list                         | Back, template menu, copy, save, ask                         |
 | Record bar     | idle (Automatic / Microphone only / app) · asked (Start answers the question) · menu open · recording · finishing · error | bottom of the Meetings list                | Start, Stop, pick a source                                   |
 
 ## Flow
