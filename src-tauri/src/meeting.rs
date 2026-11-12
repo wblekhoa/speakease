@@ -1423,8 +1423,8 @@ pub mod session {
     /// The event the Meetings page listens to when a meeting's notes change.
     pub const NOTES_EVENT: &str = "meeting-notes-updated";
 
-    /// Sent when a template switch could not write new notes; notes the user
-    /// had stay.
+    /// Sent when a template switch could not write new notes (not when a
+    /// meeting without notes still has no AI); notes the user had stay.
     pub const REWRITE_FAILED_EVENT: &str = "meeting-notes-rewrite-failed";
 
     /// What a template switch does with its result.
