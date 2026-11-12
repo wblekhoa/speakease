@@ -108,17 +108,19 @@ relations:
   its audio is the microphone as recorded, and its notes' kind is guessed from the transcript alone.
 - **Meetings page** (SE-MEET-018, SE-MEET-024; owner 12/11: a list first, a meeting's tools only once it is opened):
   the side column has **Meetings** under Live subtitles (macOS 14.2+). The page opens on the **list**, newest first,
-  with the record bar at the bottom. Each row: its app (a microphone-only meeting shows "Micro" / "Microphone"; a
-  meeting made from Files shows the file's title), "dd/mm HH:MM" and length on the right, and one muted summary line:
-  the first line of the notes (headings and Markdown marks dropped), else the first line of the transcript without
+  with the record bar at the bottom. It is laid out as History is (owner 12/11: list pages look alike; shared parts in
+  `src/components/ui/EntryList.tsx`): meetings grouped under a day heading (Hôm nay, Hôm qua, then the weekday and
+  date), one card each. A card's top line, small and muted: the time "HH:MM", its app (a microphone-only meeting shows
+  "Micro" / "Microphone"; a meeting made from Files shows a folder icon and the file's title) and the length; under it,
+  one summary line in the page's text size: the first line of the notes (headings and Markdown marks dropped), else the first line of the transcript without
   its speaker label, or "Writing the notes…" while first notes are written. Above the list, **Tìm trong cuộc họp**
   (Search meetings) finds every word, ignoring case and accents, in the title, app, notes and transcript; beside it,
   when meetings come from more than one place, an app filter: **Tất cả ứng dụng** (All apps), each app A-Z, "Micro",
-  "Tệp" (Files). No match: "Không có cuộc họp nào khớp." Each row has a bin (on hover or keyboard focus, named "Xóa
-  <title>") that asks "Xóa cuộc họp này?" - "<title>: ghi chú, bản ghi lời và âm thanh sẽ bị xóa khỏi Cuộc họp và Lịch
+  "Tệp" (Files). Loading, none yet and no match ("Không có cuộc họp nào khớp.") show in a card like History's. Each card
+  has a bin at its end, faint until hovered or focused as History's icons are (tip "Xóa", named "Xóa <title>"), that asks "Xóa cuộc họp này?" - "<title>: ghi chú, bản ghi lời và âm thanh sẽ bị xóa khỏi Cuộc họp và Lịch
   sử. Không thể hoàn tác." with **Hủy** and **Xóa**; Xóa removes the History entry, its audio and its notes, and a
   failure says "Không xóa được cuộc họp."
-  Clicking a row opens its **detail**: a back arrow (**Quay lại**, which takes the focus) beside the meeting's title,
+  Clicking a card opens its **detail**: a back arrow (**Quay lại**, which takes the focus) beside the meeting's title,
   a three-dot menu (**Thêm thao tác**) at the end of the title row with **Copy**, **Save .md** and **Save .txt**,
   then three tabs, **Notes** / **Transcript** / **Ask**, and, on Notes only, the template menu (Meeting, Call,
   Lecture, Interview) - choosing another writes the notes again in the background ("Writing the notes…" above the

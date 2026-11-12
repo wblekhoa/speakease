@@ -45,10 +45,11 @@ for good). Built with React + Tailwind in the existing settings window (780 px w
 `## Point of view` card yet (App Studio inbox item 2026-10-27), so this contract is written without one.
 
 **User + job:** a SpeakEase user finds one past meeting by its app, day or words, or starts a new recording.
-**First-read object:** the newest meeting's row: its app and time, then what it was about (summary line).
+**First-read object:** the newest meeting's card: what it was about (summary line), under its day, time and app.
 **Primary action:** open a meeting (click its row).
 **Density:** balanced - rows are scanned, so two lines per row, but with WAVE's air between rows; no table chrome.
-**Hierarchy:** meeting rows (app · time · length, then summary) → search and app filter → record bar → delete per row.
+**Hierarchy:** day heading → meeting cards (time · app · length, then summary), as History → search and app filter →
+record bar → delete per card.
 **Interaction model:** a searchable list; a row is a link into the detail; a floating bar for the one recording action.
 **Responsive priority:** at 780 px and with the side column open the summary truncates to one line; search and filter
 share one row and the filter keeps its width; the record bar keeps the Start button and truncates the source text.
@@ -104,6 +105,8 @@ panel squeezed beside the notes; a back control far from the title (top-left of 
 ## Change log
 
 - 2026-11-12: created from the owner's form.
+- 2026-11-12: the list takes History's layout (owner: list pages look alike) - day headings, a card per meeting,
+  time first; First-read object and Hierarchy above changed with it. Shared parts in `src/components/ui/EntryList.tsx`.
 - 2026-11-12: built. The summary for a meeting without notes is the transcript's first line, not the reason (the
   reason already shows in the detail; a transcript line says what the meeting was about). Copy on the Ask tab takes
   the notes. The back arrow and three dots are copied from the icon source (`bulk.tsx`); the bar's chevron and

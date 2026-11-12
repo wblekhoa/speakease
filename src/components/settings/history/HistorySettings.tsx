@@ -42,41 +42,21 @@ import {
 } from "@/lib/recentInstructions";
 import { AudioPlayer, AudioPlayerGroup } from "../../ui/AudioPlayer";
 import { Button } from "../../ui/Button";
+import {
+  DayHeader,
+  dayKey,
+  entryActions,
+  entryCard,
+  entryNotice,
+  IconButton,
+} from "../../ui/EntryList";
 import { IconTip } from "../../ui/IconTip";
 import { SettingsGroup } from "../../ui/SettingsGroup";
 import { HistoryLimit } from "../HistoryLimit";
 import { RecordingRetentionPeriodSelector } from "../RecordingRetentionPeriod";
 import { copyToClipboard } from "./clipboard";
 
-/** An entry's action: an icon, named the moment it is reached (IconTip). */
-const IconButton: React.FC<{
-  onClick: () => void;
-  title: string;
-  disabled?: boolean;
-  active?: boolean;
-  children: React.ReactNode;
-}> = ({ onClick, title, disabled, active, children }) => (
-  <IconTip label={title}>
-    <button
-      type="button"
-      onClick={onClick}
-      disabled={disabled}
-      aria-label={title}
-      className={`p-1.5 rounded-lg flex items-center justify-center transition-colors cursor-pointer disabled:cursor-not-allowed disabled:text-text/20 focus-visible:outline-2 focus-visible:outline-logo-primary ${
-        active
-          ? "text-logo-primary hover:bg-logo-primary/10"
-          : "text-text/50 hover:text-text hover:bg-row"
-      }`}
-    >
-      {children}
-    </button>
-  </IconTip>
-);
-
 const PAGE_SIZE = 30;
-
-/** Calendar day of an entry, for grouping. */
-const dayKey = (timestamp: number) => new Date(timestamp * 1000).toDateString();
 
 /** The text the user got: the AI version when there is one. */
 const shownText = (entry: HistoryEntry) =>
@@ -329,13 +309,11 @@ export const HistorySettings: React.FC = () => {
 
   if (loading) {
     content = (
-      <div className="rounded-2xl border border-hairline bg-surface px-4 py-8 text-center text-sm text-mid-gray">
-        {t("settings.history.loading")}
-      </div>
+      <div className={entryNotice}>{t("settings.history.loading")}</div>
     );
   } else if (shown.length === 0) {
     content = (
-      <div className="rounded-2xl border border-hairline bg-surface px-4 py-8 text-center text-sm text-mid-gray">
+      <div className={entryNotice}>
         {results
           ? t("settings.history.noResults", { defaultValue: "No matches" })
           : t("settings.history.empty")}
@@ -418,29 +396,6 @@ export const HistorySettings: React.FC = () => {
 
       {content}
     </div>
-  );
-};
-
-const DayHeader: React.FC<{ timestamp: number }> = ({ timestamp }) => {
-  const { t, i18n } = useTranslation();
-  const day = new Date(timestamp * 1000);
-  const today = new Date();
-  const yesterday = new Date();
-  yesterday.setDate(today.getDate() - 1);
-  const label =
-    day.toDateString() === today.toDateString()
-      ? t("settings.history.today", { defaultValue: "Today" })
-      : day.toDateString() === yesterday.toDateString()
-        ? t("settings.history.yesterday", { defaultValue: "Yesterday" })
-        : day.toLocaleDateString(i18n.language, {
-            weekday: "long",
-            day: "numeric",
-            month: "long",
-          });
-  return (
-    <h3 className="px-1 pt-3 first:pt-0 text-xs font-semibold text-mid-gray uppercase tracking-wide">
-      {label}
-    </h3>
   );
 };
 
@@ -574,7 +529,7 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
   return (
     // One card per dictation: when, what it became, and what was said.
     <div
-      className={`group rounded-2xl border border-hairline bg-surface px-4 pt-3 flex flex-col gap-2 transition-colors hover:border-mid-gray/40 ${
+      className={`${entryCard} px-4 pt-3 flex flex-col gap-2 ${
         // A card that ends on the inset "original" box keeps the same 16px
         // around that box below as beside it; text ends on the usual 12px.
         endsOnOriginal ? "pb-4" : "pb-3"
@@ -596,7 +551,7 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
             {promptName}
           </span>
         )}
-        <div className="ml-auto flex items-center opacity-60 group-hover:opacity-100 focus-within:opacity-100 transition-opacity">
+        <div className={`ml-auto ${entryActions}`}>
           <IconButton
             onClick={() => setListening((open) => !open)}
             active={listening}
