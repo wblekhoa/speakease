@@ -323,3 +323,14 @@ export const matchesSearch = (
   );
   return words.every((word) => haystack.includes(word));
 };
+
+/** A list row's length in words (review 12/11: "6:00" beside "08:45" read as
+ *  a second clock time): whole minutes, rounded, or seconds under one. */
+export const lengthUnit = (
+  ms: number,
+): { unit: "minutes" | "seconds"; count: number } => {
+  const seconds = Math.round(ms / 1000);
+  return seconds < 60
+    ? { unit: "seconds", count: seconds }
+    : { unit: "minutes", count: Math.round(seconds / 60) };
+};

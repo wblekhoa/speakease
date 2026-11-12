@@ -78,6 +78,60 @@ const placeMenu = (
   };
 };
 
+/**
+ * `placeMenu` for a hand-built menu that stays inside its anchor's element
+ * (WAVE: a floating layer flips and stays in the window, never pinned
+ * above or below). `start` lines the menu up with the anchor's start edge at
+ * its own width; `end` with its end edge. Kept in place while the page
+ * scrolls or the window resizes; null until placed, so the menu is drawn
+ * hidden first and can take focus only once placed.
+ */
+export const useMenuPlace = (
+  open: boolean,
+  anchor: React.RefObject<HTMLElement | null>,
+  menu: React.RefObject<HTMLElement | null>,
+  align: "start" | "end",
+): MenuPlace | null => {
+  const [place, setPlace] = useState<MenuPlace | null>(null);
+  useLayoutEffect(() => {
+    if (!open) {
+      setPlace(null);
+      return;
+    }
+    const update = () => {
+      const box = anchor.current?.getBoundingClientRect();
+      const el = menu.current;
+      if (!box || !el) return;
+      const natural = el.scrollHeight + (el.offsetHeight - el.clientHeight);
+      const placed = placeMenu(box, natural, align === "end");
+      setPlace(align === "end" ? placed : { ...placed, width: undefined });
+    };
+    update();
+    window.addEventListener("scroll", update, true);
+    window.addEventListener("resize", update);
+    return () => {
+      window.removeEventListener("scroll", update, true);
+      window.removeEventListener("resize", update);
+    };
+  }, [open, anchor, menu, align]);
+  return place;
+};
+
+/** The fixed-position style for a menu placed by `useMenuPlace`. */
+export const placedMenuStyle = (
+  place: MenuPlace | null,
+): React.CSSProperties => ({
+  position: "fixed",
+  zIndex: 9999,
+  top: place?.top,
+  bottom: place?.bottom,
+  left: place?.left,
+  right: place?.right,
+  width: place?.width,
+  maxHeight: place?.maxHeight,
+  visibility: place ? "visible" : "hidden",
+});
+
 export const Dropdown: React.FC<DropdownProps> = ({
   options,
   selectedValue,
