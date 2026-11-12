@@ -5,7 +5,7 @@ product: speakease
 title: "SpeakEase — Releases"
 status: active
 updated: 2026-11-12
-summary: "What each published SpeakEase version shipped, through which channel and with which rules; 0.1.2 (meeting notes, on-device AI models, live subtitles) shipped on 12 Nov 2026."
+summary: "What each published SpeakEase version shipped, through which channel and with which rules; 0.1.3 (a meeting's text stays on the Mac when the on-device model is picked) shipped on 12 Nov 2026, the same day as 0.1.2."
 tags: [area/release, area/updater]
 relations:
   presentedBy: [github:wblekhoa/speakease/releases]
@@ -14,6 +14,30 @@ relations:
 # SpeakEase — Releases (newest first)
 
 Source of truth for details: `CHANGELOG.md` (repo root) and `gh release list -R wblekhoa/speakease`.
+
+## 0.1.3 — 2026-11-12
+
+- **What changed for users**: on a Mac without Apple Intelligence, with On-device model picked in AI & Translate, a
+  meeting's text no longer goes to a service a key is saved for. Meeting notes, questions about a meeting and live
+  help run on Qwen3.5 4B on the Mac; if that model is not downloaded they are off and the app says why. 0.1.2 sent
+  the text to the saved key's service in this case. With Apple Intelligence on the Mac, or with another service
+  picked, nothing changes. The feed and the updater key are the ones 0.1.2 ships with.
+- **REQ-IDs shipped**: SE-MEET-012 (engine order changed; the other 0.1.2 rules are unchanged).
+- **Channel**: GitHub release `v0.1.3` (tag on `7b8ed98`, 7 commits past 0.1.2) - `.dmg` / `.zip` (Developer ID
+  signed, notarized, stapled), the updater archive with its signature, and `latest.json`. Built from `main`'s tip with
+  `scripts/release-mac.sh` (no `--publish`) and, with CI green on that commit, published by hand with the script's
+  own `gh release create` line and `--target` on that commit. Before publishing: the updater signature checked
+  against the key in 0.1.2's `tauri.conf.json`, the app inside the updater archive compared with the built app (no
+  difference), and the built app started once hidden from its build folder. Checked after publishing: the tag's
+  commit, `releases/latest` (v0.1.3), the served `latest.json`, updater archive, `.dmg` and `.zip` (each identical to
+  the built file).
+- **Not seen before release**: notes written by the on-device model from the app (the build Mac has no Qwen3.5 4B;
+  the order is covered by `on_device_picked_never_falls_back_to_a_saved_key`), and the three new "model not
+  downloaded" lines in the running app. As in 0.1.2, no meeting, call question, switch or live-subtitles session was
+  run in the build; the only run was a hidden start (process alive, no error line, shortcuts registered, old
+  settings loaded). The build was not installed: the build Mac stays on 0.1.2 so the first in-app update can be
+  watched, and none has been watched yet.
+- **Shown in**: https://github.com/wblekhoa/speakease/releases/tag/v0.1.3
 
 ## 0.1.2 — 2026-11-12
 
