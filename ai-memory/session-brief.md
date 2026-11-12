@@ -27,7 +27,7 @@ summary: "Open threads for SpeakEase: meeting notes built through phase 5 and Fi
   In 0.1.3 (wblekhoa/speakease#18, owner 12/11 "Đổi thứ tự"): with the on-device model picked in AI & Translate,
   meeting text never goes, in the app, to a saved key (the hidden CLI's `--notes-engine key` still forces one) -
   Qwen3.5-4B or no notes (reason `notes_model_missing`). Not seen in the app: notes from the on-device model (no
-  Qwen3.5-4B on this Mac) and the three new lines. On `main` after 0.1.3 (not released): a meeting stored with
-  no AI keeps its template menu open, so its notes can be written once AI is there; a pick that still finds no AI
-  stores the current reason (unit tests + browser preview only).
+  Qwen3.5-4B on this Mac) and the three new lines. After 0.1.3 (not released): a meeting stored with no AI keeps
+  its template menu open, so its notes can be written once AI is there; a pick that still finds no AI stores the
+  current reason (unit tests; the browser preview showed only the menu open, its mock does not store the reason).
   Next: the owner's first real meeting in 0.1.3; fix what it shows.

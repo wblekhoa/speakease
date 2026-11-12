@@ -280,7 +280,7 @@ const MeetingDetail: React.FC<{
         {/* The template the notes are written with; choosing one rewrites
             them (SE-MEET-010). */}
         {/* With no template yet, the menu's placeholder names it. A meeting
-            stored with no AI can be written once AI is there (SE-MEET-012). */}
+            stored with no AI can be written once AI is there (SE-MEET-010). */}
         {meeting.kind && (
           <span className="text-sm text-mid-gray">
             {t("meeting.page.template")}
@@ -335,7 +335,11 @@ const MeetingDetail: React.FC<{
               {t(`meeting.page.noAi.${view.reason}`)}
             </p>
           )}
-          {(view.kind === "failed" || view.kind === "noAi") && (
+          {/* The transcript stays while notes are written for a meeting
+              that has none yet. */}
+          {(view.kind === "failed" ||
+            view.kind === "noAi" ||
+            (writing && !file.notes)) && (
             <pre className="whitespace-pre-wrap font-sans text-sm leading-relaxed">
               {entry.transcript}
             </pre>
