@@ -1423,20 +1423,37 @@ pub mod session {
     /// The event the Meetings page listens to when a meeting's notes change.
     pub const NOTES_EVENT: &str = "meeting-notes-updated";
 
-    /// Sent when a template switch could not write new notes; the old ones stay.
+    /// Sent when a template switch could not write new notes; notes the user
+    /// had stay.
     pub const REWRITE_FAILED_EVENT: &str = "meeting-notes-rewrite-failed";
 
-    /// Whether a template switch's result (`state`) replaces what is stored:
-    /// new notes (or an empty meeting's one line) always do; a failure or "no
-    /// AI" keeps the notes the user has (SE-MEET-010). A meeting without notes
-    /// has nothing to keep, so it stores why there are none now (SE-MEET-012).
-    pub(crate) fn rewrite_replaces(had_notes: bool, state: &str) -> bool {
-        !had_notes || wrote_notes(state)
+    /// What a template switch does with its result.
+    #[derive(Debug, PartialEq)]
+    pub(crate) struct RewriteOutcome {
+        /// The result replaces what is stored.
+        pub store: bool,
+        /// The page is told the switch wrote no notes (REWRITE_FAILED_EVENT).
+        pub notify: bool,
     }
 
-    /// Whether a notes attempt ended with text to show.
-    fn wrote_notes(state: &str) -> bool {
-        matches!(state, "done" | "empty")
+    // SE-MEET-010
+    /// A template switch's result (`state`, `None` when the entry went):
+    /// new notes (or an empty meeting's one line) are stored; a failure or "no
+    /// AI" keeps the notes the user has. A meeting without notes has nothing
+    /// to keep, so it stores why there are none now; when that is still "no
+    /// AI", its reason line says so and no toast is sent.
+    pub(crate) fn rewrite_outcome(had_notes: bool, state: Option<&str>) -> RewriteOutcome {
+        let Some(state) = state else {
+            return RewriteOutcome {
+                store: false,
+                notify: true,
+            };
+        };
+        let wrote = matches!(state, "done" | "empty");
+        RewriteOutcome {
+            store: wrote || !had_notes,
+            notify: !wrote && (had_notes || !state.starts_with("no_ai:")),
+        }
     }
 
     /// What is stored for a meeting's notes (`meetings` row).
@@ -1544,12 +1561,14 @@ pub mod session {
                 )),
                 _ => None,
             };
-            // No new notes: the page says the switch could not write them.
-            if !stored.as_ref().is_some_and(|s| wrote_notes(&s.state)) {
+            let outcome = rewrite_outcome(
+                meeting.notes.is_some(),
+                stored.as_ref().map(|s| s.state.as_str()),
+            );
+            if outcome.notify {
                 let _ = app.emit(REWRITE_FAILED_EVENT, history_id);
             }
-            let had_notes = meeting.notes.is_some();
-            let saved = match stored.filter(|s| rewrite_replaces(had_notes, &s.state)) {
+            let saved = match stored.filter(|_| outcome.store) {
                 Some(stored) => history.set_meeting_notes(
                     history_id,
                     stored.kind,
@@ -1650,11 +1669,23 @@ mod tests {
     // SE-MEET-010
     #[test]
     fn a_failed_template_switch_keeps_the_old_notes() {
-        assert!(session::rewrite_replaces(true, "done"));
-        assert!(session::rewrite_replaces(true, "empty"));
-        assert!(!session::rewrite_replaces(true, "failed"));
-        assert!(!session::rewrite_replaces(true, "no_ai:ai_off"));
-        assert!(!session::rewrite_replaces(true, "no_ai:nothing_available"));
+        use session::{rewrite_outcome, RewriteOutcome};
+        let wrote = RewriteOutcome {
+            store: true,
+            notify: false,
+        };
+        let kept = RewriteOutcome {
+            store: false,
+            notify: true,
+        };
+        assert_eq!(rewrite_outcome(true, Some("done")), wrote);
+        assert_eq!(rewrite_outcome(true, Some("empty")), wrote);
+        assert_eq!(rewrite_outcome(true, Some("failed")), kept);
+        assert_eq!(rewrite_outcome(true, Some("no_ai:ai_off")), kept);
+        assert_eq!(rewrite_outcome(true, Some("no_ai:nothing_available")), kept);
+        // The entry went: nothing is stored, the page is told.
+        assert_eq!(rewrite_outcome(true, None), kept);
+        assert_eq!(rewrite_outcome(false, None), kept);
     }
 
     // SE-MEET-010/012: a meeting stored with no notes (no AI, or failed) has
@@ -1662,12 +1693,19 @@ mod tests {
     // or why there are none now - instead of the old reason.
     #[test]
     fn a_template_switch_on_a_meeting_without_notes_stores_what_it_got() {
-        assert!(session::rewrite_replaces(false, "done"));
-        assert!(session::rewrite_replaces(
-            false,
-            "no_ai:notes_model_missing"
-        ));
-        assert!(session::rewrite_replaces(false, "failed"));
+        use session::{rewrite_outcome, RewriteOutcome};
+        let stored = |notify| RewriteOutcome {
+            store: true,
+            notify,
+        };
+        assert_eq!(rewrite_outcome(false, Some("done")), stored(false));
+        assert_eq!(rewrite_outcome(false, Some("empty")), stored(false));
+        assert_eq!(rewrite_outcome(false, Some("failed")), stored(true));
+        // Still no AI: the reason line says why, no toast on top.
+        assert_eq!(
+            rewrite_outcome(false, Some("no_ai:notes_model_missing")),
+            stored(false)
+        );
     }
 
     // SE-MEET-012: the ids the interface's lines are keyed by.
