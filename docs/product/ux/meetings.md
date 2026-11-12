@@ -108,7 +108,8 @@ relations:
   and **Save .txt**; then **Notes** / **Transcript** and the template menu (Meeting, Call, Lecture, Interview) -
   choosing another writes the notes again in the background ("Writing the notes…" above the old ones, which stay if it fails). Notes open with "AI wrote these notes. Check names and
   numbers against the transcript." and a link to the transcript. With no AI the page says why (AI off, or nothing
-  on this Mac) and shows the transcript; an empty recording shows its one line; failed notes show the transcript.
+  on this Mac) and shows the transcript; the template menu stays open, so once AI is there the notes can be written,
+  and a pick that still finds none updates the reason; an empty recording shows its one line; failed notes show the transcript.
   A saved file holds the notes, then the transcript; Copy takes the tab in view.
 - **Ask about this meeting** (on the Meetings page; beside the meeting when the page is wide, under it otherwise):
   "Answers come from this meeting only, with the lines they used. Read those lines." The user types a question and
