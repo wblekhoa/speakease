@@ -281,9 +281,9 @@ const firstContentLine = (text: string): string | null => {
   return null;
 };
 
-/** A row's summary line: the notes' first line of content; without notes,
+/** A list card's summary line: the notes' first line of content; without notes,
  *  the transcript's first line without its speaker label; while the first
- *  notes are written, null (the row then says so). */
+ *  notes are written, null (the card then says so). */
 export const summaryLine = (
   view: NotesView,
   notes: string | null,

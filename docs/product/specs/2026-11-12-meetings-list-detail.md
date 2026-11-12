@@ -27,8 +27,9 @@ listed there are marked (assumed) below.
 
 ## Change
 
-- **List view** (the page as it opens): each meeting as one row - app (or "Micro"), "dd/mm HH:MM", length, and one
-  summary line. Above it, a search box and an app filter. Each row has a delete button that asks first. Clicking a row
+- **List view** (the page as it opens), laid out as History: meetings under day headings, one card each - time, app
+  (or "Micro"), length, and one summary line. Above it, a search box and an app filter. Each card has a delete button
+  that asks first. Clicking a card
   opens its detail.
 - **Detail view**: a back arrow beside the meeting's title, a three-dot menu (Copy, Save .md, Save .txt) at the end of
   the title row, then three tabs - Notes, Transcript, Ask. The template menu stays on its own, on the Notes tab.
@@ -46,17 +47,17 @@ for good). Built with React + Tailwind in the existing settings window (780 px w
 
 **User + job:** a SpeakEase user finds one past meeting by its app, day or words, or starts a new recording.
 **First-read object:** the newest meeting's card: what it was about (summary line), under its day, time and app.
-**Primary action:** open a meeting (click its row).
-**Density:** balanced - rows are scanned, so two lines per row, but with WAVE's air between rows; no table chrome.
+**Primary action:** open a meeting (click its card).
+**Density:** balanced - cards are scanned, so two lines per card, with History's gap between cards; no table chrome.
 **Hierarchy:** day heading → meeting cards (time · app · length, then summary), as History → search and app filter →
 record bar → delete per card.
-**Interaction model:** a searchable list; a row is a link into the detail; a floating bar for the one recording action.
+**Interaction model:** a searchable list; a card is a link into the detail; a floating bar for the one recording action.
 **Responsive priority:** at 780 px and with the side column open the summary truncates to one line; search and filter
 share one row and the filter keeps its width; the record bar keeps the Start button and truncates the source text.
 **References:** (from training, not fetched) Otter.ai conversation list → a summary snippet under each title lets the
 user pick a meeting without opening it → our summary line. Apple Voice Memos → a plain list, tap for the recording,
 record at the bottom → our bottom bar and list-first page. Granola meeting list → day and time lead each row → our
-"dd/mm HH:MM" stays on the first line.
+day heading, then the time first on each card.
 **Forbidden defaults:** `slop-01` (a coloured left border marking the chosen or new row); `slop-03` (each row a card
 inside a card); `slop-04` (one gap value for the whole page); a trash icon that deletes without asking; a row title
 that repeats the date already in the time column; an empty state that only says "No meetings" without pointing to
@@ -82,12 +83,12 @@ panel squeezed beside the notes; a back control far from the title (top-left of 
 ## Acceptance
 
 - [ ] The page opens on the list, never on a meeting; Back returns to the list with the search and filter as left.
-- [ ] Each row: app or "Micro" (or the file's title for a meeting made from Files), "dd/mm HH:MM", length, one summary
+- [ ] Each card, under its day heading: time, app or "Micro" (or the file's title for a meeting made from Files), length, one summary
       line. Summary (assumed): the first content line of the notes with Markdown marks removed (headings skipped);
       without notes (no AI, failed), the first transcript line without its speaker label; "Writing the notes…" while
       first notes are written.
 - [ ] Search (assumed: on this Mac, case- and accent-tolerant, over title, app, notes and transcript) narrows the list;
-      no match shows a one-line "no meetings match" text.
+      no match shows "no meetings match" in History's notice card.
 - [ ] App filter (assumed): All, each app with a meeting, "Micro", and "Files" for meetings made from Files.
 - [ ] Delete asks in a dialog that names the meeting and says it cannot be undone; on Delete the meeting leaves the
       list, History and its audio; on failure a toast says so and the list stays.

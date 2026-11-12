@@ -28,6 +28,7 @@ import {
   entryActions,
   entryCard,
   entryNotice,
+  entryTime,
   IconButton,
 } from "../../ui/EntryList";
 import { selectMenuSurface, selectOption } from "../../ui/selectStyles";
@@ -55,13 +56,6 @@ type Tab = "notes" | "transcript" | "ask";
 let askedSoFar: Record<number, Exchange[]> = {};
 /** Lines an answer used, and the one the user clicked. */
 type Cited = { lines: number[]; line: number };
-
-/** HH:MM; the day is in the heading above (EntryList's DayHeader). */
-const clockTime = (seconds: number) => {
-  const at = new Date(seconds * 1000);
-  const two = (n: number) => String(n).padStart(2, "0");
-  return `${two(at.getHours())}:${two(at.getMinutes())}`;
-};
 
 // SE-MEET-018, SE-MEET-024
 /** Meetings (beta), in two steps (owner, 12/11): the list of meetings with
@@ -258,7 +252,7 @@ const MeetingList: React.FC<{
   onDelete,
   returnTo,
 }) => {
-  const { t } = useTranslation();
+  const { t, i18n } = useTranslation();
   const listRef = useRef<HTMLDivElement>(null);
 
   // Only when the list first shows after Back, not on every refresh.
@@ -349,12 +343,9 @@ const MeetingList: React.FC<{
       ) : (
         // Laid out as History is (owner, 12/11: list pages look alike): a
         // card per meeting under its day, the time first, delete at the end.
-        <div
-          ref={listRef}
-          className="flex flex-col gap-2"
-          role="list"
-          aria-label={t("sidebar.meetings")}
-        >
+        // No list roles: a day heading between items would break them,
+        // and History, whose layout this is, has none.
+        <div ref={listRef} className="flex flex-col gap-2">
           {shown.map((m, index) => {
             const { meeting } = m;
             const origin = meetingOrigin(meeting.app_name, m.title);
@@ -371,7 +362,7 @@ const MeetingList: React.FC<{
                     dayKey(meeting.started_at)) && (
                   <DayHeader timestamp={meeting.started_at} />
                 )}
-                <div role="listitem" className={`${entryCard} relative`}>
+                <div className={`${entryCard} relative`}>
                   {/* The whole card opens the meeting; delete sits on top
                       of it, so the two buttons never nest. */}
                   <button
@@ -382,7 +373,7 @@ const MeetingList: React.FC<{
                   >
                     <span className="flex min-h-7.5 items-center gap-2 pe-9 text-xs text-mid-gray">
                       <span className="tabular-nums">
-                        {clockTime(meeting.started_at)}
+                        {entryTime(meeting.started_at, i18n.language)}
                       </span>
                       <span className="flex min-w-0 items-center gap-1">
                         {origin.kind === "file" && (

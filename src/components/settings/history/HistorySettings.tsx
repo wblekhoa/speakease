@@ -48,6 +48,7 @@ import {
   entryActions,
   entryCard,
   entryNotice,
+  entryTime,
   IconButton,
 } from "../../ui/EntryList";
 import { IconTip } from "../../ui/IconTip";
@@ -512,10 +513,7 @@ const HistoryEntryComponent: React.FC<HistoryEntryProps> = ({
     }
   };
 
-  const time = new Date(entry.timestamp * 1000).toLocaleTimeString(
-    i18n.language,
-    { hour: "2-digit", minute: "2-digit" },
-  );
+  const time = entryTime(entry.timestamp, i18n.language);
 
   // SE-HIST-003
   const endsOnOriginal =
