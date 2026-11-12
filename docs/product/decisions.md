@@ -28,7 +28,7 @@ repo; each cites its source.
   than falling back to the key - a fallback would send the text out in the very case the owner asked to close.
   Another downloaded on-device model is still not used for notes (31/10).
 - **Evidence**: `pick_engine` and `on_device_picked_never_falls_back_to_a_saved_key` in
-  `src-tauri/src/meeting_notes.rs`; `src/lib/meeting.test.ts`. Not in 0.1.2: it ships with the next release.
+  `src-tauri/src/meeting_notes.rs`; `src/lib/meeting.test.ts`. Not in 0.1.2; shipped in 0.1.3.
 - **Reverse**: remove the `LOCAL_AI_PROVIDER_ID` branch in `pick_engine` (the key comes first again) and restore the
   PRIVACY row.
 
