@@ -2,7 +2,6 @@ import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
 import { save } from "@tauri-apps/plugin-dialog";
-import { ArrowLeft, MoreHorizontal } from "lucide-react";
 import { toast } from "sonner";
 import { commands, type MeetingEntry } from "@/bindings";
 import {
@@ -24,7 +23,12 @@ import { Button } from "../../ui/Button";
 import { Dialog } from "../../ui/Dialog";
 import { Dropdown } from "../../ui/Dropdown";
 import { selectMenu, selectOption } from "../../ui/selectStyles";
-import { SearchIcon, TrashIcon } from "../../icons/bulk";
+import {
+  ArrowLeftIcon,
+  MoreIcon,
+  SearchIcon,
+  TrashIcon,
+} from "../../icons/bulk";
 import { MarkdownContent } from "../../whats-new/MarkdownContent";
 import { copyToClipboard } from "../history/clipboard";
 import { MeetingAsk, type Exchange } from "./MeetingAsk";
@@ -449,7 +453,7 @@ const MoreMenu: React.FC<{
         onClick={() => setOpen((o) => !o)}
         className="rounded-full p-2 text-mid-gray cursor-pointer hover:bg-row hover:text-text focus-visible:outline-2 focus-visible:outline-logo-primary"
       >
-        <MoreHorizontal className="h-4 w-4" aria-hidden="true" />
+        <MoreIcon width={18} height={18} />
       </button>
       {open && (
         <div
@@ -568,7 +572,7 @@ const MeetingDetail: React.FC<{
           onClick={onBack}
           className="-ms-2 shrink-0 rounded-full p-2 cursor-pointer hover:bg-row focus-visible:outline-2 focus-visible:outline-logo-primary"
         >
-          <ArrowLeft className="h-4 w-4" aria-hidden="true" />
+          <ArrowLeftIcon width={18} height={18} />
         </button>
         <h2 className="me-auto min-w-0 truncate text-base font-semibold">
           {entry.title}

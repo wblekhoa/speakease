@@ -41,8 +41,8 @@ repo; each cites its source.
     microphone-only ones and "Tệp" for meetings made from Files (stored with their own title as the app).
   - Delete asks first and says it cannot be undone: it removes the meeting, its History entry and its audio.
   - Copy on the Ask tab takes the notes, as on the Notes tab.
-  - The back arrow and the three dots use the lucide icons the app already uses for chevrons and close; WAVE's
-    reviewer flags lucide, as it does for the existing Start menu chevron.
+  - The back arrow and the three dots are copied from the app's icon source, each in a rounded square (WAVE's
+    canon back arrow reads as "rewind" at 18 px). The bar's chevron and tick stay lucide, as on `main`.
 - **Reverse**: put `MeetingStart` back above the list and render the detail beside it (the layout before this entry,
   `d082cb8`).
 

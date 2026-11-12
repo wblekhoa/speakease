@@ -106,4 +106,5 @@ panel squeezed beside the notes; a back control far from the title (top-left of 
 - 2026-11-12: created from the owner's form.
 - 2026-11-12: built. The summary for a meeting without notes is the transcript's first line, not the reason (the
   reason already shows in the detail; a transcript line says what the meeting was about). Copy on the Ask tab takes
-  the notes. The back arrow and three dots use lucide like the rest of the app; WAVE's reviewer flags it.
+  the notes. The back arrow and three dots are copied from the icon source (`bulk.tsx`); the bar's chevron and
+  tick stay lucide as on `main` (WAVE's reviewer flags that import, which predates this change).
