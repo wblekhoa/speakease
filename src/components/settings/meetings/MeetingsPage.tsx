@@ -279,7 +279,8 @@ const MeetingDetail: React.FC<{
         </div>
         {/* The template the notes are written with; choosing one rewrites
             them (SE-MEET-010). */}
-        {/* With no template yet, the menu's placeholder names it. */}
+        {/* With no template yet, the menu's placeholder names it. A meeting
+            stored with no AI can be written once AI is there (SE-MEET-012). */}
         {meeting.kind && (
           <span className="text-sm text-mid-gray">
             {t("meeting.page.template")}
@@ -294,7 +295,7 @@ const MeetingDetail: React.FC<{
           selectedValue={meeting.kind}
           placeholder={t("meeting.page.template")}
           onSelect={rewrite}
-          disabled={writing || view.kind === "noAi"}
+          disabled={writing}
         />
       </div>
 

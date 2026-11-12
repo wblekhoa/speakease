@@ -1426,10 +1426,16 @@ pub mod session {
     /// Sent when a template switch could not write new notes; the old ones stay.
     pub const REWRITE_FAILED_EVENT: &str = "meeting-notes-rewrite-failed";
 
-    /// Whether a template switch's result replaces the notes the user has:
-    /// only new notes (or an empty meeting's one line) do; a failure or "no
-    /// AI" keeps the old ones (SE-MEET-010).
-    pub(crate) fn rewrite_replaces(state: &str) -> bool {
+    /// Whether a template switch's result (`state`) replaces what is stored:
+    /// new notes (or an empty meeting's one line) always do; a failure or "no
+    /// AI" keeps the notes the user has (SE-MEET-010). A meeting without notes
+    /// has nothing to keep, so it stores why there are none now (SE-MEET-012).
+    pub(crate) fn rewrite_replaces(had_notes: bool, state: &str) -> bool {
+        !had_notes || wrote_notes(state)
+    }
+
+    /// Whether a notes attempt ended with text to show.
+    fn wrote_notes(state: &str) -> bool {
         matches!(state, "done" | "empty")
     }
 
@@ -1538,7 +1544,12 @@ pub mod session {
                 )),
                 _ => None,
             };
-            let saved = match stored.filter(|s| rewrite_replaces(&s.state)) {
+            // No new notes: the page says the switch could not write them.
+            if !stored.as_ref().is_some_and(|s| wrote_notes(&s.state)) {
+                let _ = app.emit(REWRITE_FAILED_EVENT, history_id);
+            }
+            let had_notes = meeting.notes.is_some();
+            let saved = match stored.filter(|s| rewrite_replaces(had_notes, &s.state)) {
                 Some(stored) => history.set_meeting_notes(
                     history_id,
                     stored.kind,
@@ -1548,16 +1559,13 @@ pub mod session {
                 ),
                 // Failed, no AI any more, or the entry went: the notes the
                 // user had stay as they were.
-                None => {
-                    let _ = app.emit(REWRITE_FAILED_EVENT, history_id);
-                    history.set_meeting_notes(
-                        history_id,
-                        meeting.kind.as_deref(),
-                        meeting.notes.as_deref(),
-                        &meeting.notes_state,
-                        meeting.notes_engine.as_deref(),
-                    )
-                }
+                None => history.set_meeting_notes(
+                    history_id,
+                    meeting.kind.as_deref(),
+                    meeting.notes.as_deref(),
+                    &meeting.notes_state,
+                    meeting.notes_engine.as_deref(),
+                ),
             };
             if let Err(e) = saved {
                 log::error!("Meeting notes: cannot save: {e}");
@@ -1642,11 +1650,24 @@ mod tests {
     // SE-MEET-010
     #[test]
     fn a_failed_template_switch_keeps_the_old_notes() {
-        assert!(session::rewrite_replaces("done"));
-        assert!(session::rewrite_replaces("empty"));
-        assert!(!session::rewrite_replaces("failed"));
-        assert!(!session::rewrite_replaces("no_ai:ai_off"));
-        assert!(!session::rewrite_replaces("no_ai:nothing_available"));
+        assert!(session::rewrite_replaces(true, "done"));
+        assert!(session::rewrite_replaces(true, "empty"));
+        assert!(!session::rewrite_replaces(true, "failed"));
+        assert!(!session::rewrite_replaces(true, "no_ai:ai_off"));
+        assert!(!session::rewrite_replaces(true, "no_ai:nothing_available"));
+    }
+
+    // SE-MEET-010/012: a meeting stored with no notes (no AI, or failed) has
+    // nothing to keep, so a template switch stores what it got - the notes,
+    // or why there are none now - instead of the old reason.
+    #[test]
+    fn a_template_switch_on_a_meeting_without_notes_stores_what_it_got() {
+        assert!(session::rewrite_replaces(false, "done"));
+        assert!(session::rewrite_replaces(
+            false,
+            "no_ai:notes_model_missing"
+        ));
+        assert!(session::rewrite_replaces(false, "failed"));
     }
 
     // SE-MEET-012: the ids the interface's lines are keyed by.
