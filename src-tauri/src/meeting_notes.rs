@@ -744,13 +744,20 @@ pub mod cli {
             };
         }
         if choice == "key" {
-            let settings = crate::settings::get_settings(app);
-            return keyed_engine(&settings)
-                .ok_or_else(|| "no provider with a key in settings".to_string());
+            return forced_key(&crate::settings::get_settings(app));
         }
         Err(format!(
             "unknown engine '{choice}' (apple, key, local=<model.gguf>)"
         ))
+    }
+
+    /// `--notes-engine key`: the saved key whatever provider is picked, but
+    /// never with AI switched off.
+    pub(crate) fn forced_key(settings: &AppSettings) -> Result<NotesEngine, String> {
+        if !settings.post_process_enabled {
+            return Err("AI is switched off in settings".to_string());
+        }
+        keyed_engine(settings).ok_or_else(|| "no provider with a key in settings".to_string())
     }
 
     /// Returns a process exit code (0 ok, 1 runtime failure, 2 bad input).
@@ -1180,7 +1187,7 @@ mod tests {
 
     // SE-MEET-012
     #[test]
-    fn the_engine_order_is_apple_then_key_then_on_device_then_none() {
+    fn the_engine_order_is_apple_then_key_then_on_device_when_on_device_is_not_picked() {
         let local = Some(PathBuf::from("/models/qwen.gguf"));
         let keyed_id = crate::settings::get_default_settings()
             .post_process_providers
@@ -1257,10 +1264,18 @@ mod tests {
             pick_engine(&picked, true, local.clone()),
             Ok(NotesEngine::Apple)
         ));
-        // The comparison CLI's `key` still finds the saved key.
+        // The comparison CLI's `key` still finds the saved key...
         assert!(matches!(
-            keyed_engine(&picked),
-            Some(NotesEngine::Key { provider, .. }) if provider.id == keyed_id
+            cli::forced_key(&picked),
+            Ok(NotesEngine::Key { provider, .. }) if provider.id == keyed_id
+        ));
+        // ...but not with AI switched off, which also still wins here.
+        let mut off = picked.clone();
+        off.post_process_enabled = false;
+        assert!(cli::forced_key(&off).is_err());
+        assert!(matches!(
+            pick_engine(&off, false, local.clone()),
+            Err(NoAiReason::AiOff)
         ));
         // A keyed provider picked instead: the key again, as before.
         picked.post_process_provider_id = keyed_id.clone();
