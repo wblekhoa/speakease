@@ -43,16 +43,24 @@ export type NotesView =
   | { kind: "notes" }
   | { kind: "empty" }
   | { kind: "failed" }
-  | { kind: "noAi"; reason: "ai_off" | "nothing_available" };
+  | {
+      kind: "noAi";
+      reason: "ai_off" | "nothing_available" | "notes_model_missing";
+    };
 
 export const notesView = (state: string, hasNotes: boolean): NotesView => {
   if (state === "writing") return { kind: "writing" };
   if (state === "empty") return { kind: "empty" };
   if (state === "failed") return { kind: "failed" };
   if (state.startsWith("no_ai:")) {
+    const reason = state.slice("no_ai:".length);
     return {
       kind: "noAi",
-      reason: state.endsWith(":ai_off") ? "ai_off" : "nothing_available",
+      // A reason this build does not know reads as "nothing available".
+      reason:
+        reason === "ai_off" || reason === "notes_model_missing"
+          ? reason
+          : "nothing_available",
     };
   }
   return hasNotes ? { kind: "notes" } : { kind: "failed" };

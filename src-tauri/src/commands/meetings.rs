@@ -186,8 +186,9 @@ pub async fn note_file_as_meeting(app: AppHandle, history_id: i64) -> Result<(),
 }
 
 // SE-MEET-014
-/// Why no AI can answer right now (`ai_off` / `nothing_available`), or
-/// `None`, so the Q&A says so before a question is typed.
+/// Why no AI can answer right now (`ai_off` / `nothing_available` /
+/// `notes_model_missing`), or `None`, so the Q&A says so before a question
+/// is typed.
 #[tauri::command]
 #[specta::specta]
 pub fn meeting_ai_missing(app: AppHandle) -> Option<String> {

@@ -45,6 +45,15 @@ assert.deepEqual(notesView("no_ai:nothing_available", false), {
   kind: "noAi",
   reason: "nothing_available",
 });
+// SE-MEET-012: on-device picked, its notes model not downloaded.
+assert.deepEqual(notesView("no_ai:notes_model_missing", false), {
+  kind: "noAi",
+  reason: "notes_model_missing",
+});
+assert.deepEqual(notesView("no_ai:something_newer", false), {
+  kind: "noAi",
+  reason: "nothing_available",
+});
 
 // SE-MEET-015: a file holds the notes, then the transcript; .txt has no "#".
 const meeting = {
@@ -87,6 +96,10 @@ assert.equal(askError("no_ai:ai_off"), "meeting.page.ask.noAi.ai_off");
 assert.equal(
   askError("no_ai:nothing_available"),
   "meeting.page.ask.noAi.nothing_available",
+);
+assert.equal(
+  askError("no_ai:notes_model_missing"),
+  "meeting.page.ask.noAi.notes_model_missing",
 );
 assert.equal(askError("missing: gone"), "meeting.page.ask.failed");
 assert.equal(askError(""), "meeting.page.ask.failed");

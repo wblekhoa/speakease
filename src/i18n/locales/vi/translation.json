@@ -1191,7 +1191,8 @@
       "failed": "Không viết được ghi chú. Bản ghi lời vẫn đầy đủ ở đây.",
       "noAi": {
         "ai_off": "AI đang tắt trong AI & dịch, nên không có ghi chú. Bản ghi lời là nội dung cuộc họp.",
-        "nothing_available": "Máy Mac này chưa có AI để viết ghi chú (Apple Intelligence, khoá API hoặc mô hình trên máy), nên không có ghi chú. Bản ghi lời là nội dung cuộc họp."
+        "nothing_available": "Máy Mac này chưa có AI để viết ghi chú (Apple Intelligence, khoá API hoặc mô hình trên máy), nên không có ghi chú. Bản ghi lời là nội dung cuộc họp.",
+        "notes_model_missing": "Bạn đang chọn mô hình AI trên máy ở AI & dịch, nhưng mô hình dùng cho cuộc họp (Qwen3.5 4B) chưa được tải, nên không có ghi chú. Bản ghi lời là nội dung cuộc họp."
       },
       "template": "Mẫu ghi chú",
       "kinds": {
@@ -1222,7 +1223,8 @@
         "failed": "Không hỏi được. Thử lại sau.",
         "noAi": {
           "ai_off": "AI đang tắt nên chưa hỏi được. Bật lại ở AI & dịch.",
-          "nothing_available": "Máy Mac này chưa có AI để trả lời (Apple Intelligence, khoá API hoặc mô hình trên máy)."
+          "nothing_available": "Máy Mac này chưa có AI để trả lời (Apple Intelligence, khoá API hoặc mô hình trên máy).",
+          "notes_model_missing": "Bạn đang chọn mô hình AI trên máy, nhưng mô hình dùng cho cuộc họp (Qwen3.5 4B) chưa được tải. Tải nó ở AI & dịch."
         }
       }
     },
@@ -1258,7 +1260,8 @@
       },
       "noAi": {
         "ai_off": "AI đang tắt ở AI & dịch nên không có bỏ lỡ gì, tóm tắt và gợi ý. Lời nói vẫn chạy.",
-        "nothing_available": "Máy Mac này chưa có AI cho bỏ lỡ gì, tóm tắt và gợi ý. Lời nói vẫn chạy."
+        "nothing_available": "Máy Mac này chưa có AI cho bỏ lỡ gì, tóm tắt và gợi ý. Lời nói vẫn chạy.",
+        "notes_model_missing": "Bạn đang chọn mô hình AI trên máy, nhưng mô hình dùng cho cuộc họp (Qwen3.5 4B) chưa được tải, nên không có bỏ lỡ gì, tóm tắt và gợi ý. Lời nói vẫn chạy."
       }
     }
   }

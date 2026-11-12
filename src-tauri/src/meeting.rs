@@ -1571,11 +1571,12 @@ pub mod session {
         match reason {
             crate::meeting_notes::NoAiReason::AiOff => "ai_off",
             crate::meeting_notes::NoAiReason::NothingAvailable => "nothing_available",
+            crate::meeting_notes::NoAiReason::NotesModelMissing => "notes_model_missing",
         }
     }
 
-    /// Why this Mac has no AI for meetings now ("ai_off" or
-    /// "nothing_available"), if it has none.
+    /// Why this Mac has no AI for meetings now ("ai_off",
+    /// "nothing_available" or "notes_model_missing"), if it has none.
     pub(crate) fn ai_missing(app: &AppHandle) -> Option<String> {
         crate::meeting_notes::engine_for(app)
             .err()
@@ -1646,6 +1647,7 @@ mod tests {
         assert!(!session::rewrite_replaces("failed"));
         assert!(!session::rewrite_replaces("no_ai:ai_off"));
         assert!(!session::rewrite_replaces("no_ai:nothing_available"));
+        assert!(!session::rewrite_replaces("no_ai:notes_model_missing"));
     }
 
     // SE-MEET-003

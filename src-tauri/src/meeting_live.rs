@@ -57,7 +57,8 @@ pub struct LiveView {
     pub lines: Vec<LiveLine>,
     pub summary: Option<String>,
     pub suggestions: Vec<Suggestion>,
-    /// Why levels 3-5 cannot run ("ai_off" / "nothing_available").
+    /// Why levels 3-5 cannot run ("ai_off" / "nothing_available" /
+    /// "notes_model_missing").
     pub ai_missing: Option<String>,
     /// A microphone-only meeting (SE-MEET-020): every line is the
     /// microphone, which hears the whole room, so lines carry no Me / Others

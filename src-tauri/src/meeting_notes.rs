@@ -559,9 +559,9 @@ pub async fn write_notes<A: NotesAi>(
 }
 
 // SE-MEET-012
-/// Which AI writes the notes: Apple Intelligence, else a provider the user
-/// gave a key, else Qwen3.5-4B on the Mac; the dictation provider setting
-/// does not choose it.
+/// Which AI writes the notes: Apple Intelligence; else, when the on-device
+/// provider is the one picked in AI & Translate, Qwen3.5-4B on the Mac and
+/// nothing else; else a provider the user gave a key, else Qwen3.5-4B.
 #[derive(Clone)]
 pub enum NotesEngine {
     Apple,
@@ -594,6 +594,9 @@ pub enum NoAiReason {
     AiOff,
     /// No Apple Intelligence, no key, and Qwen3.5-4B is not downloaded.
     NothingAvailable,
+    /// The on-device provider is picked but Qwen3.5-4B is not downloaded;
+    /// a saved key is not used in its place.
+    NotesModelMissing,
 }
 
 /// The catalog id of the on-device model meeting notes use (owner, 30/10).
@@ -613,6 +616,24 @@ pub fn pick_engine(
     if apple {
         return Ok(NotesEngine::Apple);
     }
+    // On-device picked in AI & Translate: the meeting's text stays on the
+    // Mac, so a saved key is never the fallback (owner, 12/11).
+    if settings.post_process_provider_id == LOCAL_AI_PROVIDER_ID {
+        return local_model
+            .map(NotesEngine::OnDevice)
+            .ok_or(NoAiReason::NotesModelMissing);
+    }
+    if let Some(engine) = keyed_engine(settings) {
+        return Ok(engine);
+    }
+    local_model
+        .map(NotesEngine::OnDevice)
+        .ok_or(NoAiReason::NothingAvailable)
+}
+
+/// A provider with a key and a model: the one picked in AI & Translate
+/// first, then any other.
+fn keyed_engine(settings: &AppSettings) -> Option<NotesEngine> {
     let keyed = |provider: &PostProcessProvider| -> Option<NotesEngine> {
         if provider.id == APPLE_INTELLIGENCE_PROVIDER_ID || provider.id == LOCAL_AI_PROVIDER_ID {
             return None;
@@ -633,17 +654,10 @@ pub fn pick_engine(
             api_key,
         })
     };
-    // The provider picked in AI & Translate first, then any other with a key.
-    let active = settings.active_post_process_provider();
-    if let Some(engine) = active.and_then(keyed) {
-        return Ok(engine);
-    }
-    if let Some(engine) = settings.post_process_providers.iter().find_map(keyed) {
-        return Ok(engine);
-    }
-    local_model
-        .map(NotesEngine::OnDevice)
-        .ok_or(NoAiReason::NothingAvailable)
+    settings
+        .active_post_process_provider()
+        .and_then(keyed)
+        .or_else(|| settings.post_process_providers.iter().find_map(keyed))
 }
 
 /// [`NotesAi`] over a real engine.
@@ -731,10 +745,8 @@ pub mod cli {
         }
         if choice == "key" {
             let settings = crate::settings::get_settings(app);
-            return match pick_engine(&settings, false, None) {
-                Ok(engine @ NotesEngine::Key { .. }) => Ok(engine),
-                _ => Err("no provider with a key in settings".to_string()),
-            };
+            return keyed_engine(&settings)
+                .ok_or_else(|| "no provider with a key in settings".to_string());
         }
         Err(format!(
             "unknown engine '{choice}' (apple, key, local=<model.gguf>)"
@@ -1214,6 +1226,47 @@ mod tests {
         assert!(matches!(
             pick_engine(&settings_with(false, &[]), true, local),
             Err(NoAiReason::AiOff)
+        ));
+    }
+
+    // SE-MEET-012
+    #[test]
+    fn on_device_picked_never_falls_back_to_a_saved_key() {
+        let local = Some(PathBuf::from("/models/qwen.gguf"));
+        let keyed_id = crate::settings::get_default_settings()
+            .post_process_providers
+            .iter()
+            .find(|p| p.id != APPLE_INTELLIGENCE_PROVIDER_ID && p.id != LOCAL_AI_PROVIDER_ID)
+            .map(|p| p.id.clone())
+            .expect("a keyed provider");
+        let mut picked = settings_with(true, &[(keyed_id.as_str(), "sk-test")]);
+        picked.post_process_provider_id = LOCAL_AI_PROVIDER_ID.to_string();
+
+        // The notes model is there: it writes them, key or no key.
+        assert!(matches!(
+            pick_engine(&picked, false, local.clone()),
+            Ok(NotesEngine::OnDevice(path)) if path == PathBuf::from("/models/qwen.gguf")
+        ));
+        // It is not: no notes, and the key is left alone.
+        assert!(matches!(
+            pick_engine(&picked, false, None),
+            Err(NoAiReason::NotesModelMissing)
+        ));
+        // Apple Intelligence is on the Mac too, so it still comes first.
+        assert!(matches!(
+            pick_engine(&picked, true, local.clone()),
+            Ok(NotesEngine::Apple)
+        ));
+        // The comparison CLI's `key` still finds the saved key.
+        assert!(matches!(
+            keyed_engine(&picked),
+            Some(NotesEngine::Key { provider, .. }) if provider.id == keyed_id
+        ));
+        // A keyed provider picked instead: the key again, as before.
+        picked.post_process_provider_id = keyed_id.clone();
+        assert!(matches!(
+            pick_engine(&picked, false, local),
+            Ok(NotesEngine::Key { provider, .. }) if provider.id == keyed_id
         ));
     }
 }
