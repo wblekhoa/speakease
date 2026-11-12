@@ -11,6 +11,24 @@ tags: [area/docs]
 
 # SpeakEase — Decisions (append-only, newest first)
 
+## 2026-11-12 · On-device picked: a meeting's text never goes to a saved key (owner)
+
+- **Context**: on a Mac without Apple Intelligence, 0.1.2 sends a meeting's text to a service the user saved a key
+  for even when the on-device model is the provider picked in AI & Translate (the order of 31/10 below, disclosed in
+  `PRIVACY.md`). The coordinator asked the owner whether the picked on-device model should come first.
+- **Owner's decision** (12/11, the button "Đổi thứ tự"): yes.
+- **Decision**: with the on-device model picked, meeting notes, questions and live help run on Qwen3.5-4B on the Mac
+  or not at all. Apple Intelligence still comes first where the Mac has it (it also runs on the Mac). With any other
+  provider picked the order of 31/10 stands (key, then Qwen3.5-4B).
+- **AI default, not owner-confirmed**: when on-device is picked and Qwen3.5-4B is not downloaded there are no notes
+  (reason `notes_model_missing`, with its own line on the Meetings page, the question box and the live panel) rather
+  than falling back to the key - a fallback would send the text out in the very case the owner asked to close.
+  Another downloaded on-device model is still not used for notes (31/10).
+- **Evidence**: `pick_engine` and `on_device_picked_never_falls_back_to_a_saved_key` in
+  `src-tauri/src/meeting_notes.rs`; `src/lib/meeting.test.ts`. Not in 0.1.2: it ships with the next release.
+- **Reverse**: remove the `LOCAL_AI_PROVIDER_ID` branch in `pick_engine` (the key comes first again) and restore the
+  PRIVACY row.
+
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
 

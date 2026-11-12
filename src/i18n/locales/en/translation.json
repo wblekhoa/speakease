@@ -1191,7 +1191,8 @@
       "failed": "The notes could not be written. The whole transcript is here.",
       "noAi": {
         "ai_off": "AI is switched off in AI & Translate, so there are no notes. The transcript is the record.",
-        "nothing_available": "This Mac has no AI for notes (Apple Intelligence, an API key or the on-device model), so there are no notes. The transcript is the record."
+        "nothing_available": "This Mac has no AI for notes (Apple Intelligence, an API key or the on-device model), so there are no notes. The transcript is the record.",
+        "notes_model_missing": "The on-device model is picked in AI & Translate, but the model meetings run on (Qwen3.5 4B) is not downloaded, so there are no notes. The transcript is the record."
       },
       "template": "Template",
       "kinds": {
@@ -1222,7 +1223,8 @@
         "failed": "Couldn't ask. Try again later.",
         "noAi": {
           "ai_off": "AI is switched off, so questions can't be answered. Turn it on in AI & Translate.",
-          "nothing_available": "This Mac has no AI to answer (Apple Intelligence, an API key or the on-device model)."
+          "nothing_available": "This Mac has no AI to answer (Apple Intelligence, an API key or the on-device model).",
+          "notes_model_missing": "The on-device model is picked, but the model meetings run on (Qwen3.5 4B) is not downloaded. Download it in AI & Translate."
         }
       }
     },
@@ -1258,7 +1260,8 @@
       },
       "noAi": {
         "ai_off": "AI is switched off in AI & Translate, so catch-up, summary and suggestions are off. The transcript still runs.",
-        "nothing_available": "This Mac has no AI for catch-up, summary or suggestions. The transcript still runs."
+        "nothing_available": "This Mac has no AI for catch-up, summary or suggestions. The transcript still runs.",
+        "notes_model_missing": "The on-device model is picked, but the model meetings run on (Qwen3.5 4B) is not downloaded, so catch-up, summary and suggestions are off. The transcript still runs."
       }
     }
   }
