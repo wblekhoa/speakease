@@ -11,6 +11,9 @@ tags: [area/docs]
 
 # SpeakEase — Decisions (append-only, newest first)
 
+Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
+repo; each cites its source.
+
 ## 2026-11-12 · On-device picked: a meeting's text never goes to a saved key (owner)
 
 - **Context**: on a Mac without Apple Intelligence, 0.1.2 sends a meeting's text to a service the user saved a key
@@ -28,9 +31,6 @@ tags: [area/docs]
   `src-tauri/src/meeting_notes.rs`; `src/lib/meeting.test.ts`. Not in 0.1.2: it ships with the next release.
 - **Reverse**: remove the `LOCAL_AI_PROVIDER_ID` branch in `pick_engine` (the key comes first again) and restore the
   PRIVACY row.
-
-Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
-repo; each cites its source.
 
 ## 2026-11-12 · A switch for "Take notes of this call?", on by default (coordinator, under the owner's delegation)
 

@@ -1647,7 +1647,21 @@ mod tests {
         assert!(!session::rewrite_replaces("failed"));
         assert!(!session::rewrite_replaces("no_ai:ai_off"));
         assert!(!session::rewrite_replaces("no_ai:nothing_available"));
-        assert!(!session::rewrite_replaces("no_ai:notes_model_missing"));
+    }
+
+    // SE-MEET-012: the ids the interface's lines are keyed by.
+    #[test]
+    fn each_no_ai_reason_has_the_id_the_interface_reads() {
+        use crate::meeting_notes::NoAiReason;
+        assert_eq!(session::no_ai_id(NoAiReason::AiOff), "ai_off");
+        assert_eq!(
+            session::no_ai_id(NoAiReason::NothingAvailable),
+            "nothing_available"
+        );
+        assert_eq!(
+            session::no_ai_id(NoAiReason::NotesModelMissing),
+            "notes_model_missing"
+        );
     }
 
     // SE-MEET-003

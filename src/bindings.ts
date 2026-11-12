@@ -1242,8 +1242,9 @@ async askMeeting(historyId: number, question: string) : Promise<Result<MeetingAn
 }
 },
 /**
- * Why no AI can answer right now (`ai_off` / `nothing_available`), or
- * `None`, so the Q&A says so before a question is typed.
+ * Why no AI can answer right now (`ai_off` / `nothing_available` /
+ * `notes_model_missing`), or `None`, so the Q&A says so before a question
+ * is typed.
  */
 async meetingAiMissing() : Promise<string | null> {
     return await TAURI_INVOKE("meeting_ai_missing");
@@ -1547,7 +1548,8 @@ me: boolean; text: string }
  */
 export type LiveView = { level: number; panel_open: boolean; lines: LiveLine[]; summary: string | null; suggestions: Suggestion[]; 
 /**
- * Why levels 3-5 cannot run ("ai_off" / "nothing_available").
+ * Why levels 3-5 cannot run ("ai_off" / "nothing_available" /
+ * "notes_model_missing").
  */
 ai_missing: string | null; 
 /**
