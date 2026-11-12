@@ -3,6 +3,17 @@
 All notable changes to SpeakEase. SpeakEase is built on Handy; changes that
 come from merging Handy are summarised, not repeated.
 
+## 0.1.3 — 2026-11-12
+
+- **A meeting's text stays on the Mac when you picked the on-device model.**
+  On a Mac without Apple Intelligence, 0.1.2 sent a meeting's text to a service
+  you had saved a key for, even with On-device model picked in AI & Translate.
+  Now, with On-device model picked there, meeting notes, questions about a
+  meeting and live help run on Qwen3.5 4B on the Mac or not at all: if that
+  model is not downloaded they are off, and the app says why instead of using
+  the key. With Apple Intelligence on the Mac, or with another service picked,
+  nothing changes.
+
 ## 0.1.2 — 2026-11-12
 
 - **Meeting notes (beta)**, on macOS 14.2 and later: press **Start recording**

@@ -21,8 +21,7 @@ summary: "Open threads for SpeakEase: meeting notes built through phase 5 and Fi
   open items from the #16 gate: a greyed Start/Stop still darkens on hover; the load-error text says "open this page
   again" although the list also reloads when a meeting event arrives; Yes pressed within 3 s of switching the
   question off records nothing.
-  After 0.1.2, not released (branch `fix/meeting-on-device-first`, owner 12/11 "Đổi thứ tự"): with the on-device
-  model picked in AI & Translate, meeting text never goes to a saved key - Qwen3.5-4B or no notes (reason
-  `notes_model_missing`); the next release's CHANGELOG section must say so. A meeting stored with a "no AI" state
+  In 0.1.3 (wblekhoa/speakease#18, owner 12/11 "Đổi thứ tự"): with the on-device model picked in AI & Translate,
+  meeting text never goes to a saved key - Qwen3.5-4B or no notes (reason `notes_model_missing`). A meeting stored with a "no AI" state
   has its template menu disabled, so its notes cannot be written later (open).
   Next: the owner's first real meeting in 0.1.2, then fix what it shows.
