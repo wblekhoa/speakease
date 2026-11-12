@@ -14,6 +14,20 @@ tags: [area/docs]
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
 
+## 2026-11-12 · List pages look alike: Meetings takes History's cards (owner)
+
+- **Context**: with screenshots of History and the new Meetings list side by side: "tôi cần chúng ta phải xây dựng UI
+  một cách đồng bộ và thống nhất giữa các dạng UI với nhau ví dụ như là UI lịch sử danh sách thì chúng ta cũng cần
+  phải giống những cái trang danh sách khác".
+- **Decision**: the Meetings list uses History's layout - day headings, one bordered card per meeting, the time
+  first in a small muted line (with the app and length), the summary in the page's text size, the bin among the
+  card's end icons, faint at rest; loading, empty and no-match in History's notice card. The day heading, card,
+  notice and icon button now live once in `src/components/ui/EntryList.tsx`, used by both pages.
+- **AI default, not owner-confirmed**: the app name moves from the row's title into the small top line, as History
+  shows a file's title; the date leaves the row for the day heading. The Files page's "Recent" list (rows in one
+  card) is not changed.
+- **Reverse**: the borderless rows of `20dad52`.
+
 ## 2026-11-12 · Meetings page: a list first, a meeting's detail on click (owner form)
 
 - **Context**: the owner, with a screenshot of the Meetings page: "chúng ta cần làm nó tối giản hơn và chia thành từng

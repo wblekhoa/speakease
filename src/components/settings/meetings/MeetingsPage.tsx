@@ -22,9 +22,18 @@ import {
 import { Button } from "../../ui/Button";
 import { Dialog } from "../../ui/Dialog";
 import { Dropdown, placedMenuStyle, useMenuPlace } from "../../ui/Dropdown";
+import {
+  DayHeader,
+  dayKey,
+  entryActions,
+  entryCard,
+  entryNotice,
+  IconButton,
+} from "../../ui/EntryList";
 import { selectMenuSurface, selectOption } from "../../ui/selectStyles";
 import {
   ArrowLeftIcon,
+  FolderOpenIcon,
   MoreIcon,
   SearchIcon,
   TrashIcon,
@@ -47,11 +56,11 @@ let askedSoFar: Record<number, Exchange[]> = {};
 /** Lines an answer used, and the one the user clicked. */
 type Cited = { lines: number[]; line: number };
 
-/** dd/mm HH:MM, as in the meeting's History title (meeting.rs). */
-const startedAt = (seconds: number) => {
+/** HH:MM; the day is in the heading above (EntryList's DayHeader). */
+const clockTime = (seconds: number) => {
   const at = new Date(seconds * 1000);
   const two = (n: number) => String(n).padStart(2, "0");
-  return `${two(at.getDate())}/${two(at.getMonth() + 1)} ${two(at.getHours())}:${two(at.getMinutes())}`;
+  return `${two(at.getHours())}:${two(at.getMinutes())}`;
 };
 
 // SE-MEET-018, SE-MEET-024
@@ -250,7 +259,7 @@ const MeetingList: React.FC<{
   returnTo,
 }) => {
   const { t } = useTranslation();
-  const listRef = useRef<HTMLUListElement>(null);
+  const listRef = useRef<HTMLDivElement>(null);
 
   // Only when the list first shows after Back, not on every refresh.
   const backFrom = useRef(returnTo);
@@ -269,18 +278,14 @@ const MeetingList: React.FC<{
   if (meetings === null) {
     return (
       failure || (
-        <p className="px-4 text-sm text-mid-gray" role="status">
+        <p className={entryNotice} role="status">
           {t("common.loading")}
         </p>
       )
     );
   }
   if (meetings.length === 0) {
-    return (
-      <p className="rounded-2xl border border-hairline bg-surface px-5 py-4 text-sm">
-        {t("meeting.page.empty")}
-      </p>
-    );
+    return <p className={entryNotice}>{t("meeting.page.empty")}</p>;
   }
 
   const microphone = t("meeting.start.microphoneLabel");
@@ -338,74 +343,92 @@ const MeetingList: React.FC<{
       </div>
 
       {shown.length === 0 ? (
-        <p className="px-4 text-sm text-mid-gray" role="status">
+        <p className={entryNotice} role="status">
           {t("meeting.page.noMatch")}
         </p>
       ) : (
-        <ul
+        // Laid out as History is (owner, 12/11: list pages look alike): a
+        // card per meeting under its day, the time first, delete at the end.
+        <div
           ref={listRef}
-          className="space-y-1"
+          className="flex flex-col gap-2"
+          role="list"
           aria-label={t("sidebar.meetings")}
         >
-          {shown.map((m) => {
+          {shown.map((m, index) => {
             const { meeting } = m;
-            const label = originLabel(
-              meetingOrigin(meeting.app_name, m.title),
-              m.title,
-              microphone,
-            );
+            const origin = meetingOrigin(meeting.app_name, m.title);
             const summary = summaryLine(
               notesView(meeting.notes_state, meeting.notes !== null),
               meeting.notes,
               m.transcript,
             );
+            const length = lengthUnit(meeting.duration_ms);
             return (
-              <li
-                key={meeting.history_id}
-                className="group flex items-center rounded-2xl transition-colors hover:bg-glass-hover focus-within:bg-glass-hover"
-              >
-                <button
-                  type="button"
-                  data-meeting={meeting.history_id}
-                  onClick={() => onOpen(meeting.history_id)}
-                  className="min-w-0 flex-1 rounded-2xl px-4 py-3 text-start cursor-pointer focus-visible:outline-2 focus-visible:outline-logo-primary"
-                >
-                  <span className="flex items-baseline gap-3">
-                    <span className="min-w-0 truncate text-sm font-medium">
-                      {label}
+              <React.Fragment key={meeting.history_id}>
+                {(index === 0 ||
+                  dayKey(shown[index - 1].meeting.started_at) !==
+                    dayKey(meeting.started_at)) && (
+                  <DayHeader timestamp={meeting.started_at} />
+                )}
+                <div role="listitem" className={`${entryCard} relative`}>
+                  {/* The whole card opens the meeting; delete sits on top
+                      of it, so the two buttons never nest. */}
+                  <button
+                    type="button"
+                    data-meeting={meeting.history_id}
+                    onClick={() => onOpen(meeting.history_id)}
+                    className="flex w-full flex-col gap-2 rounded-2xl px-4 pt-3 pb-3 text-start cursor-pointer focus-visible:outline-2 focus-visible:outline-logo-primary"
+                  >
+                    <span className="flex min-h-7.5 items-center gap-2 pe-9 text-xs text-mid-gray">
+                      <span className="tabular-nums">
+                        {clockTime(meeting.started_at)}
+                      </span>
+                      <span className="flex min-w-0 items-center gap-1">
+                        {origin.kind === "file" && (
+                          <FolderOpenIcon
+                            width={14}
+                            height={14}
+                            className="shrink-0"
+                          />
+                        )}
+                        <span className="truncate">
+                          {originLabel(origin, m.title, microphone)}
+                        </span>
+                      </span>
+                      <span className="shrink-0 tabular-nums">
+                        {t(`meeting.page.length.${length.unit}`, {
+                          count: length.count,
+                        })}
+                      </span>
                     </span>
-                    <span className="ms-auto shrink-0 whitespace-nowrap text-sm text-mid-gray tabular-nums">
-                      {startedAt(meeting.started_at)} ·{" "}
-                      {t(
-                        `meeting.page.length.${lengthUnit(meeting.duration_ms).unit}`,
-                        {
-                          count: lengthUnit(meeting.duration_ms).count,
-                        },
-                      )}
-                    </span>
-                  </span>
-                  {summary !== "" && (
-                    <span className="mt-1 block truncate text-sm text-mid-gray">
-                      {summary ?? t("meeting.page.writing")}
-                    </span>
-                  )}
-                </button>
-                <button
-                  type="button"
-                  aria-label={t("meeting.page.delete.button", {
-                    title: m.title,
-                  })}
-                  title={t("common.delete")}
-                  onClick={() => onDelete(m)}
-                  // Shown at rest, faint, so delete can be found without hovering.
-                  className="me-2 shrink-0 rounded-full p-2 text-mid-gray/50 transition-colors cursor-pointer hover:bg-row hover:text-error group-hover:text-mid-gray group-focus-within:text-mid-gray focus-visible:outline-2 focus-visible:outline-logo-primary"
-                >
-                  <TrashIcon width={16} height={16} />
-                </button>
-              </li>
+                    {summary !== "" && (
+                      <span
+                        // The page's own 15px (App.css), as History's text.
+                        className={`block truncate leading-relaxed ${
+                          summary === null ? "text-mid-gray" : "text-text"
+                        }`}
+                      >
+                        {summary ?? t("meeting.page.writing")}
+                      </span>
+                    )}
+                  </button>
+                  <div className={`absolute end-4 top-3 ${entryActions}`}>
+                    <IconButton
+                      onClick={() => onDelete(m)}
+                      title={t("common.delete")}
+                      ariaLabel={t("meeting.page.delete.button", {
+                        title: m.title,
+                      })}
+                    >
+                      <TrashIcon width={18} height={18} />
+                    </IconButton>
+                  </div>
+                </div>
+              </React.Fragment>
             );
           })}
-        </ul>
+        </div>
       )}
     </>
   );
