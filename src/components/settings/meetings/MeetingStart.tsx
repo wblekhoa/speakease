@@ -1,7 +1,7 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
-import { Check, ChevronDown } from "lucide-react";
+import { Check, ChevronUp } from "lucide-react";
 import { commands, type MeetingSources, type MeetingState } from "@/bindings";
 import {
   AUTOMATIC,
@@ -14,20 +14,20 @@ import {
   type SourceChoice,
 } from "@/lib/meeting";
 import {
-  selectMenu,
+  selectMenuSurface,
   selectOption,
   selectOptionChosen,
 } from "../../ui/selectStyles";
-import { Button } from "../../ui/Button";
 
 /** meeting.rs session::STATE_EVENT. */
 const STATE_EVENT = "meeting-state";
 
 const NO_SOURCES: MeetingSources = { automatic: null, apps: [] };
 
-// SE-MEET-021
-/** Start / Stop for a meeting opened by hand, with a menu beside Start that
- *  picks the sound source for the next start. The choice lasts while the
+// SE-MEET-021, SE-MEET-024
+/** Start / Stop for a meeting opened by hand, in the bar at the bottom of
+ *  the Meetings list, with a menu above it that picks the sound source for
+ *  the next start. The choice lasts while the
  *  page is mounted and is not stored. Whoever started a meeting (this
  *  button, the shortcut, the tray, the call question), the control follows
  *  the `meeting-state` event. */
@@ -44,7 +44,7 @@ export const MeetingStart: React.FC = () => {
   const [pending, setPending] = useState(false);
   const [open, setOpen] = useState(false);
   const wrap = useRef<HTMLDivElement>(null);
-  // Button takes no ref (React 18): the chevron is found by its popup role.
+  // The source button is found by its popup role.
   const focusChevron = () =>
     wrap.current?.querySelector<HTMLButtonElement>("[aria-haspopup]")?.focus();
   const menu = useRef<HTMLDivElement>(null);
@@ -181,50 +181,78 @@ export const MeetingStart: React.FC = () => {
         : null;
 
   const items = sourceItems(source, sources, asked);
+  const recording = mode === "recording";
+  const status = phaseText ?? t(line.key, { app: line.app });
 
+  // SE-MEET-024: one floating bar like the Speak and Live subtitles pages
+  // (owner, 12/11): what will be recorded, which opens the source menu
+  // above it, and Start / Stop. Errors show above the bar.
   return (
-    <div ref={wrap} className="space-y-2">
-      <div className="relative flex">
-        <Button
-          variant="primary"
-          size="md"
-          className="min-w-0 flex-1 rounded-e-none aria-disabled:cursor-not-allowed aria-disabled:opacity-50"
+    <div className="flex max-w-full flex-col items-center gap-2">
+      {error && (
+        <p
+          className="max-w-full rounded-xl border border-hairline bg-surface px-3 py-1.5 text-xs text-error shadow-sm"
+          role="alert"
+        >
+          {t(`meeting.errors.${meetingErrorKey(error)}`)}
+        </p>
+      )}
+      <div
+        ref={wrap}
+        className="relative flex max-w-full items-center gap-1 rounded-full border border-hairline bg-surface p-1.5 shadow-sm"
+      >
+        <button
+          type="button"
+          aria-label={`${t("meeting.start.chooseSource")}: ${status}`}
+          aria-haspopup="menu"
+          aria-expanded={open}
+          disabled={mode !== "idle" || pending}
+          onClick={toggleMenu}
+          className="flex h-9 min-w-0 items-center gap-2 rounded-full px-3 text-sm cursor-pointer enabled:hover:bg-row disabled:cursor-default focus-visible:outline-2 focus-visible:outline-logo-primary"
+        >
+          <span
+            aria-hidden
+            className={`size-2 shrink-0 rounded-full ${
+              recording
+                ? "bg-logo-primary animate-pulse motion-reduce:animate-none"
+                : "bg-mid-gray/50"
+            }`}
+          />
+          <span className="truncate font-medium" role="status">
+            {status}
+          </span>
+          {mode === "idle" && (
+            <ChevronUp
+              className={`h-4 w-4 shrink-0 text-mid-gray transition-transform duration-200 motion-reduce:transition-none ${
+                open ? "rotate-180" : ""
+              }`}
+              aria-hidden="true"
+            />
+          )}
+        </button>
+        <button
+          type="button"
           // Pending and finishing keep the button focusable (aria-disabled,
           // not disabled), so keyboard focus is not dropped to the page.
           aria-disabled={pending || mode === "busy" || undefined}
           onClick={
-            pending || mode === "busy"
-              ? undefined
-              : mode === "recording"
-                ? stop
-                : start
+            pending || mode === "busy" ? undefined : recording ? stop : start
           }
+          className={`h-9 shrink-0 rounded-full px-4 text-sm font-semibold cursor-pointer aria-disabled:cursor-not-allowed aria-disabled:opacity-40 focus-visible:outline-2 focus-visible:outline-logo-primary ${
+            recording
+              ? "bg-row text-text hover:bg-mid-gray/25 aria-disabled:hover:bg-row"
+              : "text-white bg-background-ui hover:bg-brand-deep aria-disabled:hover:bg-background-ui"
+          }`}
         >
-          {mode === "recording" ? t("meeting.stop") : t("meeting.start.button")}
-        </Button>
-        <Button
-          variant="primary"
-          size="md"
-          aria-label={t("meeting.start.chooseSource")}
-          aria-haspopup="menu"
-          aria-expanded={open}
-          className="flex-none rounded-s-none border-s-hairline px-2"
-          disabled={mode !== "idle" || pending}
-          onClick={toggleMenu}
-        >
-          <ChevronDown
-            className={`h-4 w-4 transition-transform duration-200 motion-reduce:transition-none ${
-              open ? "rotate-180" : ""
-            }`}
-            aria-hidden="true"
-          />
-        </Button>
+          {recording ? t("meeting.stop") : t("meeting.start.button")}
+        </button>
         {open && (
           <div
             ref={menu}
             role="menu"
             aria-label={t("meeting.start.chooseSource")}
-            className={`${selectMenu} start-0 end-0 max-h-60 overflow-y-auto`}
+            // Above the bar: it sits at the bottom of the page.
+            className={`${selectMenuSurface} absolute bottom-full start-0 z-50 mb-2 max-h-60 w-72 max-w-[calc(100vw-2rem)] overflow-y-auto`}
             onKeyDown={onMenuKey}
           >
             {items.map((item) => (
@@ -265,14 +293,6 @@ export const MeetingStart: React.FC = () => {
           </div>
         )}
       </div>
-      <p className="text-xs text-mid-gray" role="status">
-        {phaseText ?? t(line.key, { app: line.app })}
-      </p>
-      {error && (
-        <p className="text-xs text-error" role="alert">
-          {t(`meeting.errors.${meetingErrorKey(error)}`)}
-        </p>
-      )}
     </div>
   );
 };

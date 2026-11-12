@@ -16,6 +16,12 @@ import {
   recordLine,
   sameSource,
   sourceItems,
+  filterOrigins,
+  folded,
+  matchesSearch,
+  meetingOrigin,
+  originKey,
+  summaryLine,
 } from "./meeting";
 
 // The timer counts from the start, and shows hours only past an hour.
@@ -214,4 +220,88 @@ console.log("meeting.test.ts (page): ok");
   assert.equal(fallsBackToAutomatic("no-app: gone"), true);
   assert.equal(fallsBackToAutomatic("microphone: busy"), false);
   console.log("meeting.test.ts: start control ok");
+}
+
+// SE-MEET-024: the Meetings list.
+{
+  // A meeting from Files stores its own title as the app (meeting.rs note_file).
+  assert.deepEqual(meetingOrigin("", "Micro · 12/11 09:00"), {
+    kind: "microphone",
+  });
+  assert.deepEqual(meetingOrigin("bai-giang.m4a", "bai-giang.m4a"), {
+    kind: "file",
+  });
+  assert.deepEqual(meetingOrigin("Zoom", "Zoom · 12/11 09:00"), {
+    kind: "app",
+    name: "Zoom",
+  });
+  assert.equal(originKey({ kind: "app", name: "Zoom" }), "app:Zoom");
+  assert.equal(originKey({ kind: "file" }), "file");
+
+  const row = (app: string, title: string) => ({
+    meeting: { app_name: app },
+    title,
+  });
+  // Apps A-Z, each once; then the microphone and files, only when present.
+  assert.deepEqual(
+    filterOrigins([
+      row("Zoom", "Zoom · 1"),
+      row("", "Micro · 2"),
+      row("Microsoft Teams", "Microsoft Teams · 3"),
+      row("Zoom", "Zoom · 4"),
+    ]).map(originKey),
+    ["app:Microsoft Teams", "app:Zoom", "microphone"],
+  );
+  assert.deepEqual(filterOrigins([row("a.m4a", "a.m4a")]).map(originKey), [
+    "file",
+  ]);
+  assert.deepEqual(filterOrigins([]), []);
+
+  // The notes' first line of content: headings skipped, marks dropped.
+  const notes =
+    "## Tóm tắt ngắn\n\n- **Chốt** ngày ra mắt 15/11.\n## Quyết định\n- Không có";
+  assert.equal(
+    summaryLine({ kind: "notes" }, notes, "[Tôi] alo"),
+    "Chốt ngày ra mắt 15/11.",
+  );
+  assert.equal(
+    summaryLine(
+      { kind: "notes" },
+      "## Việc cần làm\n- [ ] gửi file — Hùng",
+      "",
+    ),
+    "gửi file — Hùng",
+  );
+  // Without notes, the transcript's first line without its speaker label.
+  assert.equal(
+    summaryLine(
+      { kind: "noAi", reason: "ai_off" },
+      null,
+      "\n[Người khác] mình bắt đầu nhé\n[Tôi] ok",
+    ),
+    "mình bắt đầu nhé",
+  );
+  assert.equal(summaryLine({ kind: "failed" }, null, ""), "");
+  // First notes still being written: the row says so instead.
+  assert.equal(summaryLine({ kind: "writing" }, null, "[Tôi] alo"), null);
+  // A template switch keeps the old notes, so the row keeps their line.
+  assert.equal(
+    summaryLine({ kind: "writing" }, notes, ""),
+    "Chốt ngày ra mắt 15/11.",
+  );
+
+  // Search folds case, accents and đ; every word must be found somewhere.
+  assert.equal(folded("Cuộc HỌP Đầu"), "cuoc hop dau");
+  const entry = {
+    meeting: { app_name: "Zoom", notes: "## Tóm tắt\nChốt ngày ra mắt." },
+    title: "Zoom · 12/11 09:00",
+    transcript: "[Người khác] gửi thiết kế cho chị Lan",
+  };
+  assert.equal(matchesSearch(entry, ""), true);
+  assert.equal(matchesSearch(entry, "  "), true);
+  assert.equal(matchesSearch(entry, "chot"), true);
+  assert.equal(matchesSearch(entry, "Thiết kế  lan"), true);
+  assert.equal(matchesSearch(entry, "zoom 12/11"), true);
+  assert.equal(matchesSearch(entry, "lan teams"), false);
+  console.log("meeting.test.ts: meetings list ok");
 }

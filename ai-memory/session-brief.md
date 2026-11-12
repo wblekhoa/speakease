@@ -9,6 +9,12 @@ summary: "Open threads for SpeakEase: meeting notes built through phase 5 and Fi
 
 ## Open threads
 
+- **Meetings page redesign** (owner form 12/11; spec `docs/product/specs/2026-11-12-meetings-list-detail.md`,
+  SE-MEET-024, branch `feat/meetings-list-detail`): the page opens on a list (summary line, search, app filter,
+  delete with confirm), a row opens the detail (back, three tabs, three-dot menu), the record bar sits at the bottom
+  of the list. Seen only in the browser preview (its mock does not delete). AI defaults not owner-confirmed: bar on
+  the list only, transcript line as summary without notes, a "Files" filter bucket, Copy on Ask takes the notes.
+
 - **Meeting notes** (spec `docs/product/specs/2026-10-28-meeting-notes.md` on `origin/speakease`, plans
   `ai-memory/plans/meeting-notes-build.md`, `ai-memory/plans/meeting-open-start.md`): everything through lane 4
   (#12, #13, #14, #16: SE-MEET-020…023) is on `main` and shipped in **0.1.2** (GitHub release `v0.1.2`, tag on
