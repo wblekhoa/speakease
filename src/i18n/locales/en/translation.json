@@ -1244,6 +1244,10 @@
         "cancel": "Cancel",
         "confirm": "Delete",
         "failed": "The meeting could not be deleted."
+      },
+      "length": {
+        "minutes": "{{count}} min",
+        "seconds": "{{count}} s"
       }
     },
     "live": {

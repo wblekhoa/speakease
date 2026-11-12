@@ -1230,7 +1230,7 @@
       "back": "Quay lại",
       "askTab": "Hỏi",
       "more": "Thêm thao tác",
-      "search": "Tìm trong cuộc họp",
+      "search": "Tìm cuộc họp",
       "filter": {
         "label": "Lọc theo ứng dụng",
         "all": "Tất cả ứng dụng",
@@ -1244,6 +1244,10 @@
         "cancel": "Hủy",
         "confirm": "Xóa",
         "failed": "Không xóa được cuộc họp."
+      },
+      "length": {
+        "minutes": "{{count}} phút",
+        "seconds": "{{count}} giây"
       }
     },
     "live": {

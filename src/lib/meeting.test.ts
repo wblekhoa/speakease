@@ -21,6 +21,7 @@ import {
   matchesSearch,
   meetingOrigin,
   originKey,
+  lengthUnit,
   summaryLine,
 } from "./meeting";
 
@@ -303,5 +304,11 @@ console.log("meeting.test.ts (page): ok");
   assert.equal(matchesSearch(entry, "Thiết kế  lan"), true);
   assert.equal(matchesSearch(entry, "zoom 12/11"), true);
   assert.equal(matchesSearch(entry, "lan teams"), false);
+  // A row's length reads as minutes, never as a second clock time.
+  assert.deepEqual(lengthUnit(360_000), { unit: "minutes", count: 6 });
+  assert.deepEqual(lengthUnit(95_000), { unit: "minutes", count: 2 });
+  assert.deepEqual(lengthUnit(3_120_000), { unit: "minutes", count: 52 });
+  assert.deepEqual(lengthUnit(12_400), { unit: "seconds", count: 12 });
+  assert.deepEqual(lengthUnit(59_600), { unit: "minutes", count: 1 });
   console.log("meeting.test.ts: meetings list ok");
 }

@@ -6,7 +6,7 @@ import { toast } from "sonner";
 import { commands, type MeetingEntry } from "@/bindings";
 import {
   copyText,
-  duration,
+  lengthUnit,
   exportMeeting,
   filterOrigins,
   matchesSearch,
@@ -21,8 +21,8 @@ import {
 } from "@/lib/meeting";
 import { Button } from "../../ui/Button";
 import { Dialog } from "../../ui/Dialog";
-import { Dropdown } from "../../ui/Dropdown";
-import { selectMenu, selectOption } from "../../ui/selectStyles";
+import { Dropdown, placedMenuStyle, useMenuPlace } from "../../ui/Dropdown";
+import { selectMenuSurface, selectOption } from "../../ui/selectStyles";
 import {
   ArrowLeftIcon,
   MoreIcon,
@@ -261,12 +261,19 @@ const MeetingList: React.FC<{
       ?.focus();
   }, []);
 
+  const failure = loadFailed && (
+    <p className="text-sm text-error" role="alert">
+      {t("meeting.page.loadFailed")}
+    </p>
+  );
   if (meetings === null) {
-    return loadFailed ? (
-      <p className="text-sm text-error" role="alert">
-        {t("meeting.page.loadFailed")}
-      </p>
-    ) : null;
+    return (
+      failure || (
+        <p className="px-4 text-sm text-mid-gray" role="status">
+          {t("common.loading")}
+        </p>
+      )
+    );
   }
   if (meetings.length === 0) {
     return (
@@ -292,6 +299,8 @@ const MeetingList: React.FC<{
 
   return (
     <>
+      {/* A refresh that failed keeps the old list, and says so. */}
+      {failure}
       <div className="flex items-center gap-2">
         <label className="flex h-9 min-w-0 flex-1 items-center gap-2 rounded-xl border border-hairline bg-surface px-3 focus-within:border-logo-primary">
           <SearchIcon width={16} height={16} className="text-mid-gray" />
@@ -367,7 +376,12 @@ const MeetingList: React.FC<{
                     </span>
                     <span className="ms-auto shrink-0 whitespace-nowrap text-sm text-mid-gray tabular-nums">
                       {startedAt(meeting.started_at)} ·{" "}
-                      {duration(meeting.duration_ms)}
+                      {t(
+                        `meeting.page.length.${lengthUnit(meeting.duration_ms).unit}`,
+                        {
+                          count: lengthUnit(meeting.duration_ms).count,
+                        },
+                      )}
                     </span>
                   </span>
                   {summary !== "" && (
@@ -383,7 +397,8 @@ const MeetingList: React.FC<{
                   })}
                   title={t("common.delete")}
                   onClick={() => onDelete(m)}
-                  className="me-2 shrink-0 rounded-full p-2 text-mid-gray opacity-0 transition-opacity cursor-pointer hover:bg-row hover:text-error group-hover:opacity-100 focus-visible:opacity-100 focus-visible:outline-2 focus-visible:outline-logo-primary"
+                  // Shown at rest, faint, so delete can be found without hovering.
+                  className="me-2 shrink-0 rounded-full p-2 text-mid-gray/50 transition-colors cursor-pointer hover:bg-row hover:text-error group-hover:text-mid-gray group-focus-within:text-mid-gray focus-visible:outline-2 focus-visible:outline-logo-primary"
                 >
                   <TrashIcon width={16} height={16} />
                 </button>
@@ -405,6 +420,8 @@ const MoreMenu: React.FC<{
   const wrap = useRef<HTMLDivElement>(null);
   const trigger = useRef<HTMLButtonElement>(null);
   const menu = useRef<HTMLDivElement>(null);
+  // Under the trigger, or above it when the window has no room below.
+  const place = useMenuPlace(open, trigger, menu, "end");
 
   // Closed by a click elsewhere.
   useEffect(() => {
@@ -416,10 +433,14 @@ const MoreMenu: React.FC<{
     return () => document.removeEventListener("mousedown", away);
   }, [open]);
 
-  // Into the menu once it opens.
+  // Into the menu once it is placed (a hidden row cannot take focus).
+  const placed = place !== null;
   useEffect(() => {
-    if (open) menu.current?.querySelector<HTMLButtonElement>("button")?.focus();
-  }, [open]);
+    if (open && placed)
+      menu.current
+        ?.querySelector<HTMLButtonElement>("button")
+        ?.focus({ preventScroll: true });
+  }, [open, placed]);
 
   const close = () => {
     setOpen(false);
@@ -460,7 +481,8 @@ const MoreMenu: React.FC<{
           ref={menu}
           role="menu"
           aria-label={label}
-          className={`${selectMenu} end-0 w-44`}
+          className={`${selectMenuSurface} w-44 overflow-y-auto`}
+          style={placedMenuStyle(place)}
           onKeyDown={onKey}
         >
           {items.map((item) => (
@@ -553,7 +575,7 @@ const MeetingDetail: React.FC<{
       type="button"
       aria-pressed={tab === value}
       onClick={() => onTab(value)}
-      className={`whitespace-nowrap rounded-xl px-3 py-1 text-sm transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-logo-primary ${
+      className={`h-8 whitespace-nowrap rounded-xl px-3 text-sm transition-colors cursor-pointer focus-visible:outline-2 focus-visible:outline-logo-primary ${
         tab === value ? "bg-glass-chosen font-medium" : "hover:bg-glass-hover"
       }`}
     >
@@ -595,7 +617,8 @@ const MeetingDetail: React.FC<{
         />
       </div>
 
-      <div className="flex flex-wrap items-center gap-2">
+      {/* min-h-9: the row keeps its height when the template menu leaves. */}
+      <div className="flex min-h-9 flex-wrap items-center gap-2">
         <div
           className="me-auto flex gap-1"
           role="group"
@@ -610,7 +633,8 @@ const MeetingDetail: React.FC<{
             the menu's placeholder names it. A meeting stored with no AI can
             be written once AI is there. */}
         {tab === "notes" && (
-          <>
+          // Label and menu wrap as one, never apart.
+          <div className="flex items-center gap-2">
             {meeting.kind && (
               <span className="text-sm text-mid-gray">
                 {t("meeting.page.template")}
@@ -627,7 +651,7 @@ const MeetingDetail: React.FC<{
               onSelect={rewrite}
               disabled={writing}
             />
-          </>
+          </div>
         )}
       </div>
 

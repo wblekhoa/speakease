@@ -1,7 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { listen } from "@tauri-apps/api/event";
-import { Check, ChevronUp } from "lucide-react";
 import { commands, type MeetingSources, type MeetingState } from "@/bindings";
 import {
   AUTOMATIC,
@@ -14,10 +13,13 @@ import {
   type SourceChoice,
 } from "@/lib/meeting";
 import {
+  selectChevron,
   selectMenuSurface,
   selectOption,
   selectOptionChosen,
 } from "../../ui/selectStyles";
+import { placedMenuStyle, useMenuPlace } from "../../ui/Dropdown";
+import { CheckIcon } from "../../icons/bulk";
 
 /** meeting.rs session::STATE_EVENT. */
 const STATE_EVENT = "meeting-state";
@@ -48,6 +50,8 @@ export const MeetingStart: React.FC = () => {
   const focusChevron = () =>
     wrap.current?.querySelector<HTMLButtonElement>("[aria-haspopup]")?.focus();
   const menu = useRef<HTMLDivElement>(null);
+  // Above the bar when there is no room under it, as at the page's bottom.
+  const place = useMenuPlace(open, wrap, menu, "start");
 
   const loadSources = useCallback(
     () => commands.meetingSources().then(setSources),
@@ -85,14 +89,16 @@ export const MeetingStart: React.FC = () => {
     return () => document.removeEventListener("mousedown", away);
   }, [open]);
 
-  // Into the menu once it opens: the ticked row, else the first.
+  // Into the menu once it is placed (a hidden row cannot take focus): the
+  // ticked row, else the first.
+  const placed = place !== null;
   useEffect(() => {
-    if (!open) return;
+    if (!open || !placed) return;
     (
       menu.current?.querySelector<HTMLButtonElement>('[aria-checked="true"]') ??
       menu.current?.querySelector<HTMLButtonElement>("button")
-    )?.focus();
-  }, [open]);
+    )?.focus({ preventScroll: true });
+  }, [open, placed]);
 
   const toggleMenu = () => {
     if (open) {
@@ -222,12 +228,24 @@ export const MeetingStart: React.FC = () => {
             {status}
           </span>
           {mode === "idle" && (
-            <ChevronUp
-              className={`h-4 w-4 shrink-0 text-mid-gray transition-transform duration-200 motion-reduce:transition-none ${
-                open ? "rotate-180" : ""
+            // The select chevron (Dropdown), pointing up while the menu,
+            // which opens above, is closed.
+            <svg
+              className={`${selectChevron} motion-reduce:transition-none ${
+                open ? "" : "rotate-180"
               }`}
+              fill="none"
+              stroke="currentColor"
+              viewBox="0 0 24 24"
               aria-hidden="true"
-            />
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M19 9l-7 7-7-7"
+              />
+            </svg>
           )}
         </button>
         <button
@@ -251,8 +269,8 @@ export const MeetingStart: React.FC = () => {
             ref={menu}
             role="menu"
             aria-label={t("meeting.start.chooseSource")}
-            // Above the bar: it sits at the bottom of the page.
-            className={`${selectMenuSurface} absolute bottom-full start-0 z-50 mb-2 max-h-60 w-72 max-w-[calc(100vw-2rem)] overflow-y-auto`}
+            className={`${selectMenuSurface} w-72 max-w-[calc(100vw-2rem)] overflow-y-auto`}
+            style={placedMenuStyle(place)}
             onKeyDown={onMenuKey}
           >
             {items.map((item) => (
@@ -283,9 +301,10 @@ export const MeetingStart: React.FC = () => {
                   )}
                 </span>
                 {item.ticked && (
-                  <Check
-                    className="mt-0.5 h-4 w-4 shrink-0"
-                    aria-hidden="true"
+                  <CheckIcon
+                    width={16}
+                    height={16}
+                    className="mt-0.5 shrink-0"
                   />
                 )}
               </button>
