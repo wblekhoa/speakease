@@ -655,11 +655,12 @@ const MeetingDetail: React.FC<{
         )}
       </div>
 
-      {tab === "ask" ? (
-        ask
-      ) : tab === "transcript" ? (
+      {/* Ask stays mounted while hidden, so a draft question, or one still
+          being answered, survives a look at the transcript. */}
+      <div hidden={tab !== "ask"}>{ask}</div>
+      {tab === "transcript" ? (
         <TranscriptLines transcript={entry.transcript} cited={cited} />
-      ) : (
+      ) : tab === "notes" ? (
         <div className="space-y-3 rounded-2xl border border-hairline bg-surface px-5 py-4">
           {view.kind === "writing" && (
             <p className="text-sm">{t("meeting.page.writing")}</p>
@@ -703,7 +704,7 @@ const MeetingDetail: React.FC<{
             </pre>
           )}
         </div>
-      )}
+      ) : null}
     </section>
   );
 };
