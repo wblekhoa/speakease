@@ -14,6 +14,38 @@ tags: [area/docs]
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
 
+## 2026-11-12 · Meetings page: a list first, a meeting's detail on click (owner form)
+
+- **Context**: the owner, with a screenshot of the Meetings page: "chúng ta cần làm nó tối giản hơn và chia thành từng
+  flow riêng biệt … hiển thị cái danh sách cuộc họp trước rồi bấm xem chi tiết thì mới có thêm nhiều … tính năng đi
+  kèm chứ đừng có hiển hết ra một lúc như hiện tại". The page showed the Start control, the list, the notes with
+  their tabs, template menu, Copy, Save .md, Save .txt and the question panel all at once.
+- **Owner's decisions** (form 12/11):
+  - List row: "Thêm một dòng tóm tắt" - app, date, length and one line of summary.
+  - Search and filter: "Ô tìm theo chữ trong cuộc họp, Lọc theo app, Xoá cuộc họp từ danh sách".
+  - Start: "Nút (kèm setting) cố định bên dưới trang như các trang khác (Nói, Live subtitle)".
+  - Detail layout: "Ba tab: Ghi chú, Bản ghi lời, Hỏi".
+  - Actions: "Gom vào một nút ba chấm, mẫu ghi chú để riêng" - Copy, Save .md and Save .txt in one menu; the
+    template menu stays on its own.
+  - Back: "Nút mũi tên Quay lại cạnh tiêu đề".
+- **Not chosen**: a two-column list and detail side by side (today's page); the question panel beside the notes;
+  Start at the top of the list.
+- **AI default, not owner-confirmed**:
+  - The bottom bar shows on the list only; while a meeting records, its bar, the shortcut and the tray stop it from
+    the detail view.
+  - The summary line is the first line of text in the notes (headings skipped, Markdown marks dropped); without
+    notes (no AI, failed), the first line of the transcript without its speaker label; while first notes are
+    written, "Writing the notes…".
+  - The search runs on this Mac over the title, app, notes and transcript, ignoring case and accents ("hop" finds
+    "họp"); every word must be found. The app filter lists each app that has a meeting, plus "Micro" for
+    microphone-only ones and "Tệp" for meetings made from Files (stored with their own title as the app).
+  - Delete asks first and says it cannot be undone: it removes the meeting, its History entry and its audio.
+  - Copy on the Ask tab takes the notes, as on the Notes tab.
+  - The back arrow and the three dots use the lucide icons the app already uses for chevrons and close; WAVE's
+    reviewer flags lucide, as it does for the existing Start menu chevron.
+- **Reverse**: put `MeetingStart` back above the list and render the detail beside it (the layout before this entry,
+  `d082cb8`).
+
 ## 2026-11-12 · On-device picked: a meeting's text never goes to a saved key (owner)
 
 - **Context**: on a Mac without Apple Intelligence, 0.1.2 sends a meeting's text to a service the user saved a key

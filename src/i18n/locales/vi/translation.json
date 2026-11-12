@@ -1181,7 +1181,7 @@
       "other": "Không ghi âm hoặc lưu được cuộc họp."
     },
     "page": {
-      "empty": "Chưa có cuộc họp nào. Bấm Bắt đầu ghi để mở một cuộc, hoặc dùng khay hệ thống hay phím tắt Ghi chú cuộc họp ở trang Ghi âm.",
+      "empty": "Chưa có cuộc họp nào. Bấm Bắt đầu ghi ở dưới để mở một cuộc, hoặc dùng khay hệ thống hay phím tắt Ghi chú cuộc họp ở trang Ghi âm.",
       "loadFailed": "Không tải được danh sách cuộc họp. Hãy mở lại trang này để thử lại.",
       "notesTab": "Ghi chú",
       "transcriptTab": "Bản ghi lời",
@@ -1226,6 +1226,24 @@
           "nothing_available": "Máy Mac này chưa có AI để trả lời (Apple Intelligence, khoá API hoặc mô hình trên máy).",
           "notes_model_missing": "Bạn đang chọn mô hình AI trên máy, nhưng mô hình dùng cho cuộc họp (Qwen3.5 4B) chưa được tải. Tải nó ở AI & dịch."
         }
+      },
+      "back": "Quay lại",
+      "askTab": "Hỏi",
+      "more": "Thêm thao tác",
+      "search": "Tìm trong cuộc họp",
+      "filter": {
+        "label": "Lọc theo ứng dụng",
+        "all": "Tất cả ứng dụng",
+        "file": "Tệp"
+      },
+      "noMatch": "Không có cuộc họp nào khớp.",
+      "delete": {
+        "button": "Xóa {{title}}",
+        "title": "Xóa cuộc họp này?",
+        "body": "{{title}}: ghi chú, bản ghi lời và âm thanh sẽ bị xóa khỏi Cuộc họp và Lịch sử. Không thể hoàn tác.",
+        "cancel": "Hủy",
+        "confirm": "Xóa",
+        "failed": "Không xóa được cuộc họp."
       }
     },
     "live": {

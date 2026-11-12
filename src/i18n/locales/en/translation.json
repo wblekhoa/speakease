@@ -1181,7 +1181,7 @@
       "other": "The meeting could not be recorded or saved."
     },
     "page": {
-      "empty": "No meetings yet. Press Start recording to open one, or use the tray or the Meeting notes shortcut on the Recording page.",
+      "empty": "No meetings yet. Press Start recording below to open one, or use the tray or the Meeting notes shortcut on the Recording page.",
       "loadFailed": "The meetings could not be loaded. Open this page again to try once more.",
       "notesTab": "Notes",
       "transcriptTab": "Transcript",
@@ -1226,6 +1226,24 @@
           "nothing_available": "This Mac has no AI to answer (Apple Intelligence, an API key or the on-device model).",
           "notes_model_missing": "The on-device model is picked, but the model meetings run on (Qwen3.5 4B) is not downloaded. Download it in AI & Translate."
         }
+      },
+      "back": "Back",
+      "askTab": "Ask",
+      "more": "More actions",
+      "search": "Search meetings",
+      "filter": {
+        "label": "Filter by app",
+        "all": "All apps",
+        "file": "Files"
+      },
+      "noMatch": "No meetings match.",
+      "delete": {
+        "button": "Delete {{title}}",
+        "title": "Delete this meeting?",
+        "body": "{{title}}: its notes, transcript and audio leave Meetings and History. This can't be undone.",
+        "cancel": "Cancel",
+        "confirm": "Delete",
+        "failed": "The meeting could not be deleted."
       }
     },
     "live": {
