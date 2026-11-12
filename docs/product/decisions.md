@@ -23,6 +23,8 @@ repo; each cites its source.
   first in a small muted line (with the app and length), the summary in the page's text size, the bin among the
   card's end icons, faint at rest; loading, empty and no-match in History's notice card. The day heading, card,
   notice and icon button now live once in `src/components/ui/EntryList.tsx`, used by both pages.
+- **Hover** (owner 12/11, "Giữ như Lịch sử"): a card that opens a meeting keeps History's faint border change on
+  hover; no stronger background.
 - **AI default, not owner-confirmed**: the app name moves from the row's title into the small top line, as History
   shows a file's title; the date leaves the row for the day heading. The Files page's "Recent" list (rows in one
   card) is not changed.
