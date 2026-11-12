@@ -134,7 +134,7 @@ relations:
   while it runs, and the newest answer scrolls into view. Each answer quotes the lines it used ("Line 3 [Others] …");
   clicking one opens the Transcript tab with those lines marked. "The meeting doesn't say." when it does not; "The AI
   named no lines. Check the transcript." when an answer cites none; with no AI the reason shows in place of the
-  question box, before anything is typed. Questions stay while the app runs, per meeting; deleting a meeting drops
+  question box, before anything is typed. A question being typed or answered stays while another tab is open. Questions stay while the app runs, per meeting; deleting a meeting drops
   them.
 - **From Files**: with meeting notes on, the result card on Files & links gains **Ghi chú cuộc họp** (Meeting notes).
   Pressing it lists the file on the Meetings page under its title (no app, no Tôi / Người khác labels, the text as
