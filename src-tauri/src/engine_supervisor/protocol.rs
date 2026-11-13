@@ -153,6 +153,10 @@ pub struct LoadedInfo {
     pub on_gpu: bool,
     pub capabilities: Capabilities,
     pub supports_initial_prompt: bool,
+    /// Whether `RunOptions::vocabulary` is formatted for this model
+    /// (`Feature::Vocabulary`, e.g. Qwen3-ASR).
+    #[serde(default)]
+    pub supports_vocabulary: bool,
 }
 
 /// Encode one frame. Refuses a section the reader would refuse, so an

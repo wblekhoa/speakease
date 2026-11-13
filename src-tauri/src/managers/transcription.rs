@@ -1232,6 +1232,19 @@ impl TranscriptionManager {
             None => vec![validated_language.clone()],
         };
 
+        // SE-REC-009: a detecting model on Auto may pick a third language for
+        // a short clip; keep the samples so it can be run again in Vietnamese
+        // or English. Longer audio is left alone: its language is read from
+        // the first piece only, and a second pass would double a long file.
+        let model_info = self.model_manager.get_model_info(&active_model);
+        let detects_on_auto = settings.selected_language == "auto"
+            && !settings.translate_to_english
+            && model_info
+                .as_ref()
+                .is_some_and(|info| info.supports_language_detection);
+        let retry_samples =
+            (detects_on_auto && audio.len() <= CHUNK_MAX_SAMPLES).then(|| audio.clone());
+
         // Perform transcription with the appropriate engine.
         let mut audio = audio;
         let mut attempt = 0;
@@ -1267,6 +1280,58 @@ impl TranscriptionManager {
                 languages[attempt + 1]
             );
             attempt += 1;
+        };
+
+        let supported_languages = model_info
+            .as_ref()
+            .map(|info| info.supported_languages.as_slice())
+            .unwrap_or_default();
+        let retry_language = third_language_retry(
+            run.model_detected_language.as_deref(),
+            supported_languages,
+            settings.speakease_last_spoken_language.as_deref(),
+            &settings.app_language,
+        );
+        if detects_on_auto && retry_language.is_none() {
+            // The model picked Vietnamese or English itself: that is the
+            // language to fall back on the next time it picks a third one.
+            if let Some(spoken) = vi_en_code(run.model_detected_language.as_deref()) {
+                self.remember_spoken_language(spoken);
+            }
+        }
+        let run = match (retry_samples, retry_language) {
+            (Some(samples), Some(language)) => {
+                warn!(
+                    "The model detected '{}' on Auto; running again in '{}'",
+                    run.model_detected_language.as_deref().unwrap_or_default(),
+                    language
+                );
+                match self.transcribe_in_chunks(
+                    samples,
+                    &settings,
+                    &language,
+                    &active_model,
+                    progress,
+                ) {
+                    Ok(second) if !second.text.trim().is_empty() => second,
+                    Ok(_) => run,
+                    Err(err)
+                        if err.chain().any(|cause| {
+                            matches!(
+                                cause.downcast_ref::<EngineError>(),
+                                Some(EngineError::Cancelled)
+                            )
+                        }) =>
+                    {
+                        return Err(err);
+                    }
+                    Err(err) => {
+                        warn!("The second run failed ({err:#}); keeping the first");
+                        run
+                    }
+                }
+            }
+            _ => run,
         };
 
         let output_language = with_model_detected_language(
@@ -1471,19 +1536,28 @@ impl TranscriptionManager {
         let output_was_translated = run_plan.target_language.as_deref() == Some("en");
         let applied_language_hint = run_plan.language.clone();
 
+        // SE-REC-010
+        let vocabulary = cpp_vocabulary(
+            &settings.custom_words,
+            model_is_whisper,
+            info.supports_vocabulary,
+        );
+
         let run_options = RunOptions {
             task: run_plan.task,
             language: run_plan.language,
             target_language: run_plan.target_language,
             family,
+            vocabulary,
             ..Default::default()
         };
 
         debug!(
-            "transcribe-cpp run: task={:?}, language={:?}, initial_prompt={}",
+            "transcribe-cpp run: task={:?}, language={:?}, initial_prompt={}, vocabulary={}",
             run_options.task,
             run_options.language,
-            run_options.family.is_some()
+            run_options.family.is_some(),
+            run_options.vocabulary.len()
         );
 
         let transcript = match self.engine.transcribe(audio, run_options) {
@@ -1896,7 +1970,31 @@ pub(crate) fn languages_to_try(
     if intent != "auto" || detects {
         return vec![resolved.to_string()];
     }
-    let base = |code: &str| code.split(['-', '_']).next().unwrap_or(code).to_lowercase();
+    let order = vi_en_order(supported, last_spoken, ui_language);
+    if order.is_empty() {
+        vec![resolved.to_string()]
+    } else {
+        order
+    }
+}
+
+fn base_language(code: &str) -> String {
+    code.split(['-', '_']).next().unwrap_or(code).to_lowercase()
+}
+
+/// "vi" or "en" when `code` is one of SpeakEase's two languages.
+fn vi_en_code(code: Option<&str>) -> Option<&'static str> {
+    match base_language(code?).as_str() {
+        "vi" => Some("vi"),
+        "en" => Some("en"),
+        _ => None,
+    }
+}
+
+/// SpeakEase's two languages as the model names them, in the order to try:
+/// the one that last worked, then the interface's, then Vietnamese.
+fn vi_en_order(supported: &[String], last_spoken: Option<&str>, ui_language: &str) -> Vec<String> {
+    let base = base_language;
     let mut order: Vec<String> = Vec::new();
     for wanted in [last_spoken, Some(ui_language), Some("vi"), Some("en")]
         .into_iter()
@@ -1910,11 +2008,46 @@ pub(crate) fn languages_to_try(
             }
         }
     }
-    if order.is_empty() {
-        vec![resolved.to_string()]
-    } else {
-        order
+    order
+}
+
+// SE-REC-009
+/// The language to run a clip in again when a detecting model, on Auto,
+/// reported a language that is neither Vietnamese nor English; `None` when
+/// it reported one of the two, reported nothing, or knows neither.
+pub(crate) fn third_language_retry(
+    detected: Option<&str>,
+    supported: &[String],
+    last_spoken: Option<&str>,
+    ui_language: &str,
+) -> Option<String> {
+    let detected = base_language(detected?);
+    if detected.is_empty() || detected == "auto" || vi_en_code(Some(&detected)).is_some() {
+        return None;
     }
+    vi_en_order(supported, last_spoken, ui_language)
+        .into_iter()
+        .next()
+}
+
+// SE-REC-010
+/// The custom words to hand a transcribe-cpp model as its vocabulary: only a
+/// model that formats one (Qwen3-ASR), and never the whisper family, whose
+/// initial prompt carries them and cannot be combined with a vocabulary.
+pub(crate) fn cpp_vocabulary(
+    custom_words: &[String],
+    model_is_whisper: bool,
+    supports_vocabulary: bool,
+) -> Vec<String> {
+    if model_is_whisper || !supports_vocabulary {
+        return Vec::new();
+    }
+    custom_words
+        .iter()
+        .map(|word| word.trim())
+        .filter(|word| !word.is_empty())
+        .map(str::to_string)
+        .collect()
 }
 
 fn effective_language_for_model(
@@ -2511,6 +2644,46 @@ mod tests {
             super::languages_to_try("auto", &ja, false, "ja", None, "vi"),
             ["ja"]
         );
+    }
+
+    // SE-REC-009
+    #[test]
+    fn a_third_language_pick_is_run_again_in_vietnamese_or_english() {
+        let qwen: Vec<String> = ["zh", "yue", "en", "ja", "vi"].map(String::from).to_vec();
+        let retry = |detected: Option<&str>, last: Option<&str>, ui: &str| {
+            super::third_language_retry(detected, &qwen, last, ui)
+        };
+        // Cantonese on a Vietnamese speaker's clip: the language last spoken.
+        assert_eq!(retry(Some("yue"), Some("vi"), "en").as_deref(), Some("vi"));
+        assert_eq!(retry(Some("ja"), Some("en"), "vi").as_deref(), Some("en"));
+        // Nothing remembered: the interface's language.
+        assert_eq!(retry(Some("zh-TW"), None, "vi").as_deref(), Some("vi"));
+        // Vietnamese and English picks stand, as does no pick at all.
+        assert_eq!(retry(Some("vi"), Some("en"), "en"), None);
+        assert_eq!(retry(Some("en-US"), Some("vi"), "vi"), None);
+        assert_eq!(retry(None, Some("vi"), "vi"), None);
+        assert_eq!(retry(Some("auto"), Some("vi"), "vi"), None);
+        // A model that knows neither language is left with its pick.
+        let ja: Vec<String> = vec!["ja".into(), "zh".into()];
+        assert_eq!(
+            super::third_language_retry(Some("zh"), &ja, Some("vi"), "vi"),
+            None
+        );
+    }
+
+    // SE-REC-010
+    #[test]
+    fn custom_words_become_the_vocabulary_only_where_the_model_formats_one() {
+        let words: Vec<String> = ["SpeakEase", " Tauri ", ""].map(String::from).to_vec();
+        assert_eq!(
+            super::cpp_vocabulary(&words, false, true),
+            ["SpeakEase", "Tauri"]
+        );
+        // Whisper carries them in its initial prompt, which excludes a vocabulary.
+        assert!(super::cpp_vocabulary(&words, true, true).is_empty());
+        // A model without the feature would only log a warning.
+        assert!(super::cpp_vocabulary(&words, false, false).is_empty());
+        assert!(super::cpp_vocabulary(&[], false, true).is_empty());
     }
 
     use super::*;
