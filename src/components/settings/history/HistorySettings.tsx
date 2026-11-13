@@ -74,7 +74,7 @@ const OpenRecordingsButton: React.FC<OpenRecordingsButtonProps> = ({
   onClick,
   label,
 }) => (
-  <IconTip label={label} align="end">
+  <IconTip label={label} side="bottom" align="end">
     <Button
       onClick={onClick}
       variant="secondary"
