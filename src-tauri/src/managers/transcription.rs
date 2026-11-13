@@ -1313,7 +1313,12 @@ impl TranscriptionManager {
                     &active_model,
                     progress,
                 ) {
-                    Ok(second) if !second.text.trim().is_empty() => second,
+                    Ok(second) if !second.text.trim().is_empty() => {
+                        // As SE-REC-005: the language that gave text is
+                        // tried first next time, whatever the interface.
+                        self.remember_spoken_language(&language);
+                        second
+                    }
                     Ok(_) => run,
                     Err(err)
                         if err.chain().any(|cause| {
