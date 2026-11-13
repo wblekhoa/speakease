@@ -309,10 +309,19 @@ const UNIVERSAL_FILLER_WORDS: &[&str] = &[
 /// Filler words that are only safe to remove with evidence for the output
 /// language, because the same token is a real word elsewhere (e.g. Portuguese
 /// "um" = "a/an", German "um" = "at/around", Spanish "ha" = "has").
+// SE-REC-011
+/// Vietnamese hesitation sounds, removed only when the output is known to be
+/// Vietnamese. Each entry is matched as a whole word, in any case, with a
+/// comma or full stop right after it. Keep to sounds that are never a word
+/// of the sentence: "à", "ừ", "ấy" and "thì là" carry meaning often enough
+/// that they stay with the AI tidy step.
+const VIETNAMESE_FILLER_WORDS: &[&str] = &["ờ", "ờm", "ừm"];
+
 fn gated_filler_words_for_language(lang: &str) -> &'static [&'static str] {
     let base_lang = lang.split(&['-', '_'][..]).next().unwrap_or(lang);
 
     match base_lang {
+        "vi" => VIETNAMESE_FILLER_WORDS,
         "en" => &["um", "ah", "eh"],
         "de" => &["äh", "ähm"],
         "fr" => &["euh"],
@@ -731,6 +740,36 @@ mod tests {
 
         let result = filter_transcription_output(text, "de", &None);
         assert_eq!(result, "ich glaube das passt");
+    }
+
+    // SE-REC-011
+    #[test]
+    fn vietnamese_hesitation_sounds_go_only_from_vietnamese_text() {
+        let text = "Ờ, hôm nay ờm tôi ừm. phải chờ xe ở bờ sông";
+        assert_eq!(
+            filter_transcription_output(text, "vi", &None),
+            "Hôm nay tôi phải chờ xe ở bờ sông"
+        );
+
+        // No evidence for Vietnamese, or evidence for another language: untouched.
+        let unknown = remove_filler_words(text, &OutputLanguageEvidence::Unknown, &None, true);
+        assert_eq!(normalize_transcription_output(&unknown), text);
+        assert_eq!(filter_transcription_output(text, "en", &None), text);
+    }
+
+    // SE-REC-011
+    #[test]
+    fn vietnamese_words_that_carry_meaning_are_kept() {
+        // Agreement, a self-correction, a pronoun, a connective: the AI tidy
+        // step's call, never the on-device list's.
+        for text in [
+            "Ừ, tôi đồng ý",
+            "thứ ba, à không, thứ tư",
+            "cái ấy để sau",
+            "lý do thì là vì trời mưa",
+        ] {
+            assert_eq!(filter_transcription_output(text, "vi", &None), text);
+        }
     }
 
     #[test]
