@@ -310,18 +310,13 @@ const UNIVERSAL_FILLER_WORDS: &[&str] = &[
 /// language, because the same token is a real word elsewhere (e.g. Portuguese
 /// "um" = "a/an", German "um" = "at/around", Spanish "ha" = "has").
 // SE-REC-011
-/// Vietnamese hesitation sounds, removed only when the output is known to be
-/// Vietnamese. Each entry is matched as a whole word, in any case, with a
-/// comma or full stop right after it. Keep to sounds that are never a word
-/// of the sentence: "à", "ừ", "ấy" and "thì là" carry meaning often enough
-/// that they stay with the AI tidy step.
-const VIETNAMESE_FILLER_WORDS: &[&str] = &["ờ", "ờm", "ừm"];
-
+/// Vietnamese has no entry: "ờ", "ờm", "ừm" are a hesitation in one sentence
+/// and an answer in the next ("Ờ, được"), and a word list cannot tell which.
+/// Vietnamese fillers are left to the AI tidy step, which reads the context.
 fn gated_filler_words_for_language(lang: &str) -> &'static [&'static str] {
     let base_lang = lang.split(&['-', '_'][..]).next().unwrap_or(lang);
 
     match base_lang {
-        "vi" => VIETNAMESE_FILLER_WORDS,
         "en" => &["um", "ah", "eh"],
         "de" => &["äh", "ähm"],
         "fr" => &["euh"],
@@ -744,28 +739,14 @@ mod tests {
 
     // SE-REC-011
     #[test]
-    fn vietnamese_hesitation_sounds_go_only_from_vietnamese_text() {
-        let text = "Ờ, hôm nay ờm tôi ừm. phải chờ xe ở bờ sông";
-        assert_eq!(
-            filter_transcription_output(text, "vi", &None),
-            "Hôm nay tôi phải chờ xe ở bờ sông"
-        );
-
-        // No evidence for Vietnamese, or evidence for another language: untouched.
-        let unknown = remove_filler_words(text, &OutputLanguageEvidence::Unknown, &None, true);
-        assert_eq!(normalize_transcription_output(&unknown), text);
-        assert_eq!(filter_transcription_output(text, "en", &None), text);
-    }
-
-    // SE-REC-011
-    #[test]
-    fn vietnamese_words_that_carry_meaning_are_kept() {
-        // Agreement, a self-correction, a pronoun, a connective: the AI tidy
-        // step's call, never the on-device list's.
+    fn vietnamese_text_keeps_every_word_on_the_mac() {
+        // A hesitation, an answer, a self-correction, a connective: which is
+        // which depends on the sentence, so only the AI tidy step decides.
         for text in [
-            "Ừ, tôi đồng ý",
+            "Ờ, hôm nay ờm tôi ừm. phải chờ xe ở bờ sông",
+            "Ờ, được rồi",
+            "Ừm, tôi đồng ý",
             "thứ ba, à không, thứ tư",
-            "cái ấy để sau",
             "lý do thì là vì trời mưa",
         ] {
             assert_eq!(filter_transcription_output(text, "vi", &None), text);
