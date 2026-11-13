@@ -4,7 +4,7 @@ type: ux
 product: speakease
 title: "SpeakEase — Dictation (UX)"
 status: active
-updated: 2026-10-11
+updated: 2026-11-13
 summary: "How a user dictates: the shortcut, the Speak page, the listening language, model suggestions by language, the recording pill and the error messages."
 tags: [area/audio, area/hotkeys, stack/react, surface/macos]
 relations:
@@ -46,6 +46,9 @@ relations:
   said** card with Copy, and quick choices for microphone, model, **Listen for**, AI cleanup and Translate to.
 - **Listen for**: Vietnamese, English, another language, or **Auto** ("Detect the language"). With Auto and a model
   that cannot detect the language, the hint reads "Tries Vietnamese and English, remembers what you speak".
+  With Auto and a model that detects the language, a recording of up to 30 s that the model takes for a third
+  language is run again in Vietnamese or English (SE-REC-009); the user sees only the second text. Someone who speaks
+  another language picks it in Listen for, since Auto no longer keeps a third-language result on a short recording.
 - **Model suggestions** (Recognition and the Speak page): for Vietnamese, only models measured on Vietnamese are
   suggested, labelled best / balanced / live / light, with their word error rate; Cohere Transcribe (6.3 %) is best.
   For other languages, suggestions come from the catalog's accuracy and speed scores.
