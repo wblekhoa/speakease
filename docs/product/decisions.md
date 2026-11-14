@@ -51,6 +51,10 @@ repo; each cites its source.
     that begins with "SpeakEase" or "trợ lý".
   - "trả lời câu hỏi trong meeting theo mức độ": one setting with three steps - Off · Questions others ask me ·
     Also questions I say aloud.
+  - A level stored before the update becomes switches that do no more than the level did (1 nothing · 2 the
+    lines · 3 + "what did I miss" · 4 + the summary · 5 + decisions, actions, questions, terms, answer help), so
+    an update never starts AI requests the user had not picked. Asking AI in a meeting is new and starts off.
+  - A feature that is on keeps working with the Lời nói tab off: the lines are still recognised, only not shown.
 - **Not chosen**: three tabs; two tabs with one timeline; a tab per feature; the newest line or a Stop button on
   the smaller bar; a bar that shrinks to a dot or opens by itself; keeping the five levels; three presets; AI only
   while the panel is open, only for the open tab, only on a press, or only on this Mac; preset question buttons;

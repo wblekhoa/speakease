@@ -511,12 +511,12 @@ and the notes are started); `ai-memory/lessons/check-new-triggers-against-siblin
 ```rust
 /// The words of a line, lower-cased, without punctuation: what must not change.
 pub fn words(line: &str) -> Vec<String>;
-/// `fixed` when its words equal `original`'s; otherwise `original`. The speaker label is kept from `original`.
+/// Both are a line's text after its speaker label. `fixed` when its words equal `original`'s; otherwise `original`.
 pub fn guarded<'a>(original: &'a str, fixed: &'a str) -> &'a str;
 /// Numbered lines in, the same numbered lines out with punctuation and capitals fixed.
 pub fn instructions(lang: Lang) -> String;
-/// Reads "N: text" lines from the reply and applies `guarded` line by line; a missing or extra line leaves
-/// the original line.
+/// Reads "N: text" lines from the reply and applies `guarded` to each line's text, putting the line's own
+/// "[label] " back in front; a missing or extra line leaves the original line.
 pub fn apply(lines: &[&str], reply: &str) -> Vec<String>;
 /// The whole transcript, in parts of at most `PART_WORDS` words cut at line ends. A part whose request
 /// fails keeps its lines.
@@ -628,24 +628,32 @@ pub struct MeetingHelp {
     /// 0 off · 1 questions others ask me · 2 also questions I say aloud.
     pub answer: u8,
 }
-/// The switches a stored level stood for: 1 none · 2 transcript · 3 + summary, decisions, catch_up ·
-/// 4 + actions, questions, terms, answer 1 · 5 + ask.
+/// The switches a stored level stood for, never more than that level did: 1 none · 2 transcript ·
+/// 3 + catch_up · 4 + summary · 5 + decisions, actions, questions, terms, answer 1. `ask` is new: off.
 pub fn help_from_level(level: u8) -> MeetingHelp;
+/// Lines are recognised when any switch is on; `transcript` only decides whether they are shown.
+pub fn wants_lines(help: MeetingHelp) -> bool;
+/// An AI request may be made: any switch besides `transcript` is on.
+pub fn wants_ai(help: MeetingHelp) -> bool;
 ```
 
 `AppSettings` gets `meeting_help: Option<MeetingHelp>`; when it is `None` on load it is filled from
 `help_from_level(meeting_live_level)`. `meeting_live_level` stays in the struct for old files and is read nowhere
 else. One command `change_meeting_help_setting(help: MeetingHelp)` stores it and, in a meeting, updates the live
 view at once. `LiveView.level` is replaced by `help: MeetingHelp`; every `level >= n` in `meeting_live.rs` becomes
-the matching switch (`transcript` for the recognising work, `catch_up` for "what did I miss", `summary` for the
-summary; the suggestions thread runs when `questions`, `terms`, `actions` or `decisions` is on until 4B replaces
-it). With every switch off no thread recognises and no AI request is made. Settings: a card "Trợ giúp khi đang
+the matching switch: the recognising work runs when `wants_lines` (a help feature needs the lines although Lời
+nói is off; the tab then shows its off state and the lines are kept only in memory, as today); `catch_up` for
+"what did I miss"; `summary` for the summary; the suggestions request runs when `questions`, `terms`, `actions`,
+`decisions` or `answer` is on, until 4B replaces it. With every switch off no thread recognises and no AI
+request is made. Settings: a card "Trợ giúp khi đang
 họp" with nine rows grouped under the five tab names, in place of `MeetingLiveLevel`. The panel's level buttons
 are removed; the panel shows what the switches allow.
 
 **Tests**: `help_from_level` for 1-5 and for 0 and 9 (clamped); settings without `meeting_help` load with the
-level's switches, and settings with it keep it; a pure `wants_ai(help) -> bool` is false for all-off and for
-transcript-only; the existing tests `levels_stay_between_one_and_five` and its like are replaced, not deleted
+level's switches, and settings with it keep it; no level turns on a switch whose work that level did not do
+(`help_from_level(3)` has `summary == false`, `help_from_level(4)` has `actions == false`, every level has
+`ask == false`); `wants_ai` is false for all-off and for transcript-only; `wants_lines` is true with only
+`summary` on and false for all-off; the existing tests `levels_stay_between_one_and_five` and its like are replaced, not deleted
 without a successor.
 
 **Do not**: change what the summary or the suggestions say (stream 4 does); remove the `meeting_live_level` field.
@@ -733,7 +741,7 @@ export type Tab = (typeof TABS)[number];
 /** The switches a tab's button turns on or off together. */
 export const tabSwitches: Record<Tab, (keyof MeetingHelp)[]>; // summary: summary, decisions, catch_up · suggestions: questions, terms, answer · …
 export const tabOn = (help: MeetingHelp, tab: Tab): boolean; // any of its switches on
-export const toggled = (help: MeetingHelp, tab: Tab): MeetingHelp; // all on ↔ all off (answer: 0 ↔ 1)
+export const toggled = (help: MeetingHelp, tab: Tab): MeetingHelp; // all on ↔ all off (answer: 0 ↔ 1; step 2 is set in Settings only)
 /** How many items each tab holds now. */
 export const counts = (view: LiveView): Record<Tab, number>;
 /** Items added since the tab was last open; the open tab and an off tab are 0. */
@@ -793,8 +801,10 @@ pub struct Wanted { pub summary: bool, pub decisions: bool, pub actions: bool, p
 pub fn instructions(lang: Lang, wanted: Wanted) -> String;
 /// The lists so far (so the AI adds, not repeats) and the new lines, each in its own fence.
 pub fn request_text(prev: &Assist, new_lines: &str) -> String;
-pub fn parse(reply: &str, at_ms: u32) -> Assist; // unknown kinds, "none" and chatter are dropped
-pub fn merge(prev: Assist, new: Assist, settled: &[String]) -> Assist;
+/// What one reply holds: the new items, and the open points it says are settled.
+pub struct Parsed { pub lists: Assist, pub settled: Vec<String> }
+pub fn parse(reply: &str, at_ms: u32) -> Parsed; // unknown kinds, "none" and chatter are dropped
+pub fn merge(prev: Assist, new: Parsed) -> Assist;
 ```
 
 `merge` rules: the summary is replaced when the new one is there; `decided`, `open`, `actions` and `terms` only
@@ -834,7 +844,7 @@ that is on, whether or not the panel is open.
 `Suggestion`, `suggestion_instructions`, `summary_instructions`, `parse_suggestions` and their tests (each replaced
 by 4A's). The refresh thread: when `refresh_due`, builds `Wanted` from the switches; with nothing wanted it makes
 no request; otherwise one request with `meeting_assist::instructions` and `request_text(prev, lines since the last
-refresh, at most LIVE_WORDS)`, then `merge`. `working` is true while the request runs. A failed request leaves the
+refresh, at most LIVE_WORDS)`, then `merge(prev, parse(reply, now))`. `working` is true while the request runs. A failed request leaves the
 lists and is logged without the meeting's words. Việc shows the actions as a checklist the user can tick (ticks
 live in the panel's state only); Tóm tắt shows the summary, then Đã chốt and Chưa chốt; Gợi ý shows the questions
 and the terms A-Z with the "chưa kiểm chứng" label on unchecked ones.
