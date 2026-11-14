@@ -28,7 +28,7 @@ New rules get the next free ids, added to `docs/product/logic/meetings.md` by th
 them true: SE-MEET-026 paragraphs and time marks (2A, 2B) · 027 punctuation fix (2C) · 028 live-line fix (2E) ·
 029 help switches in place of levels (3A) · 030 the window's three states, size and place (3B) · 031 tabs and
 marks (3C) · 032 the live lists (4A, 4B) · 033 answer help (4C) · 034 asking in a meeting (4D) · 035 the lists
-kept with the meeting (4E) · 036 the two tracks kept and the meeting recognised again (2F).
+kept with the meeting (4E) · 036 the Others track kept and the meeting recognised again (2F).
 
 ## For the coordinator
 
@@ -595,14 +595,20 @@ fed.
 
 ---
 
-## Work order 2F — both tracks are kept, and a meeting can be recognised again
+## Work order 2F — the Others track is kept, and a meeting can be recognised again
 
 **Needs**: 1B, 2B and 2C merged.
 
-**Goal**: a meeting recorded with an app keeps its two tracks in a second file, and a button on the saved meeting
-recognises it again with the model selected now, with Me / Others as before.
+**Goal**: a meeting recorded with an app keeps the Others track in a second file, the Me track is rebuilt from it
+and the mixed file, and a button on the saved meeting recognises it again with the model selected now, with Me /
+Others as before.
 
-**Spec items**: 2.6 (owner 14/11: "Lưu riêng hai tiếng") · rule SE-MEET-036 (SE-MEET-020 gains the second file).
+**Why one track is enough**: the mixed file holds `(me + others) / 2` per sample, so `me = 2 × mixed − others`. A
+trial on made-up signals written as the app writes them (16-bit, truncated) rebuilt Me within 3 steps of 16-bit
+at every sample (signal-to-noise 60-86 dB; 21 of 320 000 samples went past full scale when both tracks clipped,
+hence the clamp). Half the disk of keeping both tracks: about 115 MB for an hour instead of about 230 MB.
+
+**Spec items**: 2.6 (owner 14/11: "Lưu riêng hai tiếng", then "Tìm cách nhẹ hơn") · rule SE-MEET-036 (SE-MEET-020 gains the second file).
 
 **Read first**: `src-tauri/src/meeting.rs` (`mix`, `finish`, `transcribe_tracks`, `Finished`, `during_dictation`,
 `write_notes_for`, the meeting state's phases); `src-tauri/src/audio_toolkit/audio/utils.rs` (`save_wav_file`);
@@ -620,21 +626,24 @@ recognises it again with the model selected now, with Me / Others as before.
 
 ```rust
 // meeting_tracks.rs - pure, no app handle
-/// "file-meeting-170000.wav" -> "file-meeting-170000.tracks.wav".
-pub fn tracks_name(file_name: &str) -> String;
-/// Two channels, 16 kHz, 16-bit: channel 0 is Me, channel 1 is Others; the shorter track is padded with silence.
-pub fn save_tracks(path: &Path, me: &[f32], others: &[f32]) -> anyhow::Result<()>;
-/// (me, others) as saved. An error when the file is missing or is not two channels at 16 kHz.
-pub fn load_tracks(path: &Path) -> anyhow::Result<(Vec<f32>, Vec<f32>)>;
+/// "file-meeting-170000.wav" -> "file-meeting-170000.others.wav".
+pub fn others_name(file_name: &str) -> String;
+/// The Me track from the two saved files' samples: `2 × mixed − others` per sample, in whole 16-bit steps, then
+/// clamped to full scale. `others` shorter than `mixed` counts as silence from where it ends.
+pub fn rebuild_me(mixed: &[i16], others: &[i16]) -> Vec<f32>;
+/// A one-channel, 16 kHz, 16-bit file's samples as written. An error for any other format or a missing file.
+pub fn read_i16(path: &Path) -> anyhow::Result<Vec<i16>>;
+/// (me, others) for a saved meeting, from its mixed file and its Others file.
+pub fn load_tracks(mixed: &Path, others: &Path) -> anyhow::Result<(Vec<f32>, Vec<f32>)>;
 ```
 
-1. `finish` writes the tracks file beside the mixed file, only for a meeting with an app track. The mixed file
-   stays exactly as it is: it is what History plays. A failure to write the tracks is logged and the meeting is
-   still saved.
+1. `finish` writes the Others track with `save_wav_file` beside the mixed file, only for a meeting with an app
+   track. The mixed file stays exactly as it is: it is what History plays. A failure to write the Others file is
+   logged and the meeting is still saved.
 2. A new migration adds `dictations TEXT` to `meetings` (JSON `[[start_ms, end_ms], …]`, NULL when there were
    none), so a second pass marks the same lines as dictated. `Meeting` gets `has_tracks: bool`, true when the
-   tracks file is on disk (looked up when the meeting is read, not stored).
-3. `delete_entry` and `delete_entries_and_files` remove `tracks_name(file_name)` whenever they remove the file.
+   Others file is on disk (looked up when the meeting is read, not stored).
+3. `delete_entry` and `delete_entries_and_files` remove `others_name(file_name)` whenever they remove the file.
 4. `session::recognise_again(app, history_id) -> Result<(), String>` and a command `recognise_meeting_again`:
    refuses while a meeting records or is being finished (`busy`); loads the tracks; runs `transcribe_tracks` with
    the stored dictations and `speaker_labels = true`; then `meeting_punct::punctuate` as `finish` does; then
@@ -647,31 +656,34 @@ pub fn load_tracks(path: &Path) -> anyhow::Result<(Vec<f32>, Vec<f32>)>;
    on the Notes tab says the notes were written from the earlier transcript, until they are written again.
 
 A meeting recorded with the microphone only, a recording from Files, and a meeting saved before this change have
-no tracks file and no button.
+no Others file and no button.
 
 **Tests**
 
-| Test                                         | Must hold                                                                                                |
-| -------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
-| `the_tracks_file_is_named_after_the_meeting` | the example above; a name without ".wav" gets ".tracks.wav" appended                                     |
-| `two_tracks_come_back_as_saved`              | save then load a 1 s Me tone and a 1.5 s Others tone: both within one 16-bit step, Me padded to 1.5 s    |
-| `a_one_channel_file_is_refused`              | `load_tracks` on a file made with `save_wav_file` is an error                                            |
-| `deleting_a_meeting_removes_both_files`      | in a temp recordings folder, after `delete_entry` neither file is there                                  |
-| `cleanup_removes_both_files`                 | the same through `delete_entries_and_files`                                                              |
-| `the_mixed_file_is_unchanged`                | for the same input, the bytes of the mixed file equal those written before this change                   |
-| `a_failed_second_pass_keeps_the_transcript`  | a pure `replace_with(old, new: Result<String, String>)` returns `old` for an error and for an empty text |
-| `dictations_round_trip`                      | a row with `[[1000, 4000]]` reads back; a row from before the column reads as none                       |
-| TypeScript: `canRecogniseAgain(meeting)`     | true only with `has_tracks`                                                                              |
+| Test                                         | Must hold                                                                                                                                                                                                            |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `the_others_file_is_named_after_the_meeting` | the example above; a name without ".wav" gets ".others.wav" appended                                                                                                                                                 |
+| `me_is_rebuilt_within_three_steps`           | Me and Others tones of different lengths, mixed with `mix` and both written with `save_wav_file` into a temp folder: every sample of `load_tracks`'s Me is within 3/32767 of the original, and Others within 1/32767 |
+| `a_rebuilt_sample_never_passes_full_scale`   | `rebuild_me(&[32767], &[-32768])` is `[1.0]`                                                                                                                                                                         |
+| `a_short_others_file_counts_as_silence`      | `rebuild_me(&[100, 100], &[50])` is `[150, 200]` in 16-bit steps                                                                                                                                                     |
+| `a_two_channel_file_is_refused`              | `read_i16` on a two-channel file is an error                                                                                                                                                                         |
+| `deleting_a_meeting_removes_both_files`      | in a temp recordings folder, after `delete_entry` neither file is there                                                                                                                                              |
+| `cleanup_removes_both_files`                 | the same through `delete_entries_and_files`                                                                                                                                                                          |
+| `the_mixed_file_is_unchanged`                | for the same input, the bytes of the mixed file equal those written before this change                                                                                                                               |
+| `a_failed_second_pass_keeps_the_transcript`  | a pure `replace_with(old, new: Result<String, String>)` returns `old` for an error and for an empty text                                                                                                             |
+| `dictations_round_trip`                      | a row with `[[1000, 4000]]` reads back; a row from before the column reads as none                                                                                                                                   |
+| TypeScript: `canRecogniseAgain(meeting)`     | true only with `has_tracks`                                                                                                                                                                                          |
 
-**Do not**: change `mix` or what History plays; make the second pass automatic; rewrite the notes without a
-press; read the mixed file as a fallback when the tracks are missing; put the tracks file in the History list.
+**Do not**: change `mix`, `save_wav_file` or what History plays (the rebuild depends on both exactly as they
+are); make the second pass automatic; rewrite the notes without a press; recognise the mixed file alone when
+the Others file is missing; put the Others file in the History list; add an audio encoder (a new dependency).
 
 **Stop and report** when `transcribe_tracks` cannot be called outside `finish` without the bar showing a recording
 (say what the state machine needs), or when the transcript has hand edits stored somewhere this order does not
 know of.
 
 **Done when**: the tests pass; both gates pass; `logic/meetings.md` has SE-MEET-036 and states the disk cost
-(two channels at 16 kHz, 16-bit: about 230 MB for an hour, beside about 115 MB for the mixed file); the report
+(one more channel at 16 kHz, 16-bit: about 115 MB for an hour, beside about 115 MB for the mixed file); the report
 has captures of the menu, the question and the Notes line from the browser preview.
 
 ---

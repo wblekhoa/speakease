@@ -71,8 +71,11 @@ repo; each cites its source.
 - **Found after the form, then decided**: the "recognise again" button could not be built as asked, because a
   meeting saved its two tracks mixed into one file and a second pass could not tell Me from Others. Asked to
   choose between keeping both tracks and a second pass without labels, the owner answered "Lưu riêng hai tiếng".
-  A meeting with an app now keeps a second, two-channel file (about 230 MB an hour beside about 115 MB for the
-  mixed one; the AI stated the figure after the choice, not before). AI defaults, not owner-confirmed: the button
+  A meeting with an app was first planned to keep a second, two-channel file (about 230 MB an hour beside about 115 MB for the
+  mixed one; the AI stated the figure after the choice, not before). Told the figure, the owner answered "Tìm
+  cách nhẹ hơn": only the Others track is kept (about 115 MB an hour more) and Me is rebuilt as twice the mixed
+  file minus Others; a trial on made-up signals rebuilt it within 3 steps of 16-bit. Not chosen by the AI: a
+  compressed file (needs a new encoder dependency) and dropping the file after some days (not asked). AI defaults, not owner-confirmed: the button
   asks before replacing the transcript, the notes are rewritten only on a press, and meetings saved earlier have
   no button.
 - **Consequences**: spec items updated to DECIDED; stream 1 is no longer blocked; work orders for streams 2-4 are
