@@ -4,7 +4,7 @@ type: decision
 product: speakease
 title: "SpeakEase — Decisions"
 status: active
-updated: 2026-11-12
+updated: 2026-11-14
 summary: "Append-only record of SpeakEase's product and engineering decisions, newest first, each with its context, evidence and how to reverse it."
 tags: [area/docs]
 ---
@@ -13,6 +13,53 @@ tags: [area/docs]
 
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
+
+## 2026-11-14 · Live help in a meeting: speakers, transcript, panel and features (owner form, round 1)
+
+- **Context**: after the first meetings in the installed build of `b5594fc`, the owner: "tôi thấy còn khá nhiều lỗi
+  về UXUI" - the transcript is not cut by sentence in context; "transcript bị lẫn lỗi giữa 'tôi' và 'other'. 'tôi'
+  phải là nội dung được phát ra từ micro cá nhân thì mới đúng. khi tôi test với chrome thì nó tính luôn sound của
+  chrome là 'tôi'"; the panel cannot be resized or collapsed and its items are "khó sử dụng và thiếu logic"; each
+  suggestion and help feature "cần có sự khác biệt rõ rệt"; and "Xậy dựng hệ thống tài liệu chi tiết để có thể đưa
+  cho các model nhỏ hơn thực chi". The test, in the owner's words: "chỉ dùng sound của chrome thôi. dùng loa." (only
+  Chrome's sound, through the speakers).
+- **What the code does today** (read at `b5594fc`): the microphone hears the speakers, so the app's sound is
+  recognised twice. The saved transcript drops a "Me" line only when its recognised words match an "Others" line
+  (`drop_echo`, text only); the live panel has no such filter. Live lines are cut at a 0.4 s pause and never longer
+  than 6 s; saved lines at a 0.7 s pause, 12 s or 25 s; each piece is recognised on its own and shown as its own
+  line. The panel is a fixed 540 x 440 column under the bar, with five cumulative levels in place of tabs. One
+  prompt on a 2-minute timer writes all six kinds of suggestion and remembers nothing between runs.
+- **Owner's decisions** (form 14/11):
+  - Telling Me from Others: "Lọc theo âm thanh trước, AEC sau nếu chưa đủ" - compare the two tracks' sound before
+    recognition; echo cancellation with a new library only if that is not enough.
+  - Transcript: "Gộp cùng người nói thành đoạn, tách theo câu, Truyền câu trước làm ngữ cảnh cho mô hình, AI sửa
+    dấu câu, viết hoa sau khi họp, AI sửa nhẹ cả dòng trực tiếp (hướng mới), Mốc thời gian mỗi đoạn".
+  - Where the panel sits: "Dưới thanh ghi âm, có tab".
+  - Panel controls: "Kéo đổi kích thước, Thu gọn về thanh, Nhớ vị trí và kích thước, Kéo đi chỗ khác", and in the
+    owner's words: "thanh có thêm trạng theo thu nhỏ." (AI's reading, not confirmed: the bar itself gets a smaller,
+    minimised state; asked in round 2).
+  - Features wanted, all eight: "Trả lời giúp khi có người hỏi tôi, Việc cần làm, danh sách tích lũy, Quyết định
+    và điểm chưa chốt, Tôi bỏ lỡ gì, Tóm tắt trực tiếp, Câu hỏi nên hỏi tiếp, Giải thích thuật ngữ, tên riêng, Hỏi
+    AI về cuộc họp ngay khi đang họp (hướng mới)".
+  - Order of work: "Tôi / Người khác trước".
+- **Not chosen**: echo cancellation with a new library now; macOS voice processing on the microphone; a headphone
+  reminder only; a side column or a free window as the panel's home; a panel that switches between the three
+  (the owner's first message asked to change the panel's direction, so round 2 asks again); font size; two tabs
+  side by side.
+- **No answer**: the free text box.
+- **Risks the AI raised**:
+  - The app that was recorded in the owner's test is not confirmed: the installed app's log file begins after that
+    test, so it holds no "Meeting: recording …" line for it.
+  - The live panel cannot take typing (its window never becomes key), so "Hỏi AI khi đang họp" needs a decision on
+    focus.
+  - An AI fix on every live line is a request per line; with a saved key that costs money, so round 2 asks which
+    engines may do it.
+  - Passing the previous sentence to the model works only for models that take a prompt (the Whisper family),
+    where the prompt already carries the custom words.
+- **Consequences**: spec `specs/2026-11-14-meeting-live-help.md` (each item marked DECIDED, PROPOSED or OPEN); plan
+  and work orders in `ai-memory/plans/meeting-live-help.md`. Work orders exist only for the first stream (Me /
+  Others); the others wait for round 2.
+- **Reverse**: nothing is built yet; drop the spec and the plan.
 
 ## 2026-11-12 · List pages look alike: Meetings takes History's cards (owner)
 
