@@ -4,7 +4,7 @@ type: decision
 product: speakease
 title: "SpeakEase — Decisions"
 status: active
-updated: 2026-11-12
+updated: 2026-11-14
 summary: "Append-only record of SpeakEase's product and engineering decisions, newest first, each with its context, evidence and how to reverse it."
 tags: [area/docs]
 ---
@@ -13,6 +13,125 @@ tags: [area/docs]
 
 Entries before 2026-10-11 are reconstructed from commits, code comments, `CHANGELOG.md` and `NOTICE.md` in this
 repo; each cites its source.
+
+## 2026-11-14 · Live help in a meeting: tabs, switches, when AI runs, what is kept (owner form, round 2)
+
+- **Context**: round 1 (next entry) left the tabs, the smaller bar, what replaces the five levels, when AI runs,
+  the live-line fix, typing in the panel, the trigger of answer help, the source of term explanations, where the
+  live lists go and the loud-speaker limit open. Eleven questions, each with options and "Khác".
+- **Owner's decisions** (form 14/11, near-verbatim):
+  - Tabs: "5 tab theo việc. có nút active/tắt. để khi chuyển tab thì các nơi active vẫn sẽ chạy (tab sẽ có nudge
+    báo status tương ứng)" - five tabs by job (Lời nói · Tóm tắt · Việc · Gợi ý · Hỏi); each has an on/off button; a
+    feature that is on keeps running when another tab is open; each tab carries a mark of its status.
+  - The smaller bar: "Chấm đang ghi + thời gian" and "Có nudge số đếm tổng hợp các tính năng hợi ý bên trong." -
+    the recording dot, the time, and one count that sums what the help features hold.
+  - In place of the five levels: "Công tắc từng tính năng trong Cài đặt".
+  - When AI runs: "Suốt cuộc họp, mọi tính năng đã bật" - for the whole meeting, every feature that is on. The
+    question said a saved key costs money on every run and that picking is consent.
+  - AI fix of live lines: "Tối ưu cho tất cả, trên máy và cloud khi làm app thu phí."
+  - Asking AI: "Bấm ô hỏi thì bảng nhận bàn phím, xong trả lại app họp" and "lắng nghe câu hỏi từ 'tôi' trong quá
+    trình nói. có setting trả lời câu hỏi trong meeting theo mức độ."
+  - Answer help: "Tự hiện khi nghe thấy câu hỏi" - it appears by itself.
+  - Terms and names: "Cả hiểu biết của AI, ghi nhãn chưa kiểm chứng".
+  - The live lists after Stop: "Lưu nguyên như một tab riêng của cuộc họp".
+  - Loud speakers: "Làm lọc trước, đo trong cuộc gọi thật rồi quyết định khử vọng" - the limit of spec item 1.3 is
+    accepted for now; stream 1 may be built.
+  - Running the meeting again with the accurate model: "Có nút, tôi bấm khi cần".
+- **AI's readings, not confirmed by the owner** (each is the default the spec builds on; say so if wrong):
+  - The tab's on/off button and the feature's switch in Settings are one setting, shown in two places. A tab that
+    holds several features (Tóm tắt, Gợi ý) switches them together in the panel and one by one in Settings.
+  - The tab's mark: a count of items added since the tab was last open; a quiet dot while its feature is working;
+    a struck-through look when it is off.
+  - The bar's count: the sum of the tabs' unseen counts, without Lời nói.
+  - "Tối ưu cho tất cả, trên máy và cloud khi làm app thu phí": the live-line fix is built to work with every
+    engine the app has (Apple Intelligence, the on-device model, a saved key), behind its own switch that is off
+    at first; a cloud service of SpeakEase's own belongs to a paid app and is not built now.
+  - "lắng nghe câu hỏi từ 'tôi'": a question the user says aloud to the assistant is answered without typing. To
+    keep it from answering questions meant for people, it needs a spoken cue; the default cue is a line of "Me"
+    that begins with "SpeakEase" or "trợ lý".
+  - "trả lời câu hỏi trong meeting theo mức độ": one setting with three steps - Off · Questions others ask me ·
+    Also questions I say aloud.
+  - A level stored before the update becomes switches that do no more than the level did (1 nothing · 2 the
+    lines · 3 + "what did I miss" · 4 + the summary · 5 + decisions, actions, questions, terms, answer help), so
+    an update never starts AI requests the user had not picked. Asking AI in a meeting is new and starts off.
+  - A feature that is on keeps working with the Lời nói tab off: the lines are still recognised, only not shown.
+- **Not chosen**: three tabs; two tabs with one timeline; a tab per feature; the newest line or a Stop button on
+  the smaller bar; a bar that shrinks to a dot or opens by itself; keeping the five levels; three presets; AI only
+  while the panel is open, only for the open tab, only on a press, or only on this Mac; preset question buttons;
+  asking in the main window; answer help on a press; explanations from the meeting alone; a personal word list;
+  feeding the live lists into the written notes; echo cancellation now; keeping the user's words at the price of
+  the others' lines; an automatic second pass.
+- **Not asked**: where else the panel could sit (side column, free window). It stays under the bar as round 1
+  chose; AI default, not owner-confirmed.
+- **No answer**: the free text box.
+- **Risks the AI raised and the owner accepted**: with a saved key, AI running for the whole meeting on every
+  feature costs the owner money for as long as the meeting runs; typing a question takes the keyboard from the
+  meeting app until the box is left; an explanation from the AI's own knowledge can be wrong, hence its label;
+  under speakers louder than the user, the user's words over them can be lost until echo cancellation is decided.
+- **Found after the form, then decided**: the "recognise again" button could not be built as asked, because a
+  meeting saved its two tracks mixed into one file and a second pass could not tell Me from Others. Asked to
+  choose between keeping both tracks and a second pass without labels, the owner answered "Lưu riêng hai tiếng".
+  A meeting with an app was first planned to keep a second, two-channel file (about 230 MB an hour beside about 115 MB for the
+  mixed one; the AI stated the figure after the choice, not before). Told the figure, the owner answered "Tìm
+  cách nhẹ hơn": only the Others track is kept (about 115 MB an hour more) and Me is rebuilt as twice the mixed
+  file minus Others; a trial on made-up signals rebuilt it within 3 steps of 16-bit. Not chosen by the AI: a
+  compressed file (needs a new encoder dependency) and dropping the file after some days (not asked). AI defaults, not owner-confirmed: the button
+  asks before replacing the transcript, the notes are rewritten only on a press, and meetings saved earlier have
+  no button.
+- **Consequences**: spec items updated to DECIDED; stream 1 is no longer blocked; work orders for streams 2-4 are
+  written in `ai-memory/plans/meeting-live-help.md`. The five levels and the "Live help at the start" setting go
+  when the switches land (SE-MEET-023 changes in that commit).
+- **Reverse**: nothing is built yet; change the spec items and the work orders.
+
+## 2026-11-14 · Live help in a meeting: speakers, transcript, panel and features (owner form, round 1)
+
+- **Context**: after the first meetings in the installed build of `b5594fc`, the owner: "tôi thấy còn khá nhiều lỗi
+  về UXUI" - the transcript is not cut by sentence in context; "transcript bị lẫn lỗi giữa 'tôi' và 'other'. 'tôi'
+  phải là nội dung được phát ra từ micro cá nhân thì mới đúng. khi tôi test với chrome thì nó tính luôn sound của
+  chrome là 'tôi'"; the panel cannot be resized or collapsed and its items are "khó sử dụng và thiếu logic"; each
+  suggestion and help feature "cần có sự khác biệt rõ rệt"; and "Xậy dựng hệ thống tài liệu chi tiết để có thể đưa
+  cho các model nhỏ hơn thực chi". The test, in the owner's words: "chỉ dùng sound của chrome thôi. dùng loa." (only
+  Chrome's sound, through the speakers).
+- **What the code does today** (read at `b5594fc`): the microphone hears the speakers, so the app's sound is
+  recognised twice. The saved transcript drops a "Me" line only when its recognised words match an "Others" line
+  (`drop_echo`, text only); the live panel has no such filter. Live lines are cut at a 0.4 s pause and never longer
+  than 6 s; saved lines at a 0.7 s pause, 12 s or 25 s; each piece is recognised on its own and shown as its own
+  line. The panel is a fixed 540 x 440 column under the bar, with five cumulative levels in place of tabs. One
+  prompt on a 2-minute timer writes all six kinds of suggestion and remembers nothing between runs.
+- **Owner's decisions** (form 14/11):
+  - Telling Me from Others: "Lọc theo âm thanh trước, AEC sau nếu chưa đủ" - compare the two tracks' sound before
+    recognition; echo cancellation with a new library only if that is not enough.
+  - Transcript: "Gộp cùng người nói thành đoạn, tách theo câu, Truyền câu trước làm ngữ cảnh cho mô hình, AI sửa
+    dấu câu, viết hoa sau khi họp, AI sửa nhẹ cả dòng trực tiếp (hướng mới), Mốc thời gian mỗi đoạn".
+  - Where the panel sits: "Dưới thanh ghi âm, có tab".
+  - Panel controls: "Kéo đổi kích thước, Thu gọn về thanh, Nhớ vị trí và kích thước, Kéo đi chỗ khác", and in the
+    owner's words: "thanh có thêm trạng theo thu nhỏ." (AI's reading, not confirmed: the bar itself gets a smaller,
+    minimised state; asked in round 2).
+  - Features wanted, all eight: "Trả lời giúp khi có người hỏi tôi, Việc cần làm, danh sách tích lũy, Quyết định
+    và điểm chưa chốt, Tôi bỏ lỡ gì, Tóm tắt trực tiếp, Câu hỏi nên hỏi tiếp, Giải thích thuật ngữ, tên riêng, Hỏi
+    AI về cuộc họp ngay khi đang họp (hướng mới)".
+  - Order of work: "Tôi / Người khác trước".
+- **Not chosen**: echo cancellation with a new library now; macOS voice processing on the microphone; a headphone
+  reminder only; a side column or a free window as the panel's home; a panel that switches between the three
+  (the owner's first message asked to change the panel's direction, so round 2 asks again); font size; two tabs
+  side by side.
+- **No answer**: the free text box.
+- **Risks the AI raised**:
+  - The app that was recorded in the owner's test is not confirmed: the installed app's log file holds no
+    "Meeting: recording …" line.
+  - Telling the tracks apart by sound has a limit, found in a trial on generated speech (14/11): when the speakers
+    are about twice as loud at the microphone as the user, the user's words spoken over them can be lost. Not yet
+    measured in a real room.
+  - The live panel cannot take typing (its window never becomes key), so "Hỏi AI khi đang họp" needs a decision on
+    focus.
+  - An AI fix on every live line is a request per line; with a saved key that costs money, so round 2 asks which
+    engines may do it.
+  - Passing the previous sentence to the model works only for models that take a prompt (the Whisper family),
+    where the prompt already carries the custom words.
+- **Consequences**: spec `specs/2026-11-14-meeting-live-help.md` (each item marked DECIDED, PROPOSED or OPEN); plan
+  and work orders in `ai-memory/plans/meeting-live-help.md`. Work orders exist only for the first stream (Me /
+  Others); the others wait for round 2.
+- **Reverse**: nothing is built yet; drop the spec and the plan.
 
 ## 2026-11-12 · List pages look alike: Meetings takes History's cards (owner)
 
