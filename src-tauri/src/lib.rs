@@ -18,6 +18,7 @@ mod local_ai;
 mod managers;
 mod meeting;
 mod meeting_ask;
+mod meeting_echo;
 mod meeting_live;
 mod meeting_notes;
 mod meeting_window;
