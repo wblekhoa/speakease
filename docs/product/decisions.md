@@ -68,9 +68,13 @@ repo; each cites its source.
   feature costs the owner money for as long as the meeting runs; typing a question takes the keyboard from the
   meeting app until the box is left; an explanation from the AI's own knowledge can be wrong, hence its label;
   under speakers louder than the user, the user's words over them can be lost until echo cancellation is decided.
-- **Found after the form, waits for the owner**: the "recognise again" button cannot be built as asked. A meeting
-  saves its two tracks mixed into one file, so a second pass cannot tell Me from Others. The choice is between
-  keeping both tracks (a second file per meeting) and a second pass without speaker labels (plan, work order 2F).
+- **Found after the form, then decided**: the "recognise again" button could not be built as asked, because a
+  meeting saved its two tracks mixed into one file and a second pass could not tell Me from Others. Asked to
+  choose between keeping both tracks and a second pass without labels, the owner answered "Lưu riêng hai tiếng".
+  A meeting with an app now keeps a second, two-channel file (about 230 MB an hour beside about 115 MB for the
+  mixed one; the AI stated the figure after the choice, not before). AI defaults, not owner-confirmed: the button
+  asks before replacing the transcript, the notes are rewritten only on a press, and meetings saved earlier have
+  no button.
 - **Consequences**: spec items updated to DECIDED; stream 1 is no longer blocked; work orders for streams 2-4 are
   written in `ai-memory/plans/meeting-live-help.md`. The five levels and the "Live help at the start" setting go
   when the switches land (SE-MEET-023 changes in that commit).

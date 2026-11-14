@@ -81,7 +81,7 @@ New rule for `logic/meetings.md`, added by the builder in the commit that makes 
 | 2.3 | The model gets the previous sentence as context.                                  | DECIDED as a direction; WAITS for a measurement (work order 2D): does a prompt of earlier words make a Whisper-family model repeat or invent? Possible only for models with `supports_initial_prompt`. If the measurement is clean: the last 30 words of the same track after the custom words.                                                                                                                                                   |
 | 2.4 | After the meeting, AI fixes punctuation and capitals.                             | DECIDED. Guard (AI DEFAULT): the AI's text is used for a line only when its words, ignoring case and punctuation, equal the recognised words; otherwise the recognised line stays. Engine order and no-AI states as SE-MEET-012.                                                                                                                                                                                                                  |
 | 2.5 | AI fixes each live line lightly.                                                  | DECIDED: built for every engine the app has. AI READING: behind its own switch, off at first; a cloud service of SpeakEase's own is for a paid app and is not built. Same word guard as 2.4; the raw line shows first and is replaced when the fix arrives.                                                                                                                                                                                       |
-| 2.6 | The saved transcript is recognised again with the accurate Vietnamese model.      | DECIDED as a button, pressed when wanted, never automatic. WAITS: the saved audio is the two tracks mixed into one, so a second pass cannot tell Me from Others; the owner chooses between keeping both tracks (more disk) and a second pass without speaker labels (plan, work order 2F).                                                                                                                                                        |
+| 2.6 | The saved transcript is recognised again with the accurate Vietnamese model.      | DECIDED: a button, pressed when wanted, never automatic. DECIDED (owner 14/11, "Lưu riêng hai tiếng"): a meeting with an app keeps its two tracks in a second file beside the mixed one (about 230 MB an hour more), so the second pass keeps Me / Others. AI DEFAULT: the button asks before replacing the transcript; the notes are not rewritten until asked; meetings saved before this change have no button. Work order 2F.                 |
 | 2.7 | How the stored transcript changes.                                                | AI DEFAULT: the stored text stays one line per recognised turn, so line citations (`meeting_ask.rs`), the 700-word split at speaker turns (`meeting_notes.rs`), `summaryLine` and export keep working; paragraphs, sentences and time marks are derived where the transcript is read. Time marks need each line's start, stored beside the text, never inside it. Lesson: `ai-memory/lessons/reflowing-stored-text-is-rewriting-the-original.md`. |
 
 ## Stream 3 — The live panel
@@ -195,6 +195,10 @@ of the call; a level slider that hides which features are on; a new card that mo
       Ask still open the right line.
 - [ ] The punctuation fix never changes a word: unit tests for added, dropped and swapped words keep the recognised
       line.
+- [ ] A meeting recorded with an app has a second file with its two tracks; deleting the meeting removes both
+      files; the mixed file is byte-for-byte what it was before.
+- [ ] "Recognise again" asks first, replaces the transcript with Me / Others labels, leaves it alone when the pass
+      fails, and does not rewrite the notes.
 - [ ] The live-line fix is off at first; on, a line shows raw, then fixed; a fix that changes a word is not shown.
 - [ ] `cargo fmt -- --check`, `cargo test --lib`, `bun run gate:fast`, `bun run check:translations`.
 
@@ -231,3 +235,5 @@ of the call; a level slider that hides which features are on; a new card that mo
   are today's behaviour and are marked KEPT; the live check places a segment by its last frame.
 - 2026-11-14: the owner's round 2 - every open item is DECIDED, an AI READING or an AI DEFAULT; stream 1 is no
   longer blocked; items 4.1-4.6 and the acceptance for streams 2-4 added.
+- 2026-11-14: the owner chose to keep the two tracks ("Lưu riêng hai tiếng"); item 2.6 is DECIDED and has work
+  order 2F.

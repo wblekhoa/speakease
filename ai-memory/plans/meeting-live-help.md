@@ -14,21 +14,21 @@ This plan orders the work and gives each task a work order. It decides nothing t
 
 ## Order
 
-| Stream | What                 | Work orders                                     | Needs                                                                               |
-| ------ | -------------------- | ----------------------------------------------- | ----------------------------------------------------------------------------------- |
-| 1      | Me / Others by sound | 1A → 1B → 1C → 1D                               | nothing; the owner accepted spec item 1.3 in round 2                                |
-| 2      | Transcript           | 2A → 2B; 2C → 2E; 2D is a measurement; 2F waits | 2B needs 2A; 2E needs 2C and 3A                                                     |
-| 3      | The live panel       | 3A → 3B → 3C                                    | 3A changes settings and `LiveView`, so it lands before anything else in streams 3-4 |
-| 4      | Help features        | 4A → 4B → 4C → 4D → 4E                          | 4B needs 3A and 4A; 4C-4E need 3C                                                   |
+| Stream | What                 | Work orders                                    | Needs                                                                               |
+| ------ | -------------------- | ---------------------------------------------- | ----------------------------------------------------------------------------------- |
+| 1      | Me / Others by sound | 1A → 1B → 1C → 1D                              | nothing; the owner accepted spec item 1.3 in round 2                                |
+| 2      | Transcript           | 2A → 2B; 2C → 2F; 2C → 2E; 2D is a measurement | 2B needs 2A; 2F needs 1B, 2B and 2C; 2E needs 2C and 3A                             |
+| 3      | The live panel       | 3A → 3B → 3C                                   | 3A changes settings and `LiveView`, so it lands before anything else in streams 3-4 |
+| 4      | Help features        | 4A → 4B → 4C → 4D → 4E                         | 4B needs 3A and 4A; 4C-4E need 3C                                                   |
 
-Whole order: 1A, 1B, 1C, 1D, then 2A, 2B, 2C (files the panel work does not touch), then 3A, 3B, 3C, then 4A-4E,
+Whole order: 1A, 1B, 1C, 1D, then 2A, 2B, 2C, 2F (files the panel work does not touch), then 3A, 3B, 3C, then 4A-4E,
 then 2E. Two orders never run at the same time when their **Files** lists share a file.
 
 New rules get the next free ids, added to `docs/product/logic/meetings.md` by the builder in the commit that makes
 them true: SE-MEET-026 paragraphs and time marks (2A, 2B) · 027 punctuation fix (2C) · 028 live-line fix (2E) ·
 029 help switches in place of levels (3A) · 030 the window's three states, size and place (3B) · 031 tabs and
 marks (3C) · 032 the live lists (4A, 4B) · 033 answer help (4C) · 034 asking in a meeting (4D) · 035 the lists
-kept with the meeting (4E).
+kept with the meeting (4E) · 036 the two tracks kept and the meeting recognised again (2F).
 
 ## For the coordinator
 
@@ -595,12 +595,84 @@ fed.
 
 ---
 
-## Work order 2F — recognise the meeting again (WAITS)
+## Work order 2F — both tracks are kept, and a meeting can be recognised again
 
-Spec item 2.6 is DECIDED as a button, but it cannot be built as asked yet: the saved audio is the two tracks mixed
-into one (`meeting.rs` `mix`, called in `finish`), so a second pass over it cannot tell Me from Others. Two ways,
-both the owner's call: keep the two tracks (a second file per meeting, more disk), or accept a second pass
-without speaker labels. Ask before writing this order.
+**Needs**: 1B, 2B and 2C merged.
+
+**Goal**: a meeting recorded with an app keeps its two tracks in a second file, and a button on the saved meeting
+recognises it again with the model selected now, with Me / Others as before.
+
+**Spec items**: 2.6 (owner 14/11: "Lưu riêng hai tiếng") · rule SE-MEET-036 (SE-MEET-020 gains the second file).
+
+**Read first**: `src-tauri/src/meeting.rs` (`mix`, `finish`, `transcribe_tracks`, `Finished`, `during_dictation`,
+`write_notes_for`, the meeting state's phases); `src-tauri/src/audio_toolkit/audio/utils.rs` (`save_wav_file`);
+`src-tauri/src/managers/history.rs` (`delete_entry`, `delete_entries_and_files`, `update_transcription`,
+`get_audio_file_path`, the `meetings` migrations); the meeting command file (`rewrite_meeting_notes`);
+`src/components/settings/meetings/MeetingsPage.tsx` (the detail's three-dot menu);
+`ai-memory/lessons/reflowing-stored-text-is-rewriting-the-original.md`.
+
+**Files**: `src-tauri/src/meeting.rs`; new `src-tauri/src/meeting_tracks.rs` (+ `mod` line in `lib.rs`);
+`src-tauri/src/managers/history.rs`; the meeting command file; `src/bindings.ts`;
+`src/components/settings/meetings/MeetingsPage.tsx`; `src/lib/meeting.ts` + test; both locale files;
+`docs/product/logic/meetings.md`, `docs/product/ux/meetings.md`.
+
+**Build**
+
+```rust
+// meeting_tracks.rs - pure, no app handle
+/// "file-meeting-170000.wav" -> "file-meeting-170000.tracks.wav".
+pub fn tracks_name(file_name: &str) -> String;
+/// Two channels, 16 kHz, 16-bit: channel 0 is Me, channel 1 is Others; the shorter track is padded with silence.
+pub fn save_tracks(path: &Path, me: &[f32], others: &[f32]) -> anyhow::Result<()>;
+/// (me, others) as saved. An error when the file is missing or is not two channels at 16 kHz.
+pub fn load_tracks(path: &Path) -> anyhow::Result<(Vec<f32>, Vec<f32>)>;
+```
+
+1. `finish` writes the tracks file beside the mixed file, only for a meeting with an app track. The mixed file
+   stays exactly as it is: it is what History plays. A failure to write the tracks is logged and the meeting is
+   still saved.
+2. A new migration adds `dictations TEXT` to `meetings` (JSON `[[start_ms, end_ms], …]`, NULL when there were
+   none), so a second pass marks the same lines as dictated. `Meeting` gets `has_tracks: bool`, true when the
+   tracks file is on disk (looked up when the meeting is read, not stored).
+3. `delete_entry` and `delete_entries_and_files` remove `tracks_name(file_name)` whenever they remove the file.
+4. `session::recognise_again(app, history_id) -> Result<(), String>` and a command `recognise_meeting_again`:
+   refuses while a meeting records or is being finished (`busy`); loads the tracks; runs `transcribe_tracks` with
+   the stored dictations and `speaker_labels = true`; then `meeting_punct::punctuate` as `finish` does; then
+   stores the text with `update_transcription` and the new `line_starts`. When recognition fails or gives an
+   empty transcript, the stored transcript is left as it was and the error is returned. The notes are not
+   rewritten.
+5. The detail's three-dot menu gets "Nhận dạng lại" / "Recognise again", only when `has_tracks`. It asks first:
+   the transcript will be replaced by what the model selected now hears, and the notes stay as written until
+   "Viết lại ghi chú" is pressed. While it runs the Transcript tab shows a working line; afterwards a quiet line
+   on the Notes tab says the notes were written from the earlier transcript, until they are written again.
+
+A meeting recorded with the microphone only, a recording from Files, and a meeting saved before this change have
+no tracks file and no button.
+
+**Tests**
+
+| Test                                         | Must hold                                                                                                |
+| -------------------------------------------- | -------------------------------------------------------------------------------------------------------- |
+| `the_tracks_file_is_named_after_the_meeting` | the example above; a name without ".wav" gets ".tracks.wav" appended                                     |
+| `two_tracks_come_back_as_saved`              | save then load a 1 s Me tone and a 1.5 s Others tone: both within one 16-bit step, Me padded to 1.5 s    |
+| `a_one_channel_file_is_refused`              | `load_tracks` on a file made with `save_wav_file` is an error                                            |
+| `deleting_a_meeting_removes_both_files`      | in a temp recordings folder, after `delete_entry` neither file is there                                  |
+| `cleanup_removes_both_files`                 | the same through `delete_entries_and_files`                                                              |
+| `the_mixed_file_is_unchanged`                | for the same input, the bytes of the mixed file equal those written before this change                   |
+| `a_failed_second_pass_keeps_the_transcript`  | a pure `replace_with(old, new: Result<String, String>)` returns `old` for an error and for an empty text |
+| `dictations_round_trip`                      | a row with `[[1000, 4000]]` reads back; a row from before the column reads as none                       |
+| TypeScript: `canRecogniseAgain(meeting)`     | true only with `has_tracks`                                                                              |
+
+**Do not**: change `mix` or what History plays; make the second pass automatic; rewrite the notes without a
+press; read the mixed file as a fallback when the tracks are missing; put the tracks file in the History list.
+
+**Stop and report** when `transcribe_tracks` cannot be called outside `finish` without the bar showing a recording
+(say what the state machine needs), or when the transcript has hand edits stored somewhere this order does not
+know of.
+
+**Done when**: the tests pass; both gates pass; `logic/meetings.md` has SE-MEET-036 and states the disk cost
+(two channels at 16 kHz, 16-bit: about 230 MB for an hour, beside about 115 MB for the mixed file); the report
+has captures of the menu, the question and the Notes line from the browser preview.
 
 ---
 
