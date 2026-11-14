@@ -48,8 +48,11 @@ repo; each cites its source.
   side by side.
 - **No answer**: the free text box.
 - **Risks the AI raised**:
-  - The app that was recorded in the owner's test is not confirmed: the installed app's log file begins after that
-    test, so it holds no "Meeting: recording …" line for it.
+  - The app that was recorded in the owner's test is not confirmed: the installed app's log file holds no
+    "Meeting: recording …" line.
+  - Telling the tracks apart by sound has a limit, found in a trial on generated speech (14/11): when the speakers
+    are about twice as loud at the microphone as the user, the user's words spoken over them can be lost. Not yet
+    measured in a real room.
   - The live panel cannot take typing (its window never becomes key), so "Hỏi AI khi đang họp" needs a decision on
     focus.
   - An AI fix on every live line is a request per line; with a saved key that costs money, so round 2 asks which
