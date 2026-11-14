@@ -240,3 +240,5 @@ of the call; a level slider that hides which features are on; a new card that mo
   order 2F.
 - 2026-11-14: the owner asked for a lighter way than a two-channel file; 2F keeps the Others track only and
   rebuilds Me from the mixed file (trial on made-up signals: at most 3 steps of 16-bit off, 60-86 dB).
+- 2026-11-14: work order 1A built (PR 26). The window threshold is 0.75, not the plan's 0.6: echo is silenced once
+  it is about twice as loud as the user, not once it is as loud. Waits for real-room figures and the owner's call.

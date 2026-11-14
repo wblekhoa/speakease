@@ -123,7 +123,7 @@ How `best_match` decides (constants are starting values; this method was tried o
 How `echo_mask` decides:
 
 1. Windows of `WINDOW = 1000` low samples (1 s) in steps of `HOP = 500` (`likeness`).
-2. A window is echo when its likeness is at least `FOLLOWS = 0.6`.
+2. A window is echo when its likeness is at least `FOLLOWS` (0.6 as written; **0.75 as built**, see "As built").
 3. A low sample is echo only when every window that covers it is echo. (A window that holds the user's voice at
    least as loud as the echo is not echo, so those words are kept whole.)
 
@@ -148,6 +148,16 @@ Comparing loudness per 30 ms frame instead of the sound itself was also tried an
 matched by chance in 14 % of frames. Do not go back to it. Real rooms echo more than the trial's five reflections,
 so the likeness of a real echo is not measured yet; `FOLLOWS` waits for the owner's call (work order 1D prints the
 figures).
+
+**As built** (PR 26, commit `74c9ccd`, 14/11): `FOLLOWS` is 0.75. The order's test
+`my_voice_as_loud_as_the_echo_is_kept` could not pass at 0.6, and the fault was the order's: its echo at 1.0 gain
+with three reflections is 1.19 times as loud as the voice, and the direct sound is 0.84 of that echo, so a window
+of echo plus voice scores about `0.84 / sqrt(1 + 1 / 1.19²)` = 0.64. What the threshold means, by the same sum: at
+0.6 a window is silenced once the echo is about as loud as the user; at 0.75 once it is about twice as loud. The
+price of 0.75: an echo alone scores 0.84 here, so a room whose direct sound is under three quarters of what the
+microphone hears is not silenced at all. Which side to err on is the owner's call after the figures of 1B's log
+line; until then the built value keeps the user's words. `ECHO_LINE` in 1C stays 0.6: it judges one stretch, where
+the trial put echo at 0.76-0.95 and the user's voice at most 0.46.
 
 **Tests** (in `meeting_echo.rs`, `#[cfg(test)] mod tests`). Build tracks with a small deterministic generator in the
 test module (for example xorshift noise multiplied by a burst pattern); no files, no clock. "Speech" is noise in
