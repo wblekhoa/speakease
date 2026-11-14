@@ -2,8 +2,8 @@
 status: active
 owner: Lê Khoa
 started: 2026-11-14
-current-phase: stream 1 work orders written, none dispatched; streams 2-4 wait for the owner's round 2
-summary: "Order of work and builder work orders for live help in a meeting: stream 1 (Me / Others by sound) is ready to dispatch in four work orders; transcript, panel and features follow after round 2."
+current-phase: stream 1 work orders written, none dispatched (they wait for the owner's answer on spec item 1.3); streams 2-4 wait for the owner's round 2
+summary: "Order of work and builder work orders for live help in a meeting: stream 1 (Me / Others by sound) is written as four work orders and waits for one owner answer; transcript, panel and features follow after round 2."
 tags: [area/ai, area/audio, area/capture, stack/rust, stack/react]
 ---
 
@@ -14,12 +14,16 @@ This plan orders the work and gives each task a work order. It decides nothing t
 
 ## Order
 
-| Stream | What                 | State                                                    |
-| ------ | -------------------- | -------------------------------------------------------- |
-| 1      | Me / Others by sound | Work orders 1A-1D below, ready                           |
-| 2      | Transcript quality   | Waits for round 2 (items 2.3, 2.5, 2.6, 2.7)             |
-| 3      | The live panel       | Waits for round 2 (items 3.6-3.9)                        |
-| 4      | Help features        | Waits for round 2 (triggers, tabs, typing, when AI runs) |
+| Stream | What                 | State                                                                                                    |
+| ------ | -------------------- | -------------------------------------------------------------------------------------------------------- |
+| 1      | Me / Others by sound | Work orders 1A-1D below, written. BLOCKED: dispatch none until the owner answers spec item 1.3 (round 2) |
+| 2      | Transcript quality   | Waits for round 2 (items 2.3, 2.5, 2.6, 2.7)                                                             |
+| 3      | The live panel       | Waits for round 2 (items 3.6-3.9)                                                                        |
+| 4      | Help features        | Waits for round 2 (triggers, tabs, typing, when AI runs)                                                 |
+
+Spec item 1.3 (what happens to the user's words under a louder echo) is PROPOSED, and 1A builds it: no work order
+of stream 1 is dispatched before the owner's answer is in `decisions.md` and the item reads DECIDED. If the answer
+changes the rule, change 1A's method and tests first.
 
 Stream 1 runs in order: 1A, then 1B, then 1C, then 1D. 1B, 1C and 1D each change a file another one reads, so they
 never run at the same time.
@@ -254,7 +258,8 @@ add one sentence pointing to SE-MEET-025. Bump `updated`.
 **Read first**: `src-tauri/src/meeting_live.rs` `session::begin` (the thread that "cuts both tracks into lines"),
 `now_ms`, `STARTED`; `src-tauri/src/live_subtitles.rs` `Segment`.
 
-**Files**: `src-tauri/src/meeting_live.rs`; `docs/product/logic/meetings.md` (Evidence of SE-MEET-025 only).
+**Files**: `src-tauri/src/meeting_live.rs`; `src-tauri/src/live_subtitles.rs` (the one field `ended`);
+`docs/product/logic/meetings.md` (Evidence of SE-MEET-025 only).
 
 **Build**
 
@@ -283,27 +288,52 @@ add one sentence pointing to SE-MEET-025. Bump `updated`.
 
 2. In the cutting thread: keep one `Recent`. While the level is 2 or more, call `add` for every chunk of either
    track with `now_ms()` as its end; at level 1 keep nothing and clear it. When the
-   segmenter returns a segment for the microphone and the meeting is not `microphone_only`, work out its start and
-   end on the meeting's clock (end = the time from `STARTED` to `segment.speech_end`; start = end minus the
-   segment's length) and skip the segment when `is_echo` is true. Segments of the app's track are never skipped.
+   segmenter returns a segment for the microphone and the meeting is not `microphone_only`, ask
+   `segment_span_ms` (below) for its place on the meeting's clock and skip the segment when `is_echo` is true.
+   Segments of the app's track are never skipped.
+
+   `segment.samples` is not the stretch that ends at `speech_end`: it starts with up to `PREROLL_MS` of frames from
+   before the first voiced frame and ends with the silent frames that closed it (about 400 ms at a pause), while
+   `speech_end` is the last voiced frame. So do not subtract the segment's length from `speech_end`. Instead:
+   - In `live_subtitles.rs`, add one field to `Segment`: `/// When the segment's last frame arrived.`
+     `pub ended: Instant`, set in `Segmenter::segment` from the last frame taken (`taken.last()`), for both
+     `close_all` and `cut_at_quietest`. Fill it wherever a `Segment` is built. Nothing else in that file changes.
+   - In `meeting_live.rs`, a pure function:
+
+     ```rust
+     /// The segment's samples on the meeting's clock: (start_ms, end_ms).
+     pub fn segment_span_ms(segment: &Segment, started: Instant) -> (u64, u64);
+     ```
+
+     end = the time from `started` to `segment.ended`; start = end minus the samples' length
+     (`samples.len() / 16` ms), not below 0.
+
+   Frames cut from one chunk are stamped when the chunk arrives, so the span can sit up to one chunk late; `LAG`
+   and the 300 ms floor cover that. Say in the report how long the microphone's chunks are (log the first few
+   lengths once at debug level while testing, then remove the line).
+
 3. Keep at most the last 60 s in `Recent` (drop older low samples, keep the clock right).
 
 **Tests** (in `meeting_live.rs`'s test module; copy the small generator)
 
-| Test name                                                  | Must hold                                                                                                                |
-| ---------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------ |
-| `a_live_line_that_echoes_the_app_is_skipped`               | chunks of 100 ms of app speech and its echo (90 ms late) added in order; `is_echo` over a 3 s stretch is true            |
-| `a_short_echo_is_skipped_too`                              | the same tracks; `is_echo` over a 600 ms stretch that has sound is true                                                  |
-| `an_echo_that_arrives_before_the_apps_chunk_is_skipped`    | the microphone's chunks 300 ms ahead of the app's; `is_echo` over a 3 s stretch is true                                  |
-| `a_live_line_in_my_own_voice_is_kept`                      | app speech and an unrelated microphone; `is_echo` is false for a 600 ms and a 3 s stretch                                |
-| `sound_older_than_a_minute_is_dropped_and_the_clock_holds` | after 90 s of chunks, the kept length is at most 60 s and `is_echo` over the last 3 s still answers as in the first test |
+| Test name                                                  | Must hold                                                                                                                                                                                                                                                                                                                   |
+| ---------------------------------------------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `a_live_line_that_echoes_the_app_is_skipped`               | chunks of 100 ms of app speech and its echo (90 ms late) added in order; `is_echo` over a 3 s stretch is true                                                                                                                                                                                                               |
+| `a_short_echo_is_skipped_too`                              | the same tracks; `is_echo` over a 600 ms stretch that has sound is true                                                                                                                                                                                                                                                     |
+| `an_echo_that_arrives_before_the_apps_chunk_is_skipped`    | the microphone's chunks 300 ms ahead of the app's; `is_echo` over a 3 s stretch is true                                                                                                                                                                                                                                     |
+| `a_live_line_in_my_own_voice_is_kept`                      | app speech and an unrelated microphone; `is_echo` is false for a 600 ms and a 3 s stretch                                                                                                                                                                                                                                   |
+| `a_real_segment_is_placed_by_its_last_frame`               | a real `Segmenter` fed 30 ms frames stamped `base + i * 30 ms`: 300 ms silence, 1.2 s voiced, then silence until it closes; `segment_span_ms(&segment, base)` gives an end within 30 ms of the last frame fed and a start within 30 ms of that end minus the samples' length; the end is at least 300 ms after `speech_end` |
+| `a_segment_cut_at_the_length_limit_is_placed_too`          | the same `Segmenter` fed voiced frames until `cut_at_quietest` returns a segment; the span's end is within 30 ms of the stamp of the last frame in that segment (not of the last frame fed)                                                                                                                                 |
+| `sound_older_than_a_minute_is_dropped_and_the_clock_holds` | after 90 s of chunks, the kept length is at most 60 s and `is_echo` over the last 3 s still answers as in the first test                                                                                                                                                                                                    |
 
-**Do not**: change `Feed`, `Samples`, `LiveLine`, `LiveView`, the recognising thread, or anything in `meeting.rs`.
+**Do not**: change `Feed`, `Samples`, `LiveLine`, `LiveView`, the recognising thread, how `Segmenter` cuts, or
+anything in `meeting.rs`.
 
 **Stop and report** when the segment's place on the meeting's clock cannot be worked out from `STARTED` and
-`speech_end`.
+`ended`, or when the microphone's chunks are longer than 200 ms.
 
-**Done when**: the five tests pass; the builder gate passes.
+**Done when**: the seven tests pass; every live-subtitles test that passed before still passes
+(`cargo test --lib live_subtitles`); the builder gate passes.
 
 ---
 
